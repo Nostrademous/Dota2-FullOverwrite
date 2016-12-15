@@ -75,9 +75,9 @@ function UpdateLaneAssignments()
 		[5] = LANE_BOT,
 		[6] = LANE_BOT,
 		[7] = LANE_BOT,
-		[8] = LANE_BOT,
+		[8] = LANE_TOP,
 		[9] = LANE_BOT,
-		[10] = LANE_BOT,
+		[10] = LANE_MID,
 	};
 end
 

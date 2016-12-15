@@ -1,4 +1,6 @@
 
+require( GetScriptDirectory().."/role" )
+
 local tableItemsToBuyAsSupport = { 
 				"item_tango",
 				"item_tango",
@@ -87,6 +89,8 @@ local tableItemsToBuyAsCore = {
 function ItemPurchaseThink()
 
 	local npcBot = GetBot();
+	local pID = npcBot:GetPlayer() - 1;	
+	local roles = role.GetRoles();
 
 	if ( npcBot:GetAssignedLane() == LANE_MID ) then
 		if ( #tableItemsToBuyAsMid == 0 )
@@ -120,7 +124,7 @@ function ItemPurchaseThink()
 			npcBot:Action_PurchaseItem( sNextItem );
 			table.remove( tableItemsToBuyAsCore, 1 );
 		end
-	else
+	elseif ( (npcBot:GetAssignedLane() == LANE_BOT and GetTeam() == TEAM_RADIANT) or (npcBot:GetAssignedLane() == LANE_TOP and GetTeam() == TEAM_DIRE) ) then
 		if ( #tableItemsToBuyAsSupport == 0 )
 		then
 			npcBot:SetNextItemPurchaseValue( 0 );
@@ -137,7 +141,6 @@ function ItemPurchaseThink()
 			table.remove( tableItemsToBuyAsSupport, 1 );
 		end
 	end
-
 end
 
 ----------------------------------------------------------------------------------------------------

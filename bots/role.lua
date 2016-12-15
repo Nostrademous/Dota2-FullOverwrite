@@ -161,7 +161,7 @@ function GetRoles()
 
 	--print ( "GetRoles()" );
 	local unknown_idx = contains(roles, ROLE_UNKNOWN);
-	if ( unknown_idx > 0 and unknown_idx < 6 ) then
+	if ( unknown_idx > 0 and unknown_idx < 11 ) then
 		SetRoles()
 	end
 	

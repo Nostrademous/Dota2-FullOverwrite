@@ -6,6 +6,7 @@ _G._savedEnv = getfenv()
 module( "item_purchase_generic", package.seeall )
 
 require( GetScriptDirectory().."/role" )
+require( GetScriptDirectory().."/global_vars" )
 
 local tableHardSupportItemsToBuy = { 
 	"item_courier",
@@ -77,6 +78,11 @@ function ItemPurchaseThink()
 		return;
 	end
 	
+	side = TEAM_RADIANT
+	if ( GetTeam() == TEAM_DIRE ) then
+		side = TEAM_DIRE
+	end
+	
 	if ( (npcBot:GetNextItemPurchaseValue() > 0) and (npcBot:GetGold() < npcBot:GetNextItemPurchaseValue()) ) then
 		return
 	end
@@ -84,89 +90,96 @@ function ItemPurchaseThink()
 	local pID = npcBot:GetPlayer() - 1;
 	local roles = role.GetRoles();
 	
+	purch_index = global_vars.purchase_index[side][roles[pID]]
+	
 	if ( roles[pID] == role.ROLE_HARDSUPPORT ) then
 		print( "Generic.ItemPurchaseThink.HardSupport for player #", pID, " name:", npcBot:GetUnitName() );
-		if ( #tableHardSupportItemsToBuy == 0 ) then
+		if ( #tableHardSupportItemsToBuy < purch_index ) then
 			npcBot:SetNextItemPurchaseValue( 0 );
 			print( "    No More Items in Purchase Table!" )
 			return;
 		end
 
-		local sNextItem = tableHardSupportItemsToBuy[1];
+		local sNextItem = tableHardSupportItemsToBuy[purch_index];
 
 		npcBot:SetNextItemPurchaseValue( GetItemCost( sNextItem ) );
 
 		if ( npcBot:GetGold() >= GetItemCost( sNextItem ) ) then
 			npcBot:Action_PurchaseItem( sNextItem );
-			table.remove( tableHardSupportItemsToBuy, 1 );
+			--table.remove( tableHardSupportItemsToBuy, 1 );
+			global_vars.purchase_index[side][roles[pID]] = purch_index + 1
 			npcBot:SetNextItemPurchaseValue( 0 );
 		end
 	elseif ( roles[pID] == role.ROLE_SEMISUPPORT ) then
 		print( "Generic.ItemPurchaseThink.SemiSupport for player #", pID, " name:", npcBot:GetUnitName() );
-		if ( #tableSemiSupportItemsToBuy == 0 ) then
+		if ( #tableSemiSupportItemsToBuy < purch_index ) then
 			npcBot:SetNextItemPurchaseValue( 0 );
 			print( "    No More Items in Purchase Table!" )
 			return;
 		end
 
-		local sNextItem = tableSemiSupportItemsToBuy[1];
+		local sNextItem = tableSemiSupportItemsToBuy[purch_index];
 
 		npcBot:SetNextItemPurchaseValue( GetItemCost( sNextItem ) );
 
 		if ( npcBot:GetGold() >= GetItemCost( sNextItem ) ) then
 			npcBot:Action_PurchaseItem( sNextItem );
-			table.remove( tableSemiSupportItemsToBuy, 1 );
+			--table.remove( tableSemiSupportItemsToBuy, 1 );
+			global_vars.purchase_index[side][roles[pID]] = purch_index + 1
 			npcBot:SetNextItemPurchaseValue( 0 );
 		end
 	elseif ( roles[pID] == role.ROLE_HARDCARRY ) then
 		print( "Generic.ItemPurchaseThink.HardCarry for player #", pID, " name:", npcBot:GetUnitName() );
-		if ( #tableHardCarryItemsToBuy == 0 ) then
+		if ( #tableHardCarryItemsToBuy < purch_index ) then
 			npcBot:SetNextItemPurchaseValue( 0 );
 			print( "    No More Items in Purchase Table!" )
 			return;
 		end
 
-		local sNextItem = tableHardCarryItemsToBuy[1];
+		local sNextItem = tableHardCarryItemsToBuy[purch_index];
 
 		npcBot:SetNextItemPurchaseValue( GetItemCost( sNextItem ) );
 
 		if ( npcBot:GetGold() >= GetItemCost( sNextItem ) ) then
 			npcBot:Action_PurchaseItem( sNextItem );
-			table.remove( tableHardCarryItemsToBuy, 1 );
+			--table.remove( tableHardCarryItemsToBuy, 1 );
+			global_vars.purchase_index[side][roles[pID]] = purch_index + 1
 			npcBot:SetNextItemPurchaseValue( 0 );
 		end
 	elseif ( roles[pID] == role.ROLE_MID ) then
 		print( "Generic.ItemPurchaseThink.Mid for player #", pID, " name:", npcBot:GetUnitName() );
-		if ( #tableMidItemsToBuy == 0 ) then
+		if ( #tableMidItemsToBuy < purch_index ) then
 			npcBot:SetNextItemPurchaseValue( 0 );
 			print( "    No More Items in Purchase Table!" )
 			return;
 		end
 
-		local sNextItem = tableMidItemsToBuy[1];
+		local sNextItem = tableMidItemsToBuy[purch_index];
 
 		npcBot:SetNextItemPurchaseValue( GetItemCost( sNextItem ) );
 
 		if ( npcBot:GetGold() >= GetItemCost( sNextItem ) ) then
 			npcBot:Action_PurchaseItem( sNextItem );
-			table.remove( tableMidItemsToBuy, 1 );
+			--table.remove( tableMidItemsToBuy, 1 );
+			global_vars.purchase_index[side][roles[pID]] = purch_index + 1
 			npcBot:SetNextItemPurchaseValue( 0 );
 		end
 	elseif ( roles[pID] == role.ROLE_OFFLANE ) then
 		print( "Generic.ItemPurchaseThink.Offlane for player #", pID, " name:", npcBot:GetUnitName() );
-		if ( #tableOfflaneItemsToBuy == 0 ) then
+		if ( #tableOfflaneItemsToBuy < purch_index ) then
 			npcBot:SetNextItemPurchaseValue( 0 );
 			print( "    No More Items in Purchase Table!" )
 			return;
 		end
 
-		local sNextItem = tableOfflaneItemsToBuy[1];
+		local sNextItem = tableOfflaneItemsToBuy[purch_index];
 
 		npcBot:SetNextItemPurchaseValue( GetItemCost( sNextItem ) );
 
 		if ( npcBot:GetGold() >= GetItemCost( sNextItem ) ) then
 			npcBot:Action_PurchaseItem( sNextItem );
-			table.remove( tableOfflaneItemsToBuy, 1 );
+			--table.remove( tableOfflaneItemsToBuy, 1 );
+			global_vars.purchase_index[side][roles[pID]] = purch_index + 1
 			npcBot:SetNextItemPurchaseValue( 0 );
 		end
 	end

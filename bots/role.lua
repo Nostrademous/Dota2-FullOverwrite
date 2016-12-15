@@ -55,10 +55,10 @@ local listHARDSUPPORT = {
 local function contains(table, value)
 	for i=1,#table do
 		if table[i] == value then
-			return true;
+			return i;
 		end
 	end
-	return false;
+	return 0;
 end
 
 local function checkRoleHardCarry(value)
@@ -160,7 +160,8 @@ end
 function GetRoles()
 
 	--print ( "GetRoles()" );
-	if contains(roles, ROLE_UNKNOWN) then
+	local unknown_idx = contains(roles, ROLE_UNKNOWN);
+	if ( unknown_idx > 0 and unknown_idx < 6 ) then
 		SetRoles()
 	end
 	

@@ -101,9 +101,10 @@ function ItemPurchaseThink()
 	local roles = role.GetRoles();
 
 	if ( roles[pID] == role.ROLE_MID ) then
-		if ( #tableItemsToBuyAsMid == 0 )
-		then
+		print( "Line.ItemPurchaseThink.Mid" );
+		if ( #tableItemsToBuyAsMid == 0 ) then
 			npcBot:SetNextItemPurchaseValue( 0 );
+			print( "    No More Items in Purchase Table!" )
 			return;
 		end
 
@@ -111,16 +112,16 @@ function ItemPurchaseThink()
 
 		npcBot:SetNextItemPurchaseValue( GetItemCost( sNextItem ) );
 
-		if ( npcBot:GetGold() >= GetItemCost( sNextItem ) )
-		then
+		if ( npcBot:GetGold() >= GetItemCost( sNextItem ) ) then
 			npcBot:Action_PurchaseItem( sNextItem );
 			table.remove( tableItemsToBuyAsMid, 1 );
 			npcBot:SetNextItemPurchaseValue( 0 );
 		end
 	elseif ( roles[pID] == role.ROLE_HARDCARRY or roles[pID] == role.ROLE_OFFLANE ) then
-		if ( #tableItemsToBuyAsCore == 0 )
-		then
+		print( "Line.ItemPurchaseThink.Core" );
+		if ( #tableItemsToBuyAsCore == 0 ) then
 			npcBot:SetNextItemPurchaseValue( 0 );
+			print( "    No More Items in Purchase Table!" )
 			return;
 		end
 
@@ -128,16 +129,16 @@ function ItemPurchaseThink()
 
 		npcBot:SetNextItemPurchaseValue( GetItemCost( sNextItem ) );
 
-		if ( npcBot:GetGold() >= GetItemCost( sNextItem ) )
-		then
+		if ( npcBot:GetGold() >= GetItemCost( sNextItem ) ) then
 			npcBot:Action_PurchaseItem( sNextItem );
 			table.remove( tableItemsToBuyAsCore, 1 );
 			npcBot:SetNextItemPurchaseValue( 0 );
 		end
 	elseif ( roles[pID] == role.ROLE_HARDSUPPORT or roles[pID] == role.ROLE_SEMISUPPORT ) then
-		if ( #tableItemsToBuyAsSupport == 0 )
-		then
+		print( "Line.ItemPurchaseThink.Support" );
+		if ( #tableItemsToBuyAsSupport == 0 ) then
 			npcBot:SetNextItemPurchaseValue( 0 );
+			print( "    No More Items in Purchase Table!" )
 			return;
 		end
 
@@ -145,8 +146,7 @@ function ItemPurchaseThink()
 
 		npcBot:SetNextItemPurchaseValue( GetItemCost( sNextItem ) );
 
-		if ( npcBot:GetGold() >= GetItemCost( sNextItem ) )
-		then
+		if ( npcBot:GetGold() >= GetItemCost( sNextItem ) ) then
 			npcBot:Action_PurchaseItem( sNextItem );
 			table.remove( tableItemsToBuyAsSupport, 1 );
 			npcBot:SetNextItemPurchaseValue( 0 );

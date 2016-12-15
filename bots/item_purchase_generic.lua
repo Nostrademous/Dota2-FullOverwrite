@@ -48,12 +48,21 @@ local tableItemsToBuy = {
 function ItemPurchaseThink()
 
 	local npcBot = GetBot();
-	local pID = npcBot:GetPlayer() - 1;
+	if ( npcBot == nil ) then
+		return;
+	end
 	
-	--print( "Generic.ItemPurchaseThink for player #", pID );
+	if ( (npcBot:GetNextItemPurchaseValue() > 0) and (npcBot:GetGold() < npcBot:GetNextItemPurchaseValue()) ) then
+		return
+	end
+	
+	local pID = (npcBot:GetPlayer() - 1);
+	
+	print( "Generic.ItemPurchaseThink for player #", pID, " name:", npcBot:GetUnitName() );
 	
 	local roles = role.GetRoles();
-	if ( roles[pID] == 5 ) then
+	
+	if ( roles[pID] == role.ROLE_HARDSUPPORT ) then
 		if ( #tableHardSupportItemsToBuy == 0 ) then
 			npcBot:SetNextItemPurchaseValue( 0 );
 			return;
@@ -67,8 +76,9 @@ function ItemPurchaseThink()
 		then
 			npcBot:Action_PurchaseItem( sNextItem );
 			table.remove( tableHardSupportItemsToBuy, 1 );
+			npcBot:SetNextItemPurchaseValue( 0 );
 		end
-	elseif ( roles[pID] == 4 ) then
+	elseif ( roles[pID] == role.ROLE_SEMISUPPORT ) then
 		if ( #tableSemiSupportItemsToBuy == 0 ) then
 			npcBot:SetNextItemPurchaseValue( 0 );
 			return;
@@ -82,8 +92,9 @@ function ItemPurchaseThink()
 		then
 			npcBot:Action_PurchaseItem( sNextItem );
 			table.remove( tableSemiSupportItemsToBuy, 1 );
+			npcBot:SetNextItemPurchaseValue( 0 );
 		end
-	elseif ( (roles[pID] == 1) or (roles[pID] == 2) or (roles[pID] == 3) ) then
+	elseif ( (roles[pID] == role.ROLE_HARDCARRY) or (roles[pID] == role.ROLE_MID) or (roles[pID] == role.ROLE_OFFLANE) ) then
 		if ( #tableItemsToBuy == 0 ) then
 			npcBot:SetNextItemPurchaseValue( 0 );
 			return;
@@ -97,6 +108,7 @@ function ItemPurchaseThink()
 		then
 			npcBot:Action_PurchaseItem( sNextItem );
 			table.remove( tableItemsToBuy, 1 );
+			npcBot:SetNextItemPurchaseValue( 0 );
 		end
 	end
 end

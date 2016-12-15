@@ -89,10 +89,18 @@ local tableItemsToBuyAsCore = {
 function ItemPurchaseThink()
 
 	local npcBot = GetBot();
+	if ( npcBot == nil ) then
+		return;
+	end
+	
+	if ( (npcBot:GetNextItemPurchaseValue() > 0) and (npcBot:GetGold() < npcBot:GetNextItemPurchaseValue()) ) then
+		return
+	end
+	
 	local pID = npcBot:GetPlayer() - 1;	
 	local roles = role.GetRoles();
 
-	if ( npcBot:GetAssignedLane() == LANE_MID ) then
+	if ( roles[pID] == role.ROLE_MID ) then
 		if ( #tableItemsToBuyAsMid == 0 )
 		then
 			npcBot:SetNextItemPurchaseValue( 0 );
@@ -107,8 +115,9 @@ function ItemPurchaseThink()
 		then
 			npcBot:Action_PurchaseItem( sNextItem );
 			table.remove( tableItemsToBuyAsMid, 1 );
+			npcBot:SetNextItemPurchaseValue( 0 );
 		end
-	elseif ( (npcBot:GetAssignedLane() == LANE_TOP and GetTeam() == TEAM_RADIANT) or (npcBot:GetAssignedLane() == LANE_BOT and GetTeam() == TEAM_DIRE) ) then
+	elseif ( roles[pID] == role.ROLE_HARDCARRY or roles[pID] == role.ROLE_OFFLANE ) then
 		if ( #tableItemsToBuyAsCore == 0 )
 		then
 			npcBot:SetNextItemPurchaseValue( 0 );
@@ -123,8 +132,9 @@ function ItemPurchaseThink()
 		then
 			npcBot:Action_PurchaseItem( sNextItem );
 			table.remove( tableItemsToBuyAsCore, 1 );
+			npcBot:SetNextItemPurchaseValue( 0 );
 		end
-	elseif ( (npcBot:GetAssignedLane() == LANE_BOT and GetTeam() == TEAM_RADIANT) or (npcBot:GetAssignedLane() == LANE_TOP and GetTeam() == TEAM_DIRE) ) then
+	elseif ( roles[pID] == role.ROLE_HARDSUPPORT or roles[pID] == role.ROLE_SEMISUPPORT ) then
 		if ( #tableItemsToBuyAsSupport == 0 )
 		then
 			npcBot:SetNextItemPurchaseValue( 0 );
@@ -139,6 +149,7 @@ function ItemPurchaseThink()
 		then
 			npcBot:Action_PurchaseItem( sNextItem );
 			table.remove( tableItemsToBuyAsSupport, 1 );
+			npcBot:SetNextItemPurchaseValue( 0 );
 		end
 	end
 end

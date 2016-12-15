@@ -10,7 +10,7 @@ function Think()
 	then
 		a = GetGameMode()
 		print( "game mode: ", a);
-		
+
 		if ( a == GAMEMODE_AP )
 		then 
 			print ( "All Pick" )
@@ -24,7 +24,7 @@ function Think()
 				
 				if ( IsPlayerInHeroSelectionControl(3) )
 				then
-					SelectHero( 3, "npc_dota_hero_riki" );
+					SelectHero( 3, "npc_dota_hero_bristleback" );
 				end
 				
 				if ( IsPlayerInHeroSelectionControl(4) )
@@ -34,7 +34,7 @@ function Think()
 				
 				if ( IsPlayerInHeroSelectionControl(5) )
 				then
-					SelectHero( 5, "npc_dota_hero_bloodseeker" );
+					SelectHero( 5, "npc_dota_hero_lina" );
 				end
 				
 				if ( IsPlayerInHeroSelectionControl(6) )
@@ -45,9 +45,9 @@ function Think()
 			then
 				print( "selecting dire" );
 				SelectHero( 7, "npc_dota_hero_drow_ranger" );
-				SelectHero( 8, "npc_dota_hero_lich" );
+				SelectHero( 8, "npc_dota_hero_lion" );
 				SelectHero( 9, "npc_dota_hero_juggernaut" );
-				SelectHero( 10, "npc_dota_hero_mirana" );
+				SelectHero( 10, "npc_dota_hero_witch_doctor" );
 				SelectHero( 11, "npc_dota_hero_nevermore" );
 			end
 		elseif ( a == GAMEMODE_1V1MID )
@@ -66,4 +66,19 @@ function Think()
 	end
 end
 
-----------------------------------------------------------------------------------------------------
+function UpdateLaneAssignments()	
+	return {
+		[1] = LANE_BOT,
+		[2] = LANE_TOP,
+		[3] = LANE_BOT,
+		[4] = LANE_MID,
+		[5] = LANE_BOT,
+		[6] = LANE_BOT,
+		[7] = LANE_BOT,
+		[8] = LANE_BOT,
+		[9] = LANE_BOT,
+		[10] = LANE_BOT,
+	};
+end
+
+----------------------------------------------------------------------------------------------------

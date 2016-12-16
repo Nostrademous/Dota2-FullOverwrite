@@ -298,15 +298,6 @@ function StateRunAway(StateMachine)
     end
 end 
 
--- useless now ignore it
-function StateFarming(StateMachine)
-    local npcBot = GetBot();
-    if(npcBot:IsAlive() == false) then
-        StateMachine.State = STATE_IDLE;
-        return;
-    end
-end
-
 StateMachine = {};
 StateMachine["State"] = STATE_IDLE;
 StateMachine[STATE_IDLE] = StateIdle;
@@ -445,9 +436,11 @@ function ConsiderAttackCreeps()
     end
 
     if(weakest_creep ~= nil) then
-        -- if creep's hp is lower than 70(because I don't Know how much is my damadge!!), try to last hit it.
-        if(npcBot:GetAttackTarget() == nil and lowest_hp < 100) then
-            npcBot:Action_AttackUnit(weakest_creep,true);
+        -- if creep's hp is lower than 70(because I don't Know how much is my damage!!), try to last hit it.
+		expectedDmg = 1.7*npcBot:GetEstimatedDamageToTarget(false, weakest_creep, 1.0, DAMAGE_TYPE_PHYSICAL);
+		--print( "Dmg: ", npcBot:GetEstimatedDamageToTarget(false, weakest_creep, 1.0, DAMAGE_TYPE_PHYSICAL) );
+        if(npcBot:GetAttackTarget() == nil and lowest_hp < expectedDmg ) then
+            npcBot:Action_AttackUnit(weakest_creep, false);
             StateMachine.State = STATE_ATTACKING_CREEP;
             return;
         end
@@ -457,9 +450,7 @@ function ConsiderAttackCreeps()
 
     for creep_k,creep in pairs(AllyCreeps)
     do 
-        --npcBot:GetEstimatedDamageToTarget
         local creep_name = creep:GetUnitName();
-        --print(creep_name);
         if(creep:IsAlive()) then
              local creep_hp = creep:GetHealth();
              if(lowest_hp > creep_hp) then
@@ -470,12 +461,14 @@ function ConsiderAttackCreeps()
     end
 
     if(weakest_creep ~= nil) then
-        -- if creep's hp is lower than 70(because I don't Know how much is my damadge!!), try to last hit it.
-        if(npcBot:GetAttackTarget() == nil and 
-        lowest_hp < 100 and 
-        weakest_creep:GetHealth() / weakest_creep:GetMaxHealth() < 0.5) then
+        -- if creep's hp is lower than 70(because I don't Know how much is my damage!!), try to last hit it.
+		expectedDmg = 1.7*npcBot:GetEstimatedDamageToTarget(false, weakest_creep, 1.0, DAMAGE_TYPE_PHYSICAL);
+		--print( "Dmg: ", npcBot:GetEstimatedDamageToTarget(false, weakest_creep, 1.0, DAMAGE_TYPE_PHYSICAL) );
+        if( npcBot:GetAttackTarget() == nil and 
+        lowest_hp < expectedDmg or 
+        (lowest_hp > expectedDmg and (weakest_creep:GetHealth() / weakest_creep:GetMaxHealth()) < 0.5)) then
             Attacking_creep = weakest_creep;
-            npcBot:Action_AttackUnit(Attacking_creep,true);
+            npcBot:Action_AttackUnit(Attacking_creep, false);
             StateMachine.State = STATE_ATTACKING_CREEP;
             return;
         end
@@ -490,7 +483,7 @@ function ConsiderAttackCreeps()
         for _,npcEnemy in pairs( NearbyEnemyHeroes )
         do
             if(npcBot:GetAttackTarget() == nil) then
-                npcBot:Action_AttackUnit(npcEnemy,false);
+                npcBot:Action_AttackUnit(npcEnemy, false);
                 return;
             end
         end

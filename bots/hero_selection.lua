@@ -44,7 +44,7 @@ function Think()
 			elseif ( GetTeam() == TEAM_DIRE )
 			then
 				print( "selecting dire" );
-				SelectHero( 7, "npc_dota_hero_drow_ranger" );
+				SelectHero( 7, "npc_dota_hero_axe" );
 				SelectHero( 8, "npc_dota_hero_lion" );
 				SelectHero( 9, "npc_dota_hero_juggernaut" );
 				SelectHero( 10, "npc_dota_hero_witch_doctor" );

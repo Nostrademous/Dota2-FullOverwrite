@@ -24,29 +24,92 @@ roles = {
 	};
 
 local listHC = {
+		"npc_dota_hero_alchemist",
 		"npc_dota_hero_antimage",
+		"npc_dota_hero_bloodseeker",
+		"npc_dota_hero_chaos_knight",
+		"npc_dota_hero_clinkz",
+		"npc_dota_hero_drow_ranger",
+		"npc_dota_hero_dragon_knight",
+		"npc_dota_hero_ember_spirit",
+		"npc_dota_hero_faceless_void",
+		"npc_dota_hero_gyrocopter",
+		"npc_dota_hero_huskar",
 		"npc_dota_hero_juggernaut",
+		"npc_dota_hero_sniper",
 	};
 	
 local listMID = {
-		"npc_dota_hero_nevermore",
+		"npc_dota_hero_alchemist",
+		"npc_dota_hero_arc_warden",
+		"npc_dota_hero_brewmaster",
+		"npc_dota_hero_death_prophet",
+		"npc_dota_hero_dragon_knight",
+		"npc_dota_hero_ember_spirit",
+		"npc_dota_hero_faceless_void",
+		"npc_dota_hero_huskar",
+		"npc_dota_hero_invoker",
+		"npc_dota_hero_juggernaut",
 		"npc_dota_hero_lina",
+		"npc_dota_hero_nevermore",
+		"npc_dota_hero_sniper",
+		"npc_dota_hero_zuus",
 	};
 	
 local listOFF = {
+		"npc_dota_hero_arc_warden",
+		"npc_dota_hero_axe",
+		"npc_dota_hero_batrider",
+		"npc_dota_hero_beastmaster",
+		"npc_dota_hero_bounty_hunter",
+		"npc_dota_hero_brewmaster",
 		"npc_dota_hero_bristleback",
-		"npc_dota_hero_drow_ranger",
+		"npc_dota_hero_broodmother",
+		"npc_dota_hero_centaur",
+		"npc_dota_hero_clinkz",
 		"npc_dota_hero_rattletrap",
+		"npc_dota_hero_dark_seer",
+		"npc_dota_hero_doom_bringer",
+		"npc_dota_hero_dragon_knight",
+		"npc_dota_hero_elder_titan",
+		"npc_dota_hero_enchantress",
 		"npc_dota_hero_faceless_void",
+		"npc_dota_hero_huskar",
+		"npc_dota_hero_spirit_breaker",
+	};
+	
+local listJUNGLER = {
+		"npc_dota_hero_axe",
+		"npc_dota_hero_bloodseeker",
+		"npc_dota_hero_chen",
+		"npc_dota_hero_doom_bringer",
+		"npc_dota_hero_enchantress",
+		"npc_dota_hero_enigma",
 	};
 	
 local listSEMISUPPORT = {
+		"npc_dota_hero_abaddon",
+		"npc_dota_hero_ancient_apparition",
+		"npc_dota_hero_arc_warden",
 		"npc_dota_hero_bane",
+		"npc_dota_hero_brewmaster",
+		"npc_dota_hero_dazzle",
+		"npc_dota_hero_earth_spirit",
+		"npc_dota_hero_earthshaker",
+		"npc_dota_hero_elder_titan",
+		"npc_dota_hero_enigma",
+		"npc_dota_hero_jakiro",
 		"npc_dota_hero_witch_doctor",
 	};
 
 local listHARDSUPPORT = {
+		"npc_dota_hero_ancient_apparition",
 		"npc_dota_hero_crystal_maiden",
+		"npc_dota_hero_dazzle",
+		"npc_dota_hero_disruptor",
+		"npc_dota_hero_earthshaker",
+		"npc_dota_hero_wisp",
+		"npc_dota_hero_jakiro",
 		"npc_dota_hero_lion",
 	};
 	

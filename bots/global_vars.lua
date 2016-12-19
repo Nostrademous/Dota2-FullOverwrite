@@ -18,15 +18,15 @@ function GetHeroLevel(bot)
 end
 
 function GetTimeDelta(prevTime)
-	local delta = RealTime() - prevTime;
+	local delta = GameTime() - prevTime;
 	return delta;
 end
 
 function TimePassed(prevTime, amount)
 	if ( GetTimeDelta(prevTime) > amount ) then
-		return true, RealTime();
+		return true, GameTime();
 	else
-		return false, RealTime();
+		return false, GameTime();
 	end
 end
 

@@ -83,10 +83,8 @@ function StateIdle(StateMachine)
         return;
     end
 
-    target = GetLocationAlongLane(2, 0.95);
+    target = GetLocationAlongLane(2, 0.50);
     npcBot:Action_AttackMove(target);
-    
-
 end
 
 function StateAttackingCreep(StateMachine)
@@ -149,12 +147,7 @@ function StateRetreat(StateMachine)
         return;
     end
 
-    home_pos = locations.RAD_FOUNTAIN;
-	if ( GetTeam() == TEAM_DIRE ) then
-		home_pos = locations.DIRE_FOUNTAIN;
-	end
-	
-    npcBot:Action_MoveToLocation(home_pos);
+	locations.GoToFountain(npcBot);
 
     if(npcBot:GetHealth() == npcBot:GetMaxHealth() and npcBot:GetMana() == npcBot:GetMaxMana()) then
         StateMachine.State = STATE_IDLE;
@@ -198,18 +191,22 @@ end
 
 function StateFighting(StateMachine)
     local npcBot = GetBot();
-    if(npcBot:IsAlive() == false) then
+    if(npcBot:IsAlive() == false or EnemyToKill == nil) then
         StateMachine.State = STATE_IDLE;
         return;
     end
 
-    if(IsTowerAttackingMe() and npcBot:GetHealth() < EnemyToKill:GetHealth()) then
+    if(IsTowerAttackingMe()) then
         StateMachine.State = STATE_RUN_AWAY;
+		return;
     elseif(not EnemyToKill:CanBeSeen() or not EnemyToKill:IsAlive()) then
         -- lost enemy 
         print("lost enemy");
         StateMachine.State = STATE_IDLE;
         return;
+	elseif(npcBot:GetHealth() < EnemyToKill:GetHealth()) then
+		StateMachine.State = STATE_RUN_AWAY;
+		return;
     else
         if ( npcBot:IsUsingAbility() ) then return end;
 
@@ -285,7 +282,11 @@ function StateRunAway(StateMachine)
 
     if(TargetOfRunAwayFromTower == nil) then
         --set the target to go back
-        TargetOfRunAwayFromTower = Vector(mypos[1] - 400,mypos[2] - 400);
+		if ( GetTeam() == TEAM_RADIANT ) then
+			TargetOfRunAwayFromTower = Vector(mypos[1] - 400,mypos[2] - 400);
+		else
+			TargetOfRunAwayFromTower = Vector(mypos[1] + 400,mypos[2] + 400);
+		end
         npcBot:Action_MoveToLocation(TargetOfRunAwayFromTower);
         return;
     else
@@ -494,7 +495,6 @@ function ConsiderAttackCreeps()
             end
         end
     end
-    
 end
 
 function GetComfortPoint(creeps)
@@ -522,7 +522,11 @@ function GetComfortPoint(creeps)
     if(count > 0) then
         -- I assume ComfortPoint is 600 from the avg point 
         --print("avg_pos : " .. avg_pos_x .. " , " .. avg_pos_y);
-        return Vector(avg_pos_x - 600 / 1.414, avg_pos_y - 600 / 1.414);
+		if ( GetTeam() == TEAM_RADIANT ) then
+			return Vector(avg_pos_x - 600 / 1.414, avg_pos_y - 600 / 1.414);
+		else
+			return Vector(avg_pos_x + 600 / 1.414, avg_pos_y + 600 / 1.414);
+		end
     else
         return nil;
     end;
@@ -563,9 +567,8 @@ function IsTowerAttackingMe()
     local npcBot = GetBot();
     local NearbyTowers = npcBot:GetNearbyTowers(1000, true);
     if(#NearbyTowers > 0) then
-        for _,tower in pairs( NearbyTowers)
-        do
-            if(GetUnitToUnitDistance(tower,npcBot) < 900) then
+        for _,tower in pairs( NearbyTowers ) do
+            if(GetUnitToUnitDistance(tower,npcBot) < 900 ) then
                 print("Attacked by tower");
                 return true;
             end

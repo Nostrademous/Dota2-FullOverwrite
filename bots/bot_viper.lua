@@ -1,10 +1,15 @@
 
 require( GetScriptDirectory().."/global_vars" )
+require( GetScriptDirectory().."/fsm" )
 --require( GetScriptDirectory().."/locations" )
 --require( GetScriptDirectory().."/ability_item_usage_viper" );
 
 local curr_lvl = 0
 local prevTime = 0
+local prevState = "none";
+
+local StateMachine = {};
+StateMachine["State"] 					= fsm.STATE_IDLE;
 
 local SKILL_Q = "viper_poison_attack";
 local SKILL_W = "viper_nethertoxin";
@@ -35,6 +40,7 @@ end
 function Think()
 	
     local npcBot = GetBot();
+	if ( not npcBot ) then return; end
 	
 	local checkLevel, newTime = global_vars.TimePassed(prevTime, 1.0);
 	if checkLevel then
@@ -44,5 +50,12 @@ function Think()
 			curr_lvl = curr_lvl + 1;
 		end
 	end
+	
+	StateMachine.State = fsm.StateMachine[StateMachine.State](npcBot);
+
+    if(prevState ~= StateMachine.State) then
+        print("STATE: "..prevState.." -> "..fsm.StateMachine.State);
+        prevState = StateMachine.State;
+    end
 end
 

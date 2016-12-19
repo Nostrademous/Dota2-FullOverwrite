@@ -70,3 +70,18 @@ RAD_SHRINE_OFF = Vector(-4095.146973, 1219.809692, 384.000000)  -- inaccurate. s
 -----------------------------
 
 ROSHAN = Vector(-2451.685303, 1884.514893, 159.998047)
+
+-----------------------------
+-- Movement
+-----------------------------
+function GoToRoshan(bot)
+	bot:MoveToLocation(ROSHAN);
+end
+
+function GoToFountain(bot)
+	if ( GetTeam() == TEAM_RADIANT ) then
+		bot:MoveToLocation(RAD_FOUNTAIN);
+	else
+		bot:MoveToLocation(DIRE_FOUNTAIN);
+	end
+end

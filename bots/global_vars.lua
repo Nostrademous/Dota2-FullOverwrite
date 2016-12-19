@@ -5,49 +5,30 @@ module( "global_vars", package.seeall )
 
 require( GetScriptDirectory().."/role" )
 
-respawn_table = {
-	[1] = 7,
-	[2] = 9,
-	[3] = 11,
-	[4] = 13,
-	[5] = 15,
-	[6] = 25,
-	[7] = 27,
-	[8] = 29,
-	[9] = 31,
-	[10]= 33,
-	[11]= 35,
-	[12]= 45,
-	[13]= 47,
-	[14]= 49,
-	[15]= 51,
-	[16]= 53,
-	[17]= 55,
-	[18]= 65,
-	[19]= 69,
-	[20]= 73,
-	[21]= 77,
-	[22]= 81,
-	[23]= 85,
-	[24]= 89,
-	[25]= 99
-};
-
-local function contains(table, value)
-	for i=1,#table do
-		if table[i] == value then
-			return i;
-		end
-	end
-	print( "LEVEL CALCULATION BUG!!! VALUE PASSED: " .. value );
-	return 0;
+function GetHeroLevel(bot)
+    local respawnTable = {8, 10, 12, 14, 16, 26, 28, 30, 32, 34, 36, 46, 48, 50, 52, 54, 56, 66, 70, 74, 78,  82, 86, 90, 100};
+    local nRespawnTime = bot:GetRespawnTime() +1; -- It gives 1 second lower values.
+	
+    for k,v in pairs(respawnTable) do
+        if v == nRespawnTime then
+			return k;
+        end
+    end
+	return 1;
 end
 
-function GetCurrentLevel(bot)
-	--FIXME: will not work correctly for bots that took SpawnReduction Talents
-	--print( "RST: ", bot:GetRespawnTime() );
-	return contains( respawn_table, bot:GetRespawnTime() );
-end	
+function GetTimeDelta(prevTime)
+	local delta = RealTime() - prevTime;
+	return delta;
+end
+
+function TimePassed(prevTime, amount)
+	if ( GetTimeDelta(prevTime) > amount ) then
+		return true, RealTime();
+	else
+		return false, RealTime();
+	end
+end
 
 purchase_index = {
 	[TEAM_RADIANT] = {

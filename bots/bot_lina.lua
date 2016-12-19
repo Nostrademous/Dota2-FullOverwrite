@@ -8,6 +8,7 @@
 ]]
 
 require( GetScriptDirectory().."/global_vars" )
+require( GetScriptDirectory().."/locations" )
 require( GetScriptDirectory().."/ability_item_usage_lina" );
 
 STATE_IDLE = "STATE_IDLE";
@@ -22,7 +23,7 @@ STATE_RUN_AWAY = "STATE_RUN_AWAY";
 LinaRetreatHPThreshold = 0.3;
 LinaRetreatMPThreshold = 0.2;
 
-curr_lvl = 0
+local curr_lvl = 0
 
 STATE = STATE_IDLE;
 
@@ -32,7 +33,7 @@ function StateIdle(StateMachine)
         return;
     end
 
-    local creeps = npcBot:GetNearbyCreeps(1000,true);
+    local creeps = npcBot:GetNearbyCreeps(1000, true);
     local pt = GetComfortPoint(creeps);
 
     local ShouldFight = false;
@@ -54,23 +55,23 @@ function StateIdle(StateMachine)
         end
     end
 
-    if(ShouldRetreat()) then
+    if( ShouldRetreat() ) then
         StateMachine.State = STATE_RETREAT;
         return;
-    elseif(IsTowerAttackingMe()) then
+    elseif( IsTowerAttackingMe() ) then
         StateMachine.State = STATE_RUN_AWAY;
         return;
-    elseif(npcBot:GetAttackTarget() ~= nil) then
-        if(npcBot:GetAttackTarget():IsHero()) then
+    elseif( npcBot:GetAttackTarget() ~= nil ) then
+        if( npcBot:GetAttackTarget():IsHero() ) then
             EnemyToKill = npcBot:GetAttackTarget();
-            print("auto attacking: "..npcBot:GetAttackTarget():GetUnitName());
+            --print("auto attacking: "..npcBot:GetAttackTarget():GetUnitName());
             StateMachine.State = STATE_FIGHTING;
             return;
         end
-    elseif(ShouldFight) then
+    elseif( ShouldFight ) then
         StateMachine.State = STATE_FIGHTING;
         return;
-    elseif(#creeps > 0 and pt ~= nil) then
+    elseif( #creeps > 0 and pt ~= nil ) then
         local mypos = npcBot:GetLocation();
         
         local d = GetUnitToLocationDistance(npcBot,pt);
@@ -82,7 +83,7 @@ function StateIdle(StateMachine)
         return;
     end
 
-    target = GetLocationAlongLane(2,0.95);
+    target = GetLocationAlongLane(2, 0.95);
     npcBot:Action_AttackMove(target);
     
 
@@ -118,15 +119,15 @@ function StateAttackingCreep(StateMachine)
     end
 
 
-    if(ShouldRetreat()) then
+    if( ShouldRetreat() ) then
         StateMachine.State = STATE_RETREAT;
         return;
-    elseif(IsTowerAttackingMe()) then
+    elseif( IsTowerAttackingMe() ) then
         StateMachine.State = STATE_RUN_AWAY;
-    elseif(ShouldFight) then
+    elseif( ShouldFight ) then
         StateMachine.State = STATE_FIGHTING;
         return;
-    elseif(#creeps > 0 and pt ~= nil) then
+    elseif( #creeps > 0 and pt ~= nil ) then
         local mypos = npcBot:GetLocation();
         local d = GetUnitToLocationDistance(npcBot,pt);
         if(d > 200) then
@@ -148,12 +149,11 @@ function StateRetreat(StateMachine)
         return;
     end
 
-    --[[
-            I don't know how to Create a object of Location so I borrow one from GetLocation()
-
-            Got Vector from marko.polo at http://dev.dota2.com/showthread.php?t=274301
-    ]]
-    home_pos = Vector(-7000,-7000);
+    home_pos = locations.RAD_FOUNTAIN;
+	if ( GetTeam() == TEAM_DIRE ) then
+		home_pos = locations.DIRE_FOUNTAIN;
+	end
+	
     npcBot:Action_MoveToLocation(home_pos);
 
     if(npcBot:GetHealth() == npcBot:GetMaxHealth() and npcBot:GetMana() == npcBot:GetMaxMana()) then
@@ -169,15 +169,15 @@ function StateGotoComfortPoint(StateMachine)
         return;
     end
 
-    local creeps = npcBot:GetNearbyCreeps(1000,true);
+    local creeps = npcBot:GetNearbyCreeps(1000, true);
     local pt = GetComfortPoint(creeps);
 
-    if(ShouldRetreat()) then
+    if( ShouldRetreat() ) then
         StateMachine.State = STATE_RETREAT;
         return;
-    elseif(IsTowerAttackingMe()) then
+    elseif( IsTowerAttackingMe() ) then
         StateMachine.State = STATE_RUN_AWAY;
-    elseif(#creeps > 0 and pt ~= nil) then
+    elseif( #creeps > 0 and pt ~= nil ) then
         local mypos = npcBot:GetLocation();
         
         local d = GetUnitToLocationDistance(npcBot,pt);
@@ -307,61 +307,59 @@ StateMachine[STATE_GOTO_COMFORT_POINT] = StateGotoComfortPoint;
 StateMachine[STATE_FIGHTING] = StateFighting;
 StateMachine[STATE_RUN_AWAY] = StateRunAway;
 
+local SKILL_Q = "lina_dragon_slave";
+local SKILL_W = "lina_light_strike_array";
+local SKILL_E = "lina_fiery_soul";
+local SKILL_R = "lina_laguna_blade"; 
 
 -- FIXME: includes "" at talent levels for future easy adds
 -- NOTE: "" will need to stay for levels where we can't level anything (e.g. 17)
-local LinaAbilityPriority = {
-	"lina_dragon_slave",
-	"lina_fiery_soul",
-	"lina_dragon_slave",
-	"lina_light_strike_array",
-	"lina_dragon_slave",
-	"lina_laguna_blade",
-	"lina_dragon_slave",
-	"lina_fiery_soul",
-	"lina_fiery_soul",
-	"",
-	"lina_fiery_soul",
-	"lina_laguna_blade",
-	"lina_light_strike_array",
-	"lina_light_strike_array",
-	"",
-	"lina_light_strike_array",
-	"",
-	"lina_laguna_blade",
-	"",
-	"",
-	"",
-	"",
-	"",
-	"",
-	""
+local BotAbilityPriority = {
+	SKILL_Q,    SKILL_E,    SKILL_Q,    SKILL_W,    SKILL_Q,
+    SKILL_R,    SKILL_Q,    SKILL_E,    SKILL_E,    "-1",
+    SKILL_E,    SKILL_R,    SKILL_W,    SKILL_W,    "-1",
+    SKILL_W,    "-1",       SKILL_R,    "-1",       "-1",
+    "-1",       "-1",       "-1",       "-1",       "-1"
 };
 
-function ThinkLvlupAbility()
+function ThinkLvlupAbility(bot)
 
-    local npcBot = GetBot();
-	local sNextAbility = LinaAbilityPriority[1];
+	local sNextAbility = BotAbilityPriority[1];
 	
-	if sNextAbility ~= "" then
-		npcBot:Action_LevelAbility( sNextAbility );
+	if sNextAbility ~= "-1" then
+		bot:Action_LevelAbility( sNextAbility );
 	end
 	
-	table.remove( LinaAbilityPriority, 1 );
+	table.remove( BotAbilityPriority, 1 );
 end
 
 PrevState = "none";
 
-function Think(  )
+local prevTime = 0
+
+function Think()
+	--[[
+	rt = RealTime();
+	if ( rt ) then print( "RT: ", rt ); end
+	dt = DotaTime();
+	if ( dt ) then print( "DT: ", dt ); end
+	gt = GameTime();
+	if ( gt ) then print( "GT: ", gt ); end
+	--]]
+	
     -- Think this item( ... )
     --update
     local npcBot = GetBot();
     --print(GetLocationAlongLane(2,0.9));
 	
-    local cLvl = global_vars.GetCurrentLevel( npcBot );
-	if ( cLvl > curr_lvl ) then
-		ThinkLvlupAbility();
-		curr_lvl = curr_lvl + 1;
+	local checkLevel, newTime = global_vars.TimePassed(prevTime, 1.0);
+	if checkLevel then
+		prevTime = newTime;
+		local cLvl = global_vars.GetHeroLevel( npcBot );
+		if ( cLvl > curr_lvl ) then
+			ThinkLvlupAbility(npcBot);
+			curr_lvl = curr_lvl + 1;
+		end
 	end
 	
     StateMachine[StateMachine.State](StateMachine);
@@ -378,8 +376,8 @@ function ConsiderAttackCreeps()
     --print("ConsiderAttackCreeps");
     local npcBot = GetBot();
 
-    local EnemyCreeps = npcBot:GetNearbyCreeps(1000,true);
-    local AllyCreeps = npcBot:GetNearbyCreeps(1000,false);
+    local EnemyCreeps = npcBot:GetNearbyCreeps(1000, true);
+    local AllyCreeps = npcBot:GetNearbyCreeps(1000, false);
 
     -- Check if we're already using an ability
 	if ( npcBot:IsUsingAbility() ) then return end;
@@ -436,7 +434,6 @@ function ConsiderAttackCreeps()
     end
 
     if(weakest_creep ~= nil) then
-        -- if creep's hp is lower than 70(because I don't Know how much is my damage!!), try to last hit it.
 		expectedDmg = 1.7*npcBot:GetEstimatedDamageToTarget(false, weakest_creep, 1.0, DAMAGE_TYPE_PHYSICAL);
 		--print( "Dmg: ", npcBot:GetEstimatedDamageToTarget(false, weakest_creep, 1.0, DAMAGE_TYPE_PHYSICAL) );
         if(npcBot:GetAttackTarget() == nil and lowest_hp < expectedDmg ) then
@@ -461,7 +458,6 @@ function ConsiderAttackCreeps()
     end
 
     if(weakest_creep ~= nil) then
-        -- if creep's hp is lower than 70(because I don't Know how much is my damage!!), try to last hit it.
 		expectedDmg = 1.7*npcBot:GetEstimatedDamageToTarget(false, weakest_creep, 1.0, DAMAGE_TYPE_PHYSICAL);
 		--print( "Dmg: ", npcBot:GetEstimatedDamageToTarget(false, weakest_creep, 1.0, DAMAGE_TYPE_PHYSICAL) );
         if( npcBot:GetAttackTarget() == nil and 
@@ -477,13 +473,23 @@ function ConsiderAttackCreeps()
     end
 
     -- nothing to do , try to attack heros
-
     local NearbyEnemyHeroes = npcBot:GetNearbyHeroes( 1000, true, BOT_MODE_NONE );
     if(NearbyEnemyHeroes ~= nil) then
-        for _,npcEnemy in pairs( NearbyEnemyHeroes )
-        do
+        for _,npcEnemy in pairs( NearbyEnemyHeroes ) do
             if(npcBot:GetAttackTarget() == nil) then
                 npcBot:Action_AttackUnit(npcEnemy, false);
+                return;
+            end
+        end
+    end
+	
+	-- nothing to do , try to attack tower
+	local NearbyTowers = npcBot:GetNearbyTowers(1000, true);
+    if( #NearbyTowers > 0 and #AllyCreeps > 0 ) then
+        for _,tower in pairs( NearbyTowers) do
+             if(npcBot:GetAttackTarget() == nil) then
+                npcBot:Action_AttackUnit(tower, false);
+                print("Attacking tower");
                 return;
             end
         end
@@ -500,7 +506,7 @@ function GetComfortPoint(creeps)
     for creep_k,creep in pairs(creeps)
     do
         local creep_name = creep:GetUnitName();
-        local meleepos = string.find( creep_name,"melee");
+        local meleepos = string.find( creep_name, "melee");
         --if(meleepos ~= nil) then
         if(true) then
             creep_pos = creep:GetLocation();
@@ -516,7 +522,7 @@ function GetComfortPoint(creeps)
     if(count > 0) then
         -- I assume ComfortPoint is 600 from the avg point 
         --print("avg_pos : " .. avg_pos_x .. " , " .. avg_pos_y);
-        return Vector(avg_pos_x - 600 / 1.414,avg_pos_y - 600 / 1.414);
+        return Vector(avg_pos_x - 600 / 1.414, avg_pos_y - 600 / 1.414);
     else
         return nil;
     end;
@@ -538,7 +544,7 @@ function IsItemAvailable(item_name)
     local npcBot = GetBot();
     -- query item code by Hewdraw
     for i = 0, 5, 1 do
-        local item = hero:GetItemInSlot(i);
+        local item = npcBot:GetItemInSlot(i);
         if(item and item:IsFullyCastable() and item:GetName() == item_name) then
             return item;
         end
@@ -555,7 +561,7 @@ end
 
 function IsTowerAttackingMe()
     local npcBot = GetBot();
-    local NearbyTowers = npcBot:GetNearbyTowers(1000,true);
+    local NearbyTowers = npcBot:GetNearbyTowers(1000, true);
     if(#NearbyTowers > 0) then
         for _,tower in pairs( NearbyTowers)
         do

@@ -53,6 +53,7 @@ local listMID = {
 		"npc_dota_hero_lina",
 		"npc_dota_hero_nevermore",
 		"npc_dota_hero_sniper",
+		"npc_dota_hero_viper",
 		"npc_dota_hero_zuus",
 	};
 	

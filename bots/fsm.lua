@@ -2,6 +2,8 @@ _G._savedEnv = getfenv()
 module( "fsm", package.seeall )
 ----------------------------------------------------------------------------------------------------
 
+require( GetScriptDirectory().."/locations" )
+
 STATE_IDLE 					= "STATE_IDLE";
 STATE_ATTACKING_CREEP 		= "STATE_ATTACKING_CREEP";
 STATE_ATTACKING_TOWER 		= "STATE_ATTACKING_TOWER";
@@ -10,6 +12,8 @@ STATE_RETREAT 				= "STATE_RETREAT";
 STATE_GOTO_COMFORT_POINT 	= "STATE_GOTO_COMFORT_POINT";
 STATE_FIGHTING 				= "STATE_FIGHTING";
 STATE_RUN_AWAY 				= "STATE_RUN_AWAY";
+
+BOT_SPECIFIC_ATTACK_CREEPS 	= "BOT_SPECIFIC :: ATTACK_CREEPS";
 
 StateMachine = {};
 StateMachine["State"] 					= STATE_IDLE;
@@ -115,7 +119,7 @@ function StateAttackingCreep(bot)
         if(d > 200) then
             return STATE_GOTO_COMFORT_POINT;
         else
-            return ConsiderAttackCreeps(bot);
+            return BOT_SPECIFIC_ATTACK_CREEPS; --ConsiderAttackCreeps(bot);
         end
     else
         return STATE_IDLE;
@@ -128,6 +132,10 @@ function StateAttackingTower(bot)
 	if(bot:IsAlive() == false) then
         return STATE_IDLE;
     end
+	
+	if( ShouldRetreat(bot) ) then
+        return STATE_RETREAT;
+	end
 	
 	return STATE_IDLE;
 end
@@ -197,7 +205,7 @@ function StateRunAway(bot)
 			TargetOfRunAwayFromTower = Vector(mypos[1] + 400,mypos[2] + 400);
 		end
         bot:Action_MoveToLocation(TargetOfRunAwayFromTower);
-        return;
+        return STATE_RUN_AWAY;
     else
         if(GetUnitToLocationDistance(bot,TargetOfRunAwayFromTower) < 100) then
             -- we are far enough from tower,return to normal state.

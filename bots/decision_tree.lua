@@ -79,9 +79,9 @@ function X:Think(bot)
 		local enemy_crp, enemy_crp_health = X:GetWeakestCreep(EnemyCreeps);
 		
 		if ( enemy_crp ~= nil ) then
-			local d = GetUnitToLocationDistance(bot, enemy_crp.GetLocation());
-			if( d > bot.GetAttackRange() ) then
-				bot.Action_MoveToLocation(enemy_crp.GetLocation());
+			local d = GetUnitToLocationDistance(bot, enemy_crp:GetLocation());
+			if( d > bot:GetAttackRange() ) then
+				bot:Action_MoveToLocation(enemy_crp:GetLocation());
 				return;
 			else
 				if ( X:ConsiderAttackCreep(bot, enemy_crp, enemy_crp_health) ) then return end;

@@ -1,6 +1,6 @@
-_G._savedEnv = getfenv()
-module( "fsm", package.seeall )
-----------------------------------------------------------------------------------------------------
+
+--_G._savedEnv = getfenv()
+--module( "fsm", package.seeall )
 
 require( GetScriptDirectory().."/locations" )
 
@@ -13,9 +13,7 @@ STATE_GOTO_COMFORT_POINT 	= "STATE_GOTO_COMFORT_POINT";
 STATE_FIGHTING 				= "STATE_FIGHTING";
 STATE_RUN_AWAY 				= "STATE_RUN_AWAY";
 
-BOT_SPECIFIC_ATTACK_CREEPS 	= "BOT_SPECIFIC :: ATTACK_CREEPS";
-
-StateMachine = {};
+StateMachine = {}
 StateMachine["State"] 					= STATE_IDLE;
 StateMachine[STATE_IDLE] 				= StateIdle;
 StateMachine[STATE_ATTACKING_CREEP] 	= StateAttackingCreep;
@@ -58,15 +56,11 @@ function StateIdle(bot)
         return STATE_RETREAT;
     elseif( IsTowerAttackingMe(bot) ) then
         return STATE_RUN_AWAY;
-    elseif( bot:GetAttackTarget() ~= nil ) then
-        if( bot:GetAttackTarget():IsHero() ) then
-            return STATE_FIGHTING;
-        end
+    elseif( bot:GetAttackTarget() ~= nil and bot:GetAttackTarget():IsHero() ) then
+		return STATE_FIGHTING;
     elseif( ShouldFight ) then
         return STATE_FIGHTING;
     elseif( #creeps > 0 and pt ~= nil ) then
-        local mypos = bot:GetLocation();
-        
         local d = GetUnitToLocationDistance(bot, pt);
         if(d > 200) then
             return STATE_GOTO_COMFORT_POINT;
@@ -75,7 +69,7 @@ function StateIdle(bot)
         end
     end
 
-    target = GetLocationAlongLane(2, 0.55);
+	local target = GetLocationAlongLane(2, 0.95);
     bot:Action_AttackMove(target);
 	return STATE_IDLE;
 end
@@ -119,12 +113,13 @@ function StateAttackingCreep(bot)
         if(d > 200) then
             return STATE_GOTO_COMFORT_POINT;
         else
-            return BOT_SPECIFIC_ATTACK_CREEPS; --ConsiderAttackCreeps(bot);
+			return STATE_ATTACKING_CREEP;
+            --return BOT_SPECIFIC_ATTACK_CREEPS; --ConsiderAttackCreeps(bot);
         end
     else
         return STATE_IDLE;
     end
-	
+
 	return STATE_ATTACKING_CREEP;
 end
 
@@ -145,7 +140,7 @@ function StateRetreat(bot)
         return STATE_IDLE;
     end
 
-	locations.GoToFountain(bot);
+	locations:GoToFountain(bot);
 
     if(bot:GetHealth() == bot:GetMaxHealth() and bot:GetMana() == bot:GetMaxMana()) then
         return STATE_IDLE;
@@ -173,6 +168,7 @@ function StateGotoComfortPoint(bot)
             --print("mypos "..mypos[1]..mypos[2]);
             --print("comfort_pt "..pt[1]..pt[2]);
             bot:Action_MoveToLocation(pt);
+			return STATE_GOTO_COMFORT_POINT;
         else
             return STATE_ATTACKING_CREEP;
         end
@@ -181,7 +177,26 @@ function StateGotoComfortPoint(bot)
 end
 
 function StateFighting(bot)
-	return STATE_IDLE;
+    if(bot:IsAlive() == false or EnemyToKill == nil) then
+        return STATE_IDLE;
+    end
+
+    if(IsTowerAttackingMe(bot)) then
+        return STATE_RUN_AWAY;
+    elseif(not EnemyToKill:CanBeSeen() or not EnemyToKill:IsAlive()) then
+        -- lost enemy 
+        print("lost enemy");
+        return STATE_IDLE;
+	elseif(bot:GetHealth() < EnemyToKill:GetHealth()) then
+		return STATE_RUN_AWAY;
+    else
+        if ( bot:IsUsingAbility() ) then return end;
+
+        if(bot:GetAttackTarget() ~= EnemyToKill) then
+            bot:Action_AttackUnit(EnemyToKill,false);
+        end
+    end
+	return STATE_FIGHTING;
 end
 
 function StateRunAway(bot)
@@ -279,39 +294,7 @@ function ConsiderAttackCreeps(bot)
 	if ( bot:IsUsingAbility() ) then return STATE_ATTACKING_CREEP end;
 
 	--[[
-    local abilityLSA = bot:GetAbilityByName( "lina_light_strike_array" );
-	local abilityDS = bot:GetAbilityByName( "lina_dragon_slave" );
-	local abilityLB = bot:GetAbilityByName( "lina_laguna_blade" );
-
-    -- Consider using each ability
-    
-	local castLBDesire, castLBTarget = ConsiderLagunaBlade(abilityLB);
-	local castLSADesire, castLSALocation = ConsiderLightStrikeArray(abilityLSA);
-	local castDSDesire, castDSLocation = ConsiderDragonSlave(abilityDS);
-
-    if ( castLBDesire > castLSADesire and castLBDesire > castDSDesire ) 
-	then
-        LastEnemyToBeAttacked = nil;
-		bot:Action_UseAbilityOnEntity( abilityLB, castLBTarget );
-		return;
-	end
-
-	if ( castLSADesire > 0 ) 
-	then
-        LastEnemyToBeAttacked = nil;
-		bot:Action_UseAbilityOnLocation( abilityLSA, castLSALocation );
-		return;
-	end
-
-	if ( castDSDesire > 0 ) 
-	then
-        LastEnemyToBeAttacked = nil;
-		bot:Action_UseAbilityOnLocation( abilityDS, castDSLocation );
-		return;
-	end
-	
-    --print("desires: " .. castLBDesire .. " " .. castLSADesire .. " " .. castDSDesire);
-	
+    USE OF ABILITIES HERE - PER HERO
 	--]]
 
     --If we dont cast ability, just try to last hit.
@@ -332,7 +315,7 @@ function ConsiderAttackCreeps(bot)
     end
 
     if(weakest_creep ~= nil) then
-		expectedDmg = 1.7*bot:GetEstimatedDamageToTarget(false, weakest_creep, 1.0, DAMAGE_TYPE_PHYSICAL);
+		expectedDmg = 2.0*bot:GetEstimatedDamageToTarget(false, weakest_creep, 1.0, DAMAGE_TYPE_PHYSICAL);
 		--print( "Dmg: ", bot:GetEstimatedDamageToTarget(false, weakest_creep, 1.0, DAMAGE_TYPE_PHYSICAL) );
         if(bot:GetAttackTarget() == nil and lowest_hp < expectedDmg ) then
             bot:Action_AttackUnit(weakest_creep, false);
@@ -355,7 +338,7 @@ function ConsiderAttackCreeps(bot)
     end
 
     if(weakest_creep ~= nil) then
-		expectedDmg = 1.7*bot:GetEstimatedDamageToTarget(false, weakest_creep, 1.0, DAMAGE_TYPE_PHYSICAL);
+		expectedDmg = 2.0*bot:GetEstimatedDamageToTarget(false, weakest_creep, 1.0, DAMAGE_TYPE_PHYSICAL);
 		--print( "Dmg: ", bot:GetEstimatedDamageToTarget(false, weakest_creep, 1.0, DAMAGE_TYPE_PHYSICAL) );
         if( bot:GetAttackTarget() == nil and 
         lowest_hp < expectedDmg or 
@@ -392,5 +375,5 @@ function ConsiderAttackCreeps(bot)
 	return STATE_ATTACKING_CREEP;
 end
 
-----------------------------------------------------------------------------------------------------
-for k,v in pairs( fsm ) do	_G._savedEnv[k] = v end
+return StateMachine
+---for k,v in pairs( fsm ) do	_G._savedEnv[k] = v end

@@ -198,7 +198,7 @@ function BuyTPScroll(npcBot, count)
 		if ( sCurItem ~= nil ) then
 			local iName = sCurItem:GetName();
 			if ( iName == "item_tpscroll" ) then
-				iScrollCount = iScrollCount + 1;
+				iScrollCount = iScrollCount + sCurItem.GetCurrentCharges();
 			elseif ( iName == "item_travel_boots_1" or iName == "item_travel_boots_2" ) then
 				return; --we are done, no need to check further
 			end

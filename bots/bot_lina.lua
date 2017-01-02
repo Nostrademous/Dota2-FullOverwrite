@@ -7,7 +7,7 @@
     Then Think() will call the function of current state.
 ]]
 
-require( GetScriptDirectory().."/global_vars" )
+local utils = require(GetScriptDirectory() .. "/util")
 require( GetScriptDirectory().."/locations" )
 require( GetScriptDirectory().."/ability_item_usage_lina" );
 
@@ -353,10 +353,10 @@ function Think()
     local npcBot = GetBot();
     --print(GetLocationAlongLane(2,0.9));
 	
-	local checkLevel, newTime = global_vars.TimePassed(prevTime, 1.0);
+	local checkLevel, newTime = utils.TimePassed(prevTime, 1.0);
 	if checkLevel then
 		prevTime = newTime;
-		local cLvl = global_vars.GetHeroLevel( npcBot );
+		local cLvl = utils.GetHeroLevel( npcBot );
 		if ( cLvl > curr_lvl ) then
 			ThinkLvlupAbility(npcBot);
 			curr_lvl = curr_lvl + 1;

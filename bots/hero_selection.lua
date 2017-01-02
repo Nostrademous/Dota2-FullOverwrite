@@ -34,7 +34,7 @@ function Think()
 				
 				if ( IsPlayerInHeroSelectionControl(5) )
 				then
-					SelectHero( 5, "npc_dota_hero_viper" );
+					SelectHero( 5, "npc_dota_hero_lina" );
 				end
 				
 				if ( IsPlayerInHeroSelectionControl(6) )
@@ -48,7 +48,7 @@ function Think()
 				SelectHero( 8, "npc_dota_hero_lion" );
 				SelectHero( 9, "npc_dota_hero_juggernaut" );
 				SelectHero( 10, "npc_dota_hero_witch_doctor" );
-				SelectHero( 11, "npc_dota_hero_nevermore" );
+				SelectHero( 11, "npc_dota_hero_viper" );
 			end
 		elseif ( a == GAMEMODE_1V1MID )
 		then

@@ -5,31 +5,6 @@ module( "global_vars", package.seeall )
 
 require( GetScriptDirectory().."/role" )
 
-function GetHeroLevel(bot)
-    local respawnTable = {8, 10, 12, 14, 16, 26, 28, 30, 32, 34, 36, 46, 48, 50, 52, 54, 56, 66, 70, 74, 78,  82, 86, 90, 100};
-    local nRespawnTime = bot:GetRespawnTime() +1; -- It gives 1 second lower values.
-	
-    for k,v in pairs(respawnTable) do
-        if v == nRespawnTime then
-			return k;
-        end
-    end
-	return 1;
-end
-
-function GetTimeDelta(prevTime)
-	local delta = GameTime() - prevTime;
-	return delta;
-end
-
-function TimePassed(prevTime, amount)
-	if ( GetTimeDelta(prevTime) > amount ) then
-		return true, GameTime();
-	else
-		return false, GameTime();
-	end
-end
-
 purchase_index = {
 	[TEAM_RADIANT] = {
 		[role.ROLE_HARDCARRY] = 1,

@@ -40,12 +40,12 @@ function ViperBot:new(o)
 	return o
 end
 
-viperBot = ViperBot:new{prevTime = -998.0, actionQueue = viperActionQueue}
+viperBot = ViperBot:new{prevTime = -998.0, actionQueue = viperActionQueue, abilityPriority = ViperAbilityPriority}
 viperBot:printInfo();
 
 function Think()
     local npcBot = GetBot();
 	if ( not npcBot ) then return; end
 	
-	viperBot:Think(npcBot, ViperAbilityPriority);
+	viperBot:Think(npcBot);
 end

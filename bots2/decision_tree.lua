@@ -6,6 +6,7 @@
 
 local utils = require( GetScriptDirectory().."/utility" )
 --enemyData = require( GetScriptDirectory().."/enemy_data" )
+require( GetScriptDirectory().."/role" )
 
 ACTION_NONE			= "ACTION_NONE";
 ACTION_RETREAT 		= "ACTION_RETREAT";
@@ -13,7 +14,7 @@ ACTION_FIGHT		= "ACTION_FIGHT";
 ACTION_CHANNELING	= "ACTION_CHANNELING";
 ACTION_MOVING		= "ACTION_MOVING";
 
-local X = { currentAction = ACTION_NONE, prevAction = ACTION_NONE, prevTime = -1000.0, actionQueue = {} }
+local X = { currentAction = ACTION_NONE, prevAction = ACTION_NONE, prevTime = -1000.0, actionQueue = {}, abilityPriority = {} }
 
 function X:new(o)
 	o = o or {}
@@ -50,9 +51,14 @@ function X:getActionQueue()
 	return self.actionQueue
 end
 
+function X:getAbilityPriority()
+	return self.abilityPriority
+end
+
 function X:printInfo()
 	print("PrevTime Value: "..self:getPrevTime());
 	print("Addr actionQueue Table: ", self:getActionQueue());
+	print("Addr abilityPriority Table: ", self:getAbilityPriority());
 end
 
 -------------------------------------------------------------------------------
@@ -115,8 +121,17 @@ end
 -- MAIN THINK FUNCTION - DO NOT OVER-LOAD 
 -------------------------------------------------------------------------------
 
-function X:Think(bot, abilityPriority)
+X.Init = false;
+
+function X:Think(bot)
 	if ( GetGameState() ~= GAME_STATE_GAME_IN_PROGRESS and GetGameState() ~= GAME_STATE_PRE_GAME ) then return end;
+	
+	if not X.Init then
+		role.SetRoles();
+		if role.RolesFilled() then
+			X.Init = true;
+		end
+	end
 	
 	--[[
 		FIRST DECISIONS THAT DON'T AFFECT THE MY ACTION STATES
@@ -127,7 +142,7 @@ function X:Think(bot, abilityPriority)
 	if checkLevel then
 		prevTime = newTime;
 		if bot:GetAbilityPoints() > 0 then
-			utils.LevelUp(bot, abilityPriority);
+			utils.LevelUp(bot, self:getAbilityPriority());
 		end
 	end
 

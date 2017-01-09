@@ -40,12 +40,12 @@ function LinaBot:new(o)
 	return o
 end
 
-linaBot = LinaBot:new{prevTime = -999.0, actionQueue = linaActionQueue}
+linaBot = LinaBot:new{prevTime = -999.0, actionQueue = linaActionQueue, abilityPriority = LinaAbilityPriority}
 linaBot:printInfo();
 
 function Think()
     local npcBot = GetBot();
 	if ( not npcBot ) then return end
 	
-	linaBot:Think(npcBot, LinaAbilityPriority);
+	linaBot:Think(npcBot);
 end

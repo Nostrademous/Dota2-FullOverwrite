@@ -13,14 +13,12 @@ ACTION_FIGHT		= "ACTION_FIGHT";
 ACTION_CHANNELING	= "ACTION_CHANNELING";
 ACTION_MOVING		= "ACTION_MOVING";
 
-local X = { currentAction = ACTION_NONE, prevAction = ACTION_NONE }
+local X = { currentAction = ACTION_NONE, prevAction = ACTION_NONE, prevTime = -1000.0, actionQueue = {} }
 
-function X:new(o, prevTime, actionQueue)
+function X:new(o)
 	o = o or {}
 	setmetatable(o, self)
 	self.__index = self
-	self.prevTime = prevTime or -1000.0
-	self.actionQueue = actionQueue or {}
 	return o
 end
 
@@ -82,12 +80,15 @@ end
 
 function X:HasAction(action)
     for key, value in pairs(self:getActionQueue()) do
-        if value == item then return key end
+        if value == action then return key end
     end
     return false
 end
 
 function X:RemoveAction(action)
+	
+	--print("Removing Action".. action)
+	
 	if action == ACTION_NONE then return end;
 	
 	local k = self:HasAction(action);
@@ -95,7 +96,10 @@ function X:RemoveAction(action)
 		table.remove(self:getActionQueue(), k);
 	end
 	
-	self:setCurrentAction(self:GetAction());
+	local a = self:GetAction()
+	--print("Next Action".. a)
+	
+	self:setCurrentAction(a);
 end
 
 function X:GetAction()
@@ -149,13 +153,13 @@ function X:Think(bot, abilityPriority)
 	--AM I ALIVE
     if( not bot:IsAlive() ) then
 		--print( "You are dead, nothing to do!!!");
-		X:DoWhileDead(bot);
+		self:DoWhileDead(bot);
 		return;
 	end
 	
 	--AM I CHANNELING AN ABILITY/ITEM (i.e. TP Scroll, Ultimate, etc.)
 	if ( bot:IsUsingAbility() ) then
-		X:DoWhileChanneling(bot);
+		self:DoWhileChanneling(bot);
 		return;
 	end
 	
@@ -174,48 +178,48 @@ function X:Think(bot, abilityPriority)
 	local EnemyCreeps = bot:GetNearbyCreeps(RANGE, true);
 	local AllyCreeps = bot:GetNearbyCreeps(RANGE, false);
 	
-	if ( not X:Determine_AmISafe(bot, EnemyHeroes, EnemyTowers, EnemyCreeps) ) then
-		X:DoRetreat(bot);
+	if ( not self:Determine_AmISafe(bot, EnemyHeroes, EnemyTowers, EnemyCreeps) ) then
+		self:DoRetreat(bot);
 		return;		
 	end
 	
-	if ( X:Determine_AmIFighting(bot, EnemyHeroes, AllyHeroes) ) then
-		X:DoFight(bot);
+	if ( self:Determine_AmIFighting(bot, EnemyHeroes, AllyHeroes) ) then
+		self:DoFight(bot);
 		return;
 	end
 	
-	if ( X:Determine_DoAlliesNeedHelp(bot, EnemyHeroes, AllyHeroes) ) then
-		X:DoDefendAlly(bot);
+	if ( self:Determine_DoAlliesNeedHelp(bot, EnemyHeroes, AllyHeroes) ) then
+		self:DoDefendAlly(bot);
 		return;
 	end
 	
-	if ( X:Determine_ShouldIPushLane(bot, EnemyHeroes, EnemyTowers, EnemyCreeps, AllyCreeps) ) then
-		X:DoPushLane(bot);
+	if ( self:Determine_ShouldIPushLane(bot, EnemyHeroes, EnemyTowers, EnemyCreeps, AllyCreeps) ) then
+		self:DoPushLane(bot);
 		return;
 	end
 	
-	if ( X:Determine_ShouldIDefendLane(bot, EnemyHeroes, AllyHeroes, AllyTowers, EnemyCreeps, AllyCreeps) ) then
-		X:DoDefendLane(bot);
+	if ( self:Determine_ShouldIDefendLane(bot, EnemyHeroes, AllyHeroes, AllyTowers, EnemyCreeps, AllyCreeps) ) then
+		self:DoDefendLane(bot);
 		return;
 	end
 	
-	if ( X:Determine_ShouldTeamRoshan(bot, EnemyHeroes, EnemyTowers) ) then
-		X:DoRoshan(bot);
+	if ( self:Determine_ShouldTeamRoshan(bot, EnemyHeroes, EnemyTowers) ) then
+		self:DoRoshan(bot);
 		return;
 	end
 	
-	if ( X:Determine_ShouldGetRune(bot) ) then
-		X:DoGetRune(bot);
+	if ( self:Determine_ShouldGetRune(bot) ) then
+		self:DoGetRune(bot);
 		return;
 	end
 	
-	if ( X:Determine_CanFarmHere(bot) ) then
-		X:DoFarm(bot);
+	if ( self:Determine_CanFarmHere(bot) ) then
+		self:DoFarm(bot);
 		return;
 	end
 	
-	local loc = X:Determine_WhereToMove(bot);
-	X:DoMove(bot, loc);
+	local loc = self:Determine_WhereToMove(bot);
+	self:DoMove(bot, loc);
 end
 
 -------------------------------------------------------------------------------
@@ -223,7 +227,7 @@ end
 -------------------------------------------------------------------------------
 
 function X:DoWhileDead(bot)
-	local bb = X:ConsiderBuyback(bot);
+	local bb = self:ConsiderBuyback(bot);
 	if (bb) then
 		bot:Action_Buyback();
 	end

@@ -31,7 +31,16 @@ local LinaAbilityPriority = {
 ACTION_NONE			= "ACTION_NONE";
 local linaActionQueue = { [1] = ACTION_NONE }
 
-local linaBot = dt:new(nil, -999.0, linaActionQueue)
+LinaBot = dt:new()
+
+function LinaBot:new(o)
+	o = o or dt:new(o)
+	setmetatable(o, self)
+	self.__index = self
+	return o
+end
+
+linaBot = LinaBot:new{prevTime = -999.0, actionQueue = linaActionQueue}
 linaBot:printInfo();
 
 function Think()

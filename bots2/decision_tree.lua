@@ -279,7 +279,7 @@ function X:Determine_WhereToMove(bot)
 	local dist = GetUnitToLocationDistance(bot, loc);
 	--print("Distance: " .. dist);
 	if ( dist <= 1.0 ) then
-		X:RemoveAction(ACTION_MOVING);
+		self:RemoveAction(ACTION_MOVING);
 		return nil;
 	end
 	return loc;
@@ -319,7 +319,7 @@ end
 
 function X:DoMove(bot, loc)
 	if loc then
-		X:AddAction(ACTION_MOVING);
+		self:AddAction(ACTION_MOVING);
 		bot:Action_AttackMove(loc); -- MoveToLocation is quantized and imprecise
 	end
 end

@@ -31,12 +31,8 @@ local LinaAbilityPriority = {
 ACTION_NONE			= "ACTION_NONE";
 local linaActionQueue = { [1] = ACTION_NONE }
 
-local linaBot = dt:new(nil, ACTION_NONE, ACTION_NONE, -998.0, linaActionQueue);
+local linaBot = dt:new(nil, -999.0, linaActionQueue)
 linaBot:printInfo();
-
-local prevTime = -1000.0
-local currentAction = ACTION_NONE
-local prevAction = ACTION_NONE
 
 function Think()
     local npcBot = GetBot();

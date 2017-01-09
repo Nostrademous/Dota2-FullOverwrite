@@ -13,16 +13,14 @@ ACTION_FIGHT		= "ACTION_FIGHT";
 ACTION_CHANNELING	= "ACTION_CHANNELING";
 ACTION_MOVING		= "ACTION_MOVING";
 
-local X = {}
+local X = { currentAction = ACTION_NONE, prevAction = ACTION_NONE }
 
-function X:new(o, currentAction, prevAction, prevTime, actionQueue)
+function X:new(o, prevTime, actionQueue)
 	o = o or {}
-	self.currentAction = currentAction or ACTION_NONE
-	self.prevAction = prevAction or ACTION_NONE
-	self.prevTime = prevTime or -1000.0
-	self.actionQueue = actionQueue or {}
 	setmetatable(o, self)
 	self.__index = self
+	self.prevTime = prevTime or -1000.0
+	self.actionQueue = actionQueue or {}
 	return o
 end
 
@@ -55,8 +53,8 @@ function X:getActionQueue()
 end
 
 function X:printInfo()
-	print("PrevTime Value: "..X:getPrevTime());
-	print("Addr actionQueue Table: ", X:getActionQueue());
+	print("PrevTime Value: "..self:getPrevTime());
+	print("Addr actionQueue Table: ", self:getActionQueue());
 end
 
 -------------------------------------------------------------------------------
@@ -64,26 +62,26 @@ end
 -------------------------------------------------------------------------------
 
 function X:PrintActionTransition(name)
-	X:setCurrentAction(X:GetAction());
+	self:setCurrentAction(self:GetAction());
 	
-	if ( X:getCurrentAction() ~= X:getPrevAction() ) then
-		print("["..name.."] Action Transition: "..X:getPrevAction().." --> "..X:getCurrentAction());
-		X:setPrevAction(X:getCurrentAction());
+	if ( self:getCurrentAction() ~= self:getPrevAction() ) then
+		print("["..name.."] Action Transition: "..self:getPrevAction().." --> "..self:getCurrentAction());
+		self:setPrevAction(self:getCurrentAction());
 	end
 end
 
 function X:AddAction(action)
 	if action == ACTION_NONE then return end;
 	
-	local k = X:HasAction(action);
+	local k = self:HasAction(action);
 	if k then
-		table.remove(X:getActionQueue(), k);
+		table.remove(self:getActionQueue(), k);
 	end
-	table.insert(X:getActionQueue(), 1, action);
+	table.insert(self:getActionQueue(), 1, action);
 end
 
 function X:HasAction(action)
-    for key, value in pairs(X:getActionQueue()) do
+    for key, value in pairs(self:getActionQueue()) do
         if value == item then return key end
     end
     return false
@@ -92,19 +90,19 @@ end
 function X:RemoveAction(action)
 	if action == ACTION_NONE then return end;
 	
-	local k = X:HasAction(action);
+	local k = self:HasAction(action);
 	if k then
-		table.remove(X:getActionQueue(), k);
+		table.remove(self:getActionQueue(), k);
 	end
 	
-	X:setCurrentAction(X:GetAction());
+	self:setCurrentAction(self:GetAction());
 end
 
 function X:GetAction()
-	if #X:getActionQueue() == 0 then
+	if #self:getActionQueue() == 0 then
 		return ACTION_NONE;
 	end
-	return X:getActionQueue()[1];
+	return self:getActionQueue()[1];
 end
 
 --X.prevEnemyDump = -1000.0
@@ -121,7 +119,7 @@ function X:Think(bot, abilityPriority)
 		:: Leveling Up Abilities, Buying Items (in most cases), Using Courier
 	--]]
 	-- LEVEL UP ABILITIES
-	local checkLevel, newTime = utils.TimePassed(X:getPrevTime(), 1.0);
+	local checkLevel, newTime = utils.TimePassed(self:getPrevTime(), 1.0);
 	if checkLevel then
 		prevTime = newTime;
 		if bot:GetAbilityPoints() > 0 then
@@ -130,17 +128,17 @@ function X:Think(bot, abilityPriority)
 	end
 
 	-- DEBUG NOTIFICATION
-	X:setCurrentAction(X:GetAction());
-	X:PrintActionTransition(utils.GetHeroName(bot));
+	self:setCurrentAction(self:GetAction());
+	self:PrintActionTransition(utils.GetHeroName(bot));
 	
 	--[[
 	-- UPDATE GLOBAL INFO --
 	enemyData.UpdateEnemyInfo();
 	
 	-- DEBUG ENEMY DUMP
-	checkLevel, newTime = utils.TimePassed(X.prevEnemyDump, 5.0);
+	checkLevel, newTime = utils.TimePassed(self.prevEnemyDump, 5.0);
 	if checkLevel then
-		X.prevEnemyDump = newTime;
+		self.prevEnemyDump = newTime;
 		enemyData.PrintEnemyInfo();
 	end
 	

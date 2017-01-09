@@ -31,7 +31,7 @@ local ViperAbilityPriority = {
 ACTION_NONE			= "ACTION_NONE";
 local viperActionQueue = { [1] = ACTION_NONE }
 
-local viperBot = dt:new(nil, ACTION_NONE, ACTION_NONE, -998.0, viperActionQueue);
+local viperBot = dt:new(nil, -998.0, viperActionQueue)
 viperBot:printInfo();
 
 function Think()

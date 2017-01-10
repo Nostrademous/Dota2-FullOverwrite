@@ -11,6 +11,8 @@ ROLE_MID = 2
 ROLE_OFFLANE = 3
 ROLE_SEMISUPPORT = 4
 ROLE_HARDSUPPORT = 5
+ROLE_ROAMER = 6
+ROLE_JUNGLER = 7
 
 roles = {
 	[1] = ROLE_UNKNOWN,
@@ -75,7 +77,12 @@ local listOFF = {
 	"npc_dota_hero_huskar",
 	"npc_dota_hero_spirit_breaker",
 };
-	
+
+local listROAMER = {
+	"npc_dota_hero_bounty_hunter",
+	"npc_dota_hero_mirana"
+};
+
 local listJUNGLER = {
 	"npc_dota_hero_axe",
 	"npc_dota_hero_bloodseeker",
@@ -116,10 +123,10 @@ local listHARDSUPPORT = {
 local function contains(table, value)
 	for i=1,#table do
 		if table[i] == value then
-			return i;
+			return true;
 		end
 	end
-	return 0;
+	return false;
 end
 
 local function checkRoleHardCarry(value)
@@ -168,29 +175,23 @@ local function checkRoleHardSupport(value)
 end
 
 local function findRole(value)
-	if checkRoleHardCarry(value) then
-		return ROLE_HARDCARRY;
-	elseif checkRoleMid(value) then
+	if checkRoleMid(value) and not contains(roles, ROLE_MID) then
 		return ROLE_MID;
-	elseif checkRoleOff(value) then
+	elseif checkRoleOff(value) and not contains(roles, ROLE_OFFLANE) then
 		return ROLE_OFFLANE;
-	elseif checkRoleSemiSupport(value) then
-		return ROLE_SEMISUPPORT;
-	elseif checkRoleHardSupport(value) then
+	elseif checkRoleHardSupport(value) and not contains(roles, ROLE_HARDSUPPORT) then
 		return ROLE_HARDSUPPORT;
+	elseif checkRoleHardCarry(value) then
+		return ROLE_HARDCARRY;
 	else
-		return ROLE_UNKNOWN;
+		return ROLE_SEMISUPPORT;
 	end
 end
 
 -------------------------------------------------------------------------------
 
 function RolesFilled()
-	local unknown_idx = contains(roles, ROLE_UNKNOWN);
-	if ( unknown_idx > 0 and unknown_idx < 6 ) then
-		return false;
-	end
-	return true;
+	return not contains(roles, ROLE_UNKNOWN);
 end
 
 function SetRoles()
@@ -219,6 +220,28 @@ function GetRoles()
 	
 	return roles;
 end
+
+function GetLaneAndRole(team, role_indx)
+	local r = GetRoles()
+	local rl = roles[role_indx]
+	
+	if rl == ROLE_MID then
+		return LANE_MID, rl
+	elseif rl == ROLE_OFFLANE then
+		if team == TEAM_RADIANT then
+			return LANE_TOP, rl
+		else
+			return LANE_BOT, rl
+		end
+	else
+		if team == TEAM_RADIANT then
+			return LANE_BOT, rl
+		else
+			return LANE_TOP, rl
+		end
+	end
+end
+
 ----------------------------------------------------------------------------------------------------
 
 for k,v in pairs( role ) do	_G._savedEnv[k] = v end

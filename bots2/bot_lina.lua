@@ -43,6 +43,8 @@ end
 linaBot = LinaBot:new{prevTime = -999.0, actionQueue = linaActionQueue, abilityPriority = LinaAbilityPriority}
 linaBot:printInfo();
 
+linaBot.Init = false;
+
 function Think()
     local npcBot = GetBot();
 	if ( not npcBot ) then return end

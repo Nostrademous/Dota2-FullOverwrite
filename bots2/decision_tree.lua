@@ -7,8 +7,10 @@
 local utils = require( GetScriptDirectory().."/utility" )
 --enemyData = require( GetScriptDirectory().."/enemy_data" )
 require( GetScriptDirectory().."/role" )
+require ( GetScriptDirectory().."/laning_generic" )
 
 ACTION_NONE			= "ACTION_NONE";
+ACTION_LANING		= "ACTION_LANING";
 ACTION_RETREAT 		= "ACTION_RETREAT";
 ACTION_FIGHT		= "ACTION_FIGHT";
 ACTION_CHANNELING	= "ACTION_CHANNELING";
@@ -121,16 +123,25 @@ end
 -- MAIN THINK FUNCTION - DO NOT OVER-LOAD 
 -------------------------------------------------------------------------------
 
-X.Init = false;
-
 function X:Think(bot)
 	if ( GetGameState() ~= GAME_STATE_GAME_IN_PROGRESS and GetGameState() ~= GAME_STATE_PRE_GAME ) then return end;
 	
-	if not X.Init then
+	if not self.Init then
 		role.SetRoles();
 		if role.RolesFilled() then
-			X.Init = true;
+			self.Init = true;
+			
+			for i = 1, 5, 1 do
+				local hero = GetTeamMember( GetTeam(), i )
+				if hero:GetUnitName() == bot:GetUnitName() then
+					bot.CurLane, bot.Role = role.GetLaneAndRole(GetTeam(), i);
+					break
+				end
+			end
+			
 		end
+		
+		print( utils.GetHeroName(bot), " initialized - Lane: ", bot.CurLane, ", Role: ", bot.Role );
 	end
 	
 	--[[
@@ -218,6 +229,16 @@ function X:Think(bot)
 		return;
 	end
 	
+	if ( self:Determine_ShouldRoam(bot) ) then
+		self:DoRoam(bot);
+		return;
+	end
+	
+	if ( self:Determine_ShouldJungle(bot) ) then
+		self:DoJungle(bot);
+		return;
+	end
+	
 	if ( self:Determine_ShouldTeamRoshan(bot, EnemyHeroes, EnemyTowers) ) then
 		self:DoRoshan(bot);
 		return;
@@ -228,8 +249,13 @@ function X:Think(bot)
 		return;
 	end
 	
-	if ( self:Determine_CanFarmHere(bot) ) then
-		self:DoFarm(bot);
+	if ( self:Determine_ShouldWard(bot) ) then
+		self:DoWard(bot);
+		return;
+	end
+	
+	if ( self:Determine_ShouldLane(bot) or self:GetAction() == ACTION_LANING ) then
+		self:DoLane(bot);
 		return;
 	end
 	
@@ -281,6 +307,14 @@ function X:Determine_ShouldIDefendLane(bot, EnemyHeroes, AllyHeroes, AllyTowers,
 	return false;
 end
 
+function X:Determine_ShouldRoam(bot)
+	return false;
+end
+
+function X:Determine_ShouldJungle(bot)
+	return false;
+end
+
 function X:Determine_ShouldTeamRoshan(bot, EnemyHeroes, EnemyTowers)
 	return false;
 end
@@ -289,12 +323,16 @@ function X:Determine_ShouldGetRune(bot)
 	return false;
 end
 
-function X:Determine_CanFarmHere(bot)
+function X:Determine_ShouldWard(bot)
 	return false;
 end
 
+function X:Determine_ShouldLane(bot)
+	return true;
+end
+
 function X:Determine_WhereToMove(bot)
-	local loc = GetLocationAlongLane(bot:GetAssignedLane(), 0.5);
+	local loc = GetLocationAlongLane(bot.CurLane, 0.5);
 	local dist = GetUnitToLocationDistance(bot, loc);
 	--print("Distance: " .. dist);
 	if ( dist <= 1.0 ) then
@@ -324,6 +362,14 @@ function X:DoDefendLane(bot)
 	return;
 end
 
+function X:DoRoam(bot)
+	return;
+end
+
+function X:DoJungle(bot)
+	return;
+end
+
 function X:DoRoshan(bot)
 	return;
 end
@@ -332,8 +378,17 @@ function X:DoGetRune(bot)
 	return;
 end
 
-function X:DoFarm(bot)
+function X:DoWard(bot)
 	return;
+end
+
+function X:DoLane(bot)
+	if ( not self:HasAction(ACTION_LANING) ) then
+		self:AddAction(ACTION_LANING);
+		laning_generic.OnStart(bot);
+	end
+	
+	laning_generic.Think(bot);
 end
 
 function X:DoMove(bot, loc)

@@ -75,6 +75,63 @@ U.SECRET_SHOP_RADIANT = Vector(-4472,1328);
 U.SECRET_SHOP_DIRE = Vector(4586,-1588);
 U.ROSHAN = Vector(-2450, 1880);
 
+U.RadiantSafeSpots={
+	Vector(4088,-3919),
+	Vector(5153,-3784),
+	Vector(2810,-5053),
+	Vector(2645,-3814),
+	Vector(724,-3003),
+	Vector(1037,-5629),
+	Vector(1271,-4128),
+	Vector(-989,-5559),
+	Vector(-780,-3919),
+	Vector(-128,-2523),
+	Vector(-2640,-2200),
+	Vector(-1284,-962),
+	Vector(-2032,364),
+	Vector(-3545,-892),
+	Vector(-5518,-1450),
+	Vector(-4301,377),
+	Vector(-5483,1633),
+	Vector(-6152,-5664),
+	Vector(-6622,-3666),
+	Vector(-6413,-1651),
+	Vector(-4814,-4242),
+	Vector(-3379,-3073),
+	Vector(-4283,-6091),
+	Vector(-2441,-6056),
+	Vector(5722,-2602),
+	Vector(4595,-1540)
+}
+
+U.DireSafeSpots={
+	Vector(-1912,2412),
+	Vector(-4405,4735),
+	Vector(-2840,4194),
+	Vector(-1319,4735),
+	Vector(-980,3330),
+	Vector(776,4229),
+	Vector(11,2405),
+	Vector(324,670),
+	Vector(1480,1760),
+	Vector(2236,3217),
+	Vector(3079,1812),
+	Vector(1958,-116),
+	Vector(3375,242),
+	Vector(3636,-1023),
+	Vector(4957,1812),
+	Vector(4914,434),
+	Vector(5487,-1729),
+	Vector(6026,5585),
+	Vector(6339,3631),
+	Vector(6113,1782),
+	Vector(4653,4154),
+	Vector(3219,2916),
+	Vector(4070,5821),
+	Vector(2036,5637),
+	Vector(-3715,2246)
+}
+
 function U.GetTowerLocation(side, lane, n) --0 radiant 1 dire
 	if (side==0) then
 		if (lane==LANE_TOP) then
@@ -137,9 +194,22 @@ function U.GetDistance(s, t)
 	return math.sqrt((s[1]-t[1])*(s[1]-t[1]) + (s[2]-t[2])*(s[2]-t[2]));
 end
 
+function U.VectorTowards(s,t,d)
+	local f=t-s;
+	f=f / U.GetDistance(f,Vector(0,0));
+	return s+(f*d);
+end
+
 function U.GetHeroName(bot)
 	local sName = bot:GetUnitName();
 	return string.sub(sName, 15, string.len(sName));
+end
+
+function U.IsCore(hero)
+	if hero.Role == 1 or hero.Role == 2 or hero.Role == 3 then
+		return true;
+	end
+	return false;
 end
 
 function U.Fountain(team)
@@ -165,6 +235,108 @@ function U.GetOtherTeam()
 	else
 		return TEAM_RADIANT;
 	end
+end
+
+function U.PositionAlongLane(npcBot, lane)
+	local bestPos=0.0;
+	local pos=0.0;
+	local closest=0.0;
+	local dis=20000.0;
+	
+	while (pos<1.0) do
+		local thisPos = GetLocationAlongLane(lane,pos);
+		if (U.GetDistance(thisPos,npcBot:GetLocation()) < dis) then
+			dis=U.GetDistance(thisPos,npcBot:GetLocation());
+			bestPos=pos;
+		end
+		pos = pos+0.01;
+	end
+	
+	return bestPos;
+end
+
+function U.MoveSafelyToLocation(npcBot, dest)
+	if npcBot.NextHop==nil or #(npcBot.NextHop)==0 or npcBot.PathfindingWasInitiated==nil or (not npcBot.PathfindingWasInitiated) then
+		--print(npcBot.NextHop,npcBot.PathfindingWasInitiated);
+		U.InitPathFinding(npcBot);
+		npcBot:Action_Chat("Path finding has been initiated", false);
+	end
+	
+	local safeSpots=nil;
+	local safeDist=2000;
+	if dest==nil then
+		print("PathFinding: No destination was specified");
+		return;
+	end
+
+	if GetTeam()==TEAM_RADIANT then
+		safeSpots=U.RadiantSafeSpots;
+	else
+		safeSpots=U.DireSafeSpots;
+	end
+	
+	if npcBot.FinalHop==nil then
+		npcBot.FinalHop=false;
+	end
+	
+	
+	local s=nil;
+	local si=-1;
+	local mindisS=100000;
+	
+	local t=nil;
+	local ti=-1;
+	local mindisT=100000;
+	
+	local CurLoc=npcBot:GetLocation();
+	
+	for i,spot in pairs(safeSpots) do
+		if U.GetDistance(spot,CurLoc)<mindisS then
+			s=spot;
+			si=i;
+			mindisS=U.GetDistance(spot,CurLoc);
+		end
+		
+		if U.GetDistance(spot,dest)<mindisT then
+			t=spot;
+			ti=i;
+			mindisT=U.GetDistance(spot,dest);
+		end
+	end
+	
+	if s==nil or t==nil then
+		npcBot:Action_Chat('Something is wrong with path finding.',true);
+		return;
+	end
+	
+	if GetUnitToLocationDistance(npcBot,dest)<safeDist or npcBot.FinalHop or mindisS+mindisT>GetUnitToLocationDistance(npcBot,dest) then
+		npcBot:Action_MoveToLocation(dest);
+		npcBot.FinalHop=true;
+		return;
+	end
+	
+	if si==ti then
+		npcBot.FinalHop=true;
+		npcBot:Action_MoveToLocation(dest);
+		return;
+	end
+	
+	if GetUnitToLocationDistance(npcBot,s)<500 and npcBot.LastHop==nil then
+		npcBot.LastHop=si;
+	end
+	
+	if mindisS>safeDist or npcBot.LastHop==nil then
+		npcBot:Action_MoveToLocation(s);
+		return;
+	end
+	
+	if GetUnitToLocationDistance(npcBot,safeSpots[npcBot.NextHop[npcBot.LastHop][ti]])<500 then
+		npcBot.LastHop=npcBot.NextHop[npcBot.LastHop][ti];
+	end
+	
+	local newT=npcBot.NextHop[npcBot.LastHop][ti];
+	
+	npcBot:Action_MoveToLocation(safeSpots[newT]);
 end
 
 function U.IsFacingLocation(hero, loc, delta)
@@ -256,17 +428,11 @@ function U.GetWeakestHero(bot, r)
 end
 
 -- takes a "RANGE", returns creep handle and health value of that creep
-function U.GetWeakestCreep(bot, r)	
-	local EnemyCreeps = bot:GetNearbyCreeps(r,true);
-	
-	if EnemyCreeps==nil or #EnemyCreeps==0 then
-		return nil,10000;
-	end
-	
+function U.GetWeakestCreep(creeps)	
 	local WeakestCreep=nil;
 	local LowestHealth=10000;
 	
-	for _,creep in pairs(EnemyCreeps) do
+	for _,creep in pairs(creeps) do
 		if creep~=nil and creep:IsAlive() then
 			if creep:GetHealth()<LowestHealth then
 				LowestHealth=creep:GetHealth();
@@ -307,6 +473,108 @@ function U.LevelUp(bot, AbilityPriority)
 		print( " [" .. bot:GetUnitName() .. "] Leveling " .. ability:GetName() );
 		table.remove( AbilityPriority, 1 );
 	end
+end
+
+function U.InitPathFinding(npcBot)
+
+	-- keeps the path for my pathfinding
+	npcBot.NextHop={};
+	npcBot.PathfindingWasInitiated=false;
+	-- creating the graph
+
+	local SafeDist=2000;
+	local safeSpots={};
+	if GetTeam()==TEAM_RADIANT then
+		safeSpots=U.RadiantSafeSpots;
+	else
+		safeSpots=U.DireSafeSpots;
+	end
+	
+	
+	--initialization
+	local inf=100000;
+	local dist={};
+	npcBot.NextHop={}
+	
+	print("Inits are done");
+	for u,uv in pairs(safeSpots) do
+		local q=true;
+		dist[u]={};
+		npcBot.NextHop[u]={};
+		for v,vv in pairs(safeSpots) do
+			if U.GetDistance(uv,vv)>SafeDist then
+				dist[u][v]=inf;
+			else
+				q=false;
+				dist[u][v]=U.GetDistance(uv,vv);
+			end
+			npcBot.NextHop[u][v]=v;
+		end
+		if q then
+			print("There is an isolated vertex in safespots");
+		end
+	end
+	
+	--floyd algorithm (path is saved in NextHop)
+	for k,_ in pairs(safeSpots) do
+		for u,_ in pairs(safeSpots) do
+			for v,_ in pairs(safeSpots) do
+				if dist[u][v]>dist[u][k]+dist[k][v] then
+					dist[u][v]=dist[u][k]+dist[k][v];
+					npcBot.NextHop[u][v]=npcBot.NextHop[u][k];
+				end
+			end
+		end
+	end
+
+	npcBot.PathfindingWasInitiated=true;
+end
+
+function U.InitPath(npcBot)
+	npcBot.FinalHop=false;
+	npcBot.LastHop=nil;
+end
+
+function U.NumberOfItems(npcBot)
+	local n=0;
+	
+	for i = 0, 5, 1 do
+        local item = npcBot:GetItemInSlot(i);
+		if (item~=nil) then
+			n=n+1;
+		end
+    end
+	
+	return n;
+end
+
+function U.HaveItem(npcBot, item_name)
+    local slot = npcBot:FindItemSlot(item_name)
+	if slot >= 0 then
+		local slot_type = npcBot:GetItemSlotType(slot)
+		if slot_type == ITEM_SLOT_TYPE_MAIN then
+			return npcBot:GetItemInSlot(slot);
+		elseif slot_type == ITEM_SLOT_TYPE_BACKPACK then
+			print("FIXME: Implement swapping BACKPACK to MAIN INVENTORY of item: ", item_name);
+			return nil;
+		elseif slot_type == ITEM_SLOT_TYPE_STASH then
+			print("FIXME: Implement swapping STASH to MAIN INVENTORY of item: ", item_name);
+			return nil;
+		else
+			print("ERROR: condition should not be hit: ", item_name);
+		end
+	end
+	
+    return nil;
+end
+
+function U.HaveTeleportation(npcBot)
+	if U.HaveItem(npcBot, "item_tpscroll") ~= nil 
+		or U.HaveItem(npcBot, "item_travel_boots_1") ~= nil
+		or U.HaveItem(npcBot, "item_travel_boots_2") ~= nil then
+		return true
+	end
+	return false
 end
 
 function U.deepcopy(orig)

@@ -43,6 +43,8 @@ end
 viperBot = ViperBot:new{prevTime = -998.0, actionQueue = viperActionQueue, abilityPriority = ViperAbilityPriority}
 viperBot:printInfo();
 
+viperBot.Init = false;
+
 function Think()
     local npcBot = GetBot();
 	if ( not npcBot ) then return; end

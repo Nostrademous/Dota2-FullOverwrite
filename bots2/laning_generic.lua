@@ -23,8 +23,7 @@ local MoveThreshold=1.0;
 local BackTimerGen=-1000;
 
 local ShouldPush=false;
-local IsCore=false;
-
+local IsCore=nil;
 local LanePos = 0.0;
 
 local CreepDist=550;
@@ -41,7 +40,7 @@ local LaningStates={
 	MovingToLane=8
 }
 
-local LaningState=LaningStates.Moving;
+local LaningState=LaningStates.Start;
 
 function OnStart(npcBot)
 	npcBot.BackTimerGen = -1000;
@@ -369,7 +368,6 @@ local function Updates(npcBot)
 		IsCore=npcBot.IsCore;
 	end
 	
-	
 	if npcBot.LaningState~=nil then
 		LaningState=npcBot.LaningState;
 	end
@@ -462,8 +460,31 @@ local function StayBack(npcBot)
 	npcBot:Action_MoveToLocation(BackPos);
 end
 
+function SaveUpdates(npcBot)
+
+	npcBot.LaningState=LaningState;
+	npcBot.LanePos=LanePos;
+	npcBot.CurLane=CurLane;
+	npcBot.MoveThreshold=MoveThreshold;
+	npcBot.DamageThreshold=DamageThreshold;
+	npcBot.ShouldPush=ShouldPush;
+	npcBot.IsCore=IsCore;
+end
+
+function LoadUpdates(npcBot)
+
+	LaningState=npcBot.LaningState;
+	LanePos=npcBot.LanePos;
+	CurLane=npcBot.CurLane;
+	MoveThreshold=npcBot.MoveThreshold;
+	DamageThreshold=npcBot.DamageThreshold;
+	ShouldPush=npcBot.ShouldPush;
+	IsCore=npcBot.IsCore;
+end
+
 function Think(npcBot)
 	Updates(npcBot);
+	SaveUpdates(npcBot);
 	
 	if npcBot:IsUsingAbility() or npcBot:IsChanneling() then
 		return;
@@ -474,9 +495,12 @@ function Think(npcBot)
 		return;
 	end
 	
+	print(utils.GetHeroName(npcBot), " LaningState: ", LaningState);
+	
 	States[LaningState]();
 	
 	npcBot.LaningState=LaningState;
+	LoadUpdates(npcBot);
 end
 
 

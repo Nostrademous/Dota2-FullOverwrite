@@ -6,6 +6,7 @@
 
 local utils = require( GetScriptDirectory().."/utility" )
 local dt = require( GetScriptDirectory().."/decision_tree" )
+require ( GetScriptDirectory().."/ability_usage_lina" )
 
 local LINA_SKILL_Q = "lina_dragon_slave";
 local LINA_SKILL_W = "lina_light_strike_array";
@@ -45,9 +46,12 @@ linaBot = LinaBot:new{prevTime = -999.0, actionQueue = linaActionQueue, abilityP
 
 linaBot.Init = false;
 
+function linaBot:ConsiderAbilityUse()
+	ability_usage_lina.AbilityUsageThink()
+end
+
 function Think()
     local npcBot = GetBot();
-	if ( not npcBot ) then return end
 	
 	linaBot:Think(npcBot);
 end

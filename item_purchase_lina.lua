@@ -99,6 +99,8 @@ function ItemPurchaseThink()
 	
 	local pID = npcBot:GetPlayer() - 1;	
 	local roles = role.GetRoles();
+	
+	local sNextItem = nil
 
 	if ( roles[pID] == role.ROLE_MID ) then
 		print( "Lina.ItemPurchaseThink.Mid" );
@@ -108,7 +110,7 @@ function ItemPurchaseThink()
 			return;
 		end
 
-		local sNextItem = tableItemsToBuyAsMid[1];
+		sNextItem = tableItemsToBuyAsMid[1];
 
 		npcBot:SetNextItemPurchaseValue( GetItemCost( sNextItem ) );
 
@@ -125,7 +127,7 @@ function ItemPurchaseThink()
 			return;
 		end
 
-		local sNextItem = tableItemsToBuyAsCore[1];
+		sNextItem = tableItemsToBuyAsCore[1];
 
 		npcBot:SetNextItemPurchaseValue( GetItemCost( sNextItem ) );
 
@@ -142,7 +144,7 @@ function ItemPurchaseThink()
 			return;
 		end
 
-		local sNextItem = tableItemsToBuyAsSupport[1];
+		sNextItem = tableItemsToBuyAsSupport[1];
 
 		npcBot:SetNextItemPurchaseValue( GetItemCost( sNextItem ) );
 
@@ -153,7 +155,14 @@ function ItemPurchaseThink()
 		end
 	end
 	
-	utils.CourierThink(npcBot)
+	if sNextItem ~= nil then
+		if IsItemPurchasedFromSecretShop( sNextItem ) then
+			print(utils.GetHeroName(npcBot), " - ", sNextItem, " available from Secret Shop");
+		end
+		if IsItemPurchasedFromSideShop( sNextItem ) then
+			print(utils.GetHeroName(npcBot), " - ", sNextItem, " available from Side Shop");
+		end
+	end
 end
 
 ----------------------------------------------------------------------------------------------------

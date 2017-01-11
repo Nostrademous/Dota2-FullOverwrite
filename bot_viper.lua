@@ -47,7 +47,6 @@ viperBot.Init = false;
 
 function Think()
     local npcBot = GetBot();
-	if ( not npcBot ) then return; end
 	
 	viperBot:Think(npcBot);
 end

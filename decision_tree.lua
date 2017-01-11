@@ -7,7 +7,8 @@
 local utils = require( GetScriptDirectory().."/utility" )
 local enemyData = require( GetScriptDirectory().."/enemy_data" )
 require( GetScriptDirectory().."/role" )
-require ( GetScriptDirectory().."/laning_generic" )
+require( GetScriptDirectory().."/laning_generic" )
+require( GetScriptDirectory().."/item_usage" )
 
 ACTION_NONE			= "ACTION_NONE";
 ACTION_LANING		= "ACTION_LANING";
@@ -164,11 +165,13 @@ function X:Think(bot)
 	enemyData.UpdateEnemyInfo();
 	
 	-- DEBUG ENEMY DUMP
+	--[[
 	checkLevel, newTime = utils.TimePassed(self.prevEnemyDump, 5.0);
 	if checkLevel then
 		self.prevEnemyDump = newTime;
 		enemyData.PrintEnemyInfo();
 	end
+	--]]
 	
 	
 	-- NOW DECISIONS THAT MODIFY MY ACTION STATES
@@ -201,6 +204,11 @@ function X:Think(bot)
 	--GET CREEPS WITHIN XYZ UNIT RANGE
 	local EnemyCreeps = bot:GetNearbyCreeps(RANGE, true);
 	local AllyCreeps = bot:GetNearbyCreeps(RANGE, false);
+	
+	--FIXME: Is this the right place to do this???
+	self:ConsiderAbilityUse();
+	self:ConsiderItemUse();
+	utils.CourierThink(bot)
 	
 	if ( not self:Determine_AmISafe(bot, EnemyHeroes, EnemyTowers, EnemyCreeps) ) then
 		self:DoRetreat(bot);
@@ -283,6 +291,17 @@ function X:ConsiderBuyback(bot)
 		return false; -- FIXME: for now always return false
 	end
 	return false;
+end
+
+function X:ConsiderAbilityUse()
+	return;
+end
+
+function X:ConsiderItemUse()
+	local timeInfo = item_usage.UseItems()
+	if timeInfo ~= nil then
+		print( "X:ConsiderItemUse() TimeInfo: ", timeInfo )
+	end
 end
 
 function X:Determine_AmISafe(bot, eHeroes, eTowers, eCreeps)

@@ -341,6 +341,38 @@ function U.MoveSafelyToLocation(npcBot, dest)
 	npcBot:Action_MoveToLocation(safeSpots[newT]);
 end
 
+function U.IsItemAvailable(item_name)
+    local npcBot = GetBot();
+
+	local item = U.HaveItem(npcBot, item_name)
+	if item ~= nil then
+		if item:IsFullyCastable() then
+			return item
+		end
+	end
+    return nil;
+end
+
+--important items for delivery
+function U.HasImportantItem()
+	 local npcBot = GetBot();
+
+    for i = 9, 14, 1 do
+        local item = npcBot:GetItemInSlot(i);
+		if (item~=nil) then
+			if((string.find(item:GetName(),"recipe")~=nil) or (string.find(item:GetName(),"item_boots")~=nil)) then
+				return true;
+			end
+			
+			if(item:GetName()=="item_ward_observer" and item:GetCurrentCharges() > 1) then
+				return true;
+			end
+		end
+    end
+	
+    return false;
+end
+
 function U.CourierThink(npcBot)
 	local checkLevel, newTime = U.TimePassed(U.lastCourierThink, 1.0);
 	
@@ -349,7 +381,7 @@ function U.CourierThink(npcBot)
 	
     for i = 9, 15, 1 do
         local item = npcBot:GetItemInSlot(i);
-        if((item ~= nil or npcBot:GetCourierValue() > 300) and IsCourierAvailable()) then
+        if((item ~= nil or npcBot:GetCourierValue() >= 500) and IsCourierAvailable()) then
             --print("got item");
             npcBot:Action_CourierDeliver();
             return;
@@ -657,7 +689,9 @@ function U.HaveItem(npcBot, item_name)
 			print("FIXME: Implement swapping BACKPACK to MAIN INVENTORY of item: ", item_name);
 			return nil;
 		elseif slot_type == ITEM_SLOT_TYPE_STASH then
-			print("FIXME: Implement swapping STASH to MAIN INVENTORY of item: ", item_name);
+			if npcBot:HasModifier("modifier_fountain_aura") then
+				print("FIXME: Implement swapping STASH to MAIN INVENTORY of item: ", item_name);
+			end
 			return nil;
 		else
 			print("ERROR: condition should not be hit: ", item_name);

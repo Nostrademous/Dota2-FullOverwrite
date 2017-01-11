@@ -127,7 +127,7 @@ function X:Think(bot)
 	if ( GetGameState() ~= GAME_STATE_GAME_IN_PROGRESS and GetGameState() ~= GAME_STATE_PRE_GAME ) then return end;
 	
 	if not self.Init then
-		role.SetRoles();
+		role.GetRoles();
 		if role.RolesFilled() then
 			self.Init = true;
 			
@@ -138,9 +138,7 @@ function X:Think(bot)
 					break
 				end
 			end
-			
 		end
-		
 		print( utils.GetHeroName(bot), " initialized - Lane: ", bot.CurLane, ", Role: ", bot.Role );
 	end
 	

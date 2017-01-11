@@ -6,6 +6,8 @@
 
 U = {}
 
+U.lastCourierThink = -1000.0
+U.creeps = nil
 U.Lanes={[1]=LANE_BOT,[2]=LANE_MID,[3]=LANE_TOP};
 
 U.Locations = {
@@ -339,6 +341,22 @@ function U.MoveSafelyToLocation(npcBot, dest)
 	npcBot:Action_MoveToLocation(safeSpots[newT]);
 end
 
+function U.CourierThink(npcBot)
+	local checkLevel, newTime = U.TimePassed(U.lastCourierThink, 1.0);
+	
+	if not checkLevel then return end
+	U.lastCourierThink = newTime
+	
+    for i = 9, 15, 1 do
+        local item = npcBot:GetItemInSlot(i);
+        if((item ~= nil or npcBot:GetCourierValue() > 300) and IsCourierAvailable()) then
+            --print("got item");
+            npcBot:Action_CourierDeliver();
+            return;
+        end
+    end
+end
+
 function U.IsFacingLocation(hero, loc, delta)
 	
 	local face=hero:GetFacing();
@@ -403,6 +421,86 @@ function U.GetCenterOfCreeps(creeps)
 	return center;
 end
 
+function U.CreepGC()
+    -- does it works? i don't know
+    --print("CreepGC");
+    local swp_table = {}
+    for handle,time_health in pairs(self["creeps"])
+    do
+        local rm = false;
+        for t,_ in pairs(time_health)
+        do
+            if(GameTime() - t > 60) then
+                rm = true;
+            end
+            break;
+        end
+        if not rm then
+            swp_table[handle] = time_health;
+        end
+    end
+
+    U.creeps = swp_table;
+end
+
+function U.UpdateCreepHealth(creep)
+    if U.creeps == nil then
+        U.creeps = {};
+    end
+
+    if(U.creeps[creep] == nil) then
+        U.creeps[creep] = {};
+    end
+    if(creep:GetHealth() < creep:GetMaxHealth()) then
+        U.creeps[creep][GameTime()] = creep:GetHealth();
+    end
+
+    if(#U.creeps > 1000) then
+        self:CreepGC();
+    end
+end
+
+local function pairsByKeys(t, f)
+    local a = {}
+    for n in pairs(t) do table.insert(a, n) end
+    table.sort(a, f)
+    local i = 0                 -- iterator variable
+    local iter = function ()    -- iterator function
+       i = i + 1
+       if a[i] == nil then return nil
+       else return a[i], t[a[i]]
+       end
+    end
+    return iter
+end
+
+local function sortFunc(a , b)
+    if a < b then 
+        return true
+    end
+end
+
+function U.GetCreepHealthDeltaPerSec(creep)
+    if U.creeps == nil then
+        U.creeps = {};
+    end
+
+    if(U.creeps[creep] == nil) then
+        return 10000000;
+    else
+        for _time,_health in pairsByKeys(U.creeps[creep],sortFunc)
+        do
+            -- only Consider very recent datas
+            if(GameTime() - _time < 3) then
+                local e = (_health - creep:GetHealth()) / (GameTime() - _time);
+                return e;
+            end
+        end
+        return 10000000;
+    end
+
+end
+
 -- takes a "RANGE", returns hero handle and health value of that hero
 -- FIXME - make it handle heroes that went invisible if we have detection
 function U.GetWeakestHero(bot, r)
@@ -433,7 +531,8 @@ function U.GetWeakestCreep(creeps)
 	local LowestHealth=10000;
 	
 	for _,creep in pairs(creeps) do
-		if creep~=nil and creep:IsAlive() then
+		U.UpdateCreepHealth(creep)
+		if creep:IsAlive() then
 			if creep:GetHealth()<LowestHealth then
 				LowestHealth=creep:GetHealth();
 				WeakestCreep=creep;
@@ -579,15 +678,6 @@ function U.HaveTeleportation(npcBot)
 		return true
 	end
 	return false
-end
-
-function U.printValues(...)
-	local npcBot = GetBot()
-	printResult = U.GetHeroName(npcBot) .. " :: "
-	for i,v in ipairs(arg) do
-		printResult = printResult .. tostring(v) .. "\t"
-	end
-	printResult = printResult .. "\n"
 end
 
 function U.deepcopy(orig)

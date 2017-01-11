@@ -179,22 +179,24 @@ local function DenyNearbyCreeps()
 		return false;
 	end
 	
-	local WeakestCreep, _ = utils.GetWeakestCreep(AllyCreeps);
+	local WeakestCreep, WeakestCreepHealth = utils.GetWeakestCreep(AllyCreeps);
 	
 	if WeakestCreep==nil then
 		return false;
 	end
 
-	local damage = (npcBot:GetEstimatedDamageToTarget( true, WeakestCreep, AttackSpeed, DAMAGE_TYPE_PHYSICAL ))*DamageThreshold;
-	local mt = (2.2*damage + (#AllyCreeps)*15 - AttackRange/5) * MoveThreshold;
+	local safeamount = 15;
+	local damage = WeakestCreep:GetActualDamage(npcBot:GetBaseDamage(),DAMAGE_TYPE_PHYSICAL) - safeamount 
+				+ utils.GetCreepHealthDeltaPerSec(WeakestCreep) * (npcBot:GetAttackPoint() / (1 + npcBot:GetAttackSpeed()) 
+				+ GetUnitToUnitDistance(npcBot,WeakestCreep) / 1100)
 		
 	if damage > WeakestCreep:GetHealth() and utils.GetDistance(npcBot:GetLocation(),WeakestCreep:GetLocation()) < AttackRange then
 		npcBot:Action_AttackUnit(WeakestCreep,true);
 		return true;
 	end
 	
-	if mt>WeakestCreep:GetHealth() then
-		local dest=utils.VectorTowards(WeakestCreep:GetLocation(),GetLocationAlongLane(CurLane,LanePos-0.03),AttackRange-20) + RandomVector(75);
+	if ( WeakestCreepHealth / WeakestCreep:GetMaxHealth() ) < 0.5 then
+		local dest = utils.VectorTowards(WeakestCreep:GetLocation(),GetLocationAlongLane(CurLane,LanePos-0.03),AttackRange-20) + RandomVector(50);
 		
 		npcBot:Action_MoveToLocation(dest);
 		return true;
@@ -211,22 +213,24 @@ local function DenyCreeps()
 		return false;
 	end
 	
-	local WeakestCreep, _ = utils.GetWeakestCreep(AllyCreeps);
+	local WeakestCreep, WeakestCreepHealth = utils.GetWeakestCreep(AllyCreeps);
 	
 	if WeakestCreep==nil then
 		return false;
 	end
 
-	local damage = (npcBot:GetEstimatedDamageToTarget( true, WeakestCreep, AttackSpeed, DAMAGE_TYPE_PHYSICAL ) +(6*#AllyCreeps))*DamageThreshold; 
-	local mt = (2.2*damage + (#AllyCreeps)*15 - AttackRange/5) * MoveThreshold;
+	local safeamount = 15;
+	local damage = WeakestCreep:GetActualDamage(npcBot:GetBaseDamage(),DAMAGE_TYPE_PHYSICAL) - safeamount 
+				+ utils.GetCreepHealthDeltaPerSec(WeakestCreep) * (npcBot:GetAttackPoint() / (1 + npcBot:GetAttackSpeed()) 
+				+ GetUnitToUnitDistance(npcBot,WeakestCreep) / 1100)
 		
-	if damage > WeakestCreep:GetHealth() and utils.GetDistance(npcBot:GetLocation(),WeakestCreep:GetLocation()) < AttackRange then
+	if damage > WeakestCreepHealth and utils.GetDistance(npcBot:GetLocation(),WeakestCreep:GetLocation()) < AttackRange then
 		npcBot:Action_AttackUnit(WeakestCreep,true);
 		return true;
 	end
 		
-	if mt>WeakestCreep:GetHealth() then
-		local dest=utils.VectorTowards(WeakestCreep:GetLocation(),GetLocationAlongLane(CurLane,LanePos-0.03),AttackRange-20) + RandomVector(75);
+	if ( WeakestCreepHealth / WeakestCreep:GetMaxHealth() ) < 0.5 then
+		local dest=utils.VectorTowards(WeakestCreep:GetLocation(),GetLocationAlongLane(CurLane,LanePos-0.03),AttackRange-20) + RandomVector(50);
 		
 		npcBot:Action_MoveToLocation(dest);
 		return true;
@@ -264,8 +268,6 @@ local function CSing()
 	AttackRange = npcBot:GetAttackRange() + npcBot:GetBoundingRadius();
 	AttackSpeed = npcBot:GetAttackPoint();
 	
-	local damage = 0;
-	
 	local AlliedHeroes = npcBot:GetNearbyHeroes(EyeRange,false,BOT_MODE_NONE);
 	local Enemies=npcBot:GetNearbyHeroes(EyeRange,true,BOT_MODE_NONE);
 	
@@ -281,7 +283,7 @@ local function CSing()
 --	print(DamageThreshold);
 
 	if (IsCore or (NoCoreAround and (Enemies==nil or #Enemies<2))) then
-		local WeakestCreep,_ = utils.GetWeakestCreep(EnemyCreeps);
+		local WeakestCreep, WeakestCreepHealth = utils.GetWeakestCreep(EnemyCreeps);
 		local nAc=0;
 		if WeakestCreep~=nil then
 			for _,acreep in pairs(AllyCreeps) do
@@ -291,24 +293,32 @@ local function CSing()
 			end
 		end
 		
-		damage = (npcBot:GetEstimatedDamageToTarget( true, WeakestCreep, npcBot:GetSecondsPerAttack(), DAMAGE_TYPE_PHYSICAL ) + (20*nAc) * (AttackSpeed + AttackRange/5000)) * DamageThreshold; 
-		mt = (50 + damage + nAc*40 * (GetUnitToUnitDistance(npcBot,WeakestCreep)-AttackRange)/npcBot:GetCurrentMovementSpeed()) * MoveThreshold;
+		--damage = (npcBot:GetEstimatedDamageToTarget( true, WeakestCreep, npcBot:GetSecondsPerAttack(), DAMAGE_TYPE_PHYSICAL ) + (20*nAc) * (AttackSpeed + AttackRange/5000)) * DamageThreshold; 
+		--mt = (50 + damage + nAc*40 * (GetUnitToUnitDistance(npcBot,WeakestCreep)-AttackRange)/npcBot:GetCurrentMovementSpeed()) * MoveThreshold;
+		
+		local safeamount = 15;
+		local damage = WeakestCreep:GetActualDamage(npcBot:GetBaseDamage(),DAMAGE_TYPE_PHYSICAL) - safeamount 
+				+ utils.GetCreepHealthDeltaPerSec(WeakestCreep) * (npcBot:GetAttackPoint() / (1 + npcBot:GetAttackSpeed()) 
+				+ GetUnitToUnitDistance(npcBot,WeakestCreep) / 1100)
 		
 --		print(npcBot:GetUnitName());
 --		print(damage,mt);
 	
 		if ShouldPush and WeakestCreep~=nil then
-			PushCS(WeakestCreep,nAc,damage,AttackSpeed);
+			PushCS(WeakestCreep, nAc, damage, AttackSpeed);
 			return;
 		end
 		
-		if WeakestCreep~=nil and (damage>WeakestCreep:GetHealth() or (nAc==0 and GetUnitToUnitDistance(WeakestCreep,npcBot)<npcBot:GetAttackRange()) and mt>WeakestCreep:GetHealth()) then
-			npcBot:Action_AttackUnit(WeakestCreep,true);
-			return;
+		if WeakestCreep~=nil and ( WeakestCreepHealth / WeakestCreep:GetMaxHealth() ) < 0.5 then
+		--(damage>WeakestCreep:GetHealth() or (nAc==0 and GetUnitToUnitDistance(WeakestCreep,npcBot)<npcBot:GetAttackRange()) and mt>WeakestCreep:GetHealth()) then
+			if WeakestCreepHealth < damage then
+				npcBot:Action_AttackUnit(WeakestCreep, true);
+				return;
+			end
 		end
 		
-		if (not ShouldPush) and mt>WeakestCreep:GetHealth() then
-			local dest=utils.VectorTowards(WeakestCreep:GetLocation(),GetLocationAlongLane(CurLane,LanePos-0.03),AttackRange-20)+RandomVector(75);
+		if (not ShouldPush) and ( WeakestCreepHealth / WeakestCreep:GetMaxHealth() ) < 0.5 then
+			local dest = utils.VectorTowards(WeakestCreep:GetLocation(),GetLocationAlongLane(CurLane,LanePos-0.03),AttackRange-20)+RandomVector(50);
 			npcBot:Action_MoveToLocation(dest);
 			return;
 		end
@@ -319,7 +329,7 @@ local function CSing()
 			end
 		end
 	elseif not NoCoreAround then
-		
+		-- we are not a Core, we are not pushing, deny only
 		if not ShouldPush then
 			if DenyCreeps() then
 				return;
@@ -484,7 +494,7 @@ end
 
 function Think(npcBot)
 	Updates(npcBot);
-	SaveUpdates(npcBot);
+	--SaveUpdates(npcBot);
 	
 	if npcBot:IsUsingAbility() or npcBot:IsChanneling() then
 		return;
@@ -500,7 +510,7 @@ function Think(npcBot)
 	States[LaningState]();
 	
 	npcBot.LaningState=LaningState;
-	LoadUpdates(npcBot);
+	--LoadUpdates(npcBot);
 end
 
 

@@ -383,7 +383,8 @@ function X:DoWard(bot)
 end
 
 function X:DoLane(bot)
-	if ( not self:HasAction(ACTION_LANING) ) then
+	if ( self:HasAction(ACTION_LANING) == false ) then
+		print(utils.GetHeroName(bot), " STARTING TO LANE ")
 		self:AddAction(ACTION_LANING);
 		laning_generic.OnStart(bot);
 	end

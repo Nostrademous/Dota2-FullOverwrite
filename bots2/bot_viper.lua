@@ -41,7 +41,7 @@ function ViperBot:new(o)
 end
 
 viperBot = ViperBot:new{prevTime = -998.0, actionQueue = viperActionQueue, abilityPriority = ViperAbilityPriority}
-viperBot:printInfo();
+--viperBot:printInfo();
 
 viperBot.Init = false;
 

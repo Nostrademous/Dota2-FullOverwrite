@@ -76,11 +76,12 @@ local listOFF = {
 	"npc_dota_hero_faceless_void",
 	"npc_dota_hero_huskar",
 	"npc_dota_hero_spirit_breaker",
+	"npc_dota_hero_viper",
 };
 
 local listROAMER = {
 	"npc_dota_hero_bounty_hunter",
-	"npc_dota_hero_mirana"
+	"npc_dota_hero_mirana",
 };
 
 local listJUNGLER = {
@@ -174,18 +175,87 @@ local function checkRoleHardSupport(value)
 	return false;
 end
 
-local function findRole(value)
-	if checkRoleMid(value) and not contains(roles, ROLE_MID) then
-		return ROLE_MID;
-	elseif checkRoleOff(value) and not contains(roles, ROLE_OFFLANE) then
-		return ROLE_OFFLANE;
-	elseif checkRoleHardSupport(value) and not contains(roles, ROLE_HARDSUPPORT) then
-		return ROLE_HARDSUPPORT;
-	elseif checkRoleHardCarry(value) then
-		return ROLE_HARDCARRY;
-	else
-		return ROLE_SEMISUPPORT;
+local function checkRoleJungler(value)
+	for i=1,#listJUNGLER do
+		if listJUNGLER[i] == value then
+			return true;
+		end
 	end
+	return false;
+end
+
+local function checkRoleRoamer(value)
+	for i=1,#listROAMER do
+		if listROAMER[i] == value then
+			return true;
+		end
+	end
+	return false;
+end
+
+local rMatrix = { [1] = {}, [2] = {}, [3] = {}, [4] = {}, [5] = {}, [6] = {}, [7] = {} }
+
+local function findRole(name)
+	local tMatrix = { [1] = {}, [2] = {}, [3] = {}, [4] = {}, [5] = {}, [6] = {}, [7] = {} }
+	if checkRoleMid(name) then table.insert(tMatrix[2], name) end
+	if checkRoleOff(name) then table.insert(tMatrix[3], name) end
+	if checkRoleHardCarry(name) then table.insert(tMatrix[1], name) end
+	if checkRoleHardSupport(name) then table.insert(tMatrix[5], name) end
+	if checkRoleJungler(name) then table.insert(tMatrix[6], name) end
+	if checkRoleRoamer(name) then table.insert(tMatrix[7], name) end
+	if checkRoleSemiSupport(name) then table.insert(tMatrix[4], name) end
+	return tMatrix
+end
+
+local function existsInMatrix(matrix, value)
+	for k,v in pairs( matrix ) do
+		for k2,v2 in pairs (v) do
+			if v2 == value then
+				return true
+			end
+		end
+	end
+	return false
+end
+
+local function countOverlap(matrix)
+	return math.max(0, #rMatrix[1]-1) + math.max(0, #rMatrix[2]-1) + math.max(0, #rMatrix[3]-1) + math.max(0, #rMatrix[4]-1) + math.max(0, #rMatrix[5]-1) + math.max(0, #rMatrix[6]-1) + math.max(0, #rMatrix[7]-1)
+end
+
+local function everyObjectAssigned(matrix)
+	for i = 1, 5, 1 do
+		local slot = GetTeamMember( GetTeam(), i )
+		if not existsInMatrix(matrix, slot:GetUnitName()) then
+			return i
+		end
+	end
+	return 0
+end
+
+local function fillRoles(rMatrix)
+	obj = everyObjectAssigned(rMatrix)
+	best = utils.deepcopy(rMatrix)
+	
+	if obj ~= 0 then
+		local slot = GetTeamMember( GetTeam(), obj )
+		validRoles = findRole(slot:GetUnitName())
+		for k,v in pairs (validRoles) do
+			if #v > 0 then
+				new = utils.deepcopy(rMatrix)
+				table.insert(new[k], slot:GetUnitName())
+				
+				new = fillRoles(new)
+				if countOverlap(new) < countOverlap(best) then
+					best = utils.deepcopy(new)
+					if countOverlap(best) == 0 and everyObjectAssigned(best) == 0 then
+						break
+					end
+				end
+			end
+		end
+	end
+	
+	return best
 end
 
 -------------------------------------------------------------------------------
@@ -196,18 +266,18 @@ end
 
 function SetRoles()
 	print( "SetRoles()" );
-	
-	local team = GetTeam()
-	
-	for i=1,5 do
-		if roles[i] == ROLE_UNKNOWN then
-			local slot = GetTeamMember( team, i )
-			if slot == nil then
-				return
+	rMatrix = fillRoles(rMatrix)
+
+	for k, v in pairs( rMatrix ) do
+		print(k)
+		for k2, v2 in pairs (v) do
+			print("    ", k2, v2)
+			for i = 1, 5, 1 do
+				local slot = GetTeamMember( GetTeam(), i )
+				if v2 == slot:GetUnitName() then
+					roles[i] = k
+				end
 			end
-			local name = slot:GetUnitName();
-			roles[i] = findRole( name );
-			print( "Role for "..utils.GetHeroName(slot).." is", roles[i] )
 		end
 	end
 end

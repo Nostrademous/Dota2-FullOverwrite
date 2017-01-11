@@ -41,7 +41,7 @@ function LinaBot:new(o)
 end
 
 linaBot = LinaBot:new{prevTime = -999.0, actionQueue = linaActionQueue, abilityPriority = LinaAbilityPriority}
-linaBot:printInfo();
+--linaBot:printInfo();
 
 linaBot.Init = false;
 

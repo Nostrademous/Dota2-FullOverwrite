@@ -569,12 +569,25 @@ function U.HaveItem(npcBot, item_name)
 end
 
 function U.HaveTeleportation(npcBot)
+	if U.GetHeroName(npcBot) == "furion" then
+		return true
+	end
+
 	if U.HaveItem(npcBot, "item_tpscroll") ~= nil 
 		or U.HaveItem(npcBot, "item_travel_boots_1") ~= nil
 		or U.HaveItem(npcBot, "item_travel_boots_2") ~= nil then
 		return true
 	end
 	return false
+end
+
+function U.printValues(...)
+	local npcBot = GetBot()
+	printResult = U.GetHeroName(npcBot) .. " :: "
+	for i,v in ipairs(arg) do
+		printResult = printResult .. tostring(v) .. "\t"
+	end
+	printResult = printResult .. "\n"
 end
 
 function U.deepcopy(orig)

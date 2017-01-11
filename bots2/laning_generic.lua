@@ -62,6 +62,8 @@ function OnStart(npcBot)
 		utils.InitPath(npcBot);
 		npcBot.LaningState=LaningStates.MovingToLane;
 	end
+	
+	print(utils.GetHeroName(npcBot), " LANING OnStart Done")
 end
 
 -------------------------------
@@ -79,7 +81,7 @@ local function MovingToLane()
 	utils.MoveSafelyToLocation(dest);
 end
 
-local function Start(npcBot, CurLane)
+local function Start()
 	local npcBot=GetBot();
 	
 	if CurLane~= LANE_MID then
@@ -184,10 +186,18 @@ local function DenyNearbyCreeps()
 		return false;
 	end
 
-	local damage = (npcBot:GetEstimatedDamageToTarget( true, WeakestCreep, AttackSpeed, DAMAGE_TYPE_PHYSICAL ))*DamageThreshold; 
+	local damage = (npcBot:GetEstimatedDamageToTarget( true, WeakestCreep, AttackSpeed, DAMAGE_TYPE_PHYSICAL ))*DamageThreshold;
+	local mt = (2.2*damage + (#AllyCreeps)*15 - AttackRange/5) * MoveThreshold;
 		
-	if damage>WeakestCreep:GetHealth() and utils.GetDistance(npcBot:GetLocation(),WeakestCreep:GetLocation())<AttackRange then
+	if damage > WeakestCreep:GetHealth() and utils.GetDistance(npcBot:GetLocation(),WeakestCreep:GetLocation()) < AttackRange then
 		npcBot:Action_AttackUnit(WeakestCreep,true);
+		return true;
+	end
+	
+	if mt>WeakestCreep:GetHealth() then
+		local dest=utils.VectorTowards(WeakestCreep:GetLocation(),GetLocationAlongLane(CurLane,LanePos-0.03),AttackRange-20) + RandomVector(75);
+		
+		npcBot:Action_MoveToLocation(dest);
 		return true;
 	end
 
@@ -203,15 +213,15 @@ local function DenyCreeps()
 	end
 	
 	local WeakestCreep, _ = utils.GetWeakestCreep(AllyCreeps);
-
-	local damage = (npcBot:GetEstimatedDamageToTarget( true, WeakestCreep, AttackSpeed, DAMAGE_TYPE_PHYSICAL ) +(6*#AllyCreeps))*DamageThreshold; 
-	local mt = (2.2*damage + (#AllyCreeps)*15 - AttackRange/5) * MoveThreshold;
 	
 	if WeakestCreep==nil then
 		return false;
 	end
+
+	local damage = (npcBot:GetEstimatedDamageToTarget( true, WeakestCreep, AttackSpeed, DAMAGE_TYPE_PHYSICAL ) +(6*#AllyCreeps))*DamageThreshold; 
+	local mt = (2.2*damage + (#AllyCreeps)*15 - AttackRange/5) * MoveThreshold;
 		
-	if damage>WeakestCreep:GetHealth() then
+	if damage > WeakestCreep:GetHealth() and utils.GetDistance(npcBot:GetLocation(),WeakestCreep:GetLocation()) < AttackRange then
 		npcBot:Action_AttackUnit(WeakestCreep,true);
 		return true;
 	end
@@ -252,8 +262,8 @@ local function CSing()
 		return;
 	end	
 	
-	AttackRange=npcBot:GetAttackRange();
-	AttackSpeed=npcBot:GetAttackPoint();
+	AttackRange = npcBot:GetAttackRange() + npcBot:GetBoundingRadius();
+	AttackSpeed = npcBot:GetAttackPoint();
 	
 	local damage = 0;
 	

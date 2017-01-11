@@ -5,7 +5,7 @@
 -------------------------------------------------------------------------------
 
 local utils = require( GetScriptDirectory().."/utility" )
---enemyData = require( GetScriptDirectory().."/enemy_data" )
+local enemyData = require( GetScriptDirectory().."/enemy_data" )
 require( GetScriptDirectory().."/role" )
 require ( GetScriptDirectory().."/laning_generic" )
 
@@ -117,7 +117,7 @@ function X:GetAction()
 	return self:getActionQueue()[1];
 end
 
---X.prevEnemyDump = -1000.0
+X.prevEnemyDump = -1000.0
 
 -------------------------------------------------------------------------------
 -- MAIN THINK FUNCTION - DO NOT OVER-LOAD 
@@ -161,7 +161,7 @@ function X:Think(bot)
 	self:setCurrentAction(self:GetAction());
 	self:PrintActionTransition(utils.GetHeroName(bot));
 	
-	--[[
+	---[[
 	-- UPDATE GLOBAL INFO --
 	enemyData.UpdateEnemyInfo();
 	
@@ -173,8 +173,8 @@ function X:Think(bot)
 	end
 	
 	
-		NOW DECISIONS THAT MODIFY MY ACTION STATES
-	--]]
+	-- NOW DECISIONS THAT MODIFY MY ACTION STATES
+	---]]
 		
 	--AM I ALIVE
     if( not bot:IsAlive() ) then

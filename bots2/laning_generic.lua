@@ -62,7 +62,7 @@ function OnStart(npcBot)
 		npcBot.LaningState=LaningStates.MovingToLane;
 	end
 	
-	print(utils.GetHeroName(npcBot), " LANING OnStart Done")
+	--print(utils.GetHeroName(npcBot), " LANING OnStart Done")
 end
 
 -------------------------------
@@ -495,7 +495,7 @@ function Think(npcBot)
 		return;
 	end
 	
-	print(utils.GetHeroName(npcBot), " LaningState: ", LaningState);
+	--print(utils.GetHeroName(npcBot), " LaningState: ", LaningState);
 	
 	States[LaningState]();
 	

@@ -24,23 +24,24 @@ X.MissingThreshold = 10.0;
 -------------------------------------------------------------------------------
 -- FUNCTIONS - implement rudimentary atomic operation insurance
 -------------------------------------------------------------------------------
+local function EnemyEntryValidAndAlive(entry)
+	return entry.obj ~= nil and entry.last_seen ~= -1000.0 and entry.obj:GetHealth() ~= -1
+end
+
 local function UpdateEnemiesMissing()
-	if ( X.Lock ) then return end;
-	X.Lock = true;
 	
 	X.Missing = {}; -- clear it first
 	
 	for p = 1, 5, 1 do
-		if ( X.Enemies[p].obj ~= nil and X.Enemies[p].last_seen ~= -1000.0 ) then
-			local tDelta = RealTime() - X.Enemies[p].last_seen;
+		local entry = X.Enemies[p]
+		if EnemyEntryValidAndAlive(entry) then
+			local tDelta = RealTime() - entry.last_seen;
 			if tDelta > X.MissingThreshold then
-				local enemy = X.Enemies[p].obj;
+				local enemy = entry.obj;
 				X.Missing[utils.GetHeroName(enemy)] = tDelta;
 			end
 		end
 	end
-	
-	X.Lock = false;
 end
 
 function X.SetMissingThreshold(value)
@@ -66,9 +67,9 @@ function X.UpdateEnemyInfo()
 		end
 	end
 	
-	X.Lock = false;
-	
 	UpdateEnemiesMissing();
+	
+	X.Lock = false;
 end
 
 function X.PrintEnemyInfo()
@@ -77,10 +78,11 @@ function X.PrintEnemyInfo()
 	X.Lock = true;
 	
 	for p = 1, 5, 1 do
-		if ( X.Enemies[p].obj ~= nil and X.Enemies[p].last_seen ~= -1000.0 ) then
-			local enemy = X.Enemies[p].obj;
+		local entry = X.Enemies[p]
+		if EnemyEntryValidAndAlive(entry) then
+			local enemy = entry.obj;
 			local eLoc = enemy:GetLocation();
-			print( "Enemy["..p.."] "..utils.GetHeroName(enemy).." last seen at "..X.Enemies[p].last_seen );
+			print( "Enemy["..p.."] "..utils.GetHeroName(enemy).." last seen at "..entry.last_seen );
 			print( "    Health: "..enemy:GetHealth()..", Mana: "..enemy:GetMana());
 			print( "    Location: <"..eLoc[1].." , "..eLoc[2]..">");
 		end

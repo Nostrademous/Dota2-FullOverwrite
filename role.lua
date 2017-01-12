@@ -3,16 +3,17 @@
 _G._savedEnv = getfenv()
 module( "role", package.seeall )
 
+require( GetScriptDirectory().."/constants" )
 local utils = require( GetScriptDirectory().."/utility" )
 
-ROLE_UNKNOWN = 0
-ROLE_HARDCARRY = 1
-ROLE_MID = 2
-ROLE_OFFLANE = 3
-ROLE_SEMISUPPORT = 4
-ROLE_HARDSUPPORT = 5
-ROLE_ROAMER = 6
-ROLE_JUNGLER = 7
+local ROLE_UNKNOWN 		= constants.ROLE_UNKNOWN
+local ROLE_HARDCARRY 	= constants.ROLE_HARDCARRY
+local ROLE_MID 			= constants.ROLE_MID
+local ROLE_OFFLANE 		= constants.ROLE_OFFLANE
+local ROLE_SEMISUPPORT 	= constants.ROLE_SEMISUPPORT
+local ROLE_HARDSUPPORT 	= constants.ROLE_HARDSUPPORT
+local ROLE_ROAMER 		= constants.ROLE_ROAMER
+local ROLE_JUNGLER 		= constants.ROLE_JUNGLER
 
 roles = {
 	[1] = ROLE_UNKNOWN,

@@ -4,6 +4,8 @@
 --- Including: PLATINUM_DOTA2, lenlrx
 -------------------------------------------------------------------------------
 
+require( GetScriptDirectory().."/constants" )
+
 U = {}
 
 U.lastCourierThink = -1000.0
@@ -208,10 +210,28 @@ function U.GetHeroName(bot)
 end
 
 function U.IsCore(hero)
-	if hero.Role == 1 or hero.Role == 2 or hero.Role == 3 then
+	if hero.Role == constants.ROLE_HARDCARRY 
+		or hero.Role == constants.ROLE_MID
+		or hero.Role == constants.ROLE_OFFLANE then
 		return true;
 	end
 	return false;
+end
+
+function U.IsMelee(hero)
+	--NOTE: Monkey King is considered Melee with a range of 300, typical melee heroes are range 150
+	if hero:GetAttackRange() < 320.0 then return true end
+	return false
+end
+
+function U.PartyChat(msg)
+	local bot = GetBot()
+	bot:Action_Chat(msg, false)
+end
+
+function U.AllChat(msg)
+	local bot = GetBot()
+	bot:Action_Chat(msg, true)
 end
 
 function U.Fountain(team)
@@ -339,51 +359,6 @@ function U.MoveSafelyToLocation(npcBot, dest)
 	local newT=npcBot.NextHop[npcBot.LastHop][ti];
 	
 	npcBot:Action_MoveToLocation(safeSpots[newT]);
-end
-
-function U.IsItemAvailable(item_name)
-    local npcBot = GetBot();
-
-	local item = U.HaveItem(npcBot, item_name)
-	if item ~= nil then
-		if item:IsFullyCastable() then
-			return item
-		end
-	end
-    return nil;
-end
-
---important items for delivery
-function U.HasImportantItem()
-	 local npcBot = GetBot();
-
-    for i = 9, 14, 1 do
-        local item = npcBot:GetItemInSlot(i);
-		if item ~= nil then
-			if string.find(item:GetName(),"recipe") ~= nil or string.find(item:GetName(),"item_boots") ~= nil or string.find(item:GetName(),"item_bottle") then
-				return true;
-			end
-			
-			if(item:GetName()=="item_ward_observer" and item:GetCurrentCharges() > 1) then
-				return true;
-			end
-		end
-    end
-	
-    return false;
-end
-
-function U.CourierThink(npcBot)
-	local checkLevel, newTime = U.TimePassed(U.lastCourierThink, 1.0);
-	
-	if not checkLevel then return end
-	U.lastCourierThink = newTime
-	
-	if npcBot:IsAlive() and (npcBot:GetStashValue() > 500 or npcBot:GetCourierValue() > 0 or U.HasImportantItem()) and IsCourierAvailable() then
-		--print("got item");
-		npcBot:Action_CourierDeliver();
-		return;
-	end
 end
 
 function U.IsTowerAttackingMe()
@@ -705,10 +680,83 @@ function U.InitPath(npcBot)
 	npcBot.LastHop=nil;
 end
 
+function U.IsItemAvailable(item_name)
+    local npcBot = GetBot();
+
+	local item = U.HaveItem(npcBot, item_name)
+	if item ~= nil then
+		if item:IsFullyCastable() then
+			return item
+		end
+	end
+    return nil;
+end
+
+--important items for delivery
+function U.HasImportantItem()
+	 local npcBot = GetBot();
+
+    for i = 9, 14, 1 do
+        local item = npcBot:GetItemInSlot(i);
+		if item ~= nil then
+			if string.find(item:GetName(),"recipe") ~= nil or string.find(item:GetName(),"item_boots") ~= nil or string.find(item:GetName(),"item_bottle") then
+				return true;
+			end
+			
+			if(item:GetName()=="item_ward_observer" and item:GetCurrentCharges() > 1) then
+				return true;
+			end
+		end
+    end
+	
+    return false;
+end
+
+function U.CourierThink(npcBot)
+	local checkLevel, newTime = U.TimePassed(U.lastCourierThink, 1.0);
+	
+	if not checkLevel then return end
+	U.lastCourierThink = newTime
+	
+	if npcBot:IsAlive() and (npcBot:GetStashValue() > 500 or npcBot:GetCourierValue() > 0 or U.HasImportantItem()) and IsCourierAvailable() then
+		--print("got item");
+		npcBot:Action_CourierDeliver();
+		return;
+	end
+end
+
 function U.NumberOfItems(bot)
-	local n=0;
+	local n = 0;
 	
 	for i = 0, 5, 1 do
+        local item = bot:GetItemInSlot(i);
+		if item ~= nil then
+			n = n+1;
+		end
+    end
+	
+	return n;
+end
+
+function U.NumberOfItemsInBackpack(bot)
+	local n = 0;
+	
+	for i = 6, 8, 1 do
+        local item = bot:GetItemInSlot(i);
+		if item ~= nil then
+			n = n+1;
+		end
+    end
+	
+	return n;
+end
+
+function U.NumberOfItemsInStash(bot)
+	if bot:GetStashValue() == 0 then return 0 end
+	
+	local n = 0;
+	
+	for i = 9, 14, 1 do
         local item = bot:GetItemInSlot(i);
 		if item ~= nil then
 			n = n+1;
@@ -741,13 +789,25 @@ function U.HaveItem(npcBot, item_name)
 end
 
 function U.MoveItemsFromStashToInventory(bot)
-	local availableSpaces = 6 - U.NumberOfItems(bot)
+	if NumberOfItemsInStash == 0 then return end
+	
+	local invSpaces = 6 - U.NumberOfItems(bot)
 	for i = 9, 14, 1 do
-		local item = npcBot:GetItemInSlot(i)
+		local item = bot:GetItemInSlot(i)
 		if item ~= nil then
-			bot:Action_SwapItems(i, 6-availableSpaces)
-			availableSpaces = availableSpaces - 1
-			if availableSpaces == 0 then break end
+			if invSpaces == 0 then break end
+			bot:Action_SwapItems(i, 6-invSpaces)
+			invSpaces = invSpaces - 1
+		end
+	end
+	
+	local backSpaces = 3 - U.NumberOfItemsInBackpack(bot)
+	for i = 9, 14, 1 do
+		local item = bot:GetItemInSlot(i)
+		if item ~= nil then
+			if backSpaces == 0 then break end
+			bot:Action_SwapItems(i, 9-backSpaces)
+			backSpaces = backSpaces - 1
 		end
 	end
 end

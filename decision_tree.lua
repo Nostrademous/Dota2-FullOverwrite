@@ -4,6 +4,7 @@
 --- Including: 
 -------------------------------------------------------------------------------
 
+require( GetScriptDirectory().."/constants" )
 local utils = require( GetScriptDirectory().."/utility" )
 local enemyData = require( GetScriptDirectory().."/enemy_data" )
 require( GetScriptDirectory().."/role" )
@@ -11,12 +12,12 @@ require( GetScriptDirectory().."/laning_generic" )
 require( GetScriptDirectory().."/retreat_generic" )
 require( GetScriptDirectory().."/item_usage" )
 
-ACTION_NONE			= "ACTION_NONE";
-ACTION_LANING		= "ACTION_LANING";
-ACTION_RETREAT 		= "ACTION_RETREAT";
-ACTION_FIGHT		= "ACTION_FIGHT";
-ACTION_CHANNELING	= "ACTION_CHANNELING";
-ACTION_MOVING		= "ACTION_MOVING";
+local ACTION_NONE		= constants.ACTION_NONE
+local ACTION_LANING		= constants.ACTION_LANING
+local ACTION_RETREAT 	= constants.ACTION_RETREAT
+local ACTION_FIGHT		= constants.ACTION_FIGHT
+local ACTION_CHANNELING	= constants.ACTION_CHANNELING
+local ACTION_MOVING		= constants.ACTION_MOVING
 
 local X = { currentAction = ACTION_NONE, prevAction = ACTION_NONE, prevTime = -1000.0, actionQueue = {}, abilityPriority = {} }
 

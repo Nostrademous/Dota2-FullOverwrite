@@ -26,7 +26,7 @@ function UseItems()
 	
 	local flask = utils.IsItemAvailable("item_flask");
     if flask ~= nil then
-		if Enemies==nil or #Enemies==0 then
+		if (Enemies==nil or #Enemies==0) and not npcBot:HasModifier("modifier_fountain_aura") then
 			if (npcBot:GetMaxHealth()-npcBot:GetHealth()) > 400 and not npcBot:HasModifier("modifier_flask_healing") then
 				npcBot:Action_UseAbilityOnEntity(flask, npcBot);
 				return nil
@@ -36,7 +36,7 @@ function UseItems()
 	
 	local clarity = utils.IsItemAvailable("item_clarity");
     if clarity ~= nil then
-		if Enemies==nil or #Enemies==0 then
+		if (Enemies==nil or #Enemies==0) and not npcBot:HasModifier("modifier_fountain_aura") then
 			if (npcBot:GetMaxMana()-npcBot:GetMana()) > 200 and not npcBot:HasModifier("modifier_clarity_potion") then
 				npcBot:Action_UseAbilityOnEntity(clarity, npcBot);
 				return nil
@@ -66,11 +66,12 @@ function UseItems()
 	
 	local tp = utils.IsItemAvailable("item_tpscroll");
 	if tp ~= nil then
-		local dest = GetLocationAlongLane(npcBot.CurLane, 0.5);
+		-- dest (below) should find farthest away tower to TP to in our assigned lane, even if tower is dead it will
+		-- just default to closest location we can TP to in that direction
+		local dest = GetLocationAlongLane(npcBot.CurLane, 0.5); -- 0.5 is basically 1/2 way down our lane
 		if GetUnitToLocationDistance(npcBot, utils.Fountain(GetTeam())) < 2000 then
 			npcBot:Action_UseAbilityOnLocation(tp, dest);
-		--elseif not (npcBot:IsUsingAbility() or npcBot:IsChanneling()) then
-			-- FIXME: Sell if we have BoTs
+		-- FIXME: Sell if we have BoTs and are near a shop
 		--	npcBot:Action_SellItem(tp);
 		end
 	end

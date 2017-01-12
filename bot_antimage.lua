@@ -22,7 +22,7 @@ local ABILITY7 = "special_bonus_agility_25"
 local ABILITY8 = "special_bonus_unique_antimage"
 
 local AntimageAbilityPriority = {
-	SKILL_Q,    SKILL_W,    SKILL_Q,    SKILL_E,    SKILL_Q,
+	SKILL_W,    SKILL_Q,    SKILL_Q,    SKILL_E,    SKILL_Q,
     SKILL_R,    SKILL_Q,    SKILL_W,    SKILL_W,    ABILITY2,
     SKILL_W,    SKILL_R,    SKILL_E,    SKILL_E,    ABILITY4,
     SKILL_E,    SKILL_R,    ABILITY6, 	ABILITY8

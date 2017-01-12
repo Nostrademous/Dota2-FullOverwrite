@@ -143,10 +143,6 @@ local function MovingToPos()
 end
 
 local function GetReadyForCS()
-	local npcBot=GetBot();
-	
-	local AllyCreeps=npcBot:GetNearbyCreeps(EyeRange,false);
-	local EnemyCreeps=npcBot:GetNearbyCreeps(EyeRange,true);
 end
 
 local function WaitingForCS()
@@ -278,7 +274,12 @@ local function CSing()
 		end
 	end
 
-	local mt=0;
+	--local mt=0;
+	
+	if ShouldPush and #Enemies > 0 then
+		npcBot.ShouldPush = false
+		ShouldPush = false
+	end
 	
 --	print(DamageThreshold);
 
@@ -464,6 +465,7 @@ end
 
 local function StayBack(npcBot)	
 	local LaneFront=GetLaneFrontAmount(GetTeam(),npcBot.CurLane,true);
+	-- FIXME: we need to Min or Max depending on Team the LaneFrontAmount() with furthest standign tower
 	local LaneEnemyFront=GetLaneFrontAmount(GetTeam(),npcBot.CurLane,false);
 	
 	local BackPos=GetLocationAlongLane(npcBot.CurLane,Min(LaneFront-0.05,LaneEnemyFront-0.05)) + RandomVector(200);

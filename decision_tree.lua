@@ -311,6 +311,12 @@ end
 
 function X:Determine_AmISafe(bot)	
 	if bot:GetHealth()/bot:GetMaxHealth() > 0.9 and bot:GetMana()/bot:GetMaxMana() > 0.9 then
+		if utils.IsTowerAttackingMe() then
+			return 2
+		end
+		if utils.IsCreepAttackingMe() then
+			return 3
+		end
 		bot.IsRetreating = false;
 		return 0;
 	end
@@ -332,13 +338,6 @@ function X:Determine_AmISafe(bot)
 	local Enemies = bot:GetNearbyHeroes(1500, true, BOT_MODE_NONE);
 	local Allies = bot:GetNearbyHeroes(1500, false, BOT_MODE_NONE);
 	local Towers = bot:GetNearbyTowers(900, true);
-	
-	if utils.IsTowerAttackingMe() then
-		return 2
-	end
-	if utils.IsCreepAttackingMe() then
-		return 3
-	end
 	
 	local nEn = 0;
 	if Enemies ~= nil then
@@ -386,6 +385,13 @@ function X:Determine_AmISafe(bot)
 			bot.IsRetreating = true;
 			return 1;
 		end
+	end
+	
+	if utils.IsTowerAttackingMe() then
+		return 2
+	end
+	if utils.IsCreepAttackingMe() then
+		return 3
 	end
 	
 	bot.IsRetreating = false;

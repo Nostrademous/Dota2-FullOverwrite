@@ -246,7 +246,7 @@ function U.PositionAlongLane(npcBot, lane)
 	local dis=20000.0;
 	
 	while (pos<1.0) do
-		local thisPos = GetLocationAlongLane(lane,pos);
+		local thisPos = GetLocationAlongLane(lane, pos);
 		if (U.GetDistance(thisPos,npcBot:GetLocation()) < dis) then
 			dis=U.GetDistance(thisPos,npcBot:GetLocation());
 			bestPos=pos;
@@ -359,8 +359,8 @@ function U.HasImportantItem()
 
     for i = 9, 14, 1 do
         local item = npcBot:GetItemInSlot(i);
-		if (item~=nil) then
-			if((string.find(item:GetName(),"recipe")~=nil) or (string.find(item:GetName(),"item_boots")~=nil)) then
+		if item ~= nil then
+			if string.find(item:GetName(),"recipe") ~= nil or string.find(item:GetName(),"item_boots") ~= nil or string.find(item:GetName(),"item_bottle") then
 				return true;
 			end
 			
@@ -379,14 +379,53 @@ function U.CourierThink(npcBot)
 	if not checkLevel then return end
 	U.lastCourierThink = newTime
 	
-    for i = 9, 15, 1 do
-        local item = npcBot:GetItemInSlot(i);
-        if((item ~= nil or npcBot:GetCourierValue() >= 500) and IsCourierAvailable()) then
-            --print("got item");
-            npcBot:Action_CourierDeliver();
-            return;
-        end
-    end
+	if npcBot:IsAlive() and (npcBot:GetStashValue() > 500 or npcBot:GetCourierValue() > 0 or U.HasImportantItem()) and IsCourierAvailable() then
+		--print("got item");
+		npcBot:Action_CourierDeliver();
+		return;
+	end
+end
+
+function U.IsTowerAttackingMe()
+	local npcBot = GetBot()
+	
+	if npcBot:WasRecentlyDamagedByTower(2.0) then
+		return true
+	end
+	return false
+end
+
+function U.IsCreepAttackingMe()
+	local npcBot = GetBot()
+	
+	if npcBot:WasRecentlyDamagedByCreep(2.0) then
+		return true
+	end
+	return false
+end
+
+function U.IsInLane()
+	local npcBot = GetBot()
+	
+	local mindis = 10000
+	npcBot.RetreatLane = npcBot.CurLane
+	npcBot.RetreatPos = npcBot.LanePos
+	
+	for i=1,3,1 do
+		local thisl = U.PositionAlongLane(npcBot, U.Lanes[i])
+		local thisdis = U.GetDistance(GetLocationAlongLane(U.Lanes[i], thisl), npcBot:GetLocation())
+		if thisdis < mindis then
+			npcBot.RetreatLane = U.Lanes[i]
+			npcBot.RetreatPos = thisl
+			mindis = thisdis
+		end
+	end
+	
+	if mindis > 1500 then
+		npcBot.IsInLane = false
+	else
+		npcBot.IsInLane = true
+	end
 end
 
 function U.IsFacingLocation(hero, loc, delta)
@@ -666,13 +705,13 @@ function U.InitPath(npcBot)
 	npcBot.LastHop=nil;
 end
 
-function U.NumberOfItems(npcBot)
+function U.NumberOfItems(bot)
 	local n=0;
 	
 	for i = 0, 5, 1 do
-        local item = npcBot:GetItemInSlot(i);
-		if (item~=nil) then
-			n=n+1;
+        local item = bot:GetItemInSlot(i);
+		if item ~= nil then
+			n = n+1;
 		end
     end
 	
@@ -699,6 +738,18 @@ function U.HaveItem(npcBot, item_name)
 	end
 	
     return nil;
+end
+
+function U.MoveItemsFromStashToInventory(bot)
+	local availableSpaces = 6 - U.NumberOfItems(bot)
+	for i = 9, 14, 1 do
+		local item = npcBot:GetItemInSlot(i)
+		if item ~= nil then
+			bot:Action_SwapItems(i, 6-availableSpaces)
+			availableSpaces = availableSpaces - 1
+			if availableSpaces == 0 then break end
+		end
+	end
 end
 
 function U.HaveTeleportation(npcBot)

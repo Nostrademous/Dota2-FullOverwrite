@@ -59,30 +59,26 @@ local tableItemsToBuyAsMid = {
 };
 			
 local tableItemsToBuyAsCore = { 
-	"item_circlet",
-	"item_mantle",
-	"item_recipe_null_talisman",
-	"item_faerie_fire",
+	"item_stout_shield",
+	"item_tango",
+	"item_flask",
 	"item_branches",
-	"item_boots",
-	"item_blades_of_attack",
-	"item_blades_of_attack",
-	"item_wind_lace",
-	"item_staff_of_wizardry",
-	"item_void_stone",
-	"item_recipe_cyclone",
-	"item_cyclone",
-	"item_blink",
-	"item_energy_booster",
+	"item_quelling_blade",
 	"item_ring_of_health",
-	"item_recipe_aether_lens",
-	"item_aether_lens",
-	"item_point_booster",
-	"item_ogre_axe",
-	"item_staff_of_wizardry",
+	"item_boots",
+	"item_gloves",
+	"item_belt_of_strength",
+	"item_void_stone",
+	"item_claymore",
+	"item_broadsword",
 	"item_blade_of_alacrity",
+	"item_boots_of_elves",
+	"item_recipe_yasha",
 	"item_ultimate_orb",
-	"item_ultimate_orb",
+	"item_recipe_manta",
+	"item_javelin",
+	"item_belt_of_strength",
+	"item_recipe_basher"
 };
 
 ----------------------------------------------------------------------------------------------------
@@ -103,7 +99,7 @@ function ItemPurchaseThink()
 	local sNextItem = nil
 
 	if ( roles[pID] == role.ROLE_MID ) then
-		print( "Lina.ItemPurchaseThink.Mid" );
+		print( "Antimage.ItemPurchaseThink.Mid" );
 		if ( #tableItemsToBuyAsMid == 0 ) then
 			npcBot:SetNextItemPurchaseValue( 0 );
 			print( "    No More Items in Purchase Table!" )
@@ -120,7 +116,7 @@ function ItemPurchaseThink()
 			npcBot:SetNextItemPurchaseValue( 0 );
 		end
 	elseif ( roles[pID] == role.ROLE_HARDCARRY or roles[pID] == role.ROLE_OFFLANE ) then
-		print( "Lina.ItemPurchaseThink.Core" );
+		print( "Antimage.ItemPurchaseThink.Core" );
 		if ( #tableItemsToBuyAsCore == 0 ) then
 			npcBot:SetNextItemPurchaseValue( 0 );
 			print( "    No More Items in Purchase Table!" )
@@ -137,7 +133,7 @@ function ItemPurchaseThink()
 			npcBot:SetNextItemPurchaseValue( 0 );
 		end
 	elseif ( roles[pID] == role.ROLE_HARDSUPPORT or roles[pID] == role.ROLE_SEMISUPPORT ) then
-		print( "Lina.ItemPurchaseThink.Support" );
+		print( "Antimage.ItemPurchaseThink.Support" );
 		if ( #tableItemsToBuyAsSupport == 0 ) then
 			npcBot:SetNextItemPurchaseValue( 0 );
 			print( "    No More Items in Purchase Table!" )

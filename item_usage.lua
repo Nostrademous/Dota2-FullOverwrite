@@ -56,18 +56,24 @@ function UseItems()
 		end
 	end
 	
-	--[[ FIXME: Check which tower is farthest away in our lane and make sure we are "LANING"
+	local arcane = utils.IsItemAvailable("item_arcane_boots");
+    if arcane ~= nil then
+		if (npcBot:GetMaxMana() - npcBot:GetMana()) > 160 then
+			npcBot:Action_UseAbility(arcane);
+			return nil;
+		end
+	end
+	
 	local tp = utils.IsItemAvailable("item_tpscroll");
 	if tp ~= nil then
 		local dest = GetLocationAlongLane(npcBot.CurLane, 0.5);
 		if GetUnitToLocationDistance(npcBot, utils.Fountain(GetTeam())) < 2000 then
 			npcBot:Action_UseAbilityOnLocation(tp, dest);
-		elseif not (npcBot:IsUsingAbility() or npcBot:IsChanneling()) then
+		--elseif not (npcBot:IsUsingAbility() or npcBot:IsChanneling()) then
 			-- FIXME: Sell if we have BoTs
-			npcBot:Action_SellItem(tp);
+		--	npcBot:Action_SellItem(tp);
 		end
 	end
-	--]]
 	
 	return nil
 end

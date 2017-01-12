@@ -8,6 +8,7 @@ local utils = require( GetScriptDirectory().."/utility" )
 local enemyData = require( GetScriptDirectory().."/enemy_data" )
 require( GetScriptDirectory().."/role" )
 require( GetScriptDirectory().."/laning_generic" )
+require( GetScriptDirectory().."/retreat_generic" )
 require( GetScriptDirectory().."/item_usage" )
 
 ACTION_NONE			= "ACTION_NONE";
@@ -206,13 +207,15 @@ function X:Think(bot)
 	local AllyCreeps = bot:GetNearbyCreeps(RANGE, false);
 	
 	--FIXME: Is this the right place to do this???
-	self:ConsiderAbilityUse();
-	self:ConsiderItemUse();
+	self:ConsiderAbilityUse()
+	self:ConsiderItemUse()
 	utils.CourierThink(bot)
 	
-	if ( not self:Determine_AmISafe(bot, EnemyHeroes, EnemyTowers, EnemyCreeps) ) then
-		self:DoRetreat(bot);
-		return;		
+	local safe = self:Determine_AmISafe(bot)
+	
+	if safe ~= 0 or self:GetAction() == ACTION_RETREAT then
+		self:DoRetreat(bot, safe);
+		return;
 	end
 	
 	if ( self:Determine_AmIFighting(bot, EnemyHeroes, AllyHeroes) ) then
@@ -225,10 +228,11 @@ function X:Think(bot)
 		return;
 	end
 	
-	if ( self:Determine_ShouldIPushLane(bot, EnemyHeroes, EnemyTowers, EnemyCreeps, AllyCreeps) ) then
+	if ( self:Determine_ShouldIPushLane(bot, EnemyHeroes, EnemyCreeps, AllyCreeps) ) then
 		self:DoPushLane(bot);
 		return;
 	end
+	bot.ShouldPush = false
 	
 	if ( self:Determine_ShouldIDefendLane(bot, EnemyHeroes, AllyHeroes, AllyTowers, EnemyCreeps, AllyCreeps) ) then
 		self:DoDefendLane(bot);
@@ -274,6 +278,7 @@ end
 -------------------------------------------------------------------------------
 
 function X:DoWhileDead(bot)
+	self:MoveItemsFromStashToInventory(bot);
 	local bb = self:ConsiderBuyback(bot);
 	if (bb) then
 		bot:Action_Buyback();
@@ -304,8 +309,87 @@ function X:ConsiderItemUse()
 	end
 end
 
-function X:Determine_AmISafe(bot, eHeroes, eTowers, eCreeps)
-	return true;
+function X:Determine_AmISafe(bot)	
+	if bot:GetHealth()/bot:GetMaxHealth() > 0.9 and bot:GetMana()/bot:GetMaxMana() > 0.9 then
+		bot.IsRetreating = false;
+		return 0;
+	end
+	
+	if bot:GetHealth()/bot:GetMaxHealth() > 0.65 and bot:GetMana()/bot:GetMaxMana() > 0.6 and GetUnitToLocationDistance(bot, GetLocationAlongLane(bot.CurLane, 0)) > 6000 then
+		bot.IsRetreating = false;
+		return 0;
+	end
+	
+	if bot:GetHealth()/bot:GetMaxHealth() > 0.8 and bot:GetMana()/bot:GetMaxMana() > 0.36 and GetUnitToLocationDistance(bot, GetLocationAlongLane(bot.CurLane, 0)) > 6000 then
+		bot.IsRetreating = false;
+		return 0;
+	end
+	
+	if bot.IsRetreating ~= nil and bot.IsRetreating == true then
+		return 1;
+	end
+	
+	local Enemies = bot:GetNearbyHeroes(1500, true, BOT_MODE_NONE);
+	local Allies = bot:GetNearbyHeroes(1500, false, BOT_MODE_NONE);
+	local Towers = bot:GetNearbyTowers(900, true);
+	
+	if utils.IsTowerAttackingMe() then
+		return 2
+	end
+	if utils.IsCreepAttackingMe() then
+		return 3
+	end
+	
+	local nEn = 0;
+	if Enemies ~= nil then
+		nEn = #Enemies;
+	end
+	
+	local nAl = 0;
+
+	if Allies ~= nil then
+		for _,ally in pairs(Allies) do
+			if utils.NotNilOrDead(ally) then
+				nAl = nAl + 1;
+			end
+		end
+	end
+	
+	local nTo = 0;
+	if Towers ~= nil then
+		nTo = #Towers;
+	end
+	
+	if (bot:GetHealth() < (bot:GetMaxHealth()*0.17*(nEn-nAl+1) + nTo*110)) or ((bot:GetHealth()/bot:GetMaxHealth()) < 0.33) or (bot:GetMana()/bot:GetMaxMana() < 0.07 and self:getPrevAction() == ACTION_LANING) then
+		bot.IsRetreating = true;
+		return 1;
+	end
+	
+	if Allies == nil or #Allies < 2 then
+		local MaxStun = 0;
+		
+		for _,enemy in pairs(Enemies) do
+			if utils.NotNilOrDead(enemy) and enemy:GetHealth()/enemy:GetMaxHealth()>0.4 then
+				MaxStun = Max(MaxStun, Max(enemy:GetStunDuration(true) , enemy:GetSlowDuration(true)/1.5) );
+			end
+		end
+	
+		local enemyDamage=0;
+		for _,enemy in pairs(Enemies) do
+			if utils.NotNilOrDead(enemy) and enemy:GetHealth()/enemy:GetMaxHealth() > 0.4 then
+				local damage = enemy:GetEstimatedDamageToTarget(true, bot, MaxStun, DAMAGE_TYPE_ALL);
+				enemyDamage = enemyDamage + damage;
+			end
+		end
+		
+		if 0.6*enemyDamage > bot:GetHealth() then
+			bot.IsRetreating = true;
+			return 1;
+		end
+	end
+	
+	bot.IsRetreating = false;
+	return 0;
 end
 
 function X:Determine_AmIFighting(bot, EnemyHeroes, AllyHeroes)
@@ -316,8 +400,31 @@ function X:Determine_DoAlliesNeedHelp(bot, EnemyHeroes, AllyHeroes)
 	return false;
 end
 
-function X:Determine_ShouldIPushLane(bot, EnemyHeroes, EnemyTowers, EnemyCreeps, AllyCreeps)
-	return false;
+function X:Determine_ShouldIPushLane(bot, EnemyHeroes, EnemyCreeps, AllyCreeps)
+	local EnemyTowers = bot:GetNearbyTowers(900, true)
+	if EnemyTowers == nil or #EnemyTowers == 0 then 
+		return false 
+	end
+		
+	if #AllyCreeps >= #EnemyCreeps and #EnemyHeroes == 0 then
+		local NearAC = 0
+		for _,creep in pairs(AllyCreeps) do
+			if GetUnitToUnitDistance(creep, EnemyTowers[1]) < 800 then
+				NearAC = NearAC + 1
+			end
+		end
+		
+		if NearAC > 0 then
+			--print(utils.GetHeroName(bot), " :: Pushing Tower")
+			return true
+		end
+	end
+	
+	if ( EnemyTowers[1]:GetHealth() / EnemyTowers[1]:GetMaxHealth() ) < 0.1 then
+		print(utils.GetHeroName(bot), " :: Attacking Tower b/c it is almost dead")
+		return true
+	end
+	return false
 end
 
 function X:Determine_ShouldIDefendLane(bot, EnemyHeroes, AllyHeroes, AllyTowers, EnemyCreeps, AllyCreeps)
@@ -359,8 +466,78 @@ function X:Determine_WhereToMove(bot)
 	return loc;
 end
 
-function X:DoRetreat(bot)
-	return;
+function X:DoRetreat(bot, reason)
+	if reason == 1 then
+		if ( self:HasAction(ACTION_RETREAT) == false ) then
+			print(utils.GetHeroName(bot), " STARTING TO RETREAT ")
+			self:AddAction(ACTION_RETREAT)
+			retreat_generic.OnStart(bot)
+		end
+		
+		retreat_generic.Think(bot, self:RetreatAbility())
+	elseif reason == 2 then
+		if ( self:HasAction(ACTION_RETREAT) == false ) then
+			print(utils.GetHeroName(bot), " STARTING TO RETREAT b/c of tower damage")
+			self:AddAction(ACTION_RETREAT)
+		end
+		bot.RetreatLane = bot.CurLane
+		local mypos = bot:GetLocation();
+		if TargetOfRunAwayFromTower == nil then
+			--set the target to go back
+			if ( GetTeam() == TEAM_RADIANT ) then
+				TargetOfRunAwayFromTower = Vector(mypos[1] - 400, mypos[2] - 400);
+			else
+				TargetOfRunAwayFromTower = Vector(mypos[1] + 400, mypos[2] + 400);
+			end
+			
+			local d = GetUnitToLocationDistance(bot, TargetOfRunAwayFromTower);
+			if(d > 200) then
+				bot:Action_MoveToLocation(TargetOfRunAwayFromTower);
+			else
+				self:RemoveAction(ACTION_RETREAT);
+				TargetOfRunAwayFromCreep = nil;
+			end
+			return;
+		else
+			if(GetUnitToLocationDistance(bot, TargetOfRunAwayFromTower) < 100) then
+				-- we are far enough from tower,return to normal state.
+				TargetOfRunAwayFromTower = nil;
+				self:RemoveAction(ACTION_RETREAT);
+			end
+		end
+	elseif reason == 3 then
+		if ( self:HasAction(ACTION_RETREAT) == false ) then
+			print(utils.GetHeroName(bot), " STARTING TO RETREAT b/c of creep damage")
+			self:AddAction(ACTION_RETREAT)
+		end
+		bot.RetreatLane = bot.CurLane
+		local mypos = bot:GetLocation();
+		if TargetOfRunAwayFromCreep == nil then
+			--set the target to go back
+			if ( GetTeam() == TEAM_RADIANT ) then
+				TargetOfRunAwayFromCreep = Vector(mypos[1] - 300, mypos[2] - 300);
+			else
+				TargetOfRunAwayFromCreep = Vector(mypos[1] + 300, mypos[2] + 300);
+			end
+			
+			local d = GetUnitToLocationDistance(bot, TargetOfRunAwayFromCreep);
+			if(d > 200) then
+				bot:Action_MoveToLocation(TargetOfRunAwayFromCreep);
+			else
+				self:RemoveAction(ACTION_RETREAT);
+				TargetOfRunAwayFromCreep = nil;
+			end
+			return;
+		else
+			if(GetUnitToLocationDistance(bot, TargetOfRunAwayFromCreep) < 100) then
+				-- we are far enough from tower,return to normal state.
+				TargetOfRunAwayFromCreep = nil;
+				self:RemoveAction(ACTION_RETREAT);
+			end
+		end
+	else
+		self:RemoveAction(ACTION_RETREAT);
+	end
 end
 
 function X:DoFight(bot)
@@ -372,7 +549,7 @@ function X:DoDefendAlly(bot)
 end
 
 function X:DoPushLane(bot)
-	return;
+	bot.ShouldPush = true
 end
 
 function X:DoDefendLane(bot)
@@ -414,6 +591,14 @@ function X:DoMove(bot, loc)
 		self:AddAction(ACTION_MOVING);
 		bot:Action_AttackMove(loc); -- MoveToLocation is quantized and imprecise
 	end
+end
+
+function X:RetreatAbility()
+	return nil
+end
+
+function X:MoveItemsFromStashToInventory(bot)
+	utils.MoveItemsFromStashToInventory(bot)
 end
 
 return X;

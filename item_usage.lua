@@ -1,3 +1,8 @@
+-------------------------------------------------------------------------------
+--- AUTHOR: Nostrademous
+--- GITHUB REPO: https://github.com/Nostrademous/Dota2-FullOverwrite
+-------------------------------------------------------------------------------
+
 _G._savedEnv = getfenv()
 module( "item_usage", package.seeall )
 

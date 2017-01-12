@@ -1,3 +1,7 @@
+-------------------------------------------------------------------------------
+--- AUTHOR: Nostrademous
+--- GITHUB REPO: https://github.com/Nostrademous/Dota2-FullOverwrite
+-------------------------------------------------------------------------------
 
 require( GetScriptDirectory().."/role" )
 local utils = require( GetScriptDirectory().."/utility")

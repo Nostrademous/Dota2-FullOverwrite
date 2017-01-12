@@ -1,7 +1,6 @@
 -------------------------------------------------------------------------------
 --- AUTHOR: Nostrademous
---- Some Functions have been copy/pasted from bot-scripting community members 
---- Including: PLATINUM_DOTA2, lenlrx
+--- GITHUB REPO: https://github.com/Nostrademous/Dota2-FullOverwrite
 -------------------------------------------------------------------------------
 
 require( GetScriptDirectory().."/constants" )

@@ -1,3 +1,7 @@
+-------------------------------------------------------------------------------
+--- AUTHOR: Nostrademous
+--- GITHUB REPO: https://github.com/Nostrademous/Dota2-FullOverwrite
+-------------------------------------------------------------------------------
 
 This is a full bot over-write implementation. This means that for each hero 
 (eventually all of them, but we start with small sample) we will implement 

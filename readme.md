@@ -106,4 +106,10 @@ Current Files:
 	some of the possibilities of decision_tree function over-loading.
 	
 * other files are in support of bot_<heroName> files
-	
+
+TODOs/FIXMEs:
+Lots - we need fighting logic, rune logic, ward logic, tower attack logic, 
+ally defend logic, tower defend logic, bot 5-man assembly logic, roshan logic, etc.
+We need lots of item_purchasing for heroes and lots more heroes.
+
+Some FIXMEs are commented in code - I add them as a tag to get back to with ideas.

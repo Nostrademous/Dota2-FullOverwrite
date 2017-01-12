@@ -3,6 +3,7 @@
 --- GITHUB REPO: https://github.com/Nostrademous/Dota2-FullOverwrite
 -------------------------------------------------------------------------------
 
+require( GetScriptDirectory().."/constants" )
 local utils = require( GetScriptDirectory().."/utility" )
 local dt = require( GetScriptDirectory().."/decision_tree" )
 
@@ -27,8 +28,7 @@ local AntimageAbilityPriority = {
     SKILL_E,    SKILL_R,    ABILITY6, 	ABILITY8
 };
 
-ACTION_NONE			= "ACTION_NONE";
-local antimageActionQueue = { [1] = ACTION_NONE }
+local antimageActionQueue = { [1] = constants.ACTION_NONE }
 
 AMBot = dt:new()
 
@@ -39,12 +39,12 @@ function AMBot:new(o)
 	return o
 end
 
-AMBot = AMBot:new{prevTime = -997.0, actionQueue = antimageActionQueue, abilityPriority = AntimageAbilityPriority}
+amBot = AMBot:new{prevTime = -997.0, actionQueue = antimageActionQueue, abilityPriority = AntimageAbilityPriority}
 --AMBot:printInfo();
 
-AMBot.Init = false;
+amBot.Init = false;
 
-function AMBot:RetreatAbility()
+function amBot:RetreatAbility()
 	local npcBot = GetBot()
 	
 	local blink = npcBot:GetAbilityByName("antimage_blink")
@@ -57,5 +57,5 @@ end
 function Think()
     local npcBot = GetBot();
 	
-	AMBot:Think(npcBot);
+	amBot:Think(npcBot);
 end

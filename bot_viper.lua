@@ -3,6 +3,7 @@
 --- GITHUB REPO: https://github.com/Nostrademous/Dota2-FullOverwrite
 -------------------------------------------------------------------------------
 
+require( GetScriptDirectory().."/constants" )
 local utils = require( GetScriptDirectory().."/utility" )
 local dt = require( GetScriptDirectory().."/decision_tree" )
 
@@ -27,8 +28,7 @@ local ViperAbilityPriority = {
     SKILL_E,    SKILL_R,    ABILITY6, 	ABILITY8
 };
 
-ACTION_NONE			= "ACTION_NONE";
-local viperActionQueue = { [1] = ACTION_NONE }
+local viperActionQueue = { [1] = constants.ACTION_NONE }
 
 ViperBot = dt:new()
 

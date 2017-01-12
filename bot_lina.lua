@@ -3,6 +3,7 @@
 --- GITHUB REPO: https://github.com/Nostrademous/Dota2-FullOverwrite
 -------------------------------------------------------------------------------
 
+require( GetScriptDirectory().."/constants" )
 local utils = require( GetScriptDirectory().."/utility" )
 local dt = require( GetScriptDirectory().."/decision_tree" )
 require ( GetScriptDirectory().."/ability_usage_lina" )
@@ -28,8 +29,7 @@ local LinaAbilityPriority = {
     LINA_SKILL_W,    LINA_SKILL_R,    LINA_ABILITY5,   LINA_ABILITY7
 };
 
-ACTION_NONE			= "ACTION_NONE";
-local linaActionQueue = { [1] = ACTION_NONE }
+local linaActionQueue = { [1] = constants.ACTION_NONE }
 
 LinaBot = dt:new()
 

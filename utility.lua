@@ -11,15 +11,10 @@ U.creeps = nil
 U.Lanes={[1]=LANE_BOT,[2]=LANE_MID,[3]=LANE_TOP};
 
 U.Locations = {
-["TopRune"]= Vector(-1767,1233),
-["BotRune"]= Vector(2597,-2014),
-["Rosh"]= Vector(-2328,1765),
 ["RadiantShop"]= Vector(-4739,1263),
 ["DireShop"]= Vector(4559,-1554),
 ["BotShop"]= Vector(7253,-4128),
 ["TopShop"]= Vector(-7236,4444),
-["DireAncient"]= Vector(5517,4981),
-["RadiantAncient"]= Vector(-5860,-5328),
 
 ["RadiantBase"]= Vector(-7200,-6666),
 ["RBT1"]= Vector(4896,-6140),
@@ -33,8 +28,6 @@ U.Locations = {
 ["RTT3"]= Vector(-6591,-3397),
 ["RadiantTopShrine"]= Vector(-4229,1299),
 ["RadiantBotShrine"]= Vector(622,-2555),
-["RadiantBotRune"]= Vector(1276,-4129),
-["RadiantTopRune"]= Vector(-4351,200),
 
 ["DireBase"]= Vector(7137,6548),
 ["DBT1"]= Vector(6215,-1639),
@@ -48,28 +41,140 @@ U.Locations = {
 ["DTT3"]= Vector(3512,5778),
 ["DireTopShrine"]= Vector(-139,2533),
 ["DireBotShrine"]= Vector(4173,-1613),
-["DireBotRune"]= Vector(3471,295),
-["DireTopRune"]= Vector(-2821,4147),
-
-["RadiantEasyAndMedium"]={
-Vector(3197,-4647),
-Vector(680,-4420),
-Vector(-1728,-3928)
-},
-["RadiantHard"]={
-Vector(-780,-3291),
-Vector(4527,-4259)
-},
-["DireEasyAndMedium"]={
-Vector(-3082,5169),
-Vector(-1617,4056),
-Vector(1061,3489)
-},
-["DireHard"]={
-Vector(-382,3572),
-Vector(-4377,3825)
-}
 };
+
+U["tableNeutralCamps"] = {
+	[constants.TEAM_RADIANT] = {
+		[1] = {
+			[constants.DIFFICULTY] = constants.CAMP_EASY,
+			[constants.VECTOR] = constants.RAD_SAFE_EASY,
+			[constants.STACK_TIME] = constants.RAD_SAFE_EASY_STACKTIME,
+			[constants.PRE_STACK_VECTOR] = constants.RAD_SAFE_EASY_PRESTACK,
+			[constants.STACK_VECTOR] = constants.RAD_SAFE_EASY_STACK
+		},
+		[2] = {
+			[constants.DIFFICULTY] = constants.CAMP_MEDIUM,
+			[constants.VECTOR] = constants.RAD_SAFE_MEDIUM,
+			[constants.STACK_TIME] = constants.RAD_SAFE_MEDIUM_STACKTIME,
+			[constants.PRE_STACK_VECTOR] = constants.RAD_SAFE_MEDIUM_PRESTACK,
+			[constants.STACK_VECTOR] = constants.RAD_SAFE_MEDIUM_STACK
+		},
+		[3] = {
+			[constants.DIFFICULTY] = constants.CAMP_MEDIUM,
+			[constants.VECTOR] = constants.RAD_MID_MEDIUM,
+			[constants.STACK_TIME] = constants.RAD_MID_MEDIUM_STACKTIME,
+			[constants.PRE_STACK_VECTOR] = constants.RAD_MID_MEDIUM_PRESTACK,
+			[constants.STACK_VECTOR] = constants.RAD_MID_MEDIUM_STACK
+		},
+		[4] = {
+			[constants.DIFFICULTY] = constants.CAMP_MEDIUM,
+			[constants.VECTOR] = constants.RAD_OFF_MEDIUM,
+			[constants.STACK_TIME] = constants.RAD_OFF_MEDIUM_STACKTIME,
+			[constants.PRE_STACK_VECTOR] = constants.RAD_OFF_MEDIUM_PRESTACK,
+			[constants.STACK_VECTOR] = constants.RAD_OFF_MEDIUM_STACK
+		},
+		[5] = {
+			[constants.DIFFICULTY] = constants.CAMP_HARD,
+			[constants.VECTOR] = constants.RAD_OFF_HARD,
+			[constants.STACK_TIME] = constants.RAD_OFF_HARD_STACKTIME,
+			[constants.PRE_STACK_VECTOR] = constants.RAD_OFF_HARD_PRESTACK,
+			[constants.STACK_VECTOR] = constants.RAD_OFF_HARD_STACK
+		},
+		[6] = {
+			[constants.DIFFICULTY] = constants.CAMP_HARD,
+			[constants.VECTOR] = constants.RAD_MID_HARD,
+			[constants.STACK_TIME] = constants.RAD_MID_HARD_STACKTIME,
+			[constants.PRE_STACK_VECTOR] = constants.RAD_MID_HARD_PRESTACK,
+			[constants.STACK_VECTOR] = constants.RAD_MID_HARD_STACK
+		},
+		[7] = {
+			[constants.DIFFICULTY] = constants.CAMP_HARD,
+			[constants.VECTOR] = constants.RAD_SAFE_HARD,
+			[constants.STACK_TIME] = constants.RAD_SAFE_HARD_STACKTIME,
+			[constants.PRE_STACK_VECTOR] = constants.RAD_SAFE_HARD_PRESTACK,
+			[constants.STACK_VECTOR] = constants.RAD_SAFE_HARD_STACK
+		},
+		[8] = {
+			[constants.DIFFICULTY] = constants.CAMP_ANCIENT,
+			[constants.VECTOR] = constants.RAD_MID_ANCIENT,
+			[constants.STACK_TIME] = constants.RAD_MID_ANCIENT_STACKTIME,
+			[constants.PRE_STACK_VECTOR] = constants.RAD_MID_ANCIENT_PRESTACK,
+			[constants.STACK_VECTOR] = constants.RAD_MID_ANCIENT_STACK
+		},
+		[9] = {
+			[constants.DIFFICULTY] = constants.CAMP_ANCIENT,
+			[constants.VECTOR] = constants.RAD_OFF_ANCIENT,
+			[constants.STACK_TIME] = constants.RAD_OFF_ANCIENT_STACKTIME,
+			[constants.PRE_STACK_VECTOR] = constants.RAD_OFF_ANCIENT_PRESTACK,
+			[constants.STACK_VECTOR] = constants.RAD_OFF_ANCIENT_STACK
+		}
+	},
+	[constants.TEAM_DIRE] = {
+		[1] = {
+			[constants.DIFFICULTY] = constants.CAMP_EASY,
+			[constants.VECTOR] = constants.DIRE_SAFE_EASY,
+			[constants.STACK_TIME] = constants.DIRE_SAFE_EASY_STACKTIME,
+			[constants.PRE_STACK_VECTOR] = constants.DIRE_SAFE_EASY_PRESTACK,
+			[constants.STACK_VECTOR] = constants.DIRE_SAFE_EASY_STACK
+		},
+		[2] = {
+			[constants.DIFFICULTY] = constants.CAMP_MEDIUM,
+			[constants.VECTOR] = constants.DIRE_SAFE_MEDIUM,
+			[constants.STACK_TIME] = constants.DIRE_SAFE_MEDIUM_STACKTIME,
+			[constants.PRE_STACK_VECTOR] = constants.DIRE_SAFE_MEDIUM_PRESTACK,
+			[constants.STACK_VECTOR] = constants.DIRE_SAFE_MEDIUM_STACK
+		},
+		[3] = {
+			[constants.DIFFICULTY] = constants.CAMP_MEDIUM,
+			[constants.VECTOR] = constants.DIRE_MID_MEDIUM,
+			[constants.STACK_TIME] = constants.DIRE_MID_MEDIUM_STACKTIME,
+			[constants.PRE_STACK_VECTOR] = constants.DIRE_MID_MEDIUM_PRESTACK,
+			[constants.STACK_VECTOR] = constants.DIRE_MID_MEDIUM_STACK
+		},
+		[4] = {
+			[constants.DIFFICULTY] = constants.CAMP_MEDIUM,
+			[constants.VECTOR] = constants.DIRE_OFF_MEDIUM,
+			[constants.STACK_TIME] = constants.DIRE_OFF_MEDIUM_STACKTIME,
+			[constants.PRE_STACK_VECTOR] = constants.DIRE_OFF_MEDIUM_PRESTACK,
+			[constants.STACK_VECTOR] = constants.DIRE_OFF_MEDIUM_STACK
+		},
+		[5] = {
+			[constants.DIFFICULTY] = constants.CAMP_HARD,
+			[constants.VECTOR] = constants.DIRE_OFF_HARD,
+			[constants.STACK_TIME] = constants.DIRE_OFF_HARD_STACKTIME,
+			[constants.PRE_STACK_VECTOR] = constants.DIRE_OFF_HARD_PRESTACK,
+			[constants.STACK_VECTOR] = constants.DIRE_OFF_HARD_STACK
+		},
+		[6] = {
+			[constants.DIFFICULTY] = constants.CAMP_HARD,
+			[constants.VECTOR] = constants.DIRE_MID_HARD,
+			[constants.STACK_TIME] = constants.DIRE_MID_HARD_STACKTIME,
+			[constants.PRE_STACK_VECTOR] = constants.DIRE_MID_HARD_PRESTACK,
+			[constants.STACK_VECTOR] = constants.DIRE_MID_HARD_STACK
+		},
+		[7] = {
+			[constants.DIFFICULTY] = constants.CAMP_HARD,
+			[constants.VECTOR] = constants.DIRE_SAFE_HARD,
+			[constants.STACK_TIME] = constants.DIRE_SAFE_HARD_STACKTIME,
+			[constants.PRE_STACK_VECTOR] = constants.DIRE_SAFE_HARD_PRESTACK,
+			[constants.STACK_VECTOR] = constants.DIRE_SAFE_HARD_STACK
+		},
+		[8] = {
+			[constants.DIFFICULTY] = constants.CAMP_ANCIENT,
+			[constants.VECTOR] = constants.DIRE_MID_ANCIENT,
+			[constants.STACK_TIME] = constants.DIRE_MID_ANCIENT_STACKTIME,
+			[constants.PRE_STACK_VECTOR] = constants.DIRE_MID_ANCIENT_PRESTACK,
+			[constants.STACK_VECTOR] = constants.DIRE_MID_ANCIENT_STACK
+		},
+		[9] = {
+			[constants.DIFFICULTY] = constants.CAMP_ANCIENT,
+			[constants.VECTOR] = constants.DIRE_OFF_ANCIENT,
+			[constants.STACK_TIME] = constants.DIRE_OFF_ANCIENT_STACKTIME,
+			[constants.PRE_STACK_VECTOR] = constants.DIRE_OFF_ANCIENT_PRESTACK,
+			[constants.STACK_VECTOR] = constants.DIRE_OFF_ANCIENT_STACK
+		}
+	}
+}
 
 U.SIDE_SHOP_TOP = Vector(-7220,4430);
 U.SIDE_SHOP_BOT = Vector(7249,-4113);
@@ -189,6 +294,82 @@ function U.GetTowerLocation(side, lane, n) --0 radiant 1 dire
 		end
 	end
 	return nil;
+end
+
+local function spairs(t, order)
+    -- collect the keys
+    local keys = {}
+    for k in pairs(t) do keys[#keys+1] = k end
+
+    -- if order function given, sort by it by passing the table and keys a, b,
+    -- otherwise just sort the keys 
+    if order then
+        table.sort(keys, function(a,b) return order(t, a, b) end)
+    else
+        table.sort(keys)
+    end
+
+    -- return the iterator function
+    local i = 0
+    return function()
+        i = i + 1
+        if keys[i] then
+            return keys[i], t[keys[i]]
+        end
+    end
+end
+
+function U.DistanceToNeutrals(hUnit, largestCampType)
+    local camps = {}
+    local sCamps = {}
+    for i,v in ipairs(U["tableNeutralCamps"][CAMP_EASY]) do
+        camps[GetUnitToLocationDistance( hUnit, v )] = v
+    end
+    if largestCampType == CAMP_EASY then
+        for k,v in spairs(HighScore, function(t,a,b) return t[b] < t[a] end) do
+            sCamps[k] = v
+        end
+        return camps
+    end
+    for i,v in ipairs(U["tableNeutralCamps"][CAMP_MEDIUM]) do
+        camps[GetUnitToLocationDistance( hUnit, v )] = v
+    end
+    if largestCampType == CAMP_MEDIUM then
+        for k,v in spairs(HighScore, function(t,a,b) return t[b] < t[a] end) do
+            sCamps[k] = v
+        end
+    return camps
+    end
+    for i,v in ipairs(U["tableNeutralCamps"][CAMP_HARD]) do
+        camps[GetUnitToLocationDistance( hUnit, v )] = v
+    end
+    if largestCampType == CAMP_HARD then
+        for k,v in spairs(HighScore, function(t,a,b) return t[b] < t[a] end) do
+            sCamps[k] = v
+        end
+        return camps
+    end
+    for i,v in ipairs(U["tableNeutralCamps"][CAMP_ANCIENT]) do
+        camps[GetUnitToLocationDistance( hUnit, v )] = v
+    end
+
+    for k,v in spairs(HighScore, function(t,a,b) return t[b] < t[a] end) do
+        sCamps[k] = v
+    end
+    return camps
+end
+
+function U.NearestNeutralCamp( hUnit, tCamps )
+    local closestDistance = 1000000;
+    local closestCamp;
+    for k,v in ipairs(tCamps) do
+        if v ~= nil and GetUnitToLocationDistance( hUnit, v[consants.VECTOR] ) < closestDistance then
+            closestDistance = GetUnitToLocationDistance( hUnit, v[consants.VECTOR] )
+            closestCamp = v
+            --print(closestCamp..":"..closestDistance)
+        end
+    end
+    return closestCamp
 end
 
 function U.GetDistance(s, t)

@@ -255,7 +255,7 @@ function X:Think(bot)
 	
 	if ( self:Determine_ShouldGetRune(bot) ) then
 		self:DoGetRune(bot);
-		return;
+		--return; FIXME: Once we path to runes, this should be uncommented
 	end
 	
 	if ( self:Determine_ShouldWard(bot) ) then
@@ -448,7 +448,7 @@ function X:Determine_ShouldTeamRoshan(bot, EnemyHeroes, EnemyTowers)
 end
 
 function X:Determine_ShouldGetRune(bot)
-	return false;
+	return true; -- FIXME: write code to path to rune spot
 end
 
 function X:Determine_ShouldWard(bot)
@@ -601,8 +601,33 @@ function X:DoRoshan(bot)
 	return;
 end
 
-function X:DoGetRune(bot)
-	return;
+function X:DoGetRune(npcBot)
+	-- grab a rune if we walk by it
+	if (GetUnitToLocationDistance( npcBot , constants.RAD_BOUNTY_RUNE_SAFE) < 450 and
+		GetRuneStatus( RUNE_BOUNTY_1 ) == RUNE_STATUS_AVAILABLE )
+	then   
+    	npcBot:Action_PickUpRune(RUNE_BOUNTY_1);
+    elseif (GetUnitToLocationDistance( npcBot , constants.RAD_BOUNTY_RUNE_OFF) < 450 and
+		GetRuneStatus( RUNE_BOUNTY_2 ) == RUNE_STATUS_AVAILABLE )
+	then   
+    	npcBot:Action_PickUpRune(RUNE_BOUNTY_2);
+	elseif (GetUnitToLocationDistance( npcBot , constants.DIRE_BOUNTY_RUNE_SAFE) < 450 and
+		GetRuneStatus( RUNE_BOUNTY_3 ) == RUNE_STATUS_AVAILABLE )
+	then   
+    	npcBot:Action_PickUpRune(RUNE_BOUNTY_3);
+	elseif (GetUnitToLocationDistance( npcBot , constants.DIRE_BOUNTY_RUNE_OFF) < 450 and
+		GetRuneStatus( RUNE_BOUNTY_4 ) == RUNE_STATUS_AVAILABLE )
+	then    
+    	npcBot:Action_PickUpRune(RUNE_BOUNTY_4);
+    elseif (GetUnitToLocationDistance( npcBot , constants.POWERUP_RUNE_TOP) < 450 and
+		GetRuneStatus( RUNE_POWERUP_1 ) == RUNE_STATUS_AVAILABLE )
+	then    
+    	npcBot:Action_PickUpRune(RUNE_POWERUP_1);
+    elseif (GetUnitToLocationDistance( npcBot , constants.POWERUP_RUNE_BOT) < 450 and
+		GetRuneStatus( RUNE_POWERUP_2 ) == RUNE_STATUS_AVAILABLE )
+	then    
+    	npcBot:Action_PickUpRune(RUNE_POWERUP_2);
+    end
 end
 
 function X:DoWard(bot)

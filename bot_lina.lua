@@ -62,6 +62,7 @@ local IsRetreating = false
 local IsInLane = false
 local BackTimerGen = -1000
 local LastCourierThink = -1000.0
+local TargetOfRunAwayFromCreepOrTower = nil
 
 function LoadUpdates(npcBot)
 	npcBot.LaningState = LaningState
@@ -75,6 +76,7 @@ function LoadUpdates(npcBot)
 	npcBot.IsInLane = IsInLane
 	npcBot.BackTimerGen = BackTimerGen
 	npcBot.LastCourierThink = LastCourierThink
+	npcBot.TargetOfRunAwayFromCreepOrTower = TargetOfRunAwayFromCreepOrTower
 end
 
 function SaveUpdates(npcBot)
@@ -89,6 +91,7 @@ function SaveUpdates(npcBot)
 	IsInLane = npcBot.IsInLane
 	BackTimerGen = npcBot.BackTimerGen
 	LastCourierThink = npcBot.LastCourierThink
+	TargetOfRunAwayFromCreepOrTower = npcBot.TargetOfRunAwayFromCreepOrTower
 end
 
 function PrintUpdate()

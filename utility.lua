@@ -423,6 +423,8 @@ function U.IsInLane()
 	else
 		npcBot.IsInLane = true
 	end
+	
+	return npcBot.IsInLane, npcBot.RetreatLane
 end
 
 function U.IsFacingLocation(hero, loc, delta)

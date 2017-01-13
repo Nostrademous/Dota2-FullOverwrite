@@ -446,7 +446,7 @@ local function GetBackGen(npcBot)
 		return true;
 	end
 	
-	if EnemyDamage > npcBot:GetHealth() and npcBot:TimeSinceDamagedByAnyHero()<2 then
+	if EnemyDamage > npcBot:GetHealth() and utils.IsAnyHeroAttackingMe(2.0) then
 		npcBot.BackTimerGen = DotaTime();
 		return true;
 	end
@@ -478,8 +478,8 @@ end
 
 local function StayBack(npcBot)	
 	local LaneFront = GetLaneFrontAmount(GetTeam(), npcBot.CurLane, true);
-	-- FIXME: we need to Min or Max depending on Team the LaneFrontAmount() with furthest standign tower
-	local LaneEnemyFront = GetLaneFrontAmount(GetTeam(), npcBot.CurLane, false);
+	-- FIXME: we need to Min or Max depending on Team the LaneFrontAmount() with furthest standing tower
+	local LaneEnemyFront = 1.0 - GetLaneFrontAmount(utils.GetOtherTeam(), npcBot.CurLane, false);
 	
 	local BackPos = GetLocationAlongLane(npcBot.CurLane,Min(LaneFront-0.05,LaneEnemyFront-0.05)) + RandomVector(200);
 	npcBot:Action_MoveToLocation(BackPos);

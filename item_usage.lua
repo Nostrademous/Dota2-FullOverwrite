@@ -64,7 +64,7 @@ function UseItems()
 	local faerie = utils.IsItemAvailable("item_faerie_fire");
     if faerie ~= nil then
 		if (npcBot:GetHealth()/npcBot:GetMaxHealth()) < 0.15 and (utils.IsTowerAttackingMe(2.0) or utils.IsAnyHeroAttackingMe(1.0)) then
-			npcBot:Action_UseAbilityOnEntity(faerie, npcBot);
+			npcBot:Action_UseAbility(faerie);
 			return nil;
 		end
 	end

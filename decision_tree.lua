@@ -255,7 +255,7 @@ function X:Think(bot)
 	
 	if ( self:Determine_ShouldGetRune(bot) ) then
 		self:DoGetRune(bot);
-		--return; FIXME: Once we path to runes, this should be uncommented
+		return;
 	end
 	
 	if ( self:Determine_ShouldWard(bot) ) then
@@ -448,7 +448,7 @@ function X:Determine_ShouldTeamRoshan(bot, EnemyHeroes, EnemyTowers)
 end
 
 function X:Determine_ShouldGetRune(bot)
-	return true; -- FIXME: write code to path to rune spot
+	return false; -- FIXME: write code to path to rune spots on proper timings
 end
 
 function X:Determine_ShouldWard(bot)

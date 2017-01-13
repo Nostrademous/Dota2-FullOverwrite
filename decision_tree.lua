@@ -185,7 +185,7 @@ function X:Think(bot)
 	end
 	
 	--AM I CHANNELING AN ABILITY/ITEM (i.e. TP Scroll, Ultimate, etc.)
-	if ( bot:IsUsingAbility() ) then
+	if ( bot:IsUsingAbility() or bot:IsChanneling() ) then
 		self:DoWhileChanneling(bot);
 		return;
 	end

@@ -174,7 +174,6 @@ function X:Think(bot)
 	end
 	--]]
 	
-	
 	-- NOW DECISIONS THAT MODIFY MY ACTION STATES
 	---]]
 		
@@ -556,6 +555,25 @@ end
 
 function X:DoPushLane(bot)
 	bot.ShouldPush = true
+	
+	local Towers = bot:GetNearbyTowers(750,true);
+	if Towers==nil or #Towers==0 then
+		return;
+	end
+	
+	local tower=Towers[1];
+	if tower == nil or (not tower:IsAlive()) then
+		return;
+	end
+		
+	if tower ~= nil then
+		if GetUnitToUnitDistance(tower, bot) < bot:GetAttackRange() then
+			bot:Action_AttackUnit(tower, false);
+		else
+			bot:Action_MoveToLocation(tower:GetLocation());
+		end
+		return;
+	end
 end
 
 function X:DoDefendLane(bot)

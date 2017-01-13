@@ -360,19 +360,43 @@ function U.MoveSafelyToLocation(npcBot, dest)
 	npcBot:Action_MoveToLocation(safeSpots[newT]);
 end
 
-function U.IsTowerAttackingMe()
+function U.IsHeroAttackingMe(hero, fTime)
+	if (hero == nil) or (not hero:IsAlive()) then return false end
+	
+	local fTime = fTime or 2.0
 	local npcBot = GetBot()
 	
-	if npcBot:WasRecentlyDamagedByTower(2.0) then
+	if npcBot:WasRecentlyDamagedByAnyHero(hero, fTime) then
 		return true
 	end
 	return false
 end
 
-function U.IsCreepAttackingMe()
+function U.IsAnyHeroAttackingMe(fTime)
+	local fTime = fTime or 2.0
 	local npcBot = GetBot()
 	
-	if npcBot:WasRecentlyDamagedByCreep(2.0) then
+	if npcBot:WasRecentlyDamagedByAnyHero(fTime) then
+		return true
+	end
+	return false
+end
+
+function U.IsTowerAttackingMe(fTime)
+	local fTime = fTime or 2.0
+	local npcBot = GetBot()
+	
+	if npcBot:WasRecentlyDamagedByTower(fTime) then
+		return true
+	end
+	return false
+end
+
+function U.IsCreepAttackingMe(fTime)
+	local fTime = fTime or 2.0
+	local npcBot = GetBot()
+	
+	if npcBot:WasRecentlyDamagedByCreep(fTime) then
 		return true
 	end
 	return false

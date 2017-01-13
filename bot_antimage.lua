@@ -4,6 +4,8 @@
 -------------------------------------------------------------------------------
 
 require( GetScriptDirectory().."/constants" )
+require( GetScriptDirectory().."/item_purchase_antimage" )
+require ( GetScriptDirectory().."/ability_usage_antimage" )
 local utils = require( GetScriptDirectory().."/utility" )
 local dt = require( GetScriptDirectory().."/decision_tree" )
 
@@ -54,8 +56,55 @@ function amBot:RetreatAbility()
 	return nil
 end
 
+function amBot:ConsiderAbilityUse()
+	ability_usage_antimage.AbilityUsageThink()
+end
+
+local LaningState = 0
+local LanePos = nil
+local CurLane = nil
+local MoveThreshold = 1.0
+local DamageThreshold = 1.0
+local ShouldPush = false
+local IsCore = nil
+local Role = nil
+local IsRetreating = false
+local IsInLane = false
+local BackTimerGen = -1000
+
+function LoadUpdates(npcBot)
+	npcBot.LaningState = LaningState
+	npcBot.LanePos = LanePos
+	npcBot.CurLane = CurLane
+	npcBot.MoveThreshold = MoveThreshold
+	npcBot.DamageThreshold = DamageThreshold
+	npcBot.ShouldPush = ShouldPush
+	npcBot.IsCore = IsCore
+	npcBot.Role = Role
+	npcBot.IsRetreating = IsRetreating
+	npcBot.IsInLane = IsInLane
+	npcBot.BackTimerGen = BackTimerGen
+end
+
+function SaveUpdates(npcBot)
+	LaningState = npcBot.LaningState
+	LanePos = npcBot.LanePos
+	CurLane = npcBot.CurLane
+	MoveThreshold = npcBot.MoveThreshold
+	DamageThreshold = npcBot.DamageThreshold
+	ShouldPush = npcBot.ShouldPush
+	IsCore = npcBot.IsCore
+	Role = npcBot.Role
+	IsRetreating = npcBot.IsRetreating
+	IsInLane = npcBot.IsInLane
+	BackTimerGen = npcBot.BackTimerGen
+end
+
 function Think()
-    local npcBot = GetBot();
+    local npcBot = GetBot()
+	LoadUpdates(npcBot)
 	
-	amBot:Think(npcBot);
+	amBot:Think(npcBot)
+	
+	SaveUpdates(npcBot)
 end

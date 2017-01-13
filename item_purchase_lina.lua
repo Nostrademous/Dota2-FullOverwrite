@@ -101,7 +101,7 @@ function ItemPurchaseThink()
 		return
 	end
 	
-	local pID = npcBot:GetPlayer() - 1;	
+	local pID = npcBot:GetPlayerID() - 1;	
 	local roles = role.GetRoles();
 	
 	local sNextItem = nil

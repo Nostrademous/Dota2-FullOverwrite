@@ -71,18 +71,25 @@ local tableItemsToBuyAsCore = {
 	"item_ring_of_health",
 	"item_boots",
 	"item_gloves",
-	"item_belt_of_strength",
+	"item_belt_of_strength", -- completes Treads
 	"item_void_stone",
 	"item_claymore",
-	"item_broadsword",
+	"item_broadsword", -- completes Battlefury
+	"item_ring_of_health",
+	"item_vitality_booster", -- completes Vanguard
 	"item_blade_of_alacrity",
 	"item_boots_of_elves",
-	"item_recipe_yasha",
+	"item_recipe_yasha", -- completes Yasha
 	"item_ultimate_orb",
-	"item_recipe_manta",
+	"item_recipe_manta", -- completes Manta
 	"item_javelin",
 	"item_belt_of_strength",
-	"item_recipe_basher"
+	"item_recipe_basher", -- completes Basher
+	"item_recipe_abyssal_blade", -- completes Abyssal Blade
+	"item_reaver",
+	"item_vitality_booster",
+	"item_recipe_heart", -- completes Heart
+	"item_relic"
 };
 
 ----------------------------------------------------------------------------------------------------
@@ -97,7 +104,7 @@ function ItemPurchaseThink()
 		return
 	end
 	
-	local pID = npcBot:GetPlayer() - 1;	
+	local pID = npcBot:GetPlayerID() - 1;	
 	local roles = role.GetRoles();
 	
 	local sNextItem = nil

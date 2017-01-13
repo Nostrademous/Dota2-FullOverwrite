@@ -61,6 +61,14 @@ function UseItems()
 		end
 	end
 	
+	local faerie = utils.IsItemAvailable("item_faerie_fire");
+    if faerie ~= nil then
+		if (npcBot:GetHealth()/npcBot:GetMaxHealth()) < 0.15 and (utils.IsTowerAttackingMe(2.0) or utils.IsAnyHeroAttackingMe(1.0)) then
+			npcBot:Action_UseAbilityOnEntity(faerie, npcBot);
+			return nil;
+		end
+	end
+	
 	local arcane = utils.IsItemAvailable("item_arcane_boots");
     if arcane ~= nil then
 		if (npcBot:GetMaxMana() - npcBot:GetMana()) > 160 then
@@ -78,6 +86,26 @@ function UseItems()
 			npcBot:Action_UseAbilityOnLocation(tp, dest);
 		-- FIXME: Sell if we have BoTs and are near a shop
 		--	npcBot:Action_SellItem(tp);
+		end
+	end
+	
+	local tango_shared = utils.IsItemAvailable("item_tango_single");
+    if tango_shared ~= nil then
+		if (npcBot:GetMaxHealth()-npcBot:GetHealth()) > 200 and not npcBot:HasModifier("modifier_tango_heal") then
+			local trees = npcBot:GetNearbyTrees( 165 );
+			if #trees > 0 then
+				npcBot:Action_UseAbilityOnTree(tango, trees[1])
+			end
+		end
+	end
+	
+	local tango = utils.IsItemAvailable("item_tango");
+    if tango ~= nil then
+		if (npcBot:GetMaxHealth()-npcBot:GetHealth()) > 200 and not npcBot:HasModifier("modifier_tango_heal") then
+			local trees = npcBot:GetNearbyTrees( 165 );
+			if #trees > 0 then
+				npcBot:Action_UseAbilityOnTree(tango, trees[1])
+			end
 		end
 	end
 	

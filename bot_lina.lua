@@ -4,9 +4,11 @@
 -------------------------------------------------------------------------------
 
 require( GetScriptDirectory().."/constants" )
+require( GetScriptDirectory().."/item_purchase_lina" )
+require ( GetScriptDirectory().."/ability_usage_lina" )
+
 local utils = require( GetScriptDirectory().."/utility" )
 local dt = require( GetScriptDirectory().."/decision_tree" )
-require ( GetScriptDirectory().."/ability_usage_lina" )
 
 local LINA_SKILL_Q = "lina_dragon_slave";
 local LINA_SKILL_W = "lina_light_strike_array";
@@ -49,8 +51,61 @@ function linaBot:ConsiderAbilityUse()
 	ability_usage_lina.AbilityUsageThink()
 end
 
+local LaningState = 0
+local LanePos = nil
+local CurLane = nil
+local MoveThreshold = 1.0
+local DamageThreshold = 1.0
+local ShouldPush = false
+local IsCore = nil
+local Role = nil
+local IsRetreating = false
+local IsInLane = false
+local BackTimerGen = -1000
+
+function LoadUpdates(npcBot)
+	npcBot.LaningState = LaningState
+	npcBot.LanePos = LanePos
+	npcBot.CurLane = CurLane
+	npcBot.MoveThreshold = MoveThreshold
+	npcBot.DamageThreshold = DamageThreshold
+	npcBot.ShouldPush = ShouldPush
+	npcBot.IsCore = IsCore
+	npcBot.Role = Role
+	npcBot.IsRetreating = IsRetreating
+	npcBot.IsInLane = IsInLane
+	npcBot.BackTimerGen = BackTimerGen
+end
+
+function SaveUpdates(npcBot)
+	LaningState = npcBot.LaningState
+	LanePos = npcBot.LanePos
+	CurLane = npcBot.CurLane
+	MoveThreshold = npcBot.MoveThreshold
+	DamageThreshold = npcBot.DamageThreshold
+	ShouldPush = npcBot.ShouldPush
+	IsCore = npcBot.IsCore
+	Role = npcBot.Role
+	IsRetreating = npcBot.IsRetreating
+	IsInLane = npcBot.IsInLane
+	BackTimerGen = npcBot.BackTimerGen
+end
+
+function PrintUpdate()
+	print(LaningState)
+	print(LanePos)
+	print(CurLane)
+	print(Role)
+	print(IsRetreating)
+	print(BackTimerGen)
+end
+
 function Think()
-    local npcBot = GetBot();
+    local npcBot = GetBot()
+	LoadUpdates(npcBot)
 	
-	linaBot:Think(npcBot);
+	linaBot:Think(npcBot)
+	
+	SaveUpdates(npcBot)
+	--PrintUpdate()
 end

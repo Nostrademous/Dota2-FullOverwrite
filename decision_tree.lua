@@ -490,7 +490,7 @@ function X:DoRetreat(bot, reason)
 			--set the target to go back
 			local bInLane, cLane = utils.IsInLane()
 			if bInLane then
-				bot.TargetOfRunAwayFromCreepOrTower = GetLocationAlongLane(cLane,Max(utils.PositionAlongLane(bot, cLane)-0.05,0.0))
+				bot.TargetOfRunAwayFromCreepOrTower = GetLocationAlongLane(cLane,Max(utils.PositionAlongLane(bot, cLane)-0.04,0.0))
 			elseif ( GetTeam() == TEAM_RADIANT ) then
 				bot.TargetOfRunAwayFromCreepOrTower = Vector(mypos[1] - 400, mypos[2] - 400);
 			else
@@ -525,7 +525,7 @@ function X:DoRetreat(bot, reason)
 			--set the target to go back
 			local bInLane, cLane = utils.IsInLane()
 			if bInLane then
-				bot.TargetOfRunAwayFromCreepOrTower = GetLocationAlongLane(cLane,Max(utils.PositionAlongLane(bot, cLane)-0.03,0.0))
+				bot.TargetOfRunAwayFromCreepOrTower = GetLocationAlongLane(cLane,Max(utils.PositionAlongLane(bot, cLane)-0.015,0.0))
 			elseif ( GetTeam() == TEAM_RADIANT ) then
 				bot.TargetOfRunAwayFromCreepOrTower = Vector(mypos[1] - 400, mypos[2] - 400);
 			else

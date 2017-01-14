@@ -979,41 +979,49 @@ function U.HaveItem(npcBot, item_name)
 		if slot_type == ITEM_SLOT_TYPE_MAIN then
 			return npcBot:GetItemInSlot(slot);
 		elseif slot_type == ITEM_SLOT_TYPE_BACKPACK then
-			print("FIXME: Implement swapping BACKPACK to MAIN INVENTORY of item: ", item_name);
-			return nil;
+			print("FIXME: Implement swapping BACKPACK to MAIN INVENTORY of item: ", item_name)
+			return nil
 		elseif slot_type == ITEM_SLOT_TYPE_STASH then
 			if npcBot:HasModifier("modifier_fountain_aura") then
-				print("FIXME: Implement swapping STASH to MAIN INVENTORY of item: ", item_name);
+				if U.NumberOfItems(bot) < 6 then
+					U.MoveItemsFromStashToInventory(bot)
+					return U.HaveItem(npcBot, item_name)
+				else
+					print("FIXME: Implement swapping STASH to MAIN INVENTORY of item: ", item_name)
+				end
 			end
-			return nil;
+			return nil
 		else
 			print("ERROR: condition should not be hit: ", item_name);
 		end
 	end
 	
-    return nil;
+    return nil
 end
 
 function U.MoveItemsFromStashToInventory(bot)
-	if NumberOfItemsInStash == 0 then return end
+	if U.NumberOfItems(bot) == 6 and U.NumberOfItemsInBackpack(bot) == 3 then return end
+	if U.NumberOfItemsInStash(bot) == 0 then return end
 	
-	local invSpaces = 6 - U.NumberOfItems(bot)
-	for i = 9, 14, 1 do
-		local item = bot:GetItemInSlot(i)
-		if item ~= nil then
-			if invSpaces == 0 then break end
-			bot:Action_SwapItems(i, 6-invSpaces)
-			invSpaces = invSpaces - 1
+	for i = 0, 5, 1 do
+		if bot:GetItemInSlot(i) == nil then
+			for j = 9, 14, 1 do
+				local item = bot:GetItemInSlot(j)
+				if item ~= nil then
+					bot:Action_SwapItems(i, j)
+				end
+			end
 		end
 	end
 	
-	local backSpaces = 3 - U.NumberOfItemsInBackpack(bot)
-	for i = 9, 14, 1 do
-		local item = bot:GetItemInSlot(i)
-		if item ~= nil then
-			if backSpaces == 0 then break end
-			bot:Action_SwapItems(i, 9-backSpaces)
-			backSpaces = backSpaces - 1
+	for i = 6, 8, 1 do
+		if bot:GetItemInSlot(i) == nil then
+			for j = 9, 14, 1 do
+				local item = bot:GetItemInSlot(j)
+				if item ~= nil then
+					bot:Action_SwapItems(i, j)
+				end
+			end
 		end
 	end
 end

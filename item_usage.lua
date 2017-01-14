@@ -60,7 +60,7 @@ function UseItems()
 			end
 		end
 		
-		if (npcBot:GetHealth() ~= npcBot:GetMaxHealth() or npcBot:GetMaxMana() ~= npcBot:GetMana()) and npcBot:HasModifier("modifier_fountain_aura") then
+		if (npcBot:GetHealth() ~= npcBot:GetMaxHealth() and npcBot:GetMaxMana() ~= npcBot:GetMana()) and npcBot:HasModifier("modifier_fountain_aura") then
 			npcBot:Action_UseAbilityOnEntity(bottle, npcBot);
 			return nil
 		end

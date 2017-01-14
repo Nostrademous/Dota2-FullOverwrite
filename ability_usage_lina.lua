@@ -13,7 +13,7 @@ local Abilities =	{
 	"lina_laguna_blade"
 }
 
-local PerformingUltCombo = 0
+local PerformingUltCombo = false
 local comboTarget = nil
 
 function AbilityUsageThink()
@@ -29,48 +29,34 @@ function AbilityUsageThink()
 	abilityLB = npcBot:GetAbilityByName( Abilities[4] );
 	
 	-- do combo
-	if PerformingUltCombo > 0 or ConsiderUltCombo() then
-		if comboTarget == nil and PerformingUltCombo == 0 then 
+	if PerformingUltCombo or ConsiderUltCombo() then
+		if comboTarget == nil and PerformingUltCombo == false then 
 			comboTarget = UseUltCombo() 
 		end
 		
 		if comboTarget ~= nil and comboTarget:IsAlive() then
-			if PerformingUltCombo == 1 and CanCastLightStrikeArrayOnTarget( comboTarget ) then
+			if CanCastLightStrikeArrayOnTarget( comboTarget ) and abilityLSA:IsFullyCastable() then
 				local locDelta = comboTarget:GetExtrapolatedLocation(abilityLSA:GetCastPoint())
 				npcBot:Action_UseAbilityOnLocation( abilityLSA, comboTarget:GetLocation()+locDelta )
 				print ( "Hit them with LSA ..." )
-				PerformingUltCombo = 2
-				return
-			else
-				PerformingUltCombo = 0
-				comboTarget = nil
 				return
 			end
 			
-			if PerformingUltCombo == 2 and CanCastDragonSlaveOnTarget( comboTarget ) then -- and comboTarget:IsStunned() then
+			if CanCastDragonSlaveOnTarget( comboTarget ) and abilityDS:IsFullyCastable() then --and comboTarget:IsStunned() then
 				npcBot:Action_UseAbilityOnLocation( abilityDS, comboTarget:GetLocation() )
 				print ( "And Hit them with DS ..." )
-				PerformingUltCombo = 3
-				return
-			else
-				PerformingUltCombo = 0
-				comboTarget = nil
 				return
 			end
 			
-			if PerformingUltCombo == 3 and CanCastLagunaBladeOnTarget( comboTarget ) then
+			if CanCastLagunaBladeOnTarget( comboTarget ) and abilityLB:IsFullyCastable() then
 				npcBot:Action_UseAbilityOnEntity( abilityLB, comboTarget )
 				print ( "And FINISH THEM with LB!!!!" )
-				PerformingUltCombo = 0
-				comboTarget = nil
-				return
-			else
-				PerformingUltCombo = 0
+				PerformingUltCombo = false
 				comboTarget = nil
 				return
 			end
 		else
-			PerformingUltCombo = 0
+			PerformingUltCombo = false
 			comboTarget = nil
 		end
 	end
@@ -81,23 +67,26 @@ function AbilityUsageThink()
 	if ( #EnemyHeroes == 0 and #EnemyCreeps == 0 ) then return end
 	
 	-- Consider using each ability
-	castLBDesire, castLBTarget = ConsiderLagunaBlade(abilityLB);
-	castLSADesire, castLSALocation = ConsiderLightStrikeArray(abilityLSA);
-	castDSDesire, castDSLocation = ConsiderDragonSlave(abilityDS);
+	castLBDesire, castLBTarget = ConsiderLagunaBlade(abilityLB)
+	castLSADesire, castLSALocation = ConsiderLightStrikeArray(abilityLSA)
+	castDSDesire, castDSLocation = ConsiderDragonSlave(abilityDS)
 
 	if castLBDesire > castLSADesire and castLBDesire > castDSDesire then
-		npcBot:Action_UseAbilityOnEntity( abilityLB, castLBTarget );
-		return;
+		print ( "I Desired a LB Hit" )
+		npcBot:Action_UseAbilityOnEntity( abilityLB, castLBTarget )
+		return
 	end
 
 	if castLSADesire > 0 then
-		npcBot:Action_UseAbilityOnLocation( abilityLSA, castLSALocation );
-		return;
+		print ( "I Desired a LSA Hit" )
+		npcBot:Action_UseAbilityOnLocation( abilityLSA, castLSALocation )
+		return
 	end
 
 	if castDSDesire > 0 then
-		npcBot:Action_UseAbilityOnLocation( abilityDS, castDSLocation );
-		return;
+		print ( "I Desired a DS Hit" )
+		npcBot:Action_UseAbilityOnLocation( abilityDS, castDSLocation )
+		return
 	end
 end
 
@@ -150,17 +139,16 @@ function UseUltCombo()
 	if npcBot:HasScepter() then arDT = DAMAGE_TYPE_PURE end
 	comboDmg = comboDmg + WeakestEnemy:GetActualDamage( ar:GetAbilityDamage(), arDT )
 	
-	if LowestHP < comboDmg then
+	if LowestHP < comboDmg and aw:GetCastRange() > GetUnitToUnitDistance(npcBot, WeakestEnemy) then
 		print( "Lina Comboing for ", WeakestEnemy:GetUnitName() )
-		PerformingUltCombo = 1
+		PerformingUltCombo = true
 		return WeakestEnemy
 	end
+	return nil
 end
 
 function ConsiderUltCombo()
 	local npcBot = GetBot()
-	
-	if PerformingUltCombo > 0 then PerformingUltCombo = 0 end
 	
 	local aq = npcBot:GetAbilityByName(Abilities[1]);
 	local aw = npcBot:GetAbilityByName(Abilities[2]);
@@ -178,7 +166,7 @@ function ConsiderUltCombo()
 		return false
 	end
 	
-	return true;
+	return true
 end
 
 function ConsiderLightStrikeArrayFighting(abilityLSA, enemy)
@@ -247,7 +235,7 @@ function ConsiderLightStrikeArray(abilityLSA)
 		-- FIXME: This logic will fail against Heartstopper Aura or Radiance probably making us LSA all the time
 		--        as we take damage and are below 50% health
 		if npcBot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) and (npcBot:GetHealth()/npcBot:GetMaxHealth()) < 0.5 then
-			if CanCastLightStrikeArrayOnTarget( npcEnemy ) then
+			if CanCastLightStrikeArrayOnTarget( npcEnemy ) and abilityLSA:GetCastRange() > GetUnitToUnitDistance(npcBot, npcEnemy) then
 				local locDelta = npcEnemy:GetExtrapolatedLocation(abilityLSA:GetCastPoint())
 				return BOT_ACTION_DESIRE_MODERATE, npcEnemy:GetLocation() + locDelta;
 			end
@@ -258,7 +246,7 @@ function ConsiderLightStrikeArray(abilityLSA)
 	local npcTarget = npcBot:GetTarget();
 
 	if ( npcTarget ~= nil ) then
-		if ( CanCastLightStrikeArrayOnTarget( npcTarget ) ) then
+		if CanCastLightStrikeArrayOnTarget( npcTarget ) and abilityLSA:GetCastRange() > GetUnitToUnitDistance(npcBot, npcTarget) then
 			local locDelta = npcTarget:GetExtrapolatedLocation(abilityLSA:GetCastPoint())
 			return BOT_ACTION_DESIRE_HIGH, npcTarget:GetLocation() + locDelta
 		end

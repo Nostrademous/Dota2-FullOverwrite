@@ -66,6 +66,11 @@ Current Files:
 	multi-bot over-writes so I made it atomic via locks. I honestly think 
 	that our bots are called by a single thread though and we won't have race 
 	conditions every present.
+
+* global_hero_data.lua - this is a global table that allows for per-hero 
+	persistant storage of variables. It is saved based on the hero's playerID.
+	If a variable is retrieved via getHeroVar(<strNameOfVar>) that does not 
+	exist, nil is returned. 
 	
 * decision_tree.lua - this is a start... there will be lots of things that 
 	need to be fixed here and actually implemented (many place holders). 
@@ -94,6 +99,16 @@ Current Files:
 	limited for now to use of clarity, salve, bottle, TPs, arcane boots (not 
 	efficiently -> doesn't care about allies being in range). Needs to be 
 	largely implemented still.
+
+* generic_item_purchase.lua - this is a generic class for all hero-specific 
+	item purchase files (e.g., item_purchase_lina.lua) that actually does all 
+	the work of buying the item when appropriate. It is named as such to not 
+	interfere with "item_purchase_generic.lua" which if exists in the bots/ 
+	will over-ride all bot purchases that don't have a named file for them 
+	resulting in no items being bought for "ANY" bots that don't have a specific
+	hero-named lua file for item purchasing present. The hero-specific LUA files 
+	now only need to define the appropriate ROLE specific table for item purchase 
+	order (i.e., Mid, HardCarry, Support, etc).
 	
 * bot_<heroName>.lua - three exist for now - Lina, Viper and Antimage. Look, 
 	they are hard-coded implmenetations for now that don't build according 

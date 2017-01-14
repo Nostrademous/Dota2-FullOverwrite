@@ -9,6 +9,7 @@ local enemyData = require( GetScriptDirectory().."/enemy_data" )
 local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
 require( GetScriptDirectory().."/role" )
 require( GetScriptDirectory().."/laning_generic" )
+require( GetScriptDirectory().."/jungling_generic" )
 require( GetScriptDirectory().."/retreat_generic" )
 require( GetScriptDirectory().."/item_usage" )
 
@@ -251,8 +252,8 @@ function X:Think(bot)
 		self:DoRoam(bot);
 		return;
 	end
-	
-	if ( self:Determine_ShouldJungle(bot) ) then
+
+	if ( self:Determine_ShouldJungle(bot) or self:GetAction() == ACTION_JUNGLING ) then
 		self:DoJungle(bot);
 		return;
 	end
@@ -449,7 +450,7 @@ function X:Determine_ShouldRoam(bot)
 end
 
 function X:Determine_ShouldJungle(bot)
-	return false;
+	return bot.Role == ROLE_JUNGLER;
 end
 
 function X:Determine_ShouldTeamRoshan(bot, EnemyHeroes, EnemyTowers)
@@ -465,7 +466,7 @@ function X:Determine_ShouldWard(bot)
 end
 
 function X:Determine_ShouldLane(bot)
-	return true;
+	return bot.role ~= ROLE_JUNGLER;
 end
 
 function X:Determine_WhereToMove(bot)
@@ -603,7 +604,13 @@ function X:DoRoam(bot)
 end
 
 function X:DoJungle(bot)
-	return;
+	if ( self:HasAction(ACTION_JUNGLING) == false ) then
+		print(utils.GetHeroName(bot), " STARTING TO JUNGLE ")
+		self:AddAction(ACTION_JUNGLING);
+		jungling_generic.OnStart(bot);
+	end
+
+	jungling_generic.Think(bot);
 end
 
 function X:DoRoshan(bot)

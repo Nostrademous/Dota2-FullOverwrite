@@ -65,7 +65,8 @@ function UseItems()
 		and not npcBot:HasModifier("modifier_clarity_potion") and not npcBot:HasModifier("modifier_flask_healing") then
 		
 		if Enemies==nil or #Enemies==0 then
-			if (npcBot:GetMaxHealth()-npcBot:GetHealth()) >= 100 and (npcBot:GetMaxMana()-npcBot:GetMana()) >= 60 then
+			if ((npcBot:GetMaxHealth()-npcBot:GetHealth()) >= 100 and (npcBot:GetMaxMana()-npcBot:GetMana()) >= 60) or
+				(npcBot:GetHealth() < 300 or npcBot:GetMana() < 200) then
 				npcBot:Action_UseAbilityOnEntity(bottle, npcBot);
 				return nil
 			end

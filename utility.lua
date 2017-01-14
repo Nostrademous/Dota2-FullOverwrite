@@ -4,6 +4,17 @@
 -------------------------------------------------------------------------------
 
 require( GetScriptDirectory().."/constants" )
+local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
+
+function setHeroVar(var, value)
+	local bot = GetBot()
+	gHeroVar.SetVar(bot:GetPlayerID(), var, value)
+end
+
+function getHeroVar(var)
+	local bot = GetBot()
+	return gHeroVar.GetVar(bot:GetPlayerID(), var)
+end
 
 U = {}
 
@@ -457,8 +468,7 @@ function U.PositionAlongLane(npcBot, lane)
 end
 
 function U.MoveSafelyToLocation(npcBot, dest)
-	if npcBot.NextHop==nil or #(npcBot.NextHop)==0 or npcBot.PathfindingWasInitiated==nil or (not npcBot.PathfindingWasInitiated) then
-		--print(npcBot.NextHop,npcBot.PathfindingWasInitiated);
+	if getHeroVar("NextHop")==nil or #getHeroVar("NextHop")==0 or getHeroVar("PathfindingWasInitiated")==nil or (not getHeroVar("PathfindingWasInitiated")) then
 		U.InitPathFinding(npcBot);
 		npcBot:Action_Chat("Path finding has been initiated", false);
 	end
@@ -476,8 +486,8 @@ function U.MoveSafelyToLocation(npcBot, dest)
 		safeSpots=U.DireSafeSpots;
 	end
 	
-	if npcBot.FinalHop==nil then
-		npcBot.FinalHop=false;
+	if getHeroVar("FinalHop")==nil then
+		setHeroVar("FinalHop", false)
 	end
 	
 	
@@ -489,7 +499,7 @@ function U.MoveSafelyToLocation(npcBot, dest)
 	local ti=-1;
 	local mindisT=100000;
 	
-	local CurLoc=npcBot:GetLocation();
+	local CurLoc = npcBot:GetLocation();
 	
 	for i,spot in pairs(safeSpots) do
 		if U.GetDistance(spot,CurLoc)<mindisS then
@@ -510,32 +520,32 @@ function U.MoveSafelyToLocation(npcBot, dest)
 		return;
 	end
 	
-	if GetUnitToLocationDistance(npcBot,dest)<safeDist or npcBot.FinalHop or mindisS+mindisT>GetUnitToLocationDistance(npcBot,dest) then
-		npcBot:Action_MoveToLocation(dest);
-		npcBot.FinalHop=true;
+	if GetUnitToLocationDistance(npcBot,dest)<safeDist or getHeroVar("FinalHop") or mindisS+mindisT>GetUnitToLocationDistance(npcBot,dest) then
+		npcBot:Action_MoveToLocation(dest)
+		setHeroVar("FinalHop", true)
 		return;
 	end
 	
 	if si==ti then
-		npcBot.FinalHop=true;
-		npcBot:Action_MoveToLocation(dest);
+		setHeroVar("FinalHop", true)
+		npcBot:Action_MoveToLocation(dest)
 		return;
 	end
 	
-	if GetUnitToLocationDistance(npcBot,s)<500 and npcBot.LastHop==nil then
-		npcBot.LastHop=si;
+	if GetUnitToLocationDistance(npcBot,s)<500 and getHeroVar("LastHop")==nil then
+		setHeroVar("LastHop", si)
 	end
 	
-	if mindisS>safeDist or npcBot.LastHop==nil then
+	if mindisS>safeDist or getHeroVar("LastHop")==nil then
 		npcBot:Action_MoveToLocation(s);
 		return;
 	end
 	
-	if GetUnitToLocationDistance(npcBot,safeSpots[npcBot.NextHop[npcBot.LastHop][ti]])<500 then
-		npcBot.LastHop=npcBot.NextHop[npcBot.LastHop][ti];
+	if GetUnitToLocationDistance(npcBot,safeSpots[getHeroVar("NextHop")[getHeroVar("LastHop")][ti]])<500 then
+		setHeroVar("LastHop", getHeroVar("NextHop")[getHeroVar("LastHop")][ti])
 	end
 	
-	local newT=npcBot.NextHop[npcBot.LastHop][ti];
+	local newT = getHeroVar("NextHop")[getHeroVar("LastHop")][ti]
 	
 	npcBot:Action_MoveToLocation(safeSpots[newT]);
 end
@@ -586,26 +596,26 @@ function U.IsInLane()
 	local npcBot = GetBot()
 	
 	local mindis = 10000
-	npcBot.RetreatLane = npcBot.CurLane
-	npcBot.RetreatPos = npcBot.LanePos
+	setHeroVar("RetreatLane", getHeroVar("CurLane"))
+	setHeroVar("RetreatPos", getHeroVar("LanePos"))
 	
 	for i=1,3,1 do
 		local thisl = U.PositionAlongLane(npcBot, U.Lanes[i])
 		local thisdis = U.GetDistance(GetLocationAlongLane(U.Lanes[i], thisl), npcBot:GetLocation())
 		if thisdis < mindis then
-			npcBot.RetreatLane = U.Lanes[i]
-			npcBot.RetreatPos = thisl
+			setHeroVar("RetreatLane", U.Lanes[i])
+			setHeroVar("RetreatPos", thisl)
 			mindis = thisdis
 		end
 	end
 	
 	if mindis > 1500 then
-		npcBot.IsInLane = false
+		setHeroVar("IsInLane", false)
 	else
-		npcBot.IsInLane = true
+		setHeroVar("IsInLane", true)
 	end
 	
-	return npcBot.IsInLane, npcBot.RetreatLane
+	return getHeroVar("IsInLane"), getHeroVar("RetreatLane")
 end
 
 function U.IsFacingLocation(hero, loc, delta)
@@ -807,19 +817,19 @@ function U.LevelUp(bot, AbilityPriority)
 	local ability = bot:GetAbilityByName(AbilityPriority[1]);
 	
 	if ( ability == nil ) then
-		print( " [" .. bot:GetUnitName() .. "] FAILED AT Leveling " .. AbilityPriority[1] );
+		print( " [" .. getHeroVar("Name") .. "] FAILED AT Leveling " .. AbilityPriority[1] );
 		table.remove( AbilityPriority, 1 );
 		return;
 	end
 	
-	print( " [" .. bot:GetUnitName() .. "] Contemplating " .. ability:GetName() .. " " .. ability:GetLevel() .. "/" .. ability:GetMaxLevel() );
+	print( " [" .. getHeroVar("Name") .. "] Contemplating " .. ability:GetName() .. " " .. ability:GetLevel() .. "/" .. ability:GetMaxLevel() );
 	if ( ability:CanAbilityBeUpgraded() ) then
 		print( "Ability Can Be Upgraded" );
 	end
 	
 	if ( ability:CanAbilityBeUpgraded() and ability:GetLevel() < ability:GetMaxLevel() ) then
 		bot:Action_LevelAbility(AbilityPriority[1]);
-		print( " [" .. bot:GetUnitName() .. "] Leveling " .. ability:GetName() );
+		print( " [" .. getHeroVar("Name") .. "] Leveling " .. ability:GetName() );
 		table.remove( AbilityPriority, 1 );
 	end
 end
@@ -827,8 +837,8 @@ end
 function U.InitPathFinding(npcBot)
 
 	-- keeps the path for my pathfinding
-	npcBot.NextHop={};
-	npcBot.PathfindingWasInitiated=false;
+	setHeroVar("NextHop", {})
+	setHeroVar("PathfindingWasInitiated", false)
 	-- creating the graph
 
 	local SafeDist=2000;
@@ -839,17 +849,15 @@ function U.InitPathFinding(npcBot)
 		safeSpots=U.DireSafeSpots;
 	end
 	
-	
 	--initialization
 	local inf=100000;
 	local dist={};
-	npcBot.NextHop={}
 	
 	print("Inits are done");
 	for u,uv in pairs(safeSpots) do
 		local q=true;
 		dist[u]={};
-		npcBot.NextHop[u]={};
+		setHeroVar(getHeroVar("NextHop")[u], {})
 		for v,vv in pairs(safeSpots) do
 			if U.GetDistance(uv,vv)>SafeDist then
 				dist[u][v]=inf;
@@ -857,7 +865,7 @@ function U.InitPathFinding(npcBot)
 				q=false;
 				dist[u][v]=U.GetDistance(uv,vv);
 			end
-			npcBot.NextHop[u][v]=v;
+			setHeroVar(getHeroVar("NextHop")[u][v], v)
 		end
 		if q then
 			print("There is an isolated vertex in safespots");
@@ -870,18 +878,18 @@ function U.InitPathFinding(npcBot)
 			for v,_ in pairs(safeSpots) do
 				if dist[u][v]>dist[u][k]+dist[k][v] then
 					dist[u][v]=dist[u][k]+dist[k][v];
-					npcBot.NextHop[u][v]=npcBot.NextHop[u][k];
+					setHeroVar(getHeroVar("NextHop")[u][v], getHeroVar("NextHop")[u][k])
 				end
 			end
 		end
 	end
 
-	npcBot.PathfindingWasInitiated=true;
+	setHeroVar("PathfindingWasInitiated", true)
 end
 
 function U.InitPath(npcBot)
-	npcBot.FinalHop=false;
-	npcBot.LastHop=nil;
+	setHeroVar("FinalHop", false)
+	setHeroVar("LastHop", nil)
 end
 
 function U.IsItemAvailable(item_name)
@@ -917,10 +925,10 @@ function U.HasImportantItem()
 end
 
 function U.CourierThink(npcBot)
-	local checkLevel, newTime = U.TimePassed(npcBot.LastCourierThink, 1.0);
+	local checkLevel, newTime = U.TimePassed(getHeroVar("LastCourierThink"), 1.0);
 	
 	if not checkLevel then return end
-	npcBot.LastCourierThink = newTime
+	setHeroVar("LastCourierThink", newTime)
 	
 	--print(U.GetHeroName(npcBot), " SV: ", npcBot:GetStashValue(), ", CV: ", npcBot:GetCourierValue(), ", HII: ", U.HasImportantItem())
 	

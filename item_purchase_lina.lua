@@ -3,8 +3,7 @@
 --- GITHUB REPO: https://github.com/Nostrademous/Dota2-FullOverwrite
 -------------------------------------------------------------------------------
 
-require( GetScriptDirectory().."/role" )
-local utils = require( GetScriptDirectory().."/utility")
+require( GetScriptDirectory().."/generic_item_purchase" )
 
 local tableItemsToBuyAsSupport = { 
 	"item_tango",
@@ -32,7 +31,7 @@ local tableItemsToBuyAsSupport = {
 	"item_void_stone",
 	"item_recipe_cyclone",
 	"item_cyclone",
-};
+}
 
 local tableItemsToBuyAsMid = { 
 	"item_circlet",
@@ -60,9 +59,9 @@ local tableItemsToBuyAsMid = {
 	"item_blade_of_alacrity",
 	"item_ultimate_orb",
 	"item_ultimate_orb",
-};
+}
 			
-local tableItemsToBuyAsCore = { 
+local tableItemsToBuyAsHardCarry = { 
 	"item_circlet",
 	"item_mantle",
 	"item_recipe_null_talisman",
@@ -87,86 +86,21 @@ local tableItemsToBuyAsCore = {
 	"item_blade_of_alacrity",
 	"item_ultimate_orb",
 	"item_ultimate_orb",
-};
+}
+
+local tableItemsToBuyAsOfflane = {
+}
+
+local tableItemsToBuyAsJungler = {
+}
+
+local tableItemsToBuyAsRoamer = {
+}
 
 ----------------------------------------------------------------------------------------------------
 
 function ItemPurchaseThink()
-
-	local npcBot = GetBot();
-	if npcBot == nil then return end
-	if ( GetGameState() ~= GAME_STATE_GAME_IN_PROGRESS and GetGameState() ~= GAME_STATE_PRE_GAME ) then return end
-	
-	if ( (npcBot:GetNextItemPurchaseValue() > 0) and (npcBot:GetGold() < npcBot:GetNextItemPurchaseValue()) ) then
-		return
-	end
-	
-	local pID = npcBot:GetPlayerID() - 1;	
-	local roles = role.GetRoles();
-	
-	local sNextItem = nil
-
-	if ( roles[pID] == role.ROLE_MID ) then
-		print( "Lina.ItemPurchaseThink.Mid" );
-		if ( #tableItemsToBuyAsMid == 0 ) then
-			npcBot:SetNextItemPurchaseValue( 0 );
-			print( "    No More Items in Purchase Table!" )
-			return;
-		end
-
-		sNextItem = tableItemsToBuyAsMid[1];
-
-		npcBot:SetNextItemPurchaseValue( GetItemCost( sNextItem ) );
-
-		if ( npcBot:GetGold() >= GetItemCost( sNextItem ) ) then
-			npcBot:Action_PurchaseItem( sNextItem );
-			table.remove( tableItemsToBuyAsMid, 1 );
-			npcBot:SetNextItemPurchaseValue( 0 );
-		end
-	elseif ( roles[pID] == role.ROLE_HARDCARRY or roles[pID] == role.ROLE_OFFLANE ) then
-		print( "Lina.ItemPurchaseThink.Core" );
-		if ( #tableItemsToBuyAsCore == 0 ) then
-			npcBot:SetNextItemPurchaseValue( 0 );
-			print( "    No More Items in Purchase Table!" )
-			return;
-		end
-
-		sNextItem = tableItemsToBuyAsCore[1];
-
-		npcBot:SetNextItemPurchaseValue( GetItemCost( sNextItem ) );
-
-		if ( npcBot:GetGold() >= GetItemCost( sNextItem ) ) then
-			npcBot:Action_PurchaseItem( sNextItem );
-			table.remove( tableItemsToBuyAsCore, 1 );
-			npcBot:SetNextItemPurchaseValue( 0 );
-		end
-	elseif ( roles[pID] == role.ROLE_HARDSUPPORT or roles[pID] == role.ROLE_SEMISUPPORT ) then
-		print( "Lina.ItemPurchaseThink.Support" );
-		if ( #tableItemsToBuyAsSupport == 0 ) then
-			npcBot:SetNextItemPurchaseValue( 0 );
-			print( "    No More Items in Purchase Table!" )
-			return;
-		end
-
-		sNextItem = tableItemsToBuyAsSupport[1];
-
-		npcBot:SetNextItemPurchaseValue( GetItemCost( sNextItem ) );
-
-		if ( npcBot:GetGold() >= GetItemCost( sNextItem ) ) then
-			npcBot:Action_PurchaseItem( sNextItem );
-			table.remove( tableItemsToBuyAsSupport, 1 );
-			npcBot:SetNextItemPurchaseValue( 0 );
-		end
-	end
-	
-	if sNextItem ~= nil then
-		if IsItemPurchasedFromSecretShop( sNextItem ) then
-			print(utils.GetHeroName(npcBot), " - ", sNextItem, " available from Secret Shop");
-		end
-		if IsItemPurchasedFromSideShop( sNextItem ) then
-			print(utils.GetHeroName(npcBot), " - ", sNextItem, " available from Side Shop");
-		end
-	end
+	generic_item_purchase.ItemPurchaseThink(tableItemsToBuyAsMid, tableItemsToBuyAsHardCarry, tableItemsToBuyAsOfflane, tableItemsToBuyAsSupport, tableItemsToBuyAsJungler, tableItemsToBuyAsRoamer)
 end
 
 ----------------------------------------------------------------------------------------------------

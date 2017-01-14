@@ -186,7 +186,6 @@ local listHARDSUPPORT = {
 	"npc_dota_hero_dazzle",
 	"npc_dota_hero_disruptor",
 	"npc_dota_hero_earthshaker",
-	"npc_dota_hero_io",
 	"npc_dota_hero_jakiro",
 	"npc_dota_hero_lion",
 	"npc_dota_hero_omniknight",

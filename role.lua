@@ -307,6 +307,8 @@ function GetLaneAndRole(team, role_indx)
 		else
 			return LANE_BOT, rl
 		end
+	elseif rl == ROLE_JUNGLER then
+		return LANE_NONE, rl
 	else
 		if team == TEAM_RADIANT then
 			return LANE_BOT, rl

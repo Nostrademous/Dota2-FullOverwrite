@@ -3,8 +3,11 @@ module( "jungle_status", package.seeall )
 
 require(GetScriptDirectory() .. "/constants")
 local utils = require(GetScriptDirectory() .. "/utility")
-local isJungleFresh = true
-local jungle = utils.deepcopy(utils.tableNeutralCamps)
+local isJungleFresh = false
+local jungle = {}
+
+-- TODO: refresh on spawn times!
+
 ----------------------------------------------------------------------------------------------------
 
 --reset the jungle camps

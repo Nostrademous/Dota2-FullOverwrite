@@ -117,7 +117,7 @@ local listOFF = {
 	"npc_dota_hero_doom_bringer",
 	"npc_dota_hero_dragon_knight",
 	"npc_dota_hero_earth_spirit",
-	"npc_dota_hero_earthshaker"
+	"npc_dota_hero_earthshaker",
 	"npc_dota_hero_elder_titan",
 	"npc_dota_hero_enchantress",
 	"npc_dota_hero_faceless_void",
@@ -150,8 +150,8 @@ local listOFF = {
 	"npc_dota_hero_tusk",
 	"npc_dota_hero_undying",
 	"npc_dota_hero_ursa",
-	--"npc_dota_hero_viper",
-	--"npc_dota_hero_weaver",
+	"npc_dota_hero_viper",
+	"npc_dota_hero_weaver",
 };
 
 local listROAMER = {
@@ -303,13 +303,13 @@ local rMatrix = { [1] = {}, [2] = {}, [3] = {}, [4] = {}, [5] = {}, [6] = {}, [7
 
 local function findRole(name)
 	local tMatrix = { [1] = {}, [2] = {}, [3] = {}, [4] = {}, [5] = {}, [6] = {}, [7] = {} }
-	if checkRoleMid(name) then table.insert(tMatrix[2], name) end
-	if checkRoleOff(name) then table.insert(tMatrix[3], name) end
-	if checkRoleHardCarry(name) then table.insert(tMatrix[1], name) end
-	if checkRoleHardSupport(name) then table.insert(tMatrix[5], name) end
-	if checkRoleJungler(name) then table.insert(tMatrix[6], name) end
-	if checkRoleRoamer(name) then table.insert(tMatrix[7], name) end
-	if checkRoleSemiSupport(name) then table.insert(tMatrix[4], name) end
+	if checkRoleMid(name) then table.insert(tMatrix[ROLE_MID], name) end
+	if checkRoleOff(name) then table.insert(tMatrix[ROLE_OFFLANE], name) end
+	if checkRoleHardCarry(name) then table.insert(tMatrix[ROLE_HARDCARRY], name) end
+	if checkRoleHardSupport(name) then table.insert(tMatrix[ROLE_HARDSUPPORT], name) end
+	if checkRoleJungler(name) then table.insert(tMatrix[ROLE_JUNGLER], name) end
+	if checkRoleRoamer(name) then table.insert(tMatrix[ROLE_ROAMER], name) end
+	if checkRoleSemiSupport(name) then table.insert(tMatrix[ROLE_SEMISUPPORT], name) end
 	return tMatrix
 end
 
@@ -409,6 +409,8 @@ function GetLaneAndRole(team, role_indx)
 		else
 			return LANE_BOT, rl
 		end
+	elseif rl == ROLE_JUNGLER then
+		return LANE_NONE, rl
 	else
 		if team == TEAM_RADIANT then
 			return LANE_BOT, rl

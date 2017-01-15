@@ -69,7 +69,10 @@ local function FindCamp(bot)
 end
 
 local function MoveToCamp(bot)
-	if GetUnitToLocationDistance(bot, getHeroVar("currentCamp")[constants.PRE_STACK_VECTOR]) > 100 then return end
+	if GetUnitToLocationDistance(bot, getHeroVar("currentCamp")[constants.PRE_STACK_VECTOR]) > 200 then
+		bot:Action_MoveToLocation(getHeroVar("currentCamp")[constants.PRE_STACK_VECTOR]) -- FIXME: is this slow??
+		return
+	end
 	local neutrals = bot:GetNearbyCreeps(EyeRange,true);
 	if #neutrals == 0 then -- no creeps here
 		local jungle = jungle_status.GetJungle(GetTeam())

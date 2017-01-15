@@ -12,6 +12,7 @@ require( GetScriptDirectory().."/laning_generic" )
 require( GetScriptDirectory().."/jungling_generic" )
 require( GetScriptDirectory().."/retreat_generic" )
 require( GetScriptDirectory().."/item_usage" )
+require( GetScriptDirectory().."/jungle_status" )
 
 local ACTION_NONE		= constants.ACTION_NONE
 local ACTION_LANING		= constants.ACTION_LANING
@@ -128,6 +129,8 @@ end
 -------------------------------------------------------------------------------
 
 function X:Think(bot)
+	jungle_status.checkSpawnTimer()
+
 	if ( GetGameState() ~= GAME_STATE_GAME_IN_PROGRESS and GetGameState() ~= GAME_STATE_PRE_GAME ) then return end;
 	
 	if not self.Init then

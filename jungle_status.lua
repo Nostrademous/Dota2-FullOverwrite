@@ -5,10 +5,19 @@ require(GetScriptDirectory() .. "/constants")
 local utils = require(GetScriptDirectory() .. "/utility")
 local isJungleFresh = false
 local jungle = {}
+local next_refresh = 30
 
 -- TODO: refresh on spawn times!
 
 ----------------------------------------------------------------------------------------------------
+
+function checkSpawnTimer()
+	if DotaTime() >= next_refresh then
+		print("Refresh jungle")
+		NewJungle()
+		next_refresh = utils.NextNeutralSpawn()
+	end
+end
 
 --reset the jungle camps
 function NewJungle ()

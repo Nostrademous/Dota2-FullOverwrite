@@ -10,6 +10,18 @@ module( "jungling_generic", package.seeall )
 local utils = require( GetScriptDirectory().."/utility")
 require( GetScriptDirectory().."/constants" )
 require( GetScriptDirectory().."/jungle_status")
+
+local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
+
+function setHeroVar(var, value)
+	local bot = GetBot()
+	gHeroVar.SetVar(bot:GetPlayerID(), var, value)
+end
+
+function getHeroVar(var)
+	local bot = GetBot()
+	return gHeroVar.GetVar(bot:GetPlayerID(), var)
+end
 ----------
 
 local CurLane = nil;
@@ -50,25 +62,25 @@ local function FindCamp(bot)
 		jungle = FindCampsByMaxDifficulty(jungle, constants.CAMP_MEDIUM)
 	end
 	local camp = utils.NearestNeutralCamp(bot, jungle)
-	bot.currentCamp = camp
+	setHeroVar("currentCamp", camp)
 	bot:Action_MoveToLocation(camp[constants.PRE_STACK_VECTOR])
 	print(utils.GetHeroName(bot), "moves to camp")
 	JunglingState = JunglingStates.MoveToCamp
 end
 
 local function MoveToCamp(bot)
-	if GetUnitToLocationDistance(bot, bot.currentCamp[constants.PRE_STACK_VECTOR]) > 100 then return end
+	if GetUnitToLocationDistance(bot, getHeroVar("currentCamp")[constants.PRE_STACK_VECTOR]) > 100 then return end
 	local neutrals = bot:GetNearbyCreeps(EyeRange,true);
 	if #neutrals == 0 then -- no creeps here
 		local jungle = jungle_status.GetJungle(GetTeam())
 		if jungle == nil then -- jungle is empty
-			bot:Action_MoveToLocation(bot.currentCamp[constants.STACK_VECTOR]) -- make sure it spawns
-			bot.waituntil = utils.NextNeutralSpawn()
+			bot:Action_MoveToLocation(getHeroVar("currentCamp")[constants.STACK_VECTOR]) -- make sure it spawns
+			setHeroVar("waituntil", utils.NextNeutralSpawn())
 			print(utils.GetHeroName(bot), "waits for spawn")
 			JunglingState = JunglingStates.WaitForSpawn
 		else
 			print("No creeps here :(") -- one of  dumb teammates, blocked by enemy, farmed by enemy
-			jungle_status.JungleCampClear(GetTeam(), bot.currentCamp[constants.VECTOR])
+			jungle_status.JungleCampClear(GetTeam(), getHeroVar("currentCamp")[constants.VECTOR])
 			print(utils.GetHeroName(bot), "finds camp")
 			JunglingState = JunglingStates.FindCamp
 		end
@@ -79,8 +91,8 @@ local function MoveToCamp(bot)
 end
 
 local function WaitForSpawn(bot)
-	if DotaTime() < bot.waituntil then return end
-	bot:Action_MoveToLocation(bot.currentCamp[constants.PRE_STACK_VECTOR])
+	if DotaTime() < getHeroVar("waituntil") then return end
+	bot:Action_MoveToLocation(getHeroVar("currentCamp")[constants.PRE_STACK_VECTOR])
 	JunglingState = JunglingStates.MoveToCamp
 end
 
@@ -118,8 +130,8 @@ local States = {
 ----------------------------------
 
 local function Updates(npcBot)
-	if npcBot.JunglingState ~= nil then
-		JunglingState = npcBot.JunglingState;
+	if getHeroVar("JunglingState") ~= nil then
+		JunglingState = getHeroVar("JunglingState");
 	end
 end
 
@@ -129,7 +141,7 @@ function Think(npcBot)
 
 	States[JunglingState](npcBot);
 
-	npcBot.JunglingState = JunglingState;
+	setHeroVar("JunglingState", JunglingState);
 end
 
 

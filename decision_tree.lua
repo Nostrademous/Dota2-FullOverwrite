@@ -450,7 +450,7 @@ function X:Determine_ShouldRoam(bot)
 end
 
 function X:Determine_ShouldJungle(bot)
-	return bot.Role == ROLE_JUNGLER;
+	return self:getHeroVar("Role") == ROLE_JUNGLER;
 end
 
 function X:Determine_ShouldTeamRoshan(bot, EnemyHeroes, EnemyTowers)
@@ -466,7 +466,7 @@ function X:Determine_ShouldWard(bot)
 end
 
 function X:Determine_ShouldLane(bot)
-	return bot.role ~= ROLE_JUNGLER;
+	return self:getHeroVar("Role") ~= ROLE_JUNGLER;
 end
 
 function X:Determine_WhereToMove(bot)

@@ -6,6 +6,7 @@
 require( GetScriptDirectory().."/constants" )
 require( GetScriptDirectory().."/item_purchase_bloodseeker" )
 require ( GetScriptDirectory().."/ability_usage_bloodseeker" )
+require( GetScriptDirectory().."/jungling_generic" )
 
 local utils = require( GetScriptDirectory().."/utility" )
 local dt = require( GetScriptDirectory().."/decision_tree" )
@@ -55,4 +56,18 @@ function Think()
     local npcBot = GetBot()
 
 		bloodseekerBot:Think(npcBot)
+end
+
+function bloodseekerBot:DoJungle(bot)
+	if ( self:HasAction(ACTION_JUNGLING) == false ) then
+		print(utils.GetHeroName(bot), " STARTING TO JUNGLE ")
+		self:AddAction(ACTION_JUNGLING);
+		jungling_generic.OnStart(bot);
+	end
+
+	jungling_generic.Think(bot);
+end
+
+function bloodseekerBot:Determine_AmISafe(bot)
+	return 0 -- we're fine
 end

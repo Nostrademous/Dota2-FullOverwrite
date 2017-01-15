@@ -12,7 +12,11 @@ local tableItemsToBuyAsJungler = {
 	"item_branches",
 	"item_branches",
 	"item_ring_of_protection",
-	"item_recipe_iron_talon"
+	"item_recipe_iron_talon",
+	"item_boots",
+	"items_gloves",
+	"item_belt_of_strength",
+	"item_recipe_power_treads"
 };
 
 ----------------------------------------------------------------------------------------------------

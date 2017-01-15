@@ -3,8 +3,7 @@
 --- GITHUB REPO: https://github.com/Nostrademous/Dota2-FullOverwrite
 -------------------------------------------------------------------------------
 
-require( GetScriptDirectory().."/role" )
-local utils = require( GetScriptDirectory().."/utility")
+require( GetScriptDirectory().."/generic_item_purchase" )
 
 local tableItemsToBuyAsJungler = {
 	"item_clarity",
@@ -19,48 +18,25 @@ local tableItemsToBuyAsJungler = {
 
 ----------------------------------------------------------------------------------------------------
 
+local tableItemsToBuyAsRoamer = {
+}
+
+local tableItemsToBuyAsHardCarry = {
+}
+
+local tableItemsToBuyAsOfflane = {
+}
+
+local tableItemsToBuyAsMid = {
+}
+
+local tableItemsToBuyAsSupport = {
+}
+
+----------------------------------------------------------------------------------------------------
+
 function ItemPurchaseThink()
-
-	local npcBot = GetBot();
-	if npcBot == nil then return end
-	if ( GetGameState() ~= GAME_STATE_GAME_IN_PROGRESS and GetGameState() ~= GAME_STATE_PRE_GAME ) then return end
-
-	if ( (npcBot:GetNextItemPurchaseValue() > 0) and (npcBot:GetGold() < npcBot:GetNextItemPurchaseValue()) ) then
-		return
-	end
-
-	local pID = npcBot:GetPlayerID() - 1;
-	local roles = role.GetRoles();
-
-	local sNextItem = nil
-
-	if ( roles[pID] == role.ROLE_JUNGLER ) then
-		print( "Enigma.ItemPurchaseThink.Jungler" );
-		if ( #tableItemsToBuyAsJungler == 0 ) then
-			npcBot:SetNextItemPurchaseValue( 0 );
-			print( "    No More Items in Purchase Table!" )
-			return;
-		end
-
-		sNextItem = tableItemsToBuyAsJungler[1];
-
-		npcBot:SetNextItemPurchaseValue( GetItemCost( sNextItem ) );
-
-		if ( npcBot:GetGold() >= GetItemCost( sNextItem ) ) then
-			npcBot:Action_PurchaseItem( sNextItem );
-			table.remove( tableItemsToBuyAsJungler, 1 );
-			npcBot:SetNextItemPurchaseValue( 0 );
-		end
-	end
-
-	if sNextItem ~= nil then
-		if IsItemPurchasedFromSecretShop( sNextItem ) then
-			print(utils.GetHeroName(npcBot), " - ", sNextItem, " available from Secret Shop");
-		end
-		if IsItemPurchasedFromSideShop( sNextItem ) then
-			print(utils.GetHeroName(npcBot), " - ", sNextItem, " available from Side Shop");
-		end
-	end
+	generic_item_purchase.ItemPurchaseThink(tableItemsToBuyAsMid, tableItemsToBuyAsHardCarry, tableItemsToBuyAsOfflane, tableItemsToBuyAsSupport, tableItemsToBuyAsJungler, tableItemsToBuyAsRoamer)
 end
 
 ----------------------------------------------------------------------------------------------------

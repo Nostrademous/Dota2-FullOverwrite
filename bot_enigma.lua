@@ -42,7 +42,7 @@ function enigmaBot:new(o)
 	return o
 end
 
-enigmaBot = enigmaBot:new{prevTime = -999.0, actionQueue = enigmaActionQueue, abilityPriority = EnigmaAbilityPriority}
+enigmaBot = enigmaBot:new{actionQueue = enigmaActionQueue, abilityPriority = EnigmaAbilityPriority}
 --enigmaBot:printInfo();
 
 enigmaBot.Init = false;
@@ -51,63 +51,8 @@ function enigmaBot:ConsiderAbilityUse()
 	ability_usage_enigma.AbilityUsageThink()
 end
 
-local LaningState = 0
-local CurLane = nil
-local MoveThreshold = 1.0
-local DamageThreshold = 1.0
-local ShouldPush = false
-local IsCore = nil
-local Role = nil
-local IsRetreating = false
-local IsInLane = false
-local BackTimerGen = -1000
-local LastCourierThink = -1000.0
-local TargetOfRunAwayFromCreepOrTower = nil
-
-function LoadUpdates(npcBot)
-	npcBot.LaningState = LaningState
-	npcBot.CurLane = CurLane
-	npcBot.MoveThreshold = MoveThreshold
-	npcBot.DamageThreshold = DamageThreshold
-	npcBot.ShouldPush = ShouldPush
-	npcBot.IsCore = IsCore
-	npcBot.Role = Role
-	npcBot.IsRetreating = IsRetreating
-	npcBot.IsInLane = IsInLane
-	npcBot.BackTimerGen = BackTimerGen
-	npcBot.LastCourierThink = LastCourierThink
-	npcBot.TargetOfRunAwayFromCreepOrTower = TargetOfRunAwayFromCreepOrTower
-end
-
-function SaveUpdates(npcBot)
-	LaningState = npcBot.LaningState
-	CurLane = npcBot.CurLane
-	MoveThreshold = npcBot.MoveThreshold
-	DamageThreshold = npcBot.DamageThreshold
-	ShouldPush = npcBot.ShouldPush
-	IsCore = npcBot.IsCore
-	Role = npcBot.Role
-	IsRetreating = npcBot.IsRetreating
-	IsInLane = npcBot.IsInLane
-	BackTimerGen = npcBot.BackTimerGen
-	LastCourierThink = npcBot.LastCourierThink
-	TargetOfRunAwayFromCreepOrTower = npcBot.TargetOfRunAwayFromCreepOrTower
-end
-
-function PrintUpdate()
-	print(LaningState)
-	print(CurLane)
-	print(Role)
-	print(IsRetreating)
-	print(BackTimerGen)
-end
-
 function Think()
     local npcBot = GetBot()
-	LoadUpdates(npcBot)
 
-	enigmaBot:Think(npcBot)
-
-	SaveUpdates(npcBot)
-	--PrintUpdate()
+		enigmaBot:Think(npcBot)
 end

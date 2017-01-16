@@ -606,6 +606,8 @@ function X:DoFight(bot)
 			end
 			bot:Action_AttackUnit(target, true)
 		end
+	else
+		bot:SetTarget(nil)
 	end
 	return true
 end
@@ -653,7 +655,9 @@ function X:DoJungle(bot)
 		jungling_generic.OnStart(bot);
 	end
 
-	jungling_generic.Think(bot);
+	self:DoGetRune(bot) -- grab a rune if we near one as we jungle
+	
+	jungling_generic.Think(bot)
 	
 	return true
 end

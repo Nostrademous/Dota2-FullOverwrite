@@ -73,6 +73,8 @@ function AbilityUsageThink()
 	if npcBot:GetTarget() == nil then return end
 
 	if UseUlt() or UseW() then return end
+	
+	npcBot:Action_AttackUnit(enemy, true)
 end
 
 for k,v in pairs( ability_usage_bloodseeker ) do _G._savedEnv[k] = v end

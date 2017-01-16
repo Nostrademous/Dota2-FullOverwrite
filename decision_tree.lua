@@ -129,7 +129,6 @@ end
 -------------------------------------------------------------------------------
 
 function X:DoInit(bot)
-	print( "X:DoInit() called")
 	self.pID = bot:GetPlayerID() -- do this to reduce calls to bot:GetPlayerID() in the future
 	gHeroVar.InitHeroVar(self.pID)
 	

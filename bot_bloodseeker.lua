@@ -61,6 +61,7 @@ end
 
 function bloodseekerBot:DoRetreat(bot)
 	return false -- we're fine
+	-- TODO: what if we're not??
 end
 
 function bloodseekerBot:GetMaxClearableCampLevel(bot)
@@ -93,4 +94,5 @@ function bloodseekerBot:DoCleanCamp(bot, neutrals)
 			break
 		end
 	end
+	-- TODO: don't attack if we should wait on all neutrals!
 end

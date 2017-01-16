@@ -803,6 +803,91 @@ function U.GetWeakestCreep(creeps)
 	return WeakestCreep, LowestHealth;
 end
 
+function U.FindTarget(dist)
+	--npcBot:GetEstimatedDamageToTarget( true, WeakestCreep, AttackSpeed, DAMAGE_TYPE_PHYSICAL )
+	local npcBot = GetBot()
+	
+	local mindis = 100000
+	local candidate = nil
+	local MaxScore = -1
+	local damage = 0
+	
+	local Enemies = npcBot:GetNearbyHeroes(dist, true, BOT_MODE_NONE);
+	
+	if Enemies == nil or #Enemies == 0 then
+		npcBot:SetTarget(nil)
+		return nil, 0.0, 0.0
+	end
+	
+	local Towers = npcBot:GetNearbyTowers(1100, true)
+	local AlliedTowers = npcBot:GetNearbyTowers(950, false)
+	local AlliedCreeps = npcBot:GetNearbyCreeps(1000, false)
+	local EnemyCreeps = npcBot:GetNearbyCreeps(700 ,true)
+	local nEc = 0
+	local nAc = 0
+	if AlliedCreeps ~= nil then
+		nAc = #AlliedCreeps
+	end
+	if EnemyCreeps ~= nil then
+		nEc = #EnemyCreeps
+	end
+	
+	local nTo = 0
+	if Towers ~= nil then
+		nTo = #Towers
+	end
+	
+	local fTo = 0
+	if AlliedTowers ~= nil then
+		fTo = #AlliedTowers
+	end
+	
+	for _,enemy in pairs(Enemies) do
+		if U.NotNilOrDead(enemy) and enemy:GetHealth()>0 and GetUnitToLocationDistance(enemy, U.Fountain(U.GetOtherTeam()))>1350 then
+			local myDamage = npcBot:GetEstimatedDamageToTarget(true, enemy, 4.5, DAMAGE_TYPE_ALL)
+
+			local nfriends = 0
+			for j=1,5,1 do
+				local enemy2 = GetTeamMember(U.GetOtherTeam(),j)
+				if U.NotNilOrDead(enemy2) and enemy2:GetHealth()>0 then
+					if GetUnitToUnitDistance(enemy,enemy2)<1200 and enemy2:GetHealth()/enemy2:GetMaxHealth()>0.4 then
+						nfriends = nfriends+1
+					end
+				end
+			end
+			
+			local nMyFriends=0
+			for j =1,5,1 do
+				local Ally = GetTeamMember(GetTeam(),j)
+				if U.NotNilOrDead(Ally) and GetUnitToUnitDistance(enemy,Ally)<1100 then
+					nMyFriends = nMyFriends+1
+				end
+			end
+			
+			local lvl = U.GetHeroLevel()
+			local score = Min(myDamage/enemy:GetHealth(),4) + (nMyFriends)/1.7 - (nfriends)/1.7 - GetUnitToUnitDistance(enemy,npcBot)/3500 -(1-npcBot:GetHealth()/npcBot:GetMaxHealth()) - nTo/(Min(lvl/8,3)) + fTo/(Min(lvl/8,3)) - nEc/(2*lvl) + nAc/(2*lvl);
+			if score > MaxScore then
+				damage = myDamage
+				candidate = enemy
+				MaxScore = score
+			end
+		end
+	end
+	
+	return candidate, damage, MaxScore
+end
+
+function U.GetHeroLevel()
+    local npcBot = GetBot();
+    local respawnTable = {8, 10, 12, 14, 16, 26, 28, 30, 32, 34, 36, 46, 48, 50, 52, 54, 56, 66, 70, 74, 78,  82, 86, 90, 100};
+    local nRespawnTime = npcBot:GetRespawnTime() +1;
+    for k,v in pairs (respawnTable) do
+        if v == nRespawnTime then
+        return k;
+        end
+    end
+end
+
 function U.TimePassed(prevTime, amount)
 	if ( (GameTime() - prevTime) > amount ) then
 		return true, GameTime();

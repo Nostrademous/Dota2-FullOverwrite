@@ -5,6 +5,17 @@
 
 _G._savedEnv = getfenv()
 module( "ability_usage_lina", package.seeall )
+local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
+
+function setHeroVar(var, value)
+	local bot = GetBot()
+	gHeroVar.SetVar(bot:GetPlayerID(), var, value)
+end
+
+function getHeroVar(var)
+	local bot = GetBot()
+	return gHeroVar.GetVar(bot:GetPlayerID(), var)
+end
 
 local Abilities =	{
 	"lina_light_strike_array",
@@ -13,59 +24,57 @@ local Abilities =	{
 	"lina_laguna_blade"
 }
 
-local PerformingUltCombo = false
-local comboTarget = nil
-
 function AbilityUsageThink()
-	if ( GetGameState() ~= GAME_STATE_GAME_IN_PROGRESS and GetGameState() ~= GAME_STATE_PRE_GAME ) then return end
+	if ( GetGameState() ~= GAME_STATE_GAME_IN_PROGRESS and GetGameState() ~= GAME_STATE_PRE_GAME ) then return false end
 	
 	local npcBot = GetBot()
-	if not npcBot:IsAlive() then return end
+	if not npcBot:IsAlive() then return false end
 	
 	-- Check if we're already using an ability
-	if ( npcBot:IsUsingAbility() or npcBot:IsChanneling() ) then return end;
+	if ( npcBot:IsUsingAbility() or npcBot:IsChanneling() ) then return false end
 
 	abilityLSA = npcBot:GetAbilityByName( Abilities[1] );
 	abilityDS = npcBot:GetAbilityByName( Abilities[2] );
 	abilityLB = npcBot:GetAbilityByName( Abilities[4] );
 	
 	-- do combo
-	if PerformingUltCombo or ConsiderUltCombo() then
-		if comboTarget == nil and PerformingUltCombo == false then 
-			comboTarget = UseUltCombo() 
+	if getHeroVar("PerformingUltCombo") or ConsiderUltCombo() then
+		if getHeroVar("comboTarget") == nil and getHeroVar("PerformingUltCombo") == false then 
+			setHeroVar("comboTarget", UseUltCombo())
 		end
 		
+		local comboTarget = getHeroVar("comboTarget")
 		if comboTarget ~= nil and comboTarget:IsAlive() then
 			if CanCastLightStrikeArrayOnTarget( comboTarget ) and abilityLSA:IsFullyCastable() then
 				local locDelta = comboTarget:GetExtrapolatedLocation(abilityLSA:GetCastPoint())
 				npcBot:Action_UseAbilityOnLocation( abilityLSA, comboTarget:GetLocation()+locDelta )
-				print ( "Hit them with LSA ..." )
-				return
+				print ( " Hit them with LSA ..." )
+				return true
 			end
 			
-			if CanCastDragonSlaveOnTarget( comboTarget ) and abilityDS:IsFullyCastable() then --and comboTarget:IsStunned() then
+			if CanCastDragonSlaveOnTarget( comboTarget ) and abilityDS:IsFullyCastable() and comboTarget:IsStunned() then
 				npcBot:Action_UseAbilityOnLocation( abilityDS, comboTarget:GetLocation() )
 				print ( "And Hit them with DS ..." )
-				return
+				return true
 			end
 			
 			if CanCastLagunaBladeOnTarget( comboTarget ) and abilityLB:IsFullyCastable() then
 				npcBot:Action_UseAbilityOnEntity( abilityLB, comboTarget )
 				print ( "And FINISH THEM with LB!!!!" )
-				PerformingUltCombo = false
-				comboTarget = nil
-				return
+				setHeroVar("PerformingUltCombo", false)
+				setHeroVar("comboTarget", nil)
+				return true
 			end
 		else
-			PerformingUltCombo = false
-			comboTarget = nil
+			setHeroVar("PerformingUltCombo", false)
+			setHeroVar("comboTarget", nil)
 		end
 	end
 
 	local EnemyHeroes = npcBot:GetNearbyHeroes(1200, true, BOT_MODE_NONE);
 	local EnemyCreeps = npcBot:GetNearbyCreeps(1200, true);
 	
-	if ( #EnemyHeroes == 0 and #EnemyCreeps == 0 ) then return end
+	if ( #EnemyHeroes == 0 and #EnemyCreeps == 0 ) then return false end
 	
 	-- Consider using each ability
 	castLBDesire, castLBTarget = ConsiderLagunaBlade(abilityLB)
@@ -75,20 +84,22 @@ function AbilityUsageThink()
 	if castLBDesire > castLSADesire and castLBDesire > castDSDesire then
 		print ( "I Desired a LB Hit" )
 		npcBot:Action_UseAbilityOnEntity( abilityLB, castLBTarget )
-		return
+		return true
 	end
 
 	if castLSADesire > 0 then
 		print ( "I Desired a LSA Hit" )
 		npcBot:Action_UseAbilityOnLocation( abilityLSA, castLSALocation )
-		return
+		return true
 	end
 
 	if castDSDesire > 0 then
 		print ( "I Desired a DS Hit" )
 		npcBot:Action_UseAbilityOnLocation( abilityDS, castDSLocation )
-		return
+		return true
 	end
+	
+	return false
 end
 
 ----------------------------------------------------------------------------------------------------
@@ -142,7 +153,7 @@ function UseUltCombo()
 	
 	if LowestHP < comboDmg and aw:GetCastRange() > GetUnitToUnitDistance(npcBot, WeakestEnemy) then
 		print( "Lina Comboing for ", WeakestEnemy:GetUnitName() )
-		PerformingUltCombo = true
+		setHeroVar("PerformingUltCombo", true)
 		return WeakestEnemy
 	end
 	return nil
@@ -247,10 +258,7 @@ function ConsiderLightStrikeArray(abilityLSA)
 	local npcTarget = npcBot:GetTarget();
 
 	if ( npcTarget ~= nil ) then
-		if CanCastLightStrikeArrayOnTarget( npcTarget ) and abilityLSA:GetCastRange() > GetUnitToUnitDistance(npcBot, npcTarget) then
-			local locDelta = npcTarget:GetExtrapolatedLocation(abilityLSA:GetCastPoint())
-			return BOT_ACTION_DESIRE_HIGH, npcTarget:GetLocation() + locDelta
-		end
+		ConsiderLightStrikeArrayFighting( abilityLSA, npcTarget )
 	end
 
 	return BOT_ACTION_DESIRE_NONE, 0;
@@ -258,7 +266,7 @@ end
 
 ----------------------------------------------------------------------------------------------------
 
-function ConsiderDragonSlaveFighting(abilityDS,enemy)
+function ConsiderDragonSlaveFighting(abilityDS, enemy)
     local npcBot = GetBot();
 
     if ( not abilityDS:IsFullyCastable() ) then 
@@ -317,10 +325,7 @@ function ConsiderDragonSlave(abilityDS)
 	local npcTarget = npcBot:GetTarget();
 
 	if npcTarget ~= nil then
-		if CanCastDragonSlaveOnTarget( npcTarget ) then
-			local locDelta = npcTarget:GetExtrapolatedLocation(abilityLSA:GetCastPoint())
-			return BOT_ACTION_DESIRE_MODERATE, npcTarget:GetLocation() + locDelta
-		end
+		ConsiderDragonSlaveFighting( abilityDS, npcTarget )
 	end
 
 	-- If we have plenty mana and high level DS

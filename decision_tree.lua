@@ -696,4 +696,8 @@ function X:DoCleanCamp(bot, neutrals)
 	bot:Action_AttackUnit(neutrals[1], true)
 end
 
+function X:GetMaxClearableCampLevel(bot)
+	return constants.CAMP_ANCIENT
+end
+
 return X;

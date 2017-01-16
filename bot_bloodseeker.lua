@@ -7,6 +7,7 @@ require( GetScriptDirectory().."/constants" )
 require( GetScriptDirectory().."/item_purchase_bloodseeker" )
 require ( GetScriptDirectory().."/ability_usage_bloodseeker" )
 require( GetScriptDirectory().."/jungling_generic" )
+require( GetScriptDirectory().."/constants" )
 
 local utils = require( GetScriptDirectory().."/utility" )
 local dt = require( GetScriptDirectory().."/decision_tree" )
@@ -62,9 +63,19 @@ function bloodseekerBot:DoRetreat(bot)
 	return false -- we're fine
 end
 
+function bloodseekerBot:GetMaxClearableCampLevel(bot)
+	-- TODO: when to start killing ancients?
+	local bloodrage = bot:GetAbilityByName("bloodseeker_bloodrage")
+	if utils.HaveItem(bot, "item_iron_talon") and bloodrage:GetLevel() >= 2 then
+		return constants.CAMP_HARD
+	end
+	return constants.CAMP_MEDIUM
+end
+
 function bloodseekerBot:DoCleanCamp(bot, neutrals)
 	local bloodraged =  bot:HasModifier("modifier_bloodseeker_bloodrage")
-	if not bloodraged and bot:GetAbilityByName("bloodseeker_bloodrage"):IsCooldownReady() then -- bloodrage all the time
+	local bloodrage = bot:GetAbilityByName("bloodseeker_bloodrage")
+	if not bloodraged and bloodrage:IsCooldownReady() then -- bloodrage all the time
 		bot:Action_UseAbilityOnEntity(bloodrage, bot)
 	end
 	table.sort(neutrals, function(n1, n2) return n1:GetHealth() < n2:GetHealth() end) -- sort by health
@@ -72,7 +83,7 @@ function bloodseekerBot:DoCleanCamp(bot, neutrals)
 	if bloodraged and it ~= nil then -- we are bloodraged and have an iron talon
 		local it_target = neutrals[#neutrals] -- neutral with most health
 		if it_target:GetHealth() > 0.5 * it_target:GetMaxHealth() then -- is it worth it? TODO: add a absolute minimum / use it on big guys only
-			bot:Action_UseAbilityOnEntity(it, it_target);
+			bot:Action_UseAbilityOnEntity(it, it_target); -- TODO: make sure it's not an ancient!
 		end
 	end
 	for i, neutral in ipairs(neutrals) do

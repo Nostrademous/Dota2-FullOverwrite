@@ -49,17 +49,22 @@ local JunglingState=JunglingStates.FindCamp;
 
 
 function OnStart(npcBot)
-
+	-- TODO: implement stacking
+	-- TODO: Pickup runes
+	-- TODO: help lanes
+	-- TODO: when to stop jungling? (NEVER!!)
 end
 
 ----------------------------------
 
 local function FindCamp(bot)
+	-- TODO: just killing the closest one might not be the best strategy
 	local jungle = jungle_status.GetJungle(GetTeam()) or {}
-	jungle = FindCampsByMaxDifficulty(jungle, constants.CAMP_MEDIUM)
+	local maxcamplvl = getHeroVar("Self"):GetMaxClearableCampLevel(bot)
+	jungle = FindCampsByMaxDifficulty(jungle, maxcamplvl)
 	if #jungle == 0 then -- they are all dead
 		jungle = utils.deepcopy(utils.tableNeutralCamps[GetTeam()])
-		jungle = FindCampsByMaxDifficulty(jungle, constants.CAMP_MEDIUM)
+		jungle = FindCampsByMaxDifficulty(jungle, maxcamplvl)
 	end
 	local camp = utils.NearestNeutralCamp(bot, jungle)
 	setHeroVar("currentCamp", camp)
@@ -75,14 +80,15 @@ local function MoveToCamp(bot)
 	end
 	local neutrals = bot:GetNearbyCreeps(EyeRange,true);
 	if #neutrals == 0 then -- no creeps here
-		local jungle = jungle_status.GetJungle(GetTeam())
-		if jungle == nil then -- jungle is empty
+		local jungle = jungle_status.GetJungle(GetTeam()) or {}
+		jungle = FindCampsByMaxDifficulty(jungle, getHeroVar("Self"):GetMaxClearableCampLevel(bot))
+		if #jungle == 0 then -- jungle is empty
 			bot:Action_MoveToLocation(getHeroVar("currentCamp")[constants.STACK_VECTOR]) -- make sure it spawns
 			setHeroVar("waituntil", utils.NextNeutralSpawn())
 			print(utils.GetHeroName(bot), "waits for spawn")
 			JunglingState = JunglingStates.WaitForSpawn
 		else
-			print("No creeps here :(") -- one of  dumb teammates, blocked by enemy, farmed by enemy
+			print("No creeps here :(") -- one of   dumb me, dumb teammates, blocked by enemy, farmed by enemy
 			jungle_status.JungleCampClear(GetTeam(), getHeroVar("currentCamp")[constants.VECTOR])
 			print(utils.GetHeroName(bot), "finds camp")
 			JunglingState = JunglingStates.FindCamp

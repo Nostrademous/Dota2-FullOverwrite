@@ -61,3 +61,25 @@ end
 function bloodseekerBot:DoRetreat(bot)
 	return false -- we're fine
 end
+
+function bloodseekerBot:DoCleanCamp(bot, neutrals)
+	local bloodraged =  bot:HasModifier("modifier_bloodseeker_bloodrage")
+	if not bloodraged and bot:GetAbilityByName("bloodseeker_bloodrage"):IsCooldownReady() then -- bloodrage all the time
+		bot:Action_UseAbilityOnEntity(bloodrage, bot)
+	end
+	table.sort(neutrals, function(n1, n2) return n1:GetHealth() < n2:GetHealth() end) -- sort by health
+	local it = utils.IsItemAvailable("item_iron_talon")
+	if bloodraged and it ~= nil then -- we are bloodraged and have an iron talon
+		local it_target = neutrals[#neutrals] -- neutral with most health
+		if it_target:GetHealth() > 0.5 * it_target:GetMaxHealth() then -- is it worth it? TODO: add a absolute minimum / use it on big guys only
+			bot:Action_UseAbilityOnEntity(it, it_target);
+		end
+	end
+	for i, neutral in ipairs(neutrals) do
+		local eDamage = bot:GetEstimatedDamageToTarget(true, neutral, bot:GetAttackSpeed(), DAMAGE_TYPE_PHYSICAL)
+		if not (eDamage > neutral:GetHealth()) or bloodraged then -- make sure we lasthit with bloodrage on
+			bot:Action_AttackUnit(neutral, true)
+			break
+		end
+	end
+end

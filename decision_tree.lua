@@ -12,6 +12,7 @@ require( GetScriptDirectory().."/laning_generic" )
 require( GetScriptDirectory().."/jungling_generic" )
 require( GetScriptDirectory().."/retreat_generic" )
 require( GetScriptDirectory().."/item_usage" )
+require( GetScriptDirectory().."/jungle_status" )
 
 local ACTION_NONE		= constants.ACTION_NONE
 local ACTION_LANING		= constants.ACTION_LANING
@@ -128,6 +129,8 @@ end
 -------------------------------------------------------------------------------
 
 function X:Think(bot)
+	jungle_status.checkSpawnTimer()
+
 	if ( GetGameState() ~= GAME_STATE_GAME_IN_PROGRESS and GetGameState() ~= GAME_STATE_PRE_GAME ) then return end;
 	
 	if not self.Init then
@@ -451,7 +454,7 @@ function X:Determine_ShouldRoam(bot)
 end
 
 function X:Determine_ShouldJungle(bot)
-	return bot.Role == ROLE_JUNGLER;
+	return self:getHeroVar("Role") == ROLE_JUNGLER;
 end
 
 function X:Determine_ShouldTeamRoshan(bot, EnemyHeroes, EnemyTowers)
@@ -467,7 +470,7 @@ function X:Determine_ShouldWard(bot)
 end
 
 function X:Determine_ShouldLane(bot)
-	return bot.role ~= ROLE_JUNGLER;
+	return self:getHeroVar("Role") ~= ROLE_JUNGLER;
 end
 
 function X:Determine_WhereToMove(bot)
@@ -687,6 +690,14 @@ end
 
 function X:Test(msg)
 	print("[PARENT CLASS]: ", msg)
+end
+
+function X:DoCleanCamp(bot, neutrals)
+	bot:Action_AttackUnit(neutrals[1], true)
+end
+
+function X:GetMaxClearableCampLevel(bot)
+	return constants.CAMP_ANCIENT
 end
 
 return X;

@@ -330,6 +330,7 @@ local function spairs(t, order)
     end
 end
 
+-- TODO: should be broken, from looking at it (U["tableNeutralCamps"][CAMP_EASY] etc. doenst make sense)
 function U.DistanceToNeutrals(hUnit, largestCampType)
     local camps = {}
     local sCamps = {}
@@ -370,12 +371,22 @@ function U.DistanceToNeutrals(hUnit, largestCampType)
     return camps
 end
 
+function U.NextNeutralSpawn()
+	if DotaTime() < 30 then
+		return 30
+	else
+		t = math.ceil((DotaTime() - 60) / 120) * 120 + 60
+		print("Next spawn time is", t)
+		return t
+	end
+end
+
 function U.NearestNeutralCamp( hUnit, tCamps )
     local closestDistance = 1000000;
     local closestCamp;
     for k,v in ipairs(tCamps) do
-        if v ~= nil and GetUnitToLocationDistance( hUnit, v[consants.VECTOR] ) < closestDistance then
-            closestDistance = GetUnitToLocationDistance( hUnit, v[consants.VECTOR] )
+        if v ~= nil and GetUnitToLocationDistance( hUnit, v[constants.VECTOR] ) < closestDistance then
+            closestDistance = GetUnitToLocationDistance( hUnit, v[constants.VECTOR] )
             closestCamp = v
             --print(closestCamp..":"..closestDistance)
         end

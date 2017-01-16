@@ -359,8 +359,6 @@ local function checkRoleRoamer(value)
 	return false;
 end
 
-local rMatrix = { [1] = {}, [2] = {}, [3] = {}, [4] = {}, [5] = {}, [6] = {}, [7] = {} }
-
 local function findRole(name)
 	local tMatrix = { [1] = {}, [2] = {}, [3] = {}, [4] = {}, [5] = {}, [6] = {}, [7] = {} }
 	if checkRoleMid(name) then table.insert(tMatrix[ROLE_MID], name) end
@@ -385,7 +383,7 @@ local function existsInMatrix(matrix, value)
 end
 
 local function countOverlap(matrix)
-	return math.max(0, #rMatrix[1]-1) + math.max(0, #rMatrix[2]-1) + math.max(0, #rMatrix[3]-1) + math.max(0, #rMatrix[4]-1) + math.max(0, #rMatrix[5]-1) + math.max(0, #rMatrix[6]-1) + math.max(0, #rMatrix[7]-1)
+	return math.max(0, #matrix[1]-1) + math.max(0, #matrix[2]-1) + math.max(0, #matrix[3]-1) + math.max(0, #matrix[4]-1) + math.max(0, #matrix[5]-1) + math.max(0, #matrix[6]-1) + math.max(0, #matrix[7]-1)
 end
 
 local function everyObjectAssigned(matrix)
@@ -398,11 +396,12 @@ local function everyObjectAssigned(matrix)
 	return 0
 end
 
+local rMatrix = { [1] = {}, [2] = {}, [3] = {}, [4] = {}, [5] = {}, [6] = {}, [7] = {} }
+local best = nil
 local function fillRoles(rMatrix)
 	obj = everyObjectAssigned(rMatrix)
-	best = utils.deepcopy(rMatrix)
-	
-	if obj ~= 0 then
+
+	if obj ~= 0 then	
 		local slot = GetTeamMember( GetTeam(), obj )
 		validRoles = findRole(slot:GetUnitName())
 		for k,v in pairs (validRoles) do
@@ -411,7 +410,11 @@ local function fillRoles(rMatrix)
 				table.insert(new[k], slot:GetUnitName())
 				
 				new = fillRoles(new)
-				if countOverlap(new) < countOverlap(best) then
+				if everyObjectAssigned(new) == 0 and best == nil then
+					best = utils.deepcopy(new)
+				end
+
+				if everyObjectAssigned(new) == 0 and everyObjectAssigned(best) == 0 and countOverlap(new) < countOverlap(best) then
 					best = utils.deepcopy(new)
 					if countOverlap(best) == 0 and everyObjectAssigned(best) == 0 then
 						break
@@ -419,9 +422,9 @@ local function fillRoles(rMatrix)
 				end
 			end
 		end
+		
 	end
-	
-	return best
+	return rMatrix
 end
 
 -------------------------------------------------------------------------------
@@ -434,7 +437,7 @@ function SetRoles()
 	print( "SetRoles()" );
 	rMatrix = fillRoles(rMatrix)
 
-	for k, v in pairs( rMatrix ) do
+	for k, v in pairs( best ) do
 		print(k)
 		for k2, v2 in pairs (v) do
 			print("    ", k2, v2)

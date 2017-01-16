@@ -126,7 +126,7 @@ local listOFF = {
 	"npc_dota_hero_axe",
 	"npc_dota_hero_batrider",
 	"npc_dota_hero_beastmaster",
-	"npc_dota_hero_bloodseeker",
+	--"npc_dota_hero_bloodseeker",
 	"npc_dota_hero_bounty_hunter",
 	"npc_dota_hero_brewmaster",
 	"npc_dota_hero_bristleback",
@@ -186,7 +186,7 @@ local listROAMER = {
 --comments by "ByBurton":	I define roaming heroes as heroes who need no or very few gold and levels, and gank lanes to help the team. gets little gold / exp by this.
 --Typically invisible heroes or heroes with a skill to surprise their targets / roam around the map fast - Position 3; Starts usually in the offlane? for some levels to start roaming
 	"npc_dota_hero_bounty_hunter",
-	"npc_dota_hero_bloodseeker",
+	--"npc_dota_hero_bloodseeker",
 	"npc_dota_hero_clinkz",
 	"npc_dota_hero_mirana",
 	"npc_dota_hero_nyx_assassin",
@@ -229,7 +229,7 @@ local listSEMISUPPORT = {
 	"npc_dota_hero_jakiro",
 	"npc_dota_hero_leshrac",			--not sure here
 	"npc_dota_hero_lich",
-	"npc_dota_hero_lina",
+	--"npc_dota_hero_lina",	-- not really a good support
 	"npc_dota_hero_lion",
 	"npc_dota_hero_ogre_magi",
 	"npc_dota_hero_omniknight",
@@ -364,9 +364,9 @@ local function findRole(name)
 	if checkRoleMid(name) then table.insert(tMatrix[ROLE_MID], name) end
 	if checkRoleOff(name) then table.insert(tMatrix[ROLE_OFFLANE], name) end
 	if checkRoleHardCarry(name) then table.insert(tMatrix[ROLE_HARDCARRY], name) end
-	if checkRoleHardSupport(name) then table.insert(tMatrix[ROLE_HARDSUPPORT], name) end
 	if checkRoleJungler(name) then table.insert(tMatrix[ROLE_JUNGLER], name) end
 	if checkRoleRoamer(name) then table.insert(tMatrix[ROLE_ROAMER], name) end
+	if checkRoleHardSupport(name) then table.insert(tMatrix[ROLE_HARDSUPPORT], name) end
 	if checkRoleSemiSupport(name) then table.insert(tMatrix[ROLE_SEMISUPPORT], name) end
 	return tMatrix
 end

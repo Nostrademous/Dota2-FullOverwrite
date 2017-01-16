@@ -20,7 +20,7 @@ function Think()
 				print( "selecting radiant" );
 				SelectHero( 2, "npc_dota_hero_antimage" );
 				SelectHero( 3, "npc_dota_hero_viper" );
-				SelectHero( 4, "npc_dota_hero_bane" );
+				SelectHero( 4, "npc_dota_hero_bloodseeker" );
 				SelectHero( 5, "npc_dota_hero_lina" );
 				SelectHero( 6, "npc_dota_hero_crystal_maiden" );
 			elseif ( GetTeam() == TEAM_DIRE )

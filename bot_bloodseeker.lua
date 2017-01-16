@@ -58,16 +58,6 @@ function Think()
 		bloodseekerBot:Think(npcBot)
 end
 
-function bloodseekerBot:DoJungle(bot)
-	if ( self:HasAction(ACTION_JUNGLING) == false ) then
-		print(utils.GetHeroName(bot), " STARTING TO JUNGLE ")
-		self:AddAction(ACTION_JUNGLING);
-		jungling_generic.OnStart(bot);
-	end
-
-	jungling_generic.Think(bot);
-end
-
-function bloodseekerBot:Determine_AmISafe(bot)
-	return 0 -- we're fine
+function bloodseekerBot:DoRetreat(bot)
+	return false -- we're fine
 end

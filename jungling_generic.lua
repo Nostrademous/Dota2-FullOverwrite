@@ -102,10 +102,11 @@ end
 local function CleanCamp(bot)
 	local neutrals = bot:GetNearbyCreeps(EyeRange,true);
 	if #neutrals == 0 then -- we did it
+		jungle_status.JungleCampClear(GetTeam(), getHeroVar("currentCamp")[constants.VECTOR])
 		print(utils.GetHeroName(bot), "finds camp")
 		JunglingState = JunglingStates.FindCamp
 	else
-		bot:Action_AttackUnit(neutrals[1], true)
+		getHeroVar("Self"):DoCleanCamp(bot, neutrals)
 	end
 end
 

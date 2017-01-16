@@ -692,4 +692,8 @@ function X:Test(msg)
 	print("[PARENT CLASS]: ", msg)
 end
 
+function X:DoCleanCamp(bot, neutrals)
+	bot:Action_AttackUnit(neutrals[1], true)
+end
+
 return X;

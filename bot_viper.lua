@@ -44,6 +44,10 @@ viperBot = ViperBot:new{actionQueue = viperActionQueue, abilityPriority = ViperA
 
 viperBot.Init = false;
 
+function viperBot:Test(msg)
+	print("[VIPER CLASS]: ", msg)
+end
+
 function Think()
     local npcBot = GetBot()
 	

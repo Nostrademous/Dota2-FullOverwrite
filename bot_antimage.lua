@@ -60,6 +60,10 @@ function amBot:ConsiderAbilityUse()
 	ability_usage_antimage.AbilityUsageThink()
 end
 
+function amBot:Test(msg)
+	print("[ANTIMAGE CLASS]: ", msg)
+end
+
 function Think()
     local npcBot = GetBot()
 

@@ -20,6 +20,7 @@ function AbilityUsageThink()
 	if ( GetGameState() ~= GAME_STATE_GAME_IN_PROGRESS and GetGameState() ~= GAME_STATE_PRE_GAME ) then return end
 	
 	local npcBot = GetBot()
+	if not npcBot:IsAlive() then return end
 	
 	-- Check if we're already using an ability
 	if ( npcBot:IsUsingAbility() or npcBot:IsChanneling() ) then return end;

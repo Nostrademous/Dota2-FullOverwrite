@@ -671,6 +671,7 @@ end
 function X:DoGetRune(npcBot)	
 	for _,r in pairs(constants.RuneSpots) do
 		local loc = GetRuneSpawnLocation(r)
+		print("Distance To Rune '", r, "' is: ", utils.GetDistance(npcBot:GetLocation(), loc))
 		if utils.GetDistance(npcBot:GetLocation(), loc) < 900 and GetRuneStatus(r) == RUNE_STATUS_AVAILABLE then
 			npcBot:Action_PickUpRune(r)
 			return false
@@ -705,10 +706,6 @@ end
 
 function X:MoveItemsFromStashToInventory(bot)
 	utils.MoveItemsFromStashToInventory(bot)
-end
-
-function X:Test(msg)
-	print("[PARENT CLASS]: ", msg)
 end
 
 function X:DoCleanCamp(bot, neutrals)

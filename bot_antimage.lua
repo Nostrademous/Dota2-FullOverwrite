@@ -50,10 +50,6 @@ function amBot:ConsiderAbilityUse()
 	ability_usage_antimage.AbilityUsageThink()
 end
 
-function amBot:Test(msg)
-	print("[ANTIMAGE CLASS]: ", msg)
-end
-
 function amBot:DoHeroSpecificInit(bot)
 	self:setHeroVar("HasMovementAbility", bot:GetAbilityByName(SKILL_W))
 end

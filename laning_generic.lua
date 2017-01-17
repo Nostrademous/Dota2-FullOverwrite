@@ -72,9 +72,6 @@ function OnStart(npcBot)
 	end
 	
 	--print(utils.GetHeroName(npcBot), " LANING OnStart Done")
-	
-	local actBot = getHeroVar("Self")
-	actBot:Test("Message")
 end
 
 -------------------------------

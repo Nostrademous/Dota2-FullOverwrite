@@ -61,14 +61,13 @@ end
 
 function bloodseekerBot:DoRetreat(bot, safe)
 	if safe == 3 then -- just creeps
-		if bot:GetHealth()/bot:GetMaxHealth() < 0.1 then
+		if (bot:GetHealth()/bot:GetMaxHealth()) < 0.15 then
+			-- TODO: find a better reason code
 			return dt:DoRetreat(bot, 1) -- reason 1 is enemy. 3 would be creeps. But we don't want fancy backoffs. We just want to go home
 		end
 		return false
 	else -- tower (in the jungle??) or enemy
-		-- TODO: re-enable this after AmISafe has been fixed
-		-- return dt:DoRetreat(bot, safe)
-		return false
+		return dt:DoRetreat(bot, safe)
 	end
 end
 

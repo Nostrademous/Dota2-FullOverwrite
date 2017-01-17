@@ -66,11 +66,19 @@ end
 
 function bloodseekerBot:GetMaxClearableCampLevel(bot)
 	-- TODO: when to start killing ancients?
+	if DotaTime() < 30 then
+		return constants.CAMP_EASY
+	end
+
 	local bloodrage = bot:GetAbilityByName("bloodseeker_bloodrage")
 	if utils.HaveItem(bot, "item_iron_talon") and bloodrage:GetLevel() >= 2 then
 		return constants.CAMP_HARD
 	end
-	return constants.CAMP_MEDIUM
+
+	if bot:GetHealth() > 250 then
+		return constants.CAMP_MEDIUM
+	end
+	return constants.CAMP_EASY
 end
 
 function bloodseekerBot:DoCleanCamp(bot, neutrals)

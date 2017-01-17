@@ -6,13 +6,13 @@
 require( GetScriptDirectory().."/constants" )
 local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
 
-function setHeroVar(var, value)
-	local bot = GetBot()
+function setHeroVar(var, value, bot)
+	local bot = bot or GetBot()
 	gHeroVar.SetVar(bot:GetPlayerID(), var, value)
 end
 
-function getHeroVar(var)
-	local bot = GetBot()
+function getHeroVar(var, bot)
+	local bot = bot or GetBot()
 	return gHeroVar.GetVar(bot:GetPlayerID(), var)
 end
 
@@ -394,6 +394,25 @@ function U.NearestNeutralCamp( hUnit, tCamps )
     return closestCamp
 end
 
+function U.GetLaneTower(team, lane, i)
+	if i > 3 and i < 6 then
+		return GetTower(team, 5 + i)
+	end
+	
+	local j = i - 1
+	if lane == LANE_MID then
+		j = j + 3
+	elseif lane == LANE_BOT then
+		j = j + 6
+	end
+	
+	if j < 9 and j > -1 and (lane == LANE_BOT or lane == LANE_MID or lane == LANE_TOP) then
+		return GetTower(team, j)
+	end
+	
+	return nil
+end
+
 function U.GetDistance(s, t)
 	--print("S1: "..s[1]..", S2: "..s[2].." :: T1: "..t[1]..", T2: "..t[2]);
 	return math.sqrt((s[1]-t[1])*(s[1]-t[1]) + (s[2]-t[2])*(s[2]-t[2]));
@@ -406,7 +425,7 @@ function U.VectorTowards(s,t,d)
 end
 
 function U.GetHeroName(bot)
-	local sName = bot:GetUnitName();
+	local sName = bot:GetUnitName()
 	return string.sub(sName, 15, string.len(sName));
 end
 
@@ -492,9 +511,9 @@ function U.MoveSafelyToLocation(npcBot, dest)
 	end
 
 	if GetTeam()==TEAM_RADIANT then
-		safeSpots=U.RadiantSafeSpots;
+		safeSpots = U.RadiantSafeSpots
 	else
-		safeSpots=U.DireSafeSpots;
+		safeSpots = U.DireSafeSpots
 	end
 	
 	if getHeroVar("FinalHop")==nil then
@@ -918,10 +937,12 @@ function U.LevelUp(bot, AbilityPriority)
 		return;
 	end
 	
+	--[[
 	print( " [" .. getHeroVar("Name") .. "] Contemplating " .. ability:GetName() .. " " .. ability:GetLevel() .. "/" .. ability:GetMaxLevel() );
 	if ( ability:CanAbilityBeUpgraded() ) then
 		print( "Ability Can Be Upgraded" );
 	end
+	--]]
 	
 	if ( ability:CanAbilityBeUpgraded() and ability:GetLevel() < ability:GetMaxLevel() ) then
 		bot:Action_LevelAbility(AbilityPriority[1]);
@@ -933,8 +954,8 @@ end
 function U.InitPathFinding(npcBot)
 
 	-- keeps the path for my pathfinding
-	setHeroVar("NextHop", {})
-	setHeroVar("PathfindingWasInitiated", false)
+	setHeroVar("NextHop", {}, npcBot)
+	setHeroVar("PathfindingWasInitiated", false, npcBot)
 	-- creating the graph
 
 	local SafeDist=2000;
@@ -953,7 +974,7 @@ function U.InitPathFinding(npcBot)
 	for u,uv in pairs(safeSpots) do
 		local q=true;
 		dist[u]={};
-		setHeroVar(getHeroVar("NextHop")[u], {})
+		setHeroVar(getHeroVar("NextHop")[u], {}, npcBot)
 		for v,vv in pairs(safeSpots) do
 			if U.GetDistance(uv,vv)>SafeDist then
 				dist[u][v]=inf;
@@ -961,7 +982,7 @@ function U.InitPathFinding(npcBot)
 				q=false;
 				dist[u][v]=U.GetDistance(uv,vv);
 			end
-			setHeroVar(getHeroVar("NextHop")[u][v], v)
+			setHeroVar(getHeroVar("NextHop", npcBot)[u][v], v, npcBot)
 		end
 		if q then
 			print("There is an isolated vertex in safespots");
@@ -974,7 +995,7 @@ function U.InitPathFinding(npcBot)
 			for v,_ in pairs(safeSpots) do
 				if dist[u][v]>dist[u][k]+dist[k][v] then
 					dist[u][v]=dist[u][k]+dist[k][v];
-					setHeroVar(getHeroVar("NextHop")[u][v], getHeroVar("NextHop")[u][k])
+					setHeroVar(getHeroVar("NextHop", npcBot)[u][v], getHeroVar("NextHop", npcBot)[u][k], npcBot)
 				end
 			end
 		end

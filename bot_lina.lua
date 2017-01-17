@@ -9,7 +9,6 @@ require ( GetScriptDirectory().."/ability_usage_lina" )
 
 local utils = require( GetScriptDirectory().."/utility" )
 local dt = require( GetScriptDirectory().."/decision_tree" )
-local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
 
 local LINA_SKILL_Q = "lina_dragon_slave";
 local LINA_SKILL_W = "lina_light_strike_array";
@@ -43,7 +42,7 @@ function LinaBot:new(o)
 	return o
 end
 
-linaBot = LinaBot:new{actionQueue = linaActionQueue, abilityPriority = LinaAbilityPriority}
+linaBot = LinaBot:new{actionStack = linaActionQueue, abilityPriority = LinaAbilityPriority}
 --linaBot:printInfo();
 
 linaBot.Init = false

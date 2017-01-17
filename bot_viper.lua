@@ -39,7 +39,7 @@ function ViperBot:new(o)
 	return o
 end
 
-viperBot = ViperBot:new{actionQueue = viperActionQueue, abilityPriority = ViperAbilityPriority}
+viperBot = ViperBot:new{actionStack = viperActionQueue, abilityPriority = ViperAbilityPriority}
 --viperBot:printInfo();
 
 viperBot.Init = false;

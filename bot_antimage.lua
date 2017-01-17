@@ -41,7 +41,7 @@ function AMBot:new(o)
 	return o
 end
 
-amBot = AMBot:new{actionQueue = antimageActionQueue, abilityPriority = AntimageAbilityPriority}
+amBot = AMBot:new{actionStack = antimageActionQueue, abilityPriority = AntimageAbilityPriority}
 --AMBot:printInfo();
 
 amBot.Init = false

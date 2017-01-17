@@ -44,7 +44,7 @@ function botBS:new(o)
 	return o
 end
 
-bloodseekerBot = botBS:new{actionQueue = bloodseekerActionQueue, abilityPriority = BloodseekerAbilityPriority}
+bloodseekerBot = botBS:new{actionStack = bloodseekerActionQueue, abilityPriority = BloodseekerAbilityPriority}
 --bloodseekerBot:printInfo()
 
 bloodseekerBot.Init = false

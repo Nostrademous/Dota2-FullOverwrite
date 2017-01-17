@@ -6,6 +6,9 @@
 _G._savedEnv = getfenv()
 module( "generic_item_purchase", package.seeall )
 
+require( GetScriptDirectory().."/secret_shop_generic" )
+local utils = require( GetScriptDirectory().."/utility")
+
 local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
 
 function getHeroVar(var)
@@ -27,22 +30,22 @@ function ItemPurchaseThink(tableItemsToBuyAsMid, tableItemsToBuyAsHardCarry, tab
 	local sNextItem = nil
 
 	if ( getHeroVar("Role") == role.ROLE_MID ) then
-		print( getHeroVar("Name").."ItemPurchaseThink.Mid" );
+		--print( getHeroVar("Name").."ItemPurchaseThink.Mid" );
 		roleTable = tableItemsToBuyAsMid
 	elseif ( getHeroVar("Role") == role.ROLE_HARDCARRY ) then
-		print( getHeroVar("Name").."ItemPurchaseThink.HardCarry" );
+		--print( getHeroVar("Name").."ItemPurchaseThink.HardCarry" );
 		roleTable = tableItemsToBuyAsHardCarry
 	elseif ( getHeroVar("Role") == role.ROLE_OFFLANE ) then
-		print( getHeroVar("Name").."ItemPurchaseThink.Offlane" )
+		--print( getHeroVar("Name").."ItemPurchaseThink.Offlane" )
 		roleTable = tableItemsToBuyAsOfflane
 	elseif ( getHeroVar("Role") == role.ROLE_HARDSUPPORT or getHeroVar("Role") == role.ROLE_SEMISUPPORT ) then
-		print( getHeroVar("Name").."ItemPurchaseThink.Support" )
+		--print( getHeroVar("Name").."ItemPurchaseThink.Support" )
 		roleTable = tableItemsToBuyAsSupport
 	elseif ( getHeroVar("Role") == role.ROLE_JUNGLER ) then
-		print( getHeroVar("Name").."ItemPurchaseThink.Jungler" )
+		--print( getHeroVar("Name").."ItemPurchaseThink.Jungler" )
 		roleTable = tableItemsToBuyAsJungler
 	elseif ( getHeroVar("Role") == role.ROLE_ROAMER ) then
-		print( getHeroVar("Name").."ItemPurchaseThink.Roamer" )
+		--print( getHeroVar("Name").."ItemPurchaseThink.Roamer" )
 		roleTable = tableItemsToBuyAsRoamer
 	end
 	
@@ -52,23 +55,37 @@ function ItemPurchaseThink(tableItemsToBuyAsMid, tableItemsToBuyAsHardCarry, tab
 		return;
 	end
 
-	sNextItem = roleTable[1];
-
-	npcBot:SetNextItemPurchaseValue( GetItemCost( sNextItem ) );
-
-	if ( npcBot:GetGold() >= GetItemCost( sNextItem ) ) then
-		npcBot:Action_PurchaseItem( sNextItem );
-		table.remove( roleTable, 1 );
-		npcBot:SetNextItemPurchaseValue( 0 );
-	end
+	sNextItem = roleTable[1]
 	
 	if sNextItem ~= nil then
-		if IsItemPurchasedFromSecretShop( sNextItem ) then
-			print(getHeroVar("Name"), " - ", sNextItem, " available from Secret Shop");
+		--[[
+		if IsItemPurchasedFromSecretShop( sNextItem ) then -- and (not IsItemPurchasedFromSideShop(sNextItem)) then
+			npcBot:SetNextItemPurchaseValue( GetItemCost( sNextItem ) )
+
+			if ( npcBot:GetGold() >= GetItemCost( sNextItem ) ) then
+				local me = getHeroVar("Self")
+				if me:GetAction() ~= constants.ACTION_SECRETSHOP then 
+					print(getHeroVar("Name"), " - ", sNextItem, " is ONLY available from Secret Shop")
+					if ( me:HasAction(constants.ACTION_SECRETSHOP) == false ) then
+						me:AddAction(constants.ACTION_SECRETSHOP)
+						print(utils.GetHeroName(npcBot), " STARTING TO HEAD TO SECRET SHOP ")
+						secret_shop_generic.OnStart()
+					end
+				end
+				secret_shop_generic.Think(sNextItem)
+			end
+		--]]
+		--elseif IsItemPurchasedFromSideShop( sNextItem ) then
+		--	print(getHeroVar("Name"), " - ", sNextItem, " available from Side Shop")
+		--else
+		npcBot:SetNextItemPurchaseValue( GetItemCost( sNextItem ) )
+
+		if ( npcBot:GetGold() >= GetItemCost( sNextItem ) ) then
+			npcBot:Action_PurchaseItem( sNextItem )
+			table.remove( roleTable, 1 )
+			npcBot:SetNextItemPurchaseValue( 0 )
 		end
-		if IsItemPurchasedFromSideShop( sNextItem ) then
-			print(getHeroVar("Name"), " - ", sNextItem, " available from Side Shop");
-		end
+		--end
 	end
 end
 

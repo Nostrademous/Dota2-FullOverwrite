@@ -42,13 +42,15 @@ local JunglingStates={
 	FindCamp=0,
 	MoveToCamp=1,
 	WaitForSpawn=2,
-	CleanCamp=3
+	Stack=3,
+	CleanCamp=4
 }
 
 local JunglingState=JunglingStates.FindCamp;
 
 
 function OnStart(npcBot)
+	JunglingState=JunglingStates.FindCamp;
 	-- TODO: implement stacking
 	-- TODO: Pickup runes
 	-- TODO: help lanes
@@ -68,7 +70,6 @@ local function FindCamp(bot)
 	end
 	local camp = utils.NearestNeutralCamp(bot, jungle)
 	setHeroVar("currentCamp", camp)
-	bot:Action_MoveToLocation(camp[constants.PRE_STACK_VECTOR])
 	print(utils.GetHeroName(bot), "moves to camp")
 	JunglingState = JunglingStates.MoveToCamp
 end
@@ -83,7 +84,6 @@ local function MoveToCamp(bot)
 		local jungle = jungle_status.GetJungle(GetTeam()) or {}
 		jungle = FindCampsByMaxDifficulty(jungle, getHeroVar("Self"):GetMaxClearableCampLevel(bot))
 		if #jungle == 0 then -- jungle is empty
-			bot:Action_MoveToLocation(getHeroVar("currentCamp")[constants.STACK_VECTOR]) -- make sure it spawns
 			setHeroVar("waituntil", utils.NextNeutralSpawn())
 			print(utils.GetHeroName(bot), "waits for spawn")
 			JunglingState = JunglingStates.WaitForSpawn
@@ -100,12 +100,33 @@ local function MoveToCamp(bot)
 end
 
 local function WaitForSpawn(bot)
-	if DotaTime() < getHeroVar("waituntil") then return end
-	bot:Action_MoveToLocation(getHeroVar("currentCamp")[constants.PRE_STACK_VECTOR])
+	if DotaTime() < getHeroVar("waituntil") then
+		bot:Action_MoveToLocation(getHeroVar("currentCamp")[constants.STACK_VECTOR]) -- TODO: use a vector that is closer to the camp
+		return
+	end
 	JunglingState = JunglingStates.MoveToCamp
 end
 
+local function Stack(bot)
+	if DotaTime() < getHeroVar("waituntil") then
+		bot:Action_MoveToLocation(getHeroVar("currentCamp")[constants.STACK_VECTOR])
+		return
+	end
+	JunglingState = JunglingStates.FindCamp
+end
+
 local function CleanCamp(bot)
+	-- TODO: make sure we have aggro when attempting to stack
+	-- TODO: don't attack enemy creeps, unless they attack us / make sure we stay in jungle
+	-- TODO: instead of stacking, could we just kill them and move ou of the camp?
+	local time = DotaTime() % 120
+	local stacktime = getHeroVar("currentCamp")[constants.STACK_TIME]
+	if time >= stacktime and time <= stacktime + 1 then
+		JunglingState = JunglingStates.Stack
+		print(utils.GetHeroName(bot), "stacks")
+		setHeroVar("waituntil", utils.NextNeutralSpawn())
+		return
+	end
 	local neutrals = bot:GetNearbyCreeps(EyeRange,true);
 	if #neutrals == 0 then -- we did it
 		jungle_status.JungleCampClear(GetTeam(), getHeroVar("currentCamp")[constants.VECTOR])
@@ -134,6 +155,7 @@ local States = {
 [JunglingStates.FindCamp]=FindCamp,
 [JunglingStates.MoveToCamp]=MoveToCamp,
 [JunglingStates.WaitForSpawn]=WaitForSpawn,
+[JunglingStates.Stack]=Stack,
 [JunglingStates.CleanCamp]=CleanCamp
 }
 

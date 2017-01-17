@@ -69,6 +69,13 @@ end
 function X:PrintActionTransition(name)
 	self:setCurrentAction(self:GetAction());
 	
+	--[[
+	if self:getPrevAction() == ACTION_FIGHT then
+		self:RemoveAction(ACTION_FIGHT)
+		self:setHeroVar("Target", nil)
+	end
+	--]]
+	
 	if ( self:getCurrentAction() ~= self:getPrevAction() ) then
 		print("["..name.."] Action Transition: "..self:getPrevAction().." --> "..self:getCurrentAction());
 		self:setPrevAction(self:getCurrentAction());
@@ -232,7 +239,7 @@ function X:Think(bot)
 	local bRet = self:ConsiderAbilityUse()
 	if bRet then return end
 	
-	if ( self:Determine_ShouldIFighting(bot) ) then
+	if ( self:Determine_ShouldIFighting(bot) or self:GetAction() == ACTION_FIGHT ) then
 		local bRet = self:DoFight(bot)
 		if bRet then return end
 	end
@@ -417,14 +424,44 @@ function X:Determine_AmISafe(bot)
 end
 
 function X:Determine_ShouldIFighting(bot)
-	local weakestHero, myDamage, score = utils.FindTarget(1400)
-	if weakestHero == nil or not weakestHero:CanBeSeen() then
-		return false
+	local weakestHero, myDamage, score = utils.FindTarget(1200)
+	
+	if utils.NotNilOrDead(weakestHero) then
+		local bFight = myDamage > weakestHero:GetHealth() and score > 1
+		
+		if bFight then
+			if self:HasAction(ACTION_FIGHT) == false then
+				print(utils.GetHeroName(bot), " - Fighting ", utils.GetHeroName(weakestHero))
+				self:AddAction(ACTION_FIGHT)
+				self:setHeroVar("Target", weakestHero)
+			end
+			
+			if weakestHero ~= getHeroVar("Target") then
+				print(utils.GetHeroName(bot), " - Fight Change - Fighting ", utils.GetHeroName(weakestHero))
+				self:setHeroVar("Target", weakestHero)
+			end
+		end
+		
+		return bFight
 	end
 	
-	local bFight = (weakestHero ~= nil) and ( myDamage > weakestHero:GetHealth() ) and ( score > 1 )
-	bot:SetTarget(weakestHero)
-	return bFight
+	if getHeroVar("Target") ~= nil then
+		if (not utils.NotNilOrDead(weakestHero)) or (not weakestHero:CanBeSeen()) then
+			print(utils.GetHeroName(bot), " - Stopping my fight... lost hero")
+			self:RemoveAction(ACTION_FIGHT)
+			self:setHeroVar("Target", nil)
+			return false
+		end
+		
+		if (GameTime() - bot:GetLastAttackTime()) > 3.0 or bot:GetAttackTarget() ~= getHeroVar("Target") then
+			print(utils.GetHeroName(bot), " - Stopping my fight... done chasing")
+			self:RemoveAction(ACTION_FIGHT)
+			self:setHeroVar("Target", nil)
+			return false
+		end
+	end
+	
+	return false
 end
 
 function X:Determine_DoAlliesNeedHelp(bot)
@@ -612,23 +649,27 @@ function X:DoRetreat(bot, reason)
 end
 
 function X:DoFight(bot)
-	local target = bot:GetTarget()
+	local target = self:getHeroVar("Target")
 	if utils.NotNilOrDead(target) then
-		local Towers = bot:GetNearbyTowers(900, true)
+		local Towers = bot:GetNearbyTowers(1200, true)
 		if Towers ~= nil and #Towers == 0 then
 			bot:Action_AttackUnit(target, true)
 		else
 			for _, tow in pairs(Towers) do
 				if GetUnitToLocationDistance( bot, tow:GetLocation() ) < 900 then
+					self:RemoveAction(ACTION_FIGHT)
+					self:setHeroVar("Target", nil)
 					return false
 				end
 			end
 			bot:Action_AttackUnit(target, true)
+			return true
 		end
 	else
-		bot:SetTarget(nil)
+		self:RemoveAction(ACTION_FIGHT)
+		self:setHeroVar("Target", nil)
 	end
-	return true
+	return false
 end
 
 function X:DoDefendAlly(bot)

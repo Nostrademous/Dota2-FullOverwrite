@@ -255,7 +255,7 @@ function ConsiderLightStrikeArray(abilityLSA)
 	end
 
 	-- If we're going after someone
-	local npcTarget = npcBot:GetTarget();
+	local npcTarget = getHeroVar("Target")
 
 	if ( npcTarget ~= nil ) then
 		ConsiderLightStrikeArrayFighting( abilityLSA, npcTarget )
@@ -322,7 +322,7 @@ function ConsiderDragonSlave(abilityDS)
 	end
 
 	-- If we're going after someone
-	local npcTarget = npcBot:GetTarget();
+	local npcTarget = getHeroVar("Target")
 
 	if npcTarget ~= nil then
 		ConsiderDragonSlaveFighting( abilityDS, npcTarget )

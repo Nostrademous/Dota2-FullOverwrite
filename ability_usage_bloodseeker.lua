@@ -7,6 +7,17 @@ _G._savedEnv = getfenv()
 module( "ability_usage_bloodseeker", package.seeall )
 
 local utils = require( GetScriptDirectory().."/utility" )
+local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
+
+function setHeroVar(var, value)
+	local bot = bot or GetBot()
+	gHeroVar.SetVar(bot:GetPlayerID(), var, value)
+end
+
+function getHeroVar(var)
+	local bot = bot or GetBot()
+	return gHeroVar.GetVar(bot:GetPlayerID(), var)
+end
 
 local Abilities ={
 	"bloodseeker_bloodrage",
@@ -31,7 +42,8 @@ local function UseW()
 		return false
 	end
 	
-	if GetUnitToUnitDistance(npcBot, npcBot:GetTarget()) > 1500 then
+	local target = getHeroVar("Target")
+	if target ~= nil and GetUnitToUnitDistance(npcBot, target) > 1500 then
 		return false
 	end
 	
@@ -46,7 +58,7 @@ end
 local function UseUlt()
 	local npcBot = GetBot()
 	
-	local enemy = npcBot:GetTarget()
+	local enemy = getHeroVar("Target")
 	if enemy == nil then return false end
 	
 	local ability = npcBot:GetAbilityByName(Abilities[4])
@@ -70,7 +82,7 @@ function AbilityUsageThink()
 	
 	if npcBot:IsChanneling() or npcBot:IsUsingAbility() then return	end
 	
-	if npcBot:GetTarget() == nil then return end
+	if getHeroVar("Target") == nil then return end
 
 	if UseUlt() or UseW() then return end
 	

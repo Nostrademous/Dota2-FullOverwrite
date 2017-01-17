@@ -845,7 +845,7 @@ function U.FindTarget(dist)
 	local Enemies = npcBot:GetNearbyHeroes(dist, true, BOT_MODE_NONE);
 	
 	if Enemies == nil or #Enemies == 0 then
-		npcBot:SetTarget(nil)
+		setHeroVar("Target", nil)
 		return nil, 0.0, 0.0
 	end
 	

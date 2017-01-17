@@ -655,7 +655,9 @@ function X:DoJungle(bot)
 		jungling_generic.OnStart(bot);
 	end
 
-	self:DoGetRune(bot) -- grab a rune if we near one as we jungle
+	if GetGameState() == GAME_STATE_GAME_IN_PROGRESS then
+		self:DoGetRune(bot) -- grab a rune if we near one as we jungle
+	end
 	
 	jungling_generic.Think(bot)
 	
@@ -666,34 +668,15 @@ function X:DoRoshan(bot)
 	return true
 end
 
-function X:DoGetRune(npcBot)
-	-- grab a rune if we walk by it
-	if (GetUnitToLocationDistance( npcBot , constants.RAD_BOUNTY_RUNE_SAFE) < 450 and
-		GetRuneStatus( RUNE_BOUNTY_1 ) == RUNE_STATUS_AVAILABLE )
-	then   
-    	npcBot:Action_PickUpRune(RUNE_BOUNTY_1);
-    elseif (GetUnitToLocationDistance( npcBot , constants.RAD_BOUNTY_RUNE_OFF) < 450 and
-		GetRuneStatus( RUNE_BOUNTY_2 ) == RUNE_STATUS_AVAILABLE )
-	then   
-    	npcBot:Action_PickUpRune(RUNE_BOUNTY_2);
-	elseif (GetUnitToLocationDistance( npcBot , constants.DIRE_BOUNTY_RUNE_SAFE) < 450 and
-		GetRuneStatus( RUNE_BOUNTY_3 ) == RUNE_STATUS_AVAILABLE )
-	then   
-    	npcBot:Action_PickUpRune(RUNE_BOUNTY_3);
-	elseif (GetUnitToLocationDistance( npcBot , constants.DIRE_BOUNTY_RUNE_OFF) < 450 and
-		GetRuneStatus( RUNE_BOUNTY_4 ) == RUNE_STATUS_AVAILABLE )
-	then    
-    	npcBot:Action_PickUpRune(RUNE_BOUNTY_4);
-    elseif (GetUnitToLocationDistance( npcBot , constants.POWERUP_RUNE_TOP) < 450 and
-		GetRuneStatus( RUNE_POWERUP_1 ) == RUNE_STATUS_AVAILABLE )
-	then    
-    	npcBot:Action_PickUpRune(RUNE_POWERUP_1);
-    elseif (GetUnitToLocationDistance( npcBot , constants.POWERUP_RUNE_BOT) < 450 and
-		GetRuneStatus( RUNE_POWERUP_2 ) == RUNE_STATUS_AVAILABLE )
-	then    
-    	npcBot:Action_PickUpRune(RUNE_POWERUP_2);
-    end
-	return true
+function X:DoGetRune(npcBot)	
+	for _,r in pairs(constants.RuneSpots) do
+		local loc = GetRuneSpawnLocation(r)
+		if utils.GetDistance(npcBot:GetLocation(), loc) < 900 and GetRuneStatus(r) == RUNE_STATUS_AVAILABLE then
+			npcBot:Action_PickUpRune(r)
+			return false
+		end
+	end
+	return false
 end
 
 function X:DoWard(bot)

@@ -44,8 +44,8 @@ viperBot = ViperBot:new{actionQueue = viperActionQueue, abilityPriority = ViperA
 
 viperBot.Init = false;
 
-function viperBot:Test(msg)
-	print("[VIPER CLASS]: ", msg)
+function viperBot:DoHeroSpecificInit(bot)
+	self:setHeroVar("HasOrbAbility", SKILL_Q)
 end
 
 function Think()

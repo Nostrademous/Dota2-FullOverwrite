@@ -49,7 +49,8 @@ function Think(npcBot, retreatAbility)
 		nextmove = utils.Fountain(GetTeam())
 	end
 	
-	if retreatAbility ~= nil then
+	local retreatAbility = getHeroVar("HasMovementAbility")
+	if retreatAbility ~= nil and retreatAbility:IsFullyCastable() then
 		-- same name for bot AM and QoP, "tooltip_range" for "riki_blink_strike"
 		local value = 0.03
 		if (utils.GetHeroName(npcBot) == "antimage" or utils.GetHeroName(npcBot) == "queen_of_pain") then

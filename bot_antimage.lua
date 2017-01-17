@@ -44,24 +44,14 @@ end
 amBot = AMBot:new{actionQueue = antimageActionQueue, abilityPriority = AntimageAbilityPriority}
 --AMBot:printInfo();
 
-amBot.Init = false;
-
-function amBot:RetreatAbility()
-	local npcBot = GetBot()
-	
-	local blink = npcBot:GetAbilityByName("antimage_blink")
-	if blink:IsFullyCastable() then
-		return blink
-	end
-	return nil
-end
+amBot.Init = false
 
 function amBot:ConsiderAbilityUse()
 	ability_usage_antimage.AbilityUsageThink()
 end
 
-function amBot:Test(msg)
-	print("[ANTIMAGE CLASS]: ", msg)
+function amBot:DoHeroSpecificInit(bot)
+	self:setHeroVar("HasMovementAbility", bot:GetAbilityByName(SKILL_W))
 end
 
 function Think()

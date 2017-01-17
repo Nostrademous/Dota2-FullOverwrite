@@ -29,25 +29,25 @@ local BLOODSEEKER_ABILITY8 = "special_bonus_lifesteal_30"
 local BloodseekerAbilityPriority = {
 	BLOODSEEKER_SKILL_Q,    BLOODSEEKER_SKILL_E,    BLOODSEEKER_SKILL_Q,    BLOODSEEKER_SKILL_E,    BLOODSEEKER_SKILL_Q,
     BLOODSEEKER_SKILL_R,    BLOODSEEKER_SKILL_W,    BLOODSEEKER_SKILL_E,    BLOODSEEKER_SKILL_W,    BLOODSEEKER_ABILITY2,
-    BLOODSEEKER_SKILL_E,    BLOODSEEKER_SKILL_R,    BLOODSEEKER_SKILL_W,    BLOODSEEKER_SKILL_W,    BLOODSEEKER_ABILITY3,
+    BLOODSEEKER_SKILL_Q,    BLOODSEEKER_SKILL_R,    BLOODSEEKER_SKILL_W,    BLOODSEEKER_SKILL_W,    BLOODSEEKER_ABILITY3,
     BLOODSEEKER_SKILL_E,    BLOODSEEKER_SKILL_R,    BLOODSEEKER_ABILITY5,   BLOODSEEKER_ABILITY8
 };
 
 local bloodseekerActionQueue = { [1] = constants.ACTION_NONE }
 
-bloodseekerBot = dt:new()
+botBS = dt:new()
 
-function bloodseekerBot:new(o)
+function botBS:new(o)
 	o = o or dt:new(o)
 	setmetatable(o, self)
 	self.__index = self
 	return o
 end
 
-bloodseekerBot = bloodseekerBot:new{prevTime = -999.0, actionQueue = bloodseekerActionQueue, abilityPriority = BloodseekerAbilityPriority}
---bloodseekerBot:printInfo();
+bloodseekerBot = botBS:new{actionQueue = bloodseekerActionQueue, abilityPriority = BloodseekerAbilityPriority}
+--bloodseekerBot:printInfo()
 
-bloodseekerBot.Init = false;
+bloodseekerBot.Init = false
 
 function bloodseekerBot:ConsiderAbilityUse()
 	ability_usage_bloodseeker.AbilityUsageThink()
@@ -56,7 +56,7 @@ end
 function Think()
     local npcBot = GetBot()
 
-		bloodseekerBot:Think(npcBot)
+	bloodseekerBot:Think(npcBot)
 end
 
 function bloodseekerBot:DoRetreat(bot)

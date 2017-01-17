@@ -12,18 +12,23 @@ local items = require(GetScriptDirectory().."/items")
 local myEnemies = require( GetScriptDirectory().."/enemy_data")
 
 --[[
-The idea is that you get a list of starting items, utility items, core items and extension items.
-This class then decides which items to buy, considering what and how much damage the enemy mostly does,
-if we want offensive or defensive items and if we need anything else like consumables
+	The idea is that you get a list of starting items, utility items, core items and extension items.
+	This class then decides which items to buy, considering what and how much damage the enemy mostly does,
+	if we want offensive or defensive items and if we need anything else like consumables
 --]]
 
 -------------------------------------------------------------------------------
 -- Declarations
 -------------------------------------------------------------------------------
 
-local X = {startingItems = {}, utilityItems = {}, coreItems = {}, 
-				extentionItems = {offensiveItems={}, defensiveItems={}}}				
+local X = {	startingItems = {}, 
+					utilityItems = {}, 
+					coreItems = {}, 
+					extentionItems = {	offensiveItems={}, 
+													defensiveItems={}	}	}				
 
+local X.PurchaseOrder = {}				
+				
 -------------------------------------------------------------------------------
 -- Init
 -------------------------------------------------------------------------------
@@ -74,71 +79,81 @@ end
 -------------------------------------------------------------------------------
 -- Think
 --[[
-ToDo: Selling items for better ones      
+	ToDo: Selling items for better ones      
 --]]
 -------------------------------------------------------------------------------
 
 function X:Think(npcBot)
 
+	-- If bot nothing bail
 	if npcBot == nil then return end
+	
+	-- If game not in progress bail
 	if ( GetGameState() ~= GAME_STATE_GAME_IN_PROGRESS and GetGameState() ~= GAME_STATE_PRE_GAME ) then return end
 
-	local sNextItem = nil
-
-	-- Cores shall not buy wards ;)
-	if npcBot.IsCore
-		-- If there's an item to be purchased already bail
-		if ( (npcBot:GetNextItemPurchaseValue() > 0) and (npcBot:GetGold() < npcBot:GetNextItemPurchaseValue()) ) then
-			return
-		end
-
-		-- Test
-		if InTable(self.startingItems, "item_branches") print("in table") end
-		
-		-- Still starting items to buy?
-		if (#self.startingItems == 0) then
-			-- Still core items to buy?
-			if( #self.coreItems == 0) then
-				-- Otherwise consider buying extension items
-				ConsiderBuyingExtensions(npcBot)
-			else  
-				-- Select the next one, buy if possible
-				sNextItem = self.coreItems[1]      
-				npcBot:SetNextItemPurchaseValue(GetItemCost(sNextItem))
-				if(npcBot:GetGold() >= GetItemCost(sNextItem)) then
-					npcBot:Action_PurchaseItem(sNextItem)				
-					table.remove(self.coreItems, 1)
-					npcBot:SetNextItemPurchaseValue(0)
-				end
-			end      
-		else
-			-- Select the next one, buy if possible
-			sNextItem = self.startingItems[1]      
-			npcBot:SetNextItemPurchaseValue(GetItemCost(sNextItem))
-			if(npcBot:GetGold() >= GetItemCost(sNextItem)) then
-				npcBot:Action_PurchaseItem(sNextItem)
-				table.remove(self.startingItems, 1)
-				npcBot:SetNextItemPurchaseValue(0)
-			end
-		end      
-		-- Support
-	else  
-	--[[
-	Idea: buy starting items (always, should have courier and wards if hard support),
-		  then buy either core / extension items unless there is more important utility to buy.
-		  Upgrade courier at 3:00, buy all available wards and if needed detection (no smoke).
-	ToDo: Functions to check if item in stock 
-		  Function to return number of invisible enemies.
-		  Buying consumable items like raindrops if there is a lot of magical damage
-		  Buying salves for cores?          
-	--]]
+	-- If there's an item to be purchased already bail
+	if ( (npcBot:GetNextItemPurchaseValue() > 0) and (npcBot:GetGold() < npcBot:GetNextItemPurchaseValue()) ) then return end
+	
+	-- If we want a new item we determine which one first
+	self:UpdatePurchaseOrder(npcBot)
+	
+	-- Get the next item
+	local sNextItem = self.PurchaseOrder[1]
+	
+	-- Set cost
+	npcBot:SetNextItemPurchaseValue(GetItemCost(sNextItem))
+	
+	-- Enough gold -> buy, remove
+	if(npcBot:GetGold() >= GetItemCost(sNextItem)) then
+		npcBot:Action_PurchaseItem(sNextItem)
+		table.remove(self.PurchaseOrder, 1)
+		npcBot:SetNextItemPurchaseValue(0)
 	end
-
 end
 
 -------------------------------------------------------------------------------
 -- Utilitly functions
 -------------------------------------------------------------------------------
+
+local function UpdatePurchaseOrder(npcBot)
+	-- Core (doesn't buy utility items such as wards)
+	if npcBot.IsCore	
+		-- Still starting items to buy?
+		if (#self.startingItems == 0) then			
+			-- Still core items to buy?
+			if( #self.coreItems == 0) then			
+				-- Otherwise consider buying extension items
+				self:ConsiderBuyingExtensions(npcBot)
+			else
+				-- Put the core items in the purchase order
+				for _,p in pairs(items[self.coreItems[1]) do
+					self.PurchaseOrder[#PurchaseOrder+1] = p
+				end
+				-- Remove entry
+				table.remove(self.coreItems, 1)
+			end      
+		else
+			-- Put the core items in the purchase order
+			for _,p in pairs(items[self.startingItems[1]) do
+				self.PurchaseOrder[#PurchaseOrder+1] = p
+			end
+			-- Remove entry
+			table.remove(self.startingItems, 1)
+		end
+	-- Support
+	else
+	--[[
+	Idea: 	buy starting items (always, should have courier and wards if hard support),
+				then buy either core / extension items unless there is more important utility to buy.
+				Upgrade courier at 3:00, buy all available wards and if needed detection (no smoke).
+				
+	ToDo: 	Functions to check if item in stock 
+				Function to return number of invisible enemies.
+				Buying consumable items like raindrops if there is a lot of magical damage
+				Buying salves for cores?          
+	--]]
+	end
+end
 
 local function ConsiderBuyingExtensions(bot)
 	-- Start with 5s of time to do damage
@@ -150,11 +165,11 @@ local function ConsiderBuyingExtensions(bot)
 		DamageTime = DamageTime + (myEnemies.Enemies[p].obj:GetSlowDuration(true) / 2)
 		DamageTime = DamageTime + myEnemies.Enemies[p].obj:GetStunDuration(true)
 		if myEnemies.Enemies[p].obj:HasSilence then
-			SilenceCount = SilenceCount + 1		
+			SilenceCount = SilenceCount + 1
 		elseif myEnemies.Enemies[p].obj:IsUnableToMiss then
 			TrueStrikeCount = TrueStrikeCount +1
-		end				
-		print(utils.GetHeroName(myEnemies.Enemies[p].obj).." has "..DamageTime.." seconds of disable")	
+		end
+		print(utils.GetHeroName(myEnemies.Enemies[p].obj).." has "..DamageTime.." seconds of disable")
 	end
 	print("Total # of silences: "..SilenceCount.." enemies with true strike: "..TrueStrikeCount)
 		-- Stores the possible damage over 5s + stun/slow duration from all enemies
@@ -169,25 +184,25 @@ local function ConsiderBuyingExtensions(bot)
 	end
 	
 	--[[
-	The damage numbers should be calculated, also the disable time and the silence counter should work
-	Now there needs to be a decision process for what items should be bought exactly.
-	That should account for retreat abilities, what damage is more dangerous to us,
-	how much disable and most imporantly what type of disable the enemy has.
-	Big ToDo: figure out how to get the number of magic immunity piercing disables the enemy has
+		The damage numbers should be calculated, also the disable time and the silence counter should work
+		Now there needs to be a decision process for what items should be bought exactly.
+		That should account for retreat abilities, what damage is more dangerous to us,
+		how much disable and most imporantly what type of disable the enemy has.
+		Big ToDo: figure out how to get the number of magic immunity piercing disables the enemy has
 	--]]
 	
 	-- Determine if we have a retreat ability that we must be able to use (blinks etc)
-	local retreatAbility	
-	if getHeroVar("HasMovementAbility") ~= nil then 
+	local retreatAbility
+	if getHeroVar("HasMovementAbility") ~= nil then
 		retreatAbility = true
-		print("Has retreat") 
+		print("Has retreat")
 	else
 		retreatAbility = false
-		print("Has no retreat") 
+		print("Has no retreat")
 	end
 	
 	-- Remove evasion items if # true strike enemies > 1
-	if TrueStrikeCount > 0 then	
+	if TrueStrikeCount > 0 then
 		if InTable(self.extensionItems.defensiveItems, "item_solar_crest") then
 			local ItemIndex = PosInTable(self.extensionItems.defensiveItems, "item_solar_crest")
 			table.remove(self.extensionItems.defensiveItems, ItemIndex)
@@ -213,7 +228,7 @@ local function ConsiderBuyingExtensions(bot)
 				table.remove(self.extensionItems.defensiveItems, ItemIndex)
 				print("Removing bkb")
 			end
-		end		
+		end
 	elseif InTable(self.extensionItems.defensiveItems, "item_black_king_bar")
 		if retreatAbility and SilenceCount > 1 then
 			if InTable(self.extensionItems.defensiveItems, "item_manta")
@@ -222,7 +237,7 @@ local function ConsiderBuyingExtensions(bot)
 				print("Considering buying euls")
 			else
 				print("Considering buying bkb")
-			end			
+			end
 		elseif SilenceCount > 2 
 			if DamageTime > 12 then	
 				print("Considering buying bkb")
@@ -241,6 +256,10 @@ local function ConsiderBuyingExtensions(bot)
 		
 	end
 end
+
+-------------------------------------------------------------------------------
+-- Table functions (export to utility.lua probably)
+-------------------------------------------------------------------------------
 
 local function InTable (tab, val)
     for index, value in ipairs (tab) do
@@ -261,6 +280,8 @@ local function PosInTable(tab, val)
 	
 	return -1
 end
+
+-------------------------------------------------------------------------------
 
 return X
 

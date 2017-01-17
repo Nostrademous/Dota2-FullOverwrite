@@ -1,78 +1,148 @@
 --------------------------------------------------------------------------------------------
--- AUTHOR: pbenologa
+--- AUTHOR: pbenologa (big thank you!), dralois
+--- GITHUB REPO: https://github.com/Nostrademous/Dota2-FullOverwrite
 --------------------------------------------------------------------------------------------
 
 X = {}
 
-X["basic_items"] = { 	"item_aegis",
-						"item_courier",
-						"item_boots_of_elves",
-						"item_belt_of_strength",
-						"item_blade_of_alacrity",
-						"item_blades_of_attack",
-						"item_blight_stone",
-						"item_blink",
-						"item_boots",
-						"item_bottle",
-						"item_broadsword",
-						"item_chainmail",
-						"item_cheese",
-						"item_circlet",
-						"item_clarity",
-						"item_claymore",
-						"item_cloak",
-						"item_demon_edge",
-						"item_dust",
-						"item_eagle",
-						"item_enchanted_mango",
-						"item_energy_booster",
-						"item_faerie_fire",
-						"item_flying_courier",
-						"item_gauntlets",
-						"item_gem",
-						"item_ghost",
-						"item_gloves",
-						"item_flask",
-						"item_helm_of_iron_will",
-						"item_hyperstone",
-						"item_infused_raindrop",
-						"item_branches",
-						"item_javelin",
-						"item_magic_stick",
-						"item_mantle",
-						"item_mithril_hammer",
-						"item_lifesteal",
-						"item_mystic_staff",
-						"item_ward_observer",
-						"item_ogre_axe",
-						"item_orb_of_venom",
-						"item_platemail",
-						"item_point_booster",
-						"item_quarterstaff",
-						"item_quelling_blade",
-						"item_reaver",
-						"item_ring_of_health",
-						"item_ring_of_protection",
-						"item_ring_of_regen",
-						"item_robe",
-						"item_relic",
-						"item_sobi_mask",
-						"item_ward_sentry",
-						"item_shadow_amulet",
-						"item_slippers",
-						"item_smoke_of_deceit",
-						"item_staff_of_wizardry",
-						"item_stout_shield",
-						"item_talisman_of_evasion",
-						"item_tango",
-						"item_tango_single",
-						"item_tome_of_knowledge",
-						"item_tpscroll",
-						"item_ultimate_orb",
-						"item_vitality_booster",
-						"item_void_stone",
-						"item_wind_lace"	}
+--------------------------------------------------------------------------------------------
+-- Basics (includes secret shop items)
+--------------------------------------------------------------------------------------------
 
+X["item_courier"]  = {"item_courier"}
+
+X["item_boots_of_elves"]  = {"item_boots_of_elves"}
+
+X["item_belt_of_strength"]  = {"item_belt_of_strength"}
+
+X["item_blade_of_alacrity"]  = {"item_blade_of_alacrity"}
+
+X["item_blades_of_attack"]  = {"item_blades_of_attack"}
+
+X["item_blight_stone"]  = {"item_blight_stone"}
+
+X["item_blink"]  = {"item_blink"}
+
+X["item_boots"]  = {"item_boots"}
+
+X["item_bottle"]  = {"item_bottle"}
+
+X["item_broadsword"]  = {"item_broadsword"}
+
+X["item_chainmail"]  = {"item_chainmail"}
+
+X["item_circlet"]  = {"item_circlet"}
+
+X["item_clarity"]  = {"item_clarity"}
+
+X["item_claymore"]  = {"item_claymore"}
+
+X["item_cloak"]  = {"item_cloak"}
+
+X["item_demon_edge"]  = {"item_demon_edge"}
+
+X["item_dust"]  = {"item_dust"}
+
+X["item_eagle"]  = {"item_eagle"}
+
+X["item_enchanted_mango"]  = {"item_enchanted_mango"}
+
+X["item_energy_booster"]  = {"item_energy_booster"}
+
+X["item_faerie_fire"]  = {"item_faerie_fire"}
+
+X["item_flying_courier"]  = {"item_flying_courier"}
+
+X["item_gauntlets"]  = {"item_gauntlets"}
+
+X["item_gem"]  = {"item_gem"}
+
+X["item_ghost"]  = {"item_ghost"}
+
+X["item_gloves"]  = {"item_gloves"}
+
+X["item_flask"]  = {"item_flask"}
+
+X["item_helm_of_iron_will"]  = {"item_helm_of_iron_will"}
+
+X["item_hyperstone"]  = {"item_hyperstone"}
+
+X["item_infused_raindrop"]  = {"item_infused_raindrop"}
+
+X["item_branches"]  = {"item_branches"}
+
+X["item_javelin"]  = {"item_javelin"}
+
+X["item_magic_stick"]  = {"item_magic_stick"}
+
+X["item_mantle"]  = {"item_mantle"}
+
+X["item_mithril_hammer"]  = {"item_mithril_hammer"}
+
+X["item_lifesteal"]  = {"item_lifesteal"}
+
+X["item_mystic_staff"]  = {"item_mystic_staff"}
+
+X["item_ward_observer"]  = {"item_ward_observer"}
+
+X["item_ogre_axe"]  = {"item_ogre_axe"}
+
+X["item_orb_of_venom"]  = {"item_orb_of_venom"}
+
+X["item_platemail"]  = {"item_platemail"}
+
+X["item_point_booster"]  = {"item_point_booster"}
+
+X["item_quarterstaff"]  = {"item_quarterstaff"}
+
+X["item_quelling_blade"]  = {"item_quelling_blade"}
+
+X["item_reaver"]  = {"item_reaver"}
+
+X["item_ring_of_health"]  = {"item_ring_of_health"}
+
+X["item_ring_of_protection"]  = {"item_ring_of_protection"}
+
+X["item_ring_of_regen"]  = {"item_ring_of_regen"}
+
+X["item_robe"]  = {"item_robe"}
+
+X["item_relic"]  = {"item_relic"}
+
+X["item_sobi_mask"]  = {"item_sobi_mask"}
+
+X["item_ward_sentry"]  = {"item_ward_sentry"}
+
+X["item_shadow_amulet"]  = {"item_shadow_amulet"}
+
+X["item_slippers"]  = {"item_slippers"}
+
+X["item_smoke_of_deceit"]  = {"item_smoke_of_deceit"}
+
+X["item_staff_of_wizardry"]  = {"item_staff_of_wizardry"}
+
+X["item_stout_shield"]  = {"item_stout_shield"}
+
+X["item_talisman_of_evasion"]  = {"item_talisman_of_evasion"}
+
+X["item_tango"]  = {"item_tango"}
+
+X["item_tome_of_knowledge"]  = {"item_tome_of_knowledge"}
+
+X["item_tpscroll"]  = {"item_tpscroll"}
+
+X["item_ultimate_orb"]  = {"item_ultimate_orb"}
+
+X["item_vitality_booster"]  = {"item_vitality_booster"}
+
+X["item_void_stone"]  = {"item_void_stone"}
+
+X["item_wind_lace"]  = {"item_wind_lace"}
+					
+--------------------------------------------------------------------------------------------
+-- Items made from basics
+--------------------------------------------------------------------------------------------
+					
 X["item_abyssal_blade"] = { X["item_basher"], X["item_vanguard"], "item_recipe_abyssal_blade" }
 
 X["item_aether_lens"] = { "item_energy_booster", "item_ring_of_health", "item_recipe_aether_lens" }
@@ -259,6 +329,10 @@ X["item_wraith_band"] = { "item_slippers", "item_circlet", "item_recipe_wraith_b
 
 X["item_yasha"] = { "item_boots_of_elves", "item_blade_of_alacrity", "item_recipe_yasha" }
 
+--------------------------------------------------------------------------------------------
+-- Functions
+--------------------------------------------------------------------------------------------
+
 function X:GetItemValueNumber(item)
 	if item = "item_ward_observer"
 		return 10000
@@ -276,5 +350,7 @@ function X:GetItemValueNumber(item)
 		return GetItemCost(sNextItem)
 	end
 end
+
+--------------------------------------------------------------------------------------------
 
 return X

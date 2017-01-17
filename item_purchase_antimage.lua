@@ -1,10 +1,18 @@
 -------------------------------------------------------------------------------
---- AUTHOR: Nostrademous
+--- AUTHOR: Nostrademous, dralois
 --- GITHUB REPO: https://github.com/Nostrademous/Dota2-FullOverwrite
 -------------------------------------------------------------------------------
 
+--[[
 require( GetScriptDirectory().."/generic_item_purchase" )
+--]]
 
+local items = require( GetScriptDirectory().."/items")
+local item_purchase = require( GetScriptDirectory().."/item_purchase_generic_test")
+
+----------------------------------------------------------------------------------------------------
+
+--[[
 local tableItemsToBuyAsSupport = { 
 	"item_tango",
 	"item_tango",
@@ -99,11 +107,43 @@ local tableItemsToBuyAsJungler = {
 
 local tableItemsToBuyAsRoamer = {
 }
+--]]
+
+local StartingItems = {	"item_stout_shield",
+									"item_tango",
+									"item_flask",
+									"item_branches",
+									"item_branches"}
+local UtilityItems = { "item_flask" }
+local CoreItems = {	"item_power_treads_agi",
+								"item_bfury",
+								"item_vanguard",
+								"item_yasha",
+								"item_manta",
+								"item_abyssal_blade"}
+local ExtensionItems = {	{	"item_butterfly", 
+											"item_monkey_king_bar" },
+										{	"item_heart", 
+											"item_black_king_bar", 
+											"item_aghs_scepter" } }
+
+ToBuy = item_purchase:new()
+
+ToBuy:setStartingItems(StartingItems)
+ToBuy:setUtilityItems(UtilityItems)
+ToBuy:setCoreItems(CoreItems)
+ToBuy:setExtensionItems(ExtensionItems[1],ExtensionItems[2])
 
 ----------------------------------------------------------------------------------------------------
 
 function ItemPurchaseThink()
+	--[[
 	generic_item_purchase.ItemPurchaseThink(tableItemsToBuyAsMid, tableItemsToBuyAsHardCarry, tableItemsToBuyAsOfflane, tableItemsToBuyAsSupport, tableItemsToBuyAsJungler, tableItemsToBuyAsRoamer)
+	--]]
+	
+	local npcBot = GetBot()
+	
+	ToBuy:Think(npcBot)	
 end
 
 ----------------------------------------------------------------------------------------------------

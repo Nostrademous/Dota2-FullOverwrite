@@ -31,7 +31,7 @@ local LinaAbilityPriority = {
     LINA_SKILL_W,    LINA_SKILL_R,    LINA_ABILITY5,   LINA_ABILITY7
 };
 
-local linaActionQueue = { [1] = constants.ACTION_NONE }
+local linaActionStack = { [1] = constants.ACTION_NONE }
 
 LinaBot = dt:new()
 
@@ -42,7 +42,7 @@ function LinaBot:new(o)
 	return o
 end
 
-linaBot = LinaBot:new{actionStack = linaActionQueue, abilityPriority = LinaAbilityPriority}
+linaBot = LinaBot:new{actionStack = linaActionStack, abilityPriority = LinaAbilityPriority}
 --linaBot:printInfo();
 
 linaBot.Init = false

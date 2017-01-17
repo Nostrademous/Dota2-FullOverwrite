@@ -30,7 +30,7 @@ local AntimageAbilityPriority = {
     SKILL_E,    SKILL_R,    ABILITY6, 	ABILITY8
 };
 
-local antimageActionQueue = { [1] = constants.ACTION_NONE }
+local antimageActionStack = { [1] = constants.ACTION_NONE }
 
 AMBot = dt:new()
 
@@ -41,7 +41,7 @@ function AMBot:new(o)
 	return o
 end
 
-amBot = AMBot:new{actionStack = antimageActionQueue, abilityPriority = AntimageAbilityPriority}
+amBot = AMBot:new{actionStack = antimageActionStack, abilityPriority = AntimageAbilityPriority}
 --AMBot:printInfo();
 
 amBot.Init = false

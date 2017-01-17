@@ -48,7 +48,7 @@ function X:setPrevAction(action)
 	self.prevAction = action
 end
 
-function X:getActionQueue()
+function X:getActionStack()
 	return self.actionStack
 end
 
@@ -58,7 +58,7 @@ end
 
 function X:printInfo()
 	print("PrevTime Value: "..self:getPrevTime());
-	print("Addr actionStack Table: ", self:getActionQueue());
+	print("Addr actionStack Table: ", self:getActionStack());
 	print("Addr abilityPriority Table: ", self:getAbilityPriority());
 end
 
@@ -80,13 +80,13 @@ function X:AddAction(action)
 	
 	local k = self:HasAction(action);
 	if k then
-		table.remove(self:getActionQueue(), k);
+		table.remove(self:getActionStack(), k);
 	end
-	table.insert(self:getActionQueue(), 1, action);
+	table.insert(self:getActionStack(), 1, action);
 end
 
 function X:HasAction(action)
-    for key, value in pairs(self:getActionQueue()) do
+    for key, value in pairs(self:getActionStack()) do
         if value == action then return key end
     end
     return false
@@ -100,7 +100,7 @@ function X:RemoveAction(action)
 	
 	local k = self:HasAction(action);
 	if k then
-		table.remove(self:getActionQueue(), k);
+		table.remove(self:getActionStack(), k);
 	end
 	
 	local a = self:GetAction()
@@ -110,10 +110,10 @@ function X:RemoveAction(action)
 end
 
 function X:GetAction()
-	if #self:getActionQueue() == 0 then
+	if #self:getActionStack() == 0 then
 		return ACTION_NONE;
 	end
-	return self:getActionQueue()[1];
+	return self:getActionStack()[1];
 end
 
 X.prevEnemyDump = -1000.0

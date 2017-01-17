@@ -7,8 +7,8 @@
 require( GetScriptDirectory().."/generic_item_purchase" )
 --]]
 
-local items = require( GetScriptDirectory().."/items")
-local item_purchase = require( GetScriptDirectory().."/item_purchase_generic_test")
+local items = require( GetScriptDirectory().."\items" )
+local item_purchase = require( GetScriptDirectory().."/item_purchase_generic_test" )
 
 ----------------------------------------------------------------------------------------------------
 

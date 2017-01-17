@@ -4,12 +4,12 @@
 -------------------------------------------------------------------------------
 
 _G._savedEnv = getfenv()
-module( "item_purchase_generic", package.seeall )
+module( "item_purchase_generic_test", package.seeall )
 
-require( GetScriptDirectory().."/role" )
-local utils = require( GetScriptDirectory().."/utility")
-local items = require(GetScriptDirectory().."/items")
-local myEnemies = require( GetScriptDirectory().."/enemy_data")
+require( GetScriptDirectory().."/role"  )
+local utils = require( GetScriptDirectory().."/utility" )
+local items = require(GetScriptDirectory().."/items" )
+local myEnemies = require( GetScriptDirectory().."/enemy_data" )
 
 --[[
 	The idea is that you get a list of starting items, utility items, core items and extension items.

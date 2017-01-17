@@ -671,7 +671,7 @@ end
 function X:DoGetRune(npcBot)	
 	for _,r in pairs(constants.RuneSpots) do
 		local loc = GetRuneSpawnLocation(r)
-		print("Distance To Rune '", r, "' is: ", utils.GetDistance(npcBot:GetLocation(), loc))
+		--print("Distance To Rune '", r, "' is: ", utils.GetDistance(npcBot:GetLocation(), loc))
 		if utils.GetDistance(npcBot:GetLocation(), loc) < 900 and GetRuneStatus(r) == RUNE_STATUS_AVAILABLE then
 			npcBot:Action_PickUpRune(r)
 			return false

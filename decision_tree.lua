@@ -20,8 +20,10 @@ local ACTION_RETREAT 	= constants.ACTION_RETREAT
 local ACTION_FIGHT		= constants.ACTION_FIGHT
 local ACTION_CHANNELING	= constants.ACTION_CHANNELING
 local ACTION_MOVING		= constants.ACTION_MOVING
+local ACTION_SECRETSHOP	= constants.ACTION_SECRETSHOP
+local ACTION_RUNEPICKUP = constants.ACTION_RUNEPICKUP
 
-local X = { currentAction = ACTION_NONE, prevAction = ACTION_NONE, actionQueue = {}, abilityPriority = {} }
+local X = { currentAction = ACTION_NONE, prevAction = ACTION_NONE, actionStack = {}, abilityPriority = {} }
 
 function X:new(o)
 	o = o or {}
@@ -46,8 +48,8 @@ function X:setPrevAction(action)
 	self.prevAction = action
 end
 
-function X:getActionQueue()
-	return self.actionQueue
+function X:getActionStack()
+	return self.actionStack
 end
 
 function X:getAbilityPriority()
@@ -56,7 +58,7 @@ end
 
 function X:printInfo()
 	print("PrevTime Value: "..self:getPrevTime());
-	print("Addr actionQueue Table: ", self:getActionQueue());
+	print("Addr actionStack Table: ", self:getActionStack());
 	print("Addr abilityPriority Table: ", self:getAbilityPriority());
 end
 
@@ -78,13 +80,13 @@ function X:AddAction(action)
 	
 	local k = self:HasAction(action);
 	if k then
-		table.remove(self:getActionQueue(), k);
+		table.remove(self:getActionStack(), k);
 	end
-	table.insert(self:getActionQueue(), 1, action);
+	table.insert(self:getActionStack(), 1, action);
 end
 
 function X:HasAction(action)
-    for key, value in pairs(self:getActionQueue()) do
+    for key, value in pairs(self:getActionStack()) do
         if value == action then return key end
     end
     return false
@@ -98,7 +100,7 @@ function X:RemoveAction(action)
 	
 	local k = self:HasAction(action);
 	if k then
-		table.remove(self:getActionQueue(), k);
+		table.remove(self:getActionStack(), k);
 	end
 	
 	local a = self:GetAction()
@@ -108,10 +110,10 @@ function X:RemoveAction(action)
 end
 
 function X:GetAction()
-	if #self:getActionQueue() == 0 then
+	if #self:getActionStack() == 0 then
 		return ACTION_NONE;
 	end
-	return self:getActionQueue()[1];
+	return self:getActionStack()[1];
 end
 
 X.prevEnemyDump = -1000.0
@@ -183,8 +185,8 @@ function X:Think(bot)
 	end
 
 	-- DEBUG NOTIFICATION
-	self:setCurrentAction(self:GetAction());
-	self:PrintActionTransition(utils.GetHeroName(bot));
+	self:setCurrentAction(self:GetAction())
+	self:PrintActionTransition(utils.GetHeroName(bot))
 	
 	---[[
 	-- UPDATE GLOBAL INFO --
@@ -219,7 +221,6 @@ function X:Think(bot)
 	utils.CourierThink(bot)
 	
 	local safe = self:Determine_AmISafe(bot)
-	
 	if safe ~= 0 or self:GetAction() == ACTION_RETREAT then
 		local bRet = self:DoRetreat(bot, safe)
 		if bRet then return end
@@ -236,8 +237,22 @@ function X:Think(bot)
 		if bRet then return end
 	end
 	
+	if ( self:Determine_ShouldGetRune(bot) or self:GetAction() == ACTION_RUNEPICKUP ) then
+		local bRet = self:DoGetRune(bot)
+		if bRet then return end
+	end
+	
+	if ( self:GetAction() == ACTION_SECRETSHOP ) then
+		return
+	end
+	
 	if ( self:Determine_DoAlliesNeedHelp(bot) ) then
 		local bRet = self:DoDefendAlly(bot)
+		if bRet then return end
+	end
+	
+	if ( self:Determine_ShouldTeamRoshan(bot) ) then
+		local bRet = self:DoRoshan(bot)
 		if bRet then return end
 	end
 	
@@ -258,16 +273,6 @@ function X:Think(bot)
 
 	if ( self:Determine_ShouldJungle(bot) or self:GetAction() == ACTION_JUNGLING ) then
 		local bRet = self:DoJungle(bot)
-		if bRet then return end
-	end
-	
-	if ( self:Determine_ShouldTeamRoshan(bot) ) then
-		local bRet = self:DoRoshan(bot)
-		if bRet then return end
-	end
-	
-	if ( self:Determine_ShouldGetRune(bot) ) then
-		local bRet = self:DoGetRune(bot)
 		if bRet then return end
 	end
 	
@@ -372,7 +377,7 @@ function X:Determine_AmISafe(bot)
 		nTo = #Towers;
 	end
 	
-	if (bot:GetHealth() < (bot:GetMaxHealth()*0.17*(nEn-nAl+1) + nTo*110)) or ((bot:GetHealth()/bot:GetMaxHealth()) < 0.33) or (bot:GetMana()/bot:GetMaxMana() < 0.07 and self:getPrevAction() == ACTION_LANING) then
+	if ((bot:GetHealth()/bot:GetMaxHealth()) < 0.33) or (bot:GetMana()/bot:GetMaxMana() < 0.07 and self:getPrevAction() == ACTION_LANING) then
 		self:setHeroVar("IsRetreating", true)
 		return 1;
 	end
@@ -484,7 +489,21 @@ function X:Determine_ShouldTeamRoshan(bot)
 end
 
 function X:Determine_ShouldGetRune(bot)
-	return false -- FIXME: write code to path to rune spots on proper timings
+	if GetGameState() ~= GAME_STATE_GAME_IN_PROGRESS then return false end
+	
+	for _,r in pairs(constants.RuneSpots) do
+		local loc = GetRuneSpawnLocation(r)
+		if utils.GetDistance(bot:GetLocation(), loc) < 1000 and GetRuneStatus(r) == RUNE_STATUS_AVAILABLE then
+			if self:HasAction(ACTION_RUNEPICKUP) == false then
+				print(utils.GetHeroName(bot), " STARTING TO GET RUNE ")
+				self:AddAction(ACTION_RUNEPICKUP)
+				setHeroVar("RuneTarget", r)
+			end
+		end
+	end
+	
+	local bRet = self:DoGetRune(bot) -- grab a rune if we near one as we jungle
+	if bRet then return bRet end
 end
 
 function X:Determine_ShouldWard(bot)
@@ -561,7 +580,7 @@ function X:DoRetreat(bot, reason)
 			--set the target to go back
 			local bInLane, cLane = utils.IsInLane()
 			if bInLane then
-				self:setHeroVar("TargetOfRunAwayFromCreepOrTower", GetLocationAlongLane(cLane,Max(utils.PositionAlongLane(bot, cLane)-0.015,0.0)))
+				self:setHeroVar("TargetOfRunAwayFromCreepOrTower", GetLocationAlongLane(cLane,Max(utils.PositionAlongLane(bot, cLane)-0.03,0.0)))
 			elseif ( GetTeam() == TEAM_RADIANT ) then
 				self:setHeroVar("TargetOfRunAwayFromCreepOrTower", Vector(mypos[1] - 400, mypos[2] - 400))
 			else
@@ -654,10 +673,6 @@ function X:DoJungle(bot)
 		self:AddAction(ACTION_JUNGLING);
 		jungling_generic.OnStart(bot);
 	end
-
-	if GetGameState() == GAME_STATE_GAME_IN_PROGRESS then
-		self:DoGetRune(bot) -- grab a rune if we near one as we jungle
-	end
 	
 	jungling_generic.Think(bot)
 	
@@ -668,15 +683,14 @@ function X:DoRoshan(bot)
 	return true
 end
 
-function X:DoGetRune(npcBot)	
-	for _,r in pairs(constants.RuneSpots) do
-		local loc = GetRuneSpawnLocation(r)
-		--print("Distance To Rune '", r, "' is: ", utils.GetDistance(npcBot:GetLocation(), loc))
-		if utils.GetDistance(npcBot:GetLocation(), loc) < 900 and GetRuneStatus(r) == RUNE_STATUS_AVAILABLE then
-			npcBot:Action_PickUpRune(r)
-			return false
-		end
+function X:DoGetRune(bot)
+	local rt = getHeroVar("RuneTarget")
+	if rt ~= nil and GetRuneStatus(rt) ~= RUNE_STATUS_MISSING then
+		bot:Action_PickUpRune(getHeroVar("RuneTarget"))
+		return true
 	end
+	setHeroVar("RuneTarget", nil)
+	self:RemoveAction(ACTION_RUNEPICKUP)
 	return false
 end
 
@@ -714,6 +728,10 @@ end
 
 function X:GetMaxClearableCampLevel(bot)
 	return constants.CAMP_ANCIENT
+end
+
+function X:HarassLaneEnemies(bot)
+	return
 end
 
 return X;

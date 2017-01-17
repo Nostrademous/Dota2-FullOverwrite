@@ -52,6 +52,8 @@ local JunglingState=JunglingStates.FindCamp;
 function OnStart(npcBot)
 	JunglingState=JunglingStates.FindCamp;
 	setHeroVar("move_ticks", 0)
+	-- TODO: if there are camps, consider tp'ing to the jungle
+
 	-- TODO: implement stacking
 	-- TODO: Pickup runes
 	-- TODO: help lanes

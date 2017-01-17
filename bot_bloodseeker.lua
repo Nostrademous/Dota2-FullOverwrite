@@ -59,9 +59,17 @@ function Think()
 	bloodseekerBot:Think(npcBot)
 end
 
-function bloodseekerBot:DoRetreat(bot)
-	return false -- we're fine
-	-- TODO: what if we're not??
+function bloodseekerBot:DoRetreat(bot, safe)
+	if safe == 3 then -- just creeps
+		if bot:GetHealth()/bot:GetMaxHealth() < 0.1 then
+			return dt:DoRetreat(bot, 1) -- reason 1 is enemy. 3 would be creeps. But we don't want fancy backoffs. We just want to go home
+		end
+		return false
+	else -- tower (in the jungle??) or enemy
+		-- TODO: re-enable this after AmISafe has been fixed
+		-- return dt:DoRetreat(bot, safe)
+		return false
+	end
 end
 
 function bloodseekerBot:GetMaxClearableCampLevel(bot)

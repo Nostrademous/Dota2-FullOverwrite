@@ -45,14 +45,14 @@ function Think(npcBot, retreatAbility)
 			value = retreatAbility:GetSpecialValueInt("blink_range")
 			-- below I test how far in units is a single 0.01 move in terms of GetLocationAlongLane()
 			local scale = utils.GetDistance(GetLocationAlongLane(npcBot.CurLane, 0.5), GetLocationAlongLane(npcBot.CurLane, 0.49))
-			value = (value / scale)*0.01 - 0.001
+			value = ((value - 15) / scale)*0.01 -- we subtract 15 to give ourselves a little rounding wiggle room
 			nextmove = GetLocationAlongLane(npcBot.CurLane, Max(npcBot.RetreatPos-value, 0.0))
 			npcBot:Action_UseAbilityOnLocation(retreatAbility, nextmove)
 		elseif utils.GetHeroName(npcBot) == "riki" then
 			value = retreatAbility:GetSpecialValueInt("tooltip_range")
 			-- below I test how far in units is a single 0.01 move in terms of GetLocationAlongLane()
 			local scale = utils.GetDistance(GetLocationAlongLane(npcBot.CurLane, 0.5), GetLocationAlongLane(npcBot.CurLane, 0.49))
-			value = (value / scale)*0.01 - 0.001
+			value = ((value - 15) / scale)*0.01 -- we subtract 15 to give ourselves a little rounding wiggle room
 			nextmove = GetLocationAlongLane(npcBot.CurLane, Max(npcBot.RetreatPos-value, 0.0))
 			--FIXME: UseAbilityOnEntity() not Location() npcBot:Action_UseAbilityOnLocation(retreatAbility, nextmove)
 		end

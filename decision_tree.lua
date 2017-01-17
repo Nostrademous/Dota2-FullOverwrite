@@ -310,22 +310,22 @@ end
 
 function X:Determine_AmISafe(bot)	
 	if bot:GetHealth()/bot:GetMaxHealth() > 0.9 and bot:GetMana()/bot:GetMaxMana() > 0.9 then
-		if utils.IsTowerAttackingMe() then
-			return 2
-		end
-		if utils.IsCreepAttackingMe() then
-			return 3
-		end
+		if utils.IsTowerAttackingMe() then return 2 end
+		if utils.IsCreepAttackingMe() then return 3 end
 		bot.IsRetreating = false;
 		return 0;
 	end
 	
 	if bot:GetHealth()/bot:GetMaxHealth() > 0.65 and bot:GetMana()/bot:GetMaxMana() > 0.6 and GetUnitToLocationDistance(bot, GetLocationAlongLane(bot.CurLane, 0)) > 6000 then
+		if utils.IsTowerAttackingMe() then return 2 end
+		if utils.IsCreepAttackingMe() then return 3 end
 		bot.IsRetreating = false;
 		return 0;
 	end
 	
 	if bot:GetHealth()/bot:GetMaxHealth() > 0.8 and bot:GetMana()/bot:GetMaxMana() > 0.36 and GetUnitToLocationDistance(bot, GetLocationAlongLane(bot.CurLane, 0)) > 6000 then
+		if utils.IsTowerAttackingMe() then return 2 end
+		if utils.IsCreepAttackingMe() then return 3 end
 		bot.IsRetreating = false;
 		return 0;
 	end
@@ -426,7 +426,6 @@ function X:Determine_ShouldIPushLane(bot, EnemyHeroes, EnemyCreeps, AllyCreeps)
 	end
 	
 	if ( EnemyTowers[1]:GetHealth() / EnemyTowers[1]:GetMaxHealth() ) < 0.1 then
-		print(utils.GetHeroName(bot), " :: Attacking Tower b/c it is almost dead")
 		return true
 	end
 	return false
@@ -485,60 +484,70 @@ function X:DoRetreat(bot, reason)
 			print(utils.GetHeroName(bot), " STARTING TO RETREAT b/c of tower damage")
 			self:AddAction(ACTION_RETREAT)
 		end
-		bot.RetreatLane = bot.CurLane
+
 		local mypos = bot:GetLocation();
-		if TargetOfRunAwayFromTower == nil then
+		if bot.TargetOfRunAwayFromCreepOrTower == nil then
 			--set the target to go back
-			if ( GetTeam() == TEAM_RADIANT ) then
-				TargetOfRunAwayFromTower = Vector(mypos[1] - 400, mypos[2] - 400);
+			local bInLane, cLane = utils.IsInLane()
+			if bInLane then
+				bot.TargetOfRunAwayFromCreepOrTower = GetLocationAlongLane(cLane,Max(utils.PositionAlongLane(bot, cLane)-0.05,0.0))
+			elseif ( GetTeam() == TEAM_RADIANT ) then
+				bot.TargetOfRunAwayFromCreepOrTower = Vector(mypos[1] - 400, mypos[2] - 400);
 			else
-				TargetOfRunAwayFromTower = Vector(mypos[1] + 400, mypos[2] + 400);
+				bot.TargetOfRunAwayFromCreepOrTower = Vector(mypos[1] + 400, mypos[2] + 400);
 			end
 			
-			local d = GetUnitToLocationDistance(bot, TargetOfRunAwayFromTower);
+			local d = GetUnitToLocationDistance(bot, bot.TargetOfRunAwayFromCreepOrTower);
 			if(d > 200) then
-				bot:Action_MoveToLocation(TargetOfRunAwayFromTower);
+				bot:Action_MoveToLocation(bot.TargetOfRunAwayFromCreepOrTower);
 			else
 				self:RemoveAction(ACTION_RETREAT);
-				TargetOfRunAwayFromCreep = nil;
+				bot.TargetOfRunAwayFromCreepOrTower = nil;
 			end
 			return;
 		else
-			if(GetUnitToLocationDistance(bot, TargetOfRunAwayFromTower) < 100) then
+			if(GetUnitToLocationDistance(bot, bot.TargetOfRunAwayFromCreepOrTower) < 200) then
 				-- we are far enough from tower,return to normal state.
-				TargetOfRunAwayFromTower = nil;
+				bot.TargetOfRunAwayFromCreepOrTower = nil;
 				self:RemoveAction(ACTION_RETREAT);
+				return
 			end
+			bot:Action_MoveToLocation(bot.TargetOfRunAwayFromCreepOrTower);
 		end
 	elseif reason == 3 then
 		if ( self:HasAction(ACTION_RETREAT) == false ) then
 			print(utils.GetHeroName(bot), " STARTING TO RETREAT b/c of creep damage")
 			self:AddAction(ACTION_RETREAT)
 		end
-		bot.RetreatLane = bot.CurLane
+
 		local mypos = bot:GetLocation();
-		if TargetOfRunAwayFromCreep == nil then
+		if bot.TargetOfRunAwayFromCreepOrTower == nil then
 			--set the target to go back
-			if ( GetTeam() == TEAM_RADIANT ) then
-				TargetOfRunAwayFromCreep = Vector(mypos[1] - 300, mypos[2] - 300);
+			local bInLane, cLane = utils.IsInLane()
+			if bInLane then
+				bot.TargetOfRunAwayFromCreepOrTower = GetLocationAlongLane(cLane,Max(utils.PositionAlongLane(bot, cLane)-0.03,0.0))
+			elseif ( GetTeam() == TEAM_RADIANT ) then
+				bot.TargetOfRunAwayFromCreepOrTower = Vector(mypos[1] - 400, mypos[2] - 400);
 			else
-				TargetOfRunAwayFromCreep = Vector(mypos[1] + 300, mypos[2] + 300);
+				bot.TargetOfRunAwayFromCreepOrTower = Vector(mypos[1] + 400, mypos[2] + 400);
 			end
 			
-			local d = GetUnitToLocationDistance(bot, TargetOfRunAwayFromCreep);
+			local d = GetUnitToLocationDistance(bot, bot.TargetOfRunAwayFromCreepOrTower);
 			if(d > 200) then
-				bot:Action_MoveToLocation(TargetOfRunAwayFromCreep);
+				bot:Action_MoveToLocation(bot.TargetOfRunAwayFromCreepOrTower);
 			else
 				self:RemoveAction(ACTION_RETREAT);
-				TargetOfRunAwayFromCreep = nil;
+				bot.TargetOfRunAwayFromCreepOrTower = nil;
 			end
 			return;
 		else
-			if(GetUnitToLocationDistance(bot, TargetOfRunAwayFromCreep) < 100) then
+			if(GetUnitToLocationDistance(bot, bot.TargetOfRunAwayFromCreepOrTower) < 200) then
 				-- we are far enough from tower,return to normal state.
-				TargetOfRunAwayFromCreep = nil;
+				bot.TargetOfRunAwayFromCreepOrTower = nil;
 				self:RemoveAction(ACTION_RETREAT);
+				return
 			end
+			bot:Action_MoveToLocation(bot.TargetOfRunAwayFromCreepOrTower);
 		end
 	else
 		self:RemoveAction(ACTION_RETREAT);

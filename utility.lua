@@ -7,7 +7,6 @@ require( GetScriptDirectory().."/constants" )
 
 U = {}
 
-U.lastCourierThink = -1000.0
 U.creeps = nil
 U.Lanes={[1]=LANE_BOT,[2]=LANE_MID,[3]=LANE_TOP};
 
@@ -424,6 +423,8 @@ function U.IsInLane()
 	else
 		npcBot.IsInLane = true
 	end
+	
+	return npcBot.IsInLane, npcBot.RetreatLane
 end
 
 function U.IsFacingLocation(hero, loc, delta)
@@ -555,17 +556,16 @@ function U.GetCreepHealthDeltaPerSec(creep)
     end
 
     if(U.creeps[creep] == nil) then
-        return 10000000;
+        return 0;
     else
-        for _time,_health in pairsByKeys(U.creeps[creep],sortFunc)
-        do
+        for _time,_health in pairsByKeys(U.creeps[creep],sortFunc) do
             -- only Consider very recent datas
             if(GameTime() - _time < 3) then
                 local e = (_health - creep:GetHealth()) / (GameTime() - _time);
                 return e;
             end
         end
-        return 10000000;
+        return 0;
     end
 
 end
@@ -736,10 +736,12 @@ function U.HasImportantItem()
 end
 
 function U.CourierThink(npcBot)
-	local checkLevel, newTime = U.TimePassed(U.lastCourierThink, 1.0);
+	local checkLevel, newTime = U.TimePassed(npcBot.LastCourierThink, 1.0);
 	
 	if not checkLevel then return end
-	U.lastCourierThink = newTime
+	npcBot.LastCourierThink = newTime
+	
+	--print(U.GetHeroName(npcBot), " SV: ", npcBot:GetStashValue(), ", CV: ", npcBot:GetCourierValue(), ", HII: ", U.HasImportantItem())
 	
 	if npcBot:IsAlive() and (npcBot:GetStashValue() > 500 or npcBot:GetCourierValue() > 0 or U.HasImportantItem()) and IsCourierAvailable() then
 		--print("got item");

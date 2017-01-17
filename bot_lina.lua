@@ -52,7 +52,6 @@ function linaBot:ConsiderAbilityUse()
 end
 
 local LaningState = 0
-local LanePos = nil
 local CurLane = nil
 local MoveThreshold = 1.0
 local DamageThreshold = 1.0
@@ -62,10 +61,11 @@ local Role = nil
 local IsRetreating = false
 local IsInLane = false
 local BackTimerGen = -1000
+local LastCourierThink = -1000.0
+local TargetOfRunAwayFromCreepOrTower = nil
 
 function LoadUpdates(npcBot)
 	npcBot.LaningState = LaningState
-	npcBot.LanePos = LanePos
 	npcBot.CurLane = CurLane
 	npcBot.MoveThreshold = MoveThreshold
 	npcBot.DamageThreshold = DamageThreshold
@@ -75,11 +75,12 @@ function LoadUpdates(npcBot)
 	npcBot.IsRetreating = IsRetreating
 	npcBot.IsInLane = IsInLane
 	npcBot.BackTimerGen = BackTimerGen
+	npcBot.LastCourierThink = LastCourierThink
+	npcBot.TargetOfRunAwayFromCreepOrTower = TargetOfRunAwayFromCreepOrTower
 end
 
 function SaveUpdates(npcBot)
 	LaningState = npcBot.LaningState
-	LanePos = npcBot.LanePos
 	CurLane = npcBot.CurLane
 	MoveThreshold = npcBot.MoveThreshold
 	DamageThreshold = npcBot.DamageThreshold
@@ -89,11 +90,12 @@ function SaveUpdates(npcBot)
 	IsRetreating = npcBot.IsRetreating
 	IsInLane = npcBot.IsInLane
 	BackTimerGen = npcBot.BackTimerGen
+	LastCourierThink = npcBot.LastCourierThink
+	TargetOfRunAwayFromCreepOrTower = npcBot.TargetOfRunAwayFromCreepOrTower
 end
 
 function PrintUpdate()
 	print(LaningState)
-	print(LanePos)
 	print(CurLane)
 	print(Role)
 	print(IsRetreating)

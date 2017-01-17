@@ -6,12 +6,12 @@
 require( GetScriptDirectory().."/constants" )
 local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
 
-function setHeroVar(var, value, bot)
+function setHeroVar(var, value)
 	local bot = bot or GetBot()
 	gHeroVar.SetVar(bot:GetPlayerID(), var, value)
 end
 
-function getHeroVar(var, bot)
+function getHeroVar(var)
 	local bot = bot or GetBot()
 	return gHeroVar.GetVar(bot:GetPlayerID(), var)
 end
@@ -500,14 +500,14 @@ end
 function U.MoveSafelyToLocation(npcBot, dest)
 	if getHeroVar("NextHop")==nil or #getHeroVar("NextHop")==0 or getHeroVar("PathfindingWasInitiated")==nil or (not getHeroVar("PathfindingWasInitiated")) then
 		U.InitPathFinding(npcBot);
-		npcBot:Action_Chat("Path finding has been initiated", false);
+		print(U.GetHeroName(npcBot), " Path finding has been initiated");
 	end
 	
-	local safeSpots=nil;
-	local safeDist=2000;
+	local safeSpots = nil
+	local safeDist = 2000
 	if dest==nil then
-		print("PathFinding: No destination was specified");
-		return;
+		print("PathFinding: No destination was specified")
+		return
 	end
 
 	if GetTeam()==TEAM_RADIANT then
@@ -954,8 +954,8 @@ end
 function U.InitPathFinding(npcBot)
 
 	-- keeps the path for my pathfinding
-	setHeroVar("NextHop", {}, npcBot)
-	setHeroVar("PathfindingWasInitiated", false, npcBot)
+	setHeroVar("NextHop", {})
+	setHeroVar("PathfindingWasInitiated", false)
 	-- creating the graph
 
 	local SafeDist=2000;
@@ -967,14 +967,15 @@ function U.InitPathFinding(npcBot)
 	end
 	
 	--initialization
-	local inf=100000;
-	local dist={};
+	local inf=100000
+	local dist={}
+	local NextHop={}
 	
 	print("Inits are done");
 	for u,uv in pairs(safeSpots) do
 		local q=true;
 		dist[u]={};
-		setHeroVar(getHeroVar("NextHop")[u], {}, npcBot)
+		NextHop[u]={};
 		for v,vv in pairs(safeSpots) do
 			if U.GetDistance(uv,vv)>SafeDist then
 				dist[u][v]=inf;
@@ -982,7 +983,7 @@ function U.InitPathFinding(npcBot)
 				q=false;
 				dist[u][v]=U.GetDistance(uv,vv);
 			end
-			setHeroVar(getHeroVar("NextHop", npcBot)[u][v], v, npcBot)
+			NextHop[u][v]=v;
 		end
 		if q then
 			print("There is an isolated vertex in safespots");
@@ -995,12 +996,13 @@ function U.InitPathFinding(npcBot)
 			for v,_ in pairs(safeSpots) do
 				if dist[u][v]>dist[u][k]+dist[k][v] then
 					dist[u][v]=dist[u][k]+dist[k][v];
-					setHeroVar(getHeroVar("NextHop", npcBot)[u][v], getHeroVar("NextHop", npcBot)[u][k], npcBot)
+					NextHop[u][v]=NextHop[u][k];
 				end
 			end
 		end
 	end
 
+	setHeroVar("NextHop", NextHop)
 	setHeroVar("PathfindingWasInitiated", true)
 end
 

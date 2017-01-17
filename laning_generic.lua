@@ -84,7 +84,7 @@ local function MovingToLane(npcBot)
 		return;
 	end
 	
-	utils.MoveSafelyToLocation(dest);
+	utils.MoveSafelyToLocation(npcBot, dest);
 end
 
 local function Start(npcBot)

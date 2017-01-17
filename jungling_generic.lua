@@ -51,6 +51,7 @@ local JunglingState=JunglingStates.FindCamp;
 
 function OnStart(npcBot)
 	JunglingState=JunglingStates.FindCamp;
+	setHeroVar("move_ticks", 0)
 	-- TODO: implement stacking
 	-- TODO: Pickup runes
 	-- TODO: help lanes
@@ -69,14 +70,24 @@ local function FindCamp(bot)
 		jungle = FindCampsByMaxDifficulty(jungle, maxcamplvl)
 	end
 	local camp = utils.NearestNeutralCamp(bot, jungle)
+	if getHeroVar("currentCamp") == nil or camp[constants.VECTOR] ~= getHeroVar("currentCamp")[constants.VECTOR] then
+		print(utils.GetHeroName(bot), "moves to camp")
+	end
 	setHeroVar("currentCamp", camp)
-	print(utils.GetHeroName(bot), "moves to camp")
+	setHeroVar("move_ticks", 0)
 	JunglingState = JunglingStates.MoveToCamp
 end
 
 local function MoveToCamp(bot)
-	if GetUnitToLocationDistance(bot, getHeroVar("currentCamp")[constants.PRE_STACK_VECTOR]) > 200 then
-		bot:Action_MoveToLocation(getHeroVar("currentCamp")[constants.PRE_STACK_VECTOR]) -- FIXME: is this slow??
+	if GetUnitToLocationDistance(bot, getHeroVar("currentCamp")[constants.VECTOR]) > 200 then
+		local ticks = getHeroVar("move_ticks")
+		if ticks > 50 then -- don't do this every frame
+			JunglingState = JunglingStates.FindCamp -- crossing the jungle takes a lot of time. Check for camps that may have spawned
+			return
+		else
+			setHeroVar("move_ticks", ticks + 1)
+		end
+		bot:Action_MoveToLocation(getHeroVar("currentCamp")[constants.VECTOR])
 		return
 	end
 	local neutrals = bot:GetNearbyCreeps(EyeRange,true);
@@ -119,6 +130,7 @@ local function CleanCamp(bot)
 	-- TODO: make sure we have aggro when attempting to stack
 	-- TODO: don't attack enemy creeps, unless they attack us / make sure we stay in jungle
 	-- TODO: instead of stacking, could we just kill them and move ou of the camp?
+	-- TODO: make sure we can actually kill the camp.
 	local time = DotaTime() % 120
 	local stacktime = getHeroVar("currentCamp")[constants.STACK_TIME]
 	if time >= stacktime and time <= stacktime + 1 then

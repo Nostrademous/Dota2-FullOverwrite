@@ -75,10 +75,7 @@ function bloodseekerBot:GetMaxClearableCampLevel(bot)
 		return constants.CAMP_HARD
 	end
 
-	if bot:GetHealth() > 250 then
-		return constants.CAMP_MEDIUM
-	end
-	return constants.CAMP_EASY
+	return constants.CAMP_MEDIUM
 end
 
 function bloodseekerBot:DoCleanCamp(bot, neutrals)

@@ -7,6 +7,17 @@ _G._savedEnv = getfenv()
 module( "item_usage", package.seeall )
 
 local utils = require( GetScriptDirectory().."/utility" )
+local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
+
+function setHeroVar(var, value)
+	local bot = GetBot()
+	gHeroVar.SetVar(bot:GetPlayerID(), var, value)
+end
+
+function getHeroVar(var)
+	local bot = GetBot()
+	return gHeroVar.GetVar(bot:GetPlayerID(), var)
+end
 
 function UseItems()
 	local npcBot = GetBot();
@@ -54,11 +65,18 @@ function UseItems()
 		and not npcBot:HasModifier("modifier_clarity_potion") and not npcBot:HasModifier("modifier_flask_healing") then
 		
 		if Enemies==nil or #Enemies==0 then
-			if (npcBot:GetMaxHealth()-npcBot:GetHealth()) >= 100 and (npcBot:GetMaxMana()-npcBot:GetMana()) >= 60 then
+			if ((npcBot:GetMaxHealth()-npcBot:GetHealth()) >= 100 and (npcBot:GetMaxMana()-npcBot:GetMana()) >= 60) or
+				(npcBot:GetHealth() < 300 or npcBot:GetMana() < 200) then
 				npcBot:Action_UseAbilityOnEntity(bottle, npcBot);
 				return nil
 			end
 		end
+		
+		if (npcBot:GetHealth() ~= npcBot:GetMaxHealth() or npcBot:GetMaxMana() ~= npcBot:GetMana()) and npcBot:HasModifier("modifier_fountain_aura") then
+			npcBot:Action_UseAbilityOnEntity(bottle, npcBot);
+			return nil
+		end
+		
 	end
 	
 	local faerie = utils.IsItemAvailable("item_faerie_fire");
@@ -81,7 +99,7 @@ function UseItems()
 	if tp ~= nil then
 		-- dest (below) should find farthest away tower to TP to in our assigned lane, even if tower is dead it will
 		-- just default to closest location we can TP to in that direction
-		local dest = GetLocationAlongLane(npcBot.CurLane, 0.5); -- 0.5 is basically 1/2 way down our lane
+		local dest = GetLocationAlongLane(getHeroVar("CurLane"), 0.5); -- 0.5 is basically 1/2 way down our lane
 		if GetUnitToLocationDistance(npcBot, utils.Fountain(GetTeam())) < 2000 then
 			npcBot:Action_UseAbilityOnLocation(tp, dest);
 		-- FIXME: Sell if we have BoTs and are near a shop

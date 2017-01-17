@@ -4,6 +4,17 @@
 -------------------------------------------------------------------------------
 
 require( GetScriptDirectory().."/constants" )
+local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
+
+function setHeroVar(var, value, bot)
+	local bot = bot or GetBot()
+	gHeroVar.SetVar(bot:GetPlayerID(), var, value)
+end
+
+function getHeroVar(var, bot)
+	local bot = bot or GetBot()
+	return gHeroVar.GetVar(bot:GetPlayerID(), var)
+end
 
 U = {}
 
@@ -11,15 +22,10 @@ U.creeps = nil
 U.Lanes={[1]=LANE_BOT,[2]=LANE_MID,[3]=LANE_TOP};
 
 U.Locations = {
-["TopRune"]= Vector(-1767,1233),
-["BotRune"]= Vector(2597,-2014),
-["Rosh"]= Vector(-2328,1765),
 ["RadiantShop"]= Vector(-4739,1263),
 ["DireShop"]= Vector(4559,-1554),
 ["BotShop"]= Vector(7253,-4128),
 ["TopShop"]= Vector(-7236,4444),
-["DireAncient"]= Vector(5517,4981),
-["RadiantAncient"]= Vector(-5860,-5328),
 
 ["RadiantBase"]= Vector(-7200,-6666),
 ["RBT1"]= Vector(4896,-6140),
@@ -33,8 +39,6 @@ U.Locations = {
 ["RTT3"]= Vector(-6591,-3397),
 ["RadiantTopShrine"]= Vector(-4229,1299),
 ["RadiantBotShrine"]= Vector(622,-2555),
-["RadiantBotRune"]= Vector(1276,-4129),
-["RadiantTopRune"]= Vector(-4351,200),
 
 ["DireBase"]= Vector(7137,6548),
 ["DBT1"]= Vector(6215,-1639),
@@ -48,28 +52,140 @@ U.Locations = {
 ["DTT3"]= Vector(3512,5778),
 ["DireTopShrine"]= Vector(-139,2533),
 ["DireBotShrine"]= Vector(4173,-1613),
-["DireBotRune"]= Vector(3471,295),
-["DireTopRune"]= Vector(-2821,4147),
-
-["RadiantEasyAndMedium"]={
-Vector(3197,-4647),
-Vector(680,-4420),
-Vector(-1728,-3928)
-},
-["RadiantHard"]={
-Vector(-780,-3291),
-Vector(4527,-4259)
-},
-["DireEasyAndMedium"]={
-Vector(-3082,5169),
-Vector(-1617,4056),
-Vector(1061,3489)
-},
-["DireHard"]={
-Vector(-382,3572),
-Vector(-4377,3825)
-}
 };
+
+U["tableNeutralCamps"] = {
+	[constants.TEAM_RADIANT] = {
+		[1] = {
+			[constants.DIFFICULTY] = constants.CAMP_EASY,
+			[constants.VECTOR] = constants.RAD_SAFE_EASY,
+			[constants.STACK_TIME] = constants.RAD_SAFE_EASY_STACKTIME,
+			[constants.PRE_STACK_VECTOR] = constants.RAD_SAFE_EASY_PRESTACK,
+			[constants.STACK_VECTOR] = constants.RAD_SAFE_EASY_STACK
+		},
+		[2] = {
+			[constants.DIFFICULTY] = constants.CAMP_MEDIUM,
+			[constants.VECTOR] = constants.RAD_SAFE_MEDIUM,
+			[constants.STACK_TIME] = constants.RAD_SAFE_MEDIUM_STACKTIME,
+			[constants.PRE_STACK_VECTOR] = constants.RAD_SAFE_MEDIUM_PRESTACK,
+			[constants.STACK_VECTOR] = constants.RAD_SAFE_MEDIUM_STACK
+		},
+		[3] = {
+			[constants.DIFFICULTY] = constants.CAMP_MEDIUM,
+			[constants.VECTOR] = constants.RAD_MID_MEDIUM,
+			[constants.STACK_TIME] = constants.RAD_MID_MEDIUM_STACKTIME,
+			[constants.PRE_STACK_VECTOR] = constants.RAD_MID_MEDIUM_PRESTACK,
+			[constants.STACK_VECTOR] = constants.RAD_MID_MEDIUM_STACK
+		},
+		[4] = {
+			[constants.DIFFICULTY] = constants.CAMP_MEDIUM,
+			[constants.VECTOR] = constants.RAD_OFF_MEDIUM,
+			[constants.STACK_TIME] = constants.RAD_OFF_MEDIUM_STACKTIME,
+			[constants.PRE_STACK_VECTOR] = constants.RAD_OFF_MEDIUM_PRESTACK,
+			[constants.STACK_VECTOR] = constants.RAD_OFF_MEDIUM_STACK
+		},
+		[5] = {
+			[constants.DIFFICULTY] = constants.CAMP_HARD,
+			[constants.VECTOR] = constants.RAD_OFF_HARD,
+			[constants.STACK_TIME] = constants.RAD_OFF_HARD_STACKTIME,
+			[constants.PRE_STACK_VECTOR] = constants.RAD_OFF_HARD_PRESTACK,
+			[constants.STACK_VECTOR] = constants.RAD_OFF_HARD_STACK
+		},
+		[6] = {
+			[constants.DIFFICULTY] = constants.CAMP_HARD,
+			[constants.VECTOR] = constants.RAD_MID_HARD,
+			[constants.STACK_TIME] = constants.RAD_MID_HARD_STACKTIME,
+			[constants.PRE_STACK_VECTOR] = constants.RAD_MID_HARD_PRESTACK,
+			[constants.STACK_VECTOR] = constants.RAD_MID_HARD_STACK
+		},
+		[7] = {
+			[constants.DIFFICULTY] = constants.CAMP_HARD,
+			[constants.VECTOR] = constants.RAD_SAFE_HARD,
+			[constants.STACK_TIME] = constants.RAD_SAFE_HARD_STACKTIME,
+			[constants.PRE_STACK_VECTOR] = constants.RAD_SAFE_HARD_PRESTACK,
+			[constants.STACK_VECTOR] = constants.RAD_SAFE_HARD_STACK
+		},
+		[8] = {
+			[constants.DIFFICULTY] = constants.CAMP_ANCIENT,
+			[constants.VECTOR] = constants.RAD_MID_ANCIENT,
+			[constants.STACK_TIME] = constants.RAD_MID_ANCIENT_STACKTIME,
+			[constants.PRE_STACK_VECTOR] = constants.RAD_MID_ANCIENT_PRESTACK,
+			[constants.STACK_VECTOR] = constants.RAD_MID_ANCIENT_STACK
+		},
+		[9] = {
+			[constants.DIFFICULTY] = constants.CAMP_ANCIENT,
+			[constants.VECTOR] = constants.RAD_OFF_ANCIENT,
+			[constants.STACK_TIME] = constants.RAD_OFF_ANCIENT_STACKTIME,
+			[constants.PRE_STACK_VECTOR] = constants.RAD_OFF_ANCIENT_PRESTACK,
+			[constants.STACK_VECTOR] = constants.RAD_OFF_ANCIENT_STACK
+		}
+	},
+	[constants.TEAM_DIRE] = {
+		[1] = {
+			[constants.DIFFICULTY] = constants.CAMP_EASY,
+			[constants.VECTOR] = constants.DIRE_SAFE_EASY,
+			[constants.STACK_TIME] = constants.DIRE_SAFE_EASY_STACKTIME,
+			[constants.PRE_STACK_VECTOR] = constants.DIRE_SAFE_EASY_PRESTACK,
+			[constants.STACK_VECTOR] = constants.DIRE_SAFE_EASY_STACK
+		},
+		[2] = {
+			[constants.DIFFICULTY] = constants.CAMP_MEDIUM,
+			[constants.VECTOR] = constants.DIRE_SAFE_MEDIUM,
+			[constants.STACK_TIME] = constants.DIRE_SAFE_MEDIUM_STACKTIME,
+			[constants.PRE_STACK_VECTOR] = constants.DIRE_SAFE_MEDIUM_PRESTACK,
+			[constants.STACK_VECTOR] = constants.DIRE_SAFE_MEDIUM_STACK
+		},
+		[3] = {
+			[constants.DIFFICULTY] = constants.CAMP_MEDIUM,
+			[constants.VECTOR] = constants.DIRE_MID_MEDIUM,
+			[constants.STACK_TIME] = constants.DIRE_MID_MEDIUM_STACKTIME,
+			[constants.PRE_STACK_VECTOR] = constants.DIRE_MID_MEDIUM_PRESTACK,
+			[constants.STACK_VECTOR] = constants.DIRE_MID_MEDIUM_STACK
+		},
+		[4] = {
+			[constants.DIFFICULTY] = constants.CAMP_MEDIUM,
+			[constants.VECTOR] = constants.DIRE_OFF_MEDIUM,
+			[constants.STACK_TIME] = constants.DIRE_OFF_MEDIUM_STACKTIME,
+			[constants.PRE_STACK_VECTOR] = constants.DIRE_OFF_MEDIUM_PRESTACK,
+			[constants.STACK_VECTOR] = constants.DIRE_OFF_MEDIUM_STACK
+		},
+		[5] = {
+			[constants.DIFFICULTY] = constants.CAMP_HARD,
+			[constants.VECTOR] = constants.DIRE_OFF_HARD,
+			[constants.STACK_TIME] = constants.DIRE_OFF_HARD_STACKTIME,
+			[constants.PRE_STACK_VECTOR] = constants.DIRE_OFF_HARD_PRESTACK,
+			[constants.STACK_VECTOR] = constants.DIRE_OFF_HARD_STACK
+		},
+		[6] = {
+			[constants.DIFFICULTY] = constants.CAMP_HARD,
+			[constants.VECTOR] = constants.DIRE_MID_HARD,
+			[constants.STACK_TIME] = constants.DIRE_MID_HARD_STACKTIME,
+			[constants.PRE_STACK_VECTOR] = constants.DIRE_MID_HARD_PRESTACK,
+			[constants.STACK_VECTOR] = constants.DIRE_MID_HARD_STACK
+		},
+		[7] = {
+			[constants.DIFFICULTY] = constants.CAMP_HARD,
+			[constants.VECTOR] = constants.DIRE_SAFE_HARD,
+			[constants.STACK_TIME] = constants.DIRE_SAFE_HARD_STACKTIME,
+			[constants.PRE_STACK_VECTOR] = constants.DIRE_SAFE_HARD_PRESTACK,
+			[constants.STACK_VECTOR] = constants.DIRE_SAFE_HARD_STACK
+		},
+		[8] = {
+			[constants.DIFFICULTY] = constants.CAMP_ANCIENT,
+			[constants.VECTOR] = constants.DIRE_MID_ANCIENT,
+			[constants.STACK_TIME] = constants.DIRE_MID_ANCIENT_STACKTIME,
+			[constants.PRE_STACK_VECTOR] = constants.DIRE_MID_ANCIENT_PRESTACK,
+			[constants.STACK_VECTOR] = constants.DIRE_MID_ANCIENT_STACK
+		},
+		[9] = {
+			[constants.DIFFICULTY] = constants.CAMP_ANCIENT,
+			[constants.VECTOR] = constants.DIRE_OFF_ANCIENT,
+			[constants.STACK_TIME] = constants.DIRE_OFF_ANCIENT_STACKTIME,
+			[constants.PRE_STACK_VECTOR] = constants.DIRE_OFF_ANCIENT_PRESTACK,
+			[constants.STACK_VECTOR] = constants.DIRE_OFF_ANCIENT_STACK
+		}
+	}
+}
 
 U.SIDE_SHOP_TOP = Vector(-7220,4430);
 U.SIDE_SHOP_BOT = Vector(7249,-4113);
@@ -191,6 +307,112 @@ function U.GetTowerLocation(side, lane, n) --0 radiant 1 dire
 	return nil;
 end
 
+local function spairs(t, order)
+    -- collect the keys
+    local keys = {}
+    for k in pairs(t) do keys[#keys+1] = k end
+
+    -- if order function given, sort by it by passing the table and keys a, b,
+    -- otherwise just sort the keys 
+    if order then
+        table.sort(keys, function(a,b) return order(t, a, b) end)
+    else
+        table.sort(keys)
+    end
+
+    -- return the iterator function
+    local i = 0
+    return function()
+        i = i + 1
+        if keys[i] then
+            return keys[i], t[keys[i]]
+        end
+    end
+end
+
+-- TODO: should be broken, from looking at it (U["tableNeutralCamps"][CAMP_EASY] etc. doenst make sense)
+function U.DistanceToNeutrals(hUnit, largestCampType)
+    local camps = {}
+    local sCamps = {}
+    for i,v in ipairs(U["tableNeutralCamps"][CAMP_EASY]) do
+        camps[GetUnitToLocationDistance( hUnit, v )] = v
+    end
+    if largestCampType == CAMP_EASY then
+        for k,v in spairs(HighScore, function(t,a,b) return t[b] < t[a] end) do
+            sCamps[k] = v
+        end
+        return camps
+    end
+    for i,v in ipairs(U["tableNeutralCamps"][CAMP_MEDIUM]) do
+        camps[GetUnitToLocationDistance( hUnit, v )] = v
+    end
+    if largestCampType == CAMP_MEDIUM then
+        for k,v in spairs(HighScore, function(t,a,b) return t[b] < t[a] end) do
+            sCamps[k] = v
+        end
+    return camps
+    end
+    for i,v in ipairs(U["tableNeutralCamps"][CAMP_HARD]) do
+        camps[GetUnitToLocationDistance( hUnit, v )] = v
+    end
+    if largestCampType == CAMP_HARD then
+        for k,v in spairs(HighScore, function(t,a,b) return t[b] < t[a] end) do
+            sCamps[k] = v
+        end
+        return camps
+    end
+    for i,v in ipairs(U["tableNeutralCamps"][CAMP_ANCIENT]) do
+        camps[GetUnitToLocationDistance( hUnit, v )] = v
+    end
+
+    for k,v in spairs(HighScore, function(t,a,b) return t[b] < t[a] end) do
+        sCamps[k] = v
+    end
+    return camps
+end
+
+function U.NextNeutralSpawn()
+	if DotaTime() < 30 then
+		return 30
+	else
+		t = math.ceil((DotaTime() - 60) / 120) * 120 + 60
+		print("Next spawn time is", t)
+		return t
+	end
+end
+
+function U.NearestNeutralCamp( hUnit, tCamps )
+    local closestDistance = 1000000;
+    local closestCamp;
+    for k,v in ipairs(tCamps) do
+        if v ~= nil and GetUnitToLocationDistance( hUnit, v[constants.VECTOR] ) < closestDistance then
+            closestDistance = GetUnitToLocationDistance( hUnit, v[constants.VECTOR] )
+            closestCamp = v
+            --print(closestCamp..":"..closestDistance)
+        end
+    end
+    return closestCamp
+end
+
+function U.GetLaneTower(team, lane, i)
+	if i > 3 and i < 6 then
+		return GetTower(team, 5 + i)
+	end
+	
+	local j = i - 1
+	if lane == LANE_MID then
+		j = j + 3
+	elseif lane == LANE_BOT then
+		j = j + 6
+	end
+	
+	if j < 9 and j > -1 and (lane == LANE_BOT or lane == LANE_MID or lane == LANE_TOP) then
+		return GetTower(team, j)
+	end
+	
+	return nil
+end
+
 function U.GetDistance(s, t)
 	--print("S1: "..s[1]..", S2: "..s[2].." :: T1: "..t[1]..", T2: "..t[2]);
 	return math.sqrt((s[1]-t[1])*(s[1]-t[1]) + (s[2]-t[2])*(s[2]-t[2]));
@@ -203,7 +425,7 @@ function U.VectorTowards(s,t,d)
 end
 
 function U.GetHeroName(bot)
-	local sName = bot:GetUnitName();
+	local sName = bot:GetUnitName()
 	return string.sub(sName, 15, string.len(sName));
 end
 
@@ -276,8 +498,7 @@ function U.PositionAlongLane(npcBot, lane)
 end
 
 function U.MoveSafelyToLocation(npcBot, dest)
-	if npcBot.NextHop==nil or #(npcBot.NextHop)==0 or npcBot.PathfindingWasInitiated==nil or (not npcBot.PathfindingWasInitiated) then
-		--print(npcBot.NextHop,npcBot.PathfindingWasInitiated);
+	if getHeroVar("NextHop")==nil or #getHeroVar("NextHop")==0 or getHeroVar("PathfindingWasInitiated")==nil or (not getHeroVar("PathfindingWasInitiated")) then
 		U.InitPathFinding(npcBot);
 		npcBot:Action_Chat("Path finding has been initiated", false);
 	end
@@ -290,13 +511,13 @@ function U.MoveSafelyToLocation(npcBot, dest)
 	end
 
 	if GetTeam()==TEAM_RADIANT then
-		safeSpots=U.RadiantSafeSpots;
+		safeSpots = U.RadiantSafeSpots
 	else
-		safeSpots=U.DireSafeSpots;
+		safeSpots = U.DireSafeSpots
 	end
 	
-	if npcBot.FinalHop==nil then
-		npcBot.FinalHop=false;
+	if getHeroVar("FinalHop")==nil then
+		setHeroVar("FinalHop", false)
 	end
 	
 	
@@ -308,7 +529,7 @@ function U.MoveSafelyToLocation(npcBot, dest)
 	local ti=-1;
 	local mindisT=100000;
 	
-	local CurLoc=npcBot:GetLocation();
+	local CurLoc = npcBot:GetLocation();
 	
 	for i,spot in pairs(safeSpots) do
 		if U.GetDistance(spot,CurLoc)<mindisS then
@@ -329,32 +550,32 @@ function U.MoveSafelyToLocation(npcBot, dest)
 		return;
 	end
 	
-	if GetUnitToLocationDistance(npcBot,dest)<safeDist or npcBot.FinalHop or mindisS+mindisT>GetUnitToLocationDistance(npcBot,dest) then
-		npcBot:Action_MoveToLocation(dest);
-		npcBot.FinalHop=true;
+	if GetUnitToLocationDistance(npcBot,dest)<safeDist or getHeroVar("FinalHop") or mindisS+mindisT>GetUnitToLocationDistance(npcBot,dest) then
+		npcBot:Action_MoveToLocation(dest)
+		setHeroVar("FinalHop", true)
 		return;
 	end
 	
 	if si==ti then
-		npcBot.FinalHop=true;
-		npcBot:Action_MoveToLocation(dest);
+		setHeroVar("FinalHop", true)
+		npcBot:Action_MoveToLocation(dest)
 		return;
 	end
 	
-	if GetUnitToLocationDistance(npcBot,s)<500 and npcBot.LastHop==nil then
-		npcBot.LastHop=si;
+	if GetUnitToLocationDistance(npcBot,s)<500 and getHeroVar("LastHop")==nil then
+		setHeroVar("LastHop", si)
 	end
 	
-	if mindisS>safeDist or npcBot.LastHop==nil then
+	if mindisS>safeDist or getHeroVar("LastHop")==nil then
 		npcBot:Action_MoveToLocation(s);
 		return;
 	end
 	
-	if GetUnitToLocationDistance(npcBot,safeSpots[npcBot.NextHop[npcBot.LastHop][ti]])<500 then
-		npcBot.LastHop=npcBot.NextHop[npcBot.LastHop][ti];
+	if GetUnitToLocationDistance(npcBot,safeSpots[getHeroVar("NextHop")[getHeroVar("LastHop")][ti]])<500 then
+		setHeroVar("LastHop", getHeroVar("NextHop")[getHeroVar("LastHop")][ti])
 	end
 	
-	local newT=npcBot.NextHop[npcBot.LastHop][ti];
+	local newT = getHeroVar("NextHop")[getHeroVar("LastHop")][ti]
 	
 	npcBot:Action_MoveToLocation(safeSpots[newT]);
 end
@@ -405,26 +626,26 @@ function U.IsInLane()
 	local npcBot = GetBot()
 	
 	local mindis = 10000
-	npcBot.RetreatLane = npcBot.CurLane
-	npcBot.RetreatPos = npcBot.LanePos
+	setHeroVar("RetreatLane", getHeroVar("CurLane"))
+	setHeroVar("RetreatPos", getHeroVar("LanePos"))
 	
 	for i=1,3,1 do
 		local thisl = U.PositionAlongLane(npcBot, U.Lanes[i])
 		local thisdis = U.GetDistance(GetLocationAlongLane(U.Lanes[i], thisl), npcBot:GetLocation())
 		if thisdis < mindis then
-			npcBot.RetreatLane = U.Lanes[i]
-			npcBot.RetreatPos = thisl
+			setHeroVar("RetreatLane", U.Lanes[i])
+			setHeroVar("RetreatPos", thisl)
 			mindis = thisdis
 		end
 	end
 	
 	if mindis > 1500 then
-		npcBot.IsInLane = false
+		setHeroVar("IsInLane", false)
 	else
-		npcBot.IsInLane = true
+		setHeroVar("IsInLane", true)
 	end
 	
-	return npcBot.IsInLane, npcBot.RetreatLane
+	return getHeroVar("IsInLane"), getHeroVar("RetreatLane")
 end
 
 function U.IsFacingLocation(hero, loc, delta)
@@ -612,6 +833,91 @@ function U.GetWeakestCreep(creeps)
 	return WeakestCreep, LowestHealth;
 end
 
+function U.FindTarget(dist)
+	--npcBot:GetEstimatedDamageToTarget( true, WeakestCreep, AttackSpeed, DAMAGE_TYPE_PHYSICAL )
+	local npcBot = GetBot()
+	
+	local mindis = 100000
+	local candidate = nil
+	local MaxScore = -1
+	local damage = 0
+	
+	local Enemies = npcBot:GetNearbyHeroes(dist, true, BOT_MODE_NONE);
+	
+	if Enemies == nil or #Enemies == 0 then
+		npcBot:SetTarget(nil)
+		return nil, 0.0, 0.0
+	end
+	
+	local Towers = npcBot:GetNearbyTowers(1100, true)
+	local AlliedTowers = npcBot:GetNearbyTowers(950, false)
+	local AlliedCreeps = npcBot:GetNearbyCreeps(1000, false)
+	local EnemyCreeps = npcBot:GetNearbyCreeps(700 ,true)
+	local nEc = 0
+	local nAc = 0
+	if AlliedCreeps ~= nil then
+		nAc = #AlliedCreeps
+	end
+	if EnemyCreeps ~= nil then
+		nEc = #EnemyCreeps
+	end
+	
+	local nTo = 0
+	if Towers ~= nil then
+		nTo = #Towers
+	end
+	
+	local fTo = 0
+	if AlliedTowers ~= nil then
+		fTo = #AlliedTowers
+	end
+	
+	for _,enemy in pairs(Enemies) do
+		if U.NotNilOrDead(enemy) and enemy:GetHealth()>0 and GetUnitToLocationDistance(enemy, U.Fountain(U.GetOtherTeam()))>1350 then
+			local myDamage = npcBot:GetEstimatedDamageToTarget(true, enemy, 4.5, DAMAGE_TYPE_ALL)
+
+			local nfriends = 0
+			for j=1,5,1 do
+				local enemy2 = GetTeamMember(U.GetOtherTeam(),j)
+				if U.NotNilOrDead(enemy2) and enemy2:GetHealth()>0 then
+					if GetUnitToUnitDistance(enemy,enemy2)<1200 and enemy2:GetHealth()/enemy2:GetMaxHealth()>0.4 then
+						nfriends = nfriends+1
+					end
+				end
+			end
+			
+			local nMyFriends=0
+			for j =1,5,1 do
+				local Ally = GetTeamMember(GetTeam(),j)
+				if U.NotNilOrDead(Ally) and GetUnitToUnitDistance(enemy,Ally)<1100 then
+					nMyFriends = nMyFriends+1
+				end
+			end
+			
+			local lvl = U.GetHeroLevel()
+			local score = Min(myDamage/enemy:GetHealth(),4) + (nMyFriends)/1.7 - (nfriends)/1.7 - GetUnitToUnitDistance(enemy,npcBot)/3500 -(1-npcBot:GetHealth()/npcBot:GetMaxHealth()) - nTo/(Min(lvl/8,3)) + fTo/(Min(lvl/8,3)) - nEc/(2*lvl) + nAc/(2*lvl);
+			if score > MaxScore then
+				damage = myDamage
+				candidate = enemy
+				MaxScore = score
+			end
+		end
+	end
+	
+	return candidate, damage, MaxScore
+end
+
+function U.GetHeroLevel()
+    local npcBot = GetBot();
+    local respawnTable = {8, 10, 12, 14, 16, 26, 28, 30, 32, 34, 36, 46, 48, 50, 52, 54, 56, 66, 70, 74, 78,  82, 86, 90, 100};
+    local nRespawnTime = npcBot:GetRespawnTime() +1;
+    for k,v in pairs (respawnTable) do
+        if v == nRespawnTime then
+        return k;
+        end
+    end
+end
+
 function U.TimePassed(prevTime, amount)
 	if ( (GameTime() - prevTime) > amount ) then
 		return true, GameTime();
@@ -626,19 +932,21 @@ function U.LevelUp(bot, AbilityPriority)
 	local ability = bot:GetAbilityByName(AbilityPriority[1]);
 	
 	if ( ability == nil ) then
-		print( " [" .. bot:GetUnitName() .. "] FAILED AT Leveling " .. AbilityPriority[1] );
+		print( " [" .. getHeroVar("Name") .. "] FAILED AT Leveling " .. AbilityPriority[1] );
 		table.remove( AbilityPriority, 1 );
 		return;
 	end
 	
-	print( " [" .. bot:GetUnitName() .. "] Contemplating " .. ability:GetName() .. " " .. ability:GetLevel() .. "/" .. ability:GetMaxLevel() );
+	--[[
+	print( " [" .. getHeroVar("Name") .. "] Contemplating " .. ability:GetName() .. " " .. ability:GetLevel() .. "/" .. ability:GetMaxLevel() );
 	if ( ability:CanAbilityBeUpgraded() ) then
 		print( "Ability Can Be Upgraded" );
 	end
+	--]]
 	
 	if ( ability:CanAbilityBeUpgraded() and ability:GetLevel() < ability:GetMaxLevel() ) then
 		bot:Action_LevelAbility(AbilityPriority[1]);
-		print( " [" .. bot:GetUnitName() .. "] Leveling " .. ability:GetName() );
+		print( " [" .. getHeroVar("Name") .. "] Leveling " .. ability:GetName() );
 		table.remove( AbilityPriority, 1 );
 	end
 end
@@ -646,8 +954,8 @@ end
 function U.InitPathFinding(npcBot)
 
 	-- keeps the path for my pathfinding
-	npcBot.NextHop={};
-	npcBot.PathfindingWasInitiated=false;
+	setHeroVar("NextHop", {}, npcBot)
+	setHeroVar("PathfindingWasInitiated", false, npcBot)
 	-- creating the graph
 
 	local SafeDist=2000;
@@ -658,17 +966,15 @@ function U.InitPathFinding(npcBot)
 		safeSpots=U.DireSafeSpots;
 	end
 	
-	
 	--initialization
 	local inf=100000;
 	local dist={};
-	npcBot.NextHop={}
 	
 	print("Inits are done");
 	for u,uv in pairs(safeSpots) do
 		local q=true;
 		dist[u]={};
-		npcBot.NextHop[u]={};
+		setHeroVar(getHeroVar("NextHop")[u], {}, npcBot)
 		for v,vv in pairs(safeSpots) do
 			if U.GetDistance(uv,vv)>SafeDist then
 				dist[u][v]=inf;
@@ -676,7 +982,7 @@ function U.InitPathFinding(npcBot)
 				q=false;
 				dist[u][v]=U.GetDistance(uv,vv);
 			end
-			npcBot.NextHop[u][v]=v;
+			setHeroVar(getHeroVar("NextHop", npcBot)[u][v], v, npcBot)
 		end
 		if q then
 			print("There is an isolated vertex in safespots");
@@ -689,18 +995,18 @@ function U.InitPathFinding(npcBot)
 			for v,_ in pairs(safeSpots) do
 				if dist[u][v]>dist[u][k]+dist[k][v] then
 					dist[u][v]=dist[u][k]+dist[k][v];
-					npcBot.NextHop[u][v]=npcBot.NextHop[u][k];
+					setHeroVar(getHeroVar("NextHop", npcBot)[u][v], getHeroVar("NextHop", npcBot)[u][k], npcBot)
 				end
 			end
 		end
 	end
 
-	npcBot.PathfindingWasInitiated=true;
+	setHeroVar("PathfindingWasInitiated", true)
 end
 
 function U.InitPath(npcBot)
-	npcBot.FinalHop=false;
-	npcBot.LastHop=nil;
+	setHeroVar("FinalHop", false)
+	setHeroVar("LastHop", nil)
 end
 
 function U.IsItemAvailable(item_name)
@@ -736,10 +1042,10 @@ function U.HasImportantItem()
 end
 
 function U.CourierThink(npcBot)
-	local checkLevel, newTime = U.TimePassed(npcBot.LastCourierThink, 1.0);
+	local checkLevel, newTime = U.TimePassed(getHeroVar("LastCourierThink"), 1.0);
 	
 	if not checkLevel then return end
-	npcBot.LastCourierThink = newTime
+	setHeroVar("LastCourierThink", newTime)
 	
 	--print(U.GetHeroName(npcBot), " SV: ", npcBot:GetStashValue(), ", CV: ", npcBot:GetCourierValue(), ", HII: ", U.HasImportantItem())
 	
@@ -798,41 +1104,49 @@ function U.HaveItem(npcBot, item_name)
 		if slot_type == ITEM_SLOT_TYPE_MAIN then
 			return npcBot:GetItemInSlot(slot);
 		elseif slot_type == ITEM_SLOT_TYPE_BACKPACK then
-			print("FIXME: Implement swapping BACKPACK to MAIN INVENTORY of item: ", item_name);
-			return nil;
+			print("FIXME: Implement swapping BACKPACK to MAIN INVENTORY of item: ", item_name)
+			return nil
 		elseif slot_type == ITEM_SLOT_TYPE_STASH then
 			if npcBot:HasModifier("modifier_fountain_aura") then
-				print("FIXME: Implement swapping STASH to MAIN INVENTORY of item: ", item_name);
+				if U.NumberOfItems(bot) < 6 then
+					U.MoveItemsFromStashToInventory(bot)
+					return U.HaveItem(npcBot, item_name)
+				else
+					print("FIXME: Implement swapping STASH to MAIN INVENTORY of item: ", item_name)
+				end
 			end
-			return nil;
+			return nil
 		else
 			print("ERROR: condition should not be hit: ", item_name);
 		end
 	end
 	
-    return nil;
+    return nil
 end
 
 function U.MoveItemsFromStashToInventory(bot)
-	if NumberOfItemsInStash == 0 then return end
+	if U.NumberOfItems(bot) == 6 and U.NumberOfItemsInBackpack(bot) == 3 then return end
+	if U.NumberOfItemsInStash(bot) == 0 then return end
 	
-	local invSpaces = 6 - U.NumberOfItems(bot)
-	for i = 9, 14, 1 do
-		local item = bot:GetItemInSlot(i)
-		if item ~= nil then
-			if invSpaces == 0 then break end
-			bot:Action_SwapItems(i, 6-invSpaces)
-			invSpaces = invSpaces - 1
+	for i = 0, 5, 1 do
+		if bot:GetItemInSlot(i) == nil then
+			for j = 9, 14, 1 do
+				local item = bot:GetItemInSlot(j)
+				if item ~= nil then
+					bot:Action_SwapItems(i, j)
+				end
+			end
 		end
 	end
 	
-	local backSpaces = 3 - U.NumberOfItemsInBackpack(bot)
-	for i = 9, 14, 1 do
-		local item = bot:GetItemInSlot(i)
-		if item ~= nil then
-			if backSpaces == 0 then break end
-			bot:Action_SwapItems(i, 9-backSpaces)
-			backSpaces = backSpaces - 1
+	for i = 6, 8, 1 do
+		if bot:GetItemInSlot(i) == nil then
+			for j = 9, 14, 1 do
+				local item = bot:GetItemInSlot(j)
+				if item ~= nil then
+					bot:Action_SwapItems(i, j)
+				end
+			end
 		end
 	end
 end

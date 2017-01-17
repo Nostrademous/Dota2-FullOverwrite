@@ -5,53 +5,101 @@
 
 _G._savedEnv = getfenv()
 module( "ability_usage_lina", package.seeall )
+local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
+
+function setHeroVar(var, value)
+	local bot = GetBot()
+	gHeroVar.SetVar(bot:GetPlayerID(), var, value)
+end
+
+function getHeroVar(var)
+	local bot = GetBot()
+	return gHeroVar.GetVar(bot:GetPlayerID(), var)
+end
+
+local Abilities =	{
+	"lina_light_strike_array",
+	"lina_dragon_slave",
+	"lina_fiery_soul",
+	"lina_laguna_blade"
+}
 
 function AbilityUsageThink()
-	if ( GetGameState() ~= GAME_STATE_GAME_IN_PROGRESS and GetGameState() ~= GAME_STATE_PRE_GAME ) then return end
+	if ( GetGameState() ~= GAME_STATE_GAME_IN_PROGRESS and GetGameState() ~= GAME_STATE_PRE_GAME ) then return false end
 	
-	local npcBot = GetBot();
+	local npcBot = GetBot()
+	if not npcBot:IsAlive() then return false end
 	
+	-- Check if we're already using an ability
+	if ( npcBot:IsUsingAbility() or npcBot:IsChanneling() ) then return false end
+
+	abilityLSA = npcBot:GetAbilityByName( Abilities[1] );
+	abilityDS = npcBot:GetAbilityByName( Abilities[2] );
+	abilityLB = npcBot:GetAbilityByName( Abilities[4] );
+	
+	-- do combo
+	if getHeroVar("PerformingUltCombo") or ConsiderUltCombo() then
+		if getHeroVar("comboTarget") == nil and getHeroVar("PerformingUltCombo") == false then 
+			setHeroVar("comboTarget", UseUltCombo())
+		end
+		
+		local comboTarget = getHeroVar("comboTarget")
+		if comboTarget ~= nil and comboTarget:IsAlive() then
+			if CanCastLightStrikeArrayOnTarget( comboTarget ) and abilityLSA:IsFullyCastable() then
+				local locDelta = comboTarget:GetExtrapolatedLocation(abilityLSA:GetCastPoint())
+				npcBot:Action_UseAbilityOnLocation( abilityLSA, comboTarget:GetLocation()+locDelta )
+				print ( " Hit them with LSA ..." )
+				return true
+			end
+			
+			if CanCastDragonSlaveOnTarget( comboTarget ) and abilityDS:IsFullyCastable() and comboTarget:IsStunned() then
+				npcBot:Action_UseAbilityOnLocation( abilityDS, comboTarget:GetLocation() )
+				print ( "And Hit them with DS ..." )
+				return true
+			end
+			
+			if CanCastLagunaBladeOnTarget( comboTarget ) and abilityLB:IsFullyCastable() then
+				npcBot:Action_UseAbilityOnEntity( abilityLB, comboTarget )
+				print ( "And FINISH THEM with LB!!!!" )
+				setHeroVar("PerformingUltCombo", false)
+				setHeroVar("comboTarget", nil)
+				return true
+			end
+		else
+			setHeroVar("PerformingUltCombo", false)
+			setHeroVar("comboTarget", nil)
+		end
+	end
+
 	local EnemyHeroes = npcBot:GetNearbyHeroes(1200, true, BOT_MODE_NONE);
 	local EnemyCreeps = npcBot:GetNearbyCreeps(1200, true);
 	
-	if ( #EnemyHeroes == 0 and #EnemyCreeps == 0 ) then return end
-
-	-- Check if we're already using an ability
-	if ( npcBot:IsUsingAbility() ) then return end;
-
-	abilityLSA = npcBot:GetAbilityByName( "lina_light_strike_array" );
-	abilityDS = npcBot:GetAbilityByName( "lina_dragon_slave" );
-	abilityLB = npcBot:GetAbilityByName( "lina_laguna_blade" );
-
+	if ( #EnemyHeroes == 0 and #EnemyCreeps == 0 ) then return false end
+	
 	-- Consider using each ability
-	castLBDesire, castLBTarget = ConsiderLagunaBlade(abilityLB);
-	castLSADesire, castLSALocation = ConsiderLightStrikeArray(abilityLSA);
-	castDSDesire, castDSLocation = ConsiderDragonSlave(abilityDS);
+	castLBDesire, castLBTarget = ConsiderLagunaBlade(abilityLB)
+	castLSADesire, castLSALocation = ConsiderLightStrikeArray(abilityLSA)
+	castDSDesire, castDSLocation = ConsiderDragonSlave(abilityDS)
 
-	if ( castLBDesire > castLSADesire and castLBDesire > castDSDesire ) 
-	then
-		npcBot:Action_UseAbilityOnEntity( abilityLB, castLBTarget );
-		return;
+	if castLBDesire > castLSADesire and castLBDesire > castDSDesire then
+		print ( "I Desired a LB Hit" )
+		npcBot:Action_UseAbilityOnEntity( abilityLB, castLBTarget )
+		return true
 	end
 
-	if ( castLSADesire > 0 ) 
-	then
-		npcBot:Action_UseAbilityOnLocation( abilityLSA, castLSALocation );
-		return;
+	if castLSADesire > 0 then
+		print ( "I Desired a LSA Hit" )
+		npcBot:Action_UseAbilityOnLocation( abilityLSA, castLSALocation )
+		return true
 	end
 
-	if ( castDSDesire > 0 ) 
-	then
-		npcBot:Action_UseAbilityOnLocation( abilityDS, castDSLocation );
-		return;
+	if castDSDesire > 0 then
+		print ( "I Desired a DS Hit" )
+		npcBot:Action_UseAbilityOnLocation( abilityDS, castDSLocation )
+		return true
 	end
-
-	--[[
-	local middle_point = npcBot:GetLocation();
-	middle_point[1] = 0.0;
-	middle_point[2] = 0.0;
-	npcBot:Action_AttackMove(middle_point);
-	--]]
+	
+	return false
 end
 
 ----------------------------------------------------------------------------------------------------
@@ -70,22 +118,84 @@ end
 
 ----------------------------------------------------------------------------------------------------
 
-function ConsiderLightStrikeArrayFighting(abilityLSA,enemy)
+function UseUltCombo()
+	local npcBot = GetBot()
+	
+	local WeakestEnemy = nil
+	local LowestHP = 10000.0
+	
+	local aq = npcBot:GetAbilityByName(Abilities[1])
+	local aw = npcBot:GetAbilityByName(Abilities[2])
+	local ar = npcBot:GetAbilityByName(Abilities[4])
+	
+	local nCastRange = aw:GetCastRange()
+	local nRadius = abilityLSA:GetSpecialValueInt( "light_strike_array_aoe" )
+	
+	local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nCastRange + nRadius, true, BOT_MODE_NONE )
+	for _,npcEnemy in pairs( tableNearbyEnemyHeroes ) do
+		if npcEnemy ~= nil and npcEnemy:IsAlive() then	
+			if LowestHP > npcEnemy:GetHealth() and npcEnemy:GetHealth() > 0 then
+				WeakestEnemy = npcEnemy
+				LowestHP = npcEnemy:GetHealth()
+			end
+		end
+	end
+	
+	if WeakestEnemy == nil or LowestHP < 1 then
+		return nil
+	end
+	
+	local comboDmg = WeakestEnemy:GetActualDamage( aw:GetAbilityDamage(), aw:GetDamageType() )
+	comboDmg = comboDmg + WeakestEnemy:GetActualDamage( aq:GetAbilityDamage(), aq:GetDamageType() )
+	local arDT = ar:GetDamageType()
+	if npcBot:HasScepter() then arDT = DAMAGE_TYPE_PURE end
+	comboDmg = comboDmg + WeakestEnemy:GetActualDamage( ar:GetAbilityDamage(), arDT )
+	
+	if LowestHP < comboDmg and aw:GetCastRange() > GetUnitToUnitDistance(npcBot, WeakestEnemy) then
+		print( "Lina Comboing for ", WeakestEnemy:GetUnitName() )
+		setHeroVar("PerformingUltCombo", true)
+		return WeakestEnemy
+	end
+	return nil
+end
+
+function ConsiderUltCombo()
+	local npcBot = GetBot()
+	
+	local aq = npcBot:GetAbilityByName(Abilities[1]);
+	local aw = npcBot:GetAbilityByName(Abilities[2]);
+	local ar = npcBot:GetAbilityByName(Abilities[4]);
+	
+	if aq:GetLevel() < 1 or aw:GetLevel() < 1 or ar:GetLevel() < 1 then
+		return false
+	end
+	
+	if not ( aq:IsFullyCastable() and aw:IsFullyCastable() and ar:IsFullyCastable() ) then
+		return false
+	end
+	
+	if ( aq:GetManaCost() + aw:GetManaCost() + ar:GetManaCost() ) > npcBot:GetMana() then
+		return false
+	end
+	
+	return true
+end
+
+function ConsiderLightStrikeArrayFighting(abilityLSA, enemy)
     local npcBot = GetBot();
 
-	if ( not abilityLSA:IsFullyCastable() ) 
-	then 
+	if not abilityLSA:IsFullyCastable() then 
 		return BOT_ACTION_DESIRE_NONE, 0;
 	end;
 
 	local nCastRange = abilityLSA:GetCastRange();
 
-	local EnemyLocation = predictPosition(enemy, abilityLSA:GetCastPoint());
+	local locDelta = enemy:GetExtrapolatedLocation(abilityLSA:GetCastPoint())
+	local EnemyLocation = enemy:GetLocation() + locDelta
 
 	local d = GetUnitToLocationDistance(npcBot,EnemyLocation);
 
-	if (d < nCastRange and CanCastLightStrikeArrayOnTarget( enemy ) ) 
-	then
+	if d < nCastRange and CanCastLightStrikeArrayOnTarget( enemy ) then
 		return BOT_ACTION_DESIRE_MODERATE, EnemyLocation;
 	end
 	return BOT_ACTION_DESIRE_NONE, 0;
@@ -97,8 +207,7 @@ function ConsiderLightStrikeArray(abilityLSA)
 	local npcBot = GetBot();
 
 	-- Make sure it's castable
-	if ( not abilityLSA:IsFullyCastable() ) 
-	then 
+	if not abilityLSA:IsFullyCastable() then 
 		return BOT_ACTION_DESIRE_NONE, 0;
 	end;
 
@@ -114,11 +223,10 @@ function ConsiderLightStrikeArray(abilityLSA)
 
 	-- Check for a channeling enemy
 	local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nCastRange + nRadius + 200, true, BOT_MODE_NONE );
-	for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
-	do
-		if ( npcEnemy:IsChanneling() ) 
-		then
-			return BOT_ACTION_DESIRE_HIGH, npcEnemy:GetLocation();
+	for _,npcEnemy in pairs( tableNearbyEnemyHeroes ) do
+		if npcEnemy:IsChanneling() then
+			local locDelta = npcEnemy:GetExtrapolatedLocation(abilityLSA:GetCastPoint())
+			return BOT_ACTION_DESIRE_HIGH, npcEnemy:GetLocation() + locDelta
 		end
 	end
 
@@ -127,26 +235,21 @@ function ConsiderLightStrikeArray(abilityLSA)
 	--------------------------------------
 
 	-- If we're farming and can kill 3+ creeps with LSA
-	if (true) then
-		local locationAoE = npcBot:FindAoELocation( true, false, npcBot:GetLocation(), nCastRange, nRadius, 0, nDamage );
+	local locationAoE = npcBot:FindAoELocation( true, false, npcBot:GetLocation(), nCastRange, nRadius, abilityLSA:GetCastPoint(), nDamage );
 
-		if ( locationAoE.count >= 3 ) then
-			return BOT_ACTION_DESIRE_LOW, locationAoE.targetloc;
-		end
+	if ( locationAoE.count >= 3 ) then
+		return BOT_ACTION_DESIRE_LOW, locationAoE.targetloc;
 	end
 
 	-- If we're seriously retreating, see if we can land a stun on someone who's damaged us recently
-	if (true ) 
-	then
-		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nCastRange + nRadius + 200, true, BOT_MODE_NONE );
-		for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
-		do
-			if ( npcBot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) ) 
-			then
-				if ( CanCastLightStrikeArrayOnTarget( npcEnemy ) ) 
-				then
-					return BOT_ACTION_DESIRE_MODERATE, npcEnemy:GetLocation();
-				end
+	local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nCastRange + nRadius + 200, true, BOT_MODE_NONE );
+	for _,npcEnemy in pairs( tableNearbyEnemyHeroes ) do
+		-- FIXME: This logic will fail against Heartstopper Aura or Radiance probably making us LSA all the time
+		--        as we take damage and are below 50% health
+		if npcBot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) and (npcBot:GetHealth()/npcBot:GetMaxHealth()) < 0.5 then
+			if CanCastLightStrikeArrayOnTarget( npcEnemy ) and abilityLSA:GetCastRange() > GetUnitToUnitDistance(npcBot, npcEnemy) then
+				local locDelta = npcEnemy:GetExtrapolatedLocation(abilityLSA:GetCastPoint())
+				return BOT_ACTION_DESIRE_MODERATE, npcEnemy:GetLocation() + locDelta;
 			end
 		end
 	end
@@ -155,9 +258,7 @@ function ConsiderLightStrikeArray(abilityLSA)
 	local npcTarget = npcBot:GetTarget();
 
 	if ( npcTarget ~= nil ) then
-		if ( CanCastLightStrikeArrayOnTarget( npcTarget ) ) then
-			return BOT_ACTION_DESIRE_HIGH, npcTarget:GetLocation();
-		end
+		ConsiderLightStrikeArrayFighting( abilityLSA, npcTarget )
 	end
 
 	return BOT_ACTION_DESIRE_NONE, 0;
@@ -165,7 +266,7 @@ end
 
 ----------------------------------------------------------------------------------------------------
 
-function ConsiderDragonSlaveFighting(abilityDS,enemy)
+function ConsiderDragonSlaveFighting(abilityDS, enemy)
     local npcBot = GetBot();
 
     if ( not abilityDS:IsFullyCastable() ) then 
@@ -176,8 +277,9 @@ function ConsiderDragonSlaveFighting(abilityDS,enemy)
 
 	local d = GetUnitToUnitDistance(npcBot,enemy);
 
-	if(d < nCastRange and CanCastDragonSlaveOnTarget(enemy))then
-		return BOT_ACTION_DESIRE_MODERATE, enemy:GetLocation();
+	if d < nCastRange and CanCastDragonSlaveOnTarget(enemy) then
+		local locDelta = enemy:GetExtrapolatedLocation(abilityLSA:GetCastPoint())
+		return BOT_ACTION_DESIRE_MODERATE, enemy:GetLocation() + locDelta
 	end
 
 	return BOT_ACTION_DESIRE_NONE, 0;
@@ -222,12 +324,8 @@ function ConsiderDragonSlave(abilityDS)
 	-- If we're going after someone
 	local npcTarget = npcBot:GetTarget();
 
-	if ( npcTarget ~= nil ) 
-	then
-		if ( CanCastDragonSlaveOnTarget( npcTarget ) )
-		then
-			return BOT_ACTION_DESIRE_MODERATE, npcEnemy:GetLocation();
-		end
+	if npcTarget ~= nil then
+		ConsiderDragonSlaveFighting( abilityDS, npcTarget )
 	end
 
 	-- If we have plenty mana and high level DS
@@ -235,8 +333,7 @@ function ConsiderDragonSlave(abilityDS)
         local locationAoE = npcBot:FindAoELocation( true, true, npcBot:GetLocation(), nCastRange, nRadius, 0, 0 );
 
 		-- hit heros
-		if ( locationAoE.count >= 1 ) 
-		then
+		if locationAoE.count >= 1 then
 			return BOT_ACTION_DESIRE_LOW, locationAoE.targetloc;
 		end
 	end
@@ -259,17 +356,17 @@ function ConsiderLagunaBlade(abilityLB)
 	-- Get some of its values
 	local nCastRange = abilityLB:GetCastRange();
 	local nDamage = abilityLB:GetSpecialValueInt( "damage" );
-	local eDamageType = npcBot:HasScepter() and DAMAGE_TYPE_PURE or DAMAGE_TYPE_MAGICAL;
+	local eDamageType = DAMAGE_TYPE_MAGICAL
+	if npcBot:HasScepter() then
+		eDamageType = DAMAGE_TYPE_PURE
+	end
 
 	-- If a mode has set a target, and we can kill them, do it
 	local NearbyEnemyHeroes = npcBot:GetNearbyHeroes( nCastRange + 200, true, BOT_MODE_NONE );
-	if(NearbyEnemyHeroes ~= nil) then
-	    for _,npcEnemy in pairs( NearbyEnemyHeroes )
-		do
-			if (CanCastLagunaBladeOnTarget( npcEnemy ) )
-			then
-				if ( npcEnemy:GetActualDamage( nDamage, eDamageType ) > npcEnemy:GetHealth() )
-				then
+	if NearbyEnemyHeroes ~= nil then
+	    for _,npcEnemy in pairs( NearbyEnemyHeroes ) do
+			if CanCastLagunaBladeOnTarget( npcEnemy ) then
+				if npcEnemy:GetActualDamage( nDamage, eDamageType ) > npcEnemy:GetHealth() then
 					return BOT_ACTION_DESIRE_HIGH, npcEnemy;
 				end
 			end
@@ -310,13 +407,4 @@ function ConsiderLagunaBlade(abilityLB)
 
 end
 
-function predictPosition(hero, t)
-    -- prediction by hero:GetVelocity(); is not good
-    local ret = hero:GetLocation();
-	local v = hero:GetVelocity();
-	ret[1] = ret[1] + t * v[1];
-	ret[2] = ret[2] + t * v[2];
-	return hero:GetLocation();
-end
-
-for k,v in pairs( ability_usage_lina ) do	_G._savedEnv[k] = v end
+for k,v in pairs( ability_usage_lina ) do _G._savedEnv[k] = v end

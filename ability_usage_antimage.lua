@@ -9,7 +9,8 @@ module( "ability_usage_antimage", package.seeall )
 function AbilityUsageThink()
 	if ( GetGameState() ~= GAME_STATE_GAME_IN_PROGRESS and GetGameState() ~= GAME_STATE_PRE_GAME ) then return end
 	
-	local npcBot = GetBot();
+	local npcBot = GetBot()
+	if not npcBot:IsAlive() then return end
 	
 	local EnemyHeroes = npcBot:GetNearbyHeroes(1200, true, BOT_MODE_NONE);
 	
@@ -39,7 +40,7 @@ end
 
 function ConsiderManaVoid(abilityMV)
 
-	local npcBot = GetBot();
+	local npcBot = GetBot()
 
 	-- Make sure it's castable
 	if not abilityMV:IsFullyCastable() then 
@@ -74,8 +75,9 @@ function ConsiderManaVoid(abilityMV)
 	
 	if channelingHero ~= nil and channelingHero:GetHealth() < aoeDmg and GetUnitToUnitDistance(channelingHero, lowestManaHero) < nRadius then
 		return BOT_ACTION_DESIRE_HIGH, lowestManaHero
-	elseif channelingHero ~= nil then
-		return BOT_ACTION_DESIRE_HIGH, channelingHero
+	else
+		--FIXME: Figure out how many deaths ulting each hero would result in - pick greatest # if above 0
+		return BOT_ACTION_DESIRE_HIGH, lowestManaHero
 	end
 
 	--------------------------------------

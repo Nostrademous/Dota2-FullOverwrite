@@ -8,6 +8,17 @@ _G._savedEnv = getfenv()
 module( "laning_generic", package.seeall )
 ----------
 local utils = require( GetScriptDirectory().."/utility")
+local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
+
+function setHeroVar(var, value)
+	local bot = GetBot()
+	gHeroVar.SetVar(bot:GetPlayerID(), var, value)
+end
+
+function getHeroVar(var)
+	local bot = GetBot()
+	return gHeroVar.GetVar(bot:GetPlayerID(), var)
+end
 ----------
 
 local CurLane = nil;
@@ -41,10 +52,10 @@ local LaningStates={
 local LaningState=LaningStates.Start;
 
 function OnStart(npcBot)
-	npcBot.BackTimerGen = -1000;
+	setHeroVar("BackTimerGen", -1000)
 	
 	if not utils.HaveTeleportation(npcBot) then
-		if DotaTime()>10 and npcBot:GetGold()>50 and GetUnitToLocationDistance(npcBot,GetLocationAlongLane(npcBot.CurLane,0.0))<700 and utils.NumberOfItems(npcBot)<=5 then
+		if DotaTime()>10 and npcBot:GetGold()>50 and GetUnitToLocationDistance(npcBot,GetLocationAlongLane(getHeroVar("CurLane"),0.0))<700 and utils.NumberOfItems(npcBot)<=5 then
 			npcBot:Action_PurchaseItem("item_tpscroll");
 			return;
 		end
@@ -54,10 +65,10 @@ function OnStart(npcBot)
 		return;
 	end
 		
-	local dest=GetLocationAlongLane(npcBot.CurLane,GetLaneFrontAmount(GetTeam(),npcBot.CurLane,true)-0.04);
+	local dest=GetLocationAlongLane(getHeroVar("CurLane"),GetLaneFrontAmount(GetTeam(),getHeroVar("CurLane"),true)-0.04);
 	if GetUnitToLocationDistance(npcBot,dest)>1500 then
 		utils.InitPath(npcBot);
-		npcBot.LaningState=LaningStates.MovingToLane;
+		setHeroVar("LaningState", LaningStates.MovingToLane)
 	end
 	
 	--print(utils.GetHeroName(npcBot), " LANING OnStart Done")
@@ -66,7 +77,7 @@ end
 -------------------------------
 
 local function MovingToLane(npcBot)
-	local dest = GetLocationAlongLane(npcBot.CurLane,GetLaneFrontAmount(GetTeam(), npcBot.CurLane, true) - 0.04);
+	local dest = GetLocationAlongLane(getHeroVar("CurLane"),GetLaneFrontAmount(GetTeam(), getHeroVar("CurLane"), true) - 0.04);
 	
 	if GetUnitToLocationDistance(npcBot, dest) < 300 then
 		LaningState = LaningStates.Moving;
@@ -383,43 +394,44 @@ local States = {
 ----------------------------------
 
 local function Updates(npcBot)
-	CurLane = npcBot.CurLane;
+	CurLane = getHeroVar("CurLane")
 	LanePos = utils.PositionAlongLane(npcBot, CurLane);
 	
-	if npcBot.IsCore == nil then
-		IsCore = utils.IsCore(npcBot);
+	if getHeroVar("IsCore") == nil then
+		IsCore = utils.IsCore(npcBot)
+		setHeroVar("IsCore", IsCore)
 	else
-		IsCore = npcBot.IsCore;
+		IsCore = getHeroVar("IsCore")
 	end
 	
-	if npcBot.LaningState ~= nil then
-		LaningState = npcBot.LaningState;
+	if getHeroVar("LaningState") ~= nil then
+		LaningState = getHeroVar("LaningState")
 	end
 	
-	if npcBot.MoveThreshold ~= nil then
-		MoveThreshold = npcBot.MoveThreshold;
+	if getHeroVar("MoveThreshold") ~= nil then
+		MoveThreshold = getHeroVar("MoveThreshold")
 	end
 	
-	if npcBot.DamageThreshold ~= nil then
-		DamageThreshold=npcBot.DamageThreshold;
+	if getHeroVar("DamageThreshold") ~= nil then
+		DamageThreshold = getHeroVar("DamageThreshold")
 	end
 	
-	if npcBot.ShouldPush ~= nil then
-		ShouldPush = npcBot.ShouldPush;
+	if getHeroVar("ShouldPush") ~= nil then
+		ShouldPush = getHeroVar("ShouldPush")
 	end
 	
 	if ( not npcBot:IsAlive() ) or ( LanePos < 0.15 and LaningState ~= LaningStates.Start ) then
-		LaningState=LaningStates.Moving;
+		LaningState = LaningStates.Moving;
 	end
 end
 
 local function GetBackGen(npcBot)
-	if npcBot.BackTimerGen == nil then
-		npcBot.BackTimerGen = -1000
+	if getHeroVar("BackTimerGen") == nil then
+		setHeroVar("BackTimerGen", -1000)
 		return false
 	end
 	
-	if DotaTime() - npcBot.BackTimerGen < 1 then
+	if DotaTime() - getHeroVar("BackTimerGen") < 1 then
 		return true
 	end
 	
@@ -442,12 +454,12 @@ local function GetBackGen(npcBot)
 	end
 	
 	if EnemyDamage*0.7 > npcBot:GetHealth() then
-		npcBot.BackTimerGen = DotaTime();
+		setHeroVar("BackTimerGen", DotaTime())
 		return true;
 	end
 	
 	if EnemyDamage > npcBot:GetHealth() and utils.IsAnyHeroAttackingMe(2.0) then
-		npcBot.BackTimerGen = DotaTime();
+		setHeroVar("BackTimerGen", DotaTime())
 		return true;
 	end
 	
@@ -468,20 +480,20 @@ local function GetBackGen(npcBot)
 	end
 	
 	if EnemyDamage > npcBot:GetHealth() then
-		npcBot.BackTimerGen = DotaTime();
+		setHeroVar("BackTimerGen", DotaTime())
 		return true;
 	end
 	
-	npcBot.BackTimerGen = -1000;
+	setHeroVar("BackTimerGen", -1000)
 	return false;
 end
 
 local function StayBack(npcBot)	
-	local LaneFront = GetLaneFrontAmount(GetTeam(), npcBot.CurLane, true);
+	local LaneFront = GetLaneFrontAmount(GetTeam(), getHeroVar("CurLane"), true);
 	-- FIXME: we need to Min or Max depending on Team the LaneFrontAmount() with furthest standing tower
-	local LaneEnemyFront = 1.0 - GetLaneFrontAmount(utils.GetOtherTeam(), npcBot.CurLane, false);
+	local LaneEnemyFront = 1.0 - GetLaneFrontAmount(utils.GetOtherTeam(), getHeroVar("CurLane"), false);
 	
-	local BackPos = GetLocationAlongLane(npcBot.CurLane,Min(LaneFront-0.05,LaneEnemyFront-0.05)) + RandomVector(200);
+	local BackPos = GetLocationAlongLane(getHeroVar("CurLane"),Min(LaneFront-0.05,LaneEnemyFront-0.05)) + RandomVector(200);
 	npcBot:Action_MoveToLocation(BackPos);
 end
 
@@ -501,7 +513,7 @@ function Think(npcBot)
 	
 	States[LaningState](npcBot);
 	
-	npcBot.LaningState = LaningState;
+	setHeroVar("LaningState", LaningState)
 end
 
 

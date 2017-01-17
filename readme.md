@@ -78,7 +78,7 @@ Current Files:
 	retreat functionality (read below) are implemented. This is the BIG 
 	KAHUNA of the majority of the bot logic. Larger concepts, like laning, 
 	will have their own files and states and be tied to this file and 
-	transitioned between based on the bot's foremost ACTION in actionQueue. 
+	transitioned between based on the bot's foremost ACTION in actionStack. 
 	In a way I'm trying to re-implement what I think Valve's Think() is doing, 
 	but I have no clue really, so I'm doing what I think should be done. It 
 	would be very appreciated and useful to have more people fill placeholder 

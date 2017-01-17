@@ -33,7 +33,7 @@ local BloodseekerAbilityPriority = {
     BLOODSEEKER_SKILL_E,    BLOODSEEKER_SKILL_R,    BLOODSEEKER_ABILITY5,   BLOODSEEKER_ABILITY8
 };
 
-local bloodseekerActionQueue = { [1] = constants.ACTION_NONE }
+local bloodseekerActionStack = { [1] = constants.ACTION_NONE }
 
 botBS = dt:new()
 
@@ -44,7 +44,7 @@ function botBS:new(o)
 	return o
 end
 
-bloodseekerBot = botBS:new{actionQueue = bloodseekerActionQueue, abilityPriority = BloodseekerAbilityPriority}
+bloodseekerBot = botBS:new{actionStack = bloodseekerActionStack, abilityPriority = BloodseekerAbilityPriority}
 --bloodseekerBot:printInfo()
 
 bloodseekerBot.Init = false

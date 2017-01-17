@@ -28,7 +28,7 @@ local ViperAbilityPriority = {
     SKILL_E,    SKILL_R,    ABILITY6, 	ABILITY8
 };
 
-local viperActionQueue = { [1] = constants.ACTION_NONE }
+local viperActionStack = { [1] = constants.ACTION_NONE }
 
 ViperBot = dt:new()
 
@@ -39,7 +39,7 @@ function ViperBot:new(o)
 	return o
 end
 
-viperBot = ViperBot:new{actionQueue = viperActionQueue, abilityPriority = ViperAbilityPriority}
+viperBot = ViperBot:new{actionStack = viperActionStack, abilityPriority = ViperAbilityPriority}
 --viperBot:printInfo();
 
 viperBot.Init = false;

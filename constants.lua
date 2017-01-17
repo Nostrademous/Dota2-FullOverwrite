@@ -13,6 +13,8 @@ ACTION_FIGHT		= "ACTION_FIGHT"
 ACTION_CHANNELING	= "ACTION_CHANNELING"
 ACTION_MOVING		= "ACTION_MOVING"
 ACTION_JUNGLING		= "ACTION_JUNGLING"
+ACTION_SECRETSHOP 	= "ACTION_SECRETSHOP"
+ACTION_RUNEPICKUP	= "ACTION_RUNEPICKUP"
 
 ROLE_UNKNOWN 		= 0
 ROLE_HARDCARRY 		= 1
@@ -131,6 +133,12 @@ RuneSpots = {
 	RUNE_BOUNTY_3,
 	RUNE_BOUNTY_4
 }
+
+-------------------------------------------------------------------------------
+-- SECRET SHOPS
+-------------------------------------------------------------------------------
+SECRET_SHOP_RADIANT = Vector(-4472,1328);
+SECRET_SHOP_DIRE = Vector(4586,-1588);
 
 -------------------------------------------------------------------------------
 

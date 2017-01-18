@@ -907,7 +907,7 @@ function U.GetCreepHealthDeltaPerSec(creep)
     if(U.creeps[creep] == nil) then
         return 0;
     else
-        for _time,_health in U.PairsByKeys(U.creeps[creep],U.SortFunc()) do
+        for _time,_health in U.PairsByKeys(U.creeps[creep],U.SortFunc) do
             -- only Consider very recent datas
             if(GameTime() - _time < 3) then
                 local e = (_health - creep:GetHealth()) / (GameTime() - _time);
@@ -916,7 +916,6 @@ function U.GetCreepHealthDeltaPerSec(creep)
         end
         return 0;
     end
-
 end
 
 -- takes a "RANGE", returns creep handle and health value of that creep
@@ -1225,22 +1224,22 @@ end
 
 --important items for delivery
 function U.HasImportantItem()
-	 local npcBot = GetBot();
+	 local npcBot = GetBot()
 
     for i = 9, 14, 1 do
-        local item = npcBot:GetItemInSlot(i);
-				if item ~= nil then
-					if string.find(item:GetName(),"recipe") ~= nil or string.find(item:GetName(),"item_boots") ~= nil or string.find(item:GetName(),"item_bottle") then
-						return true;
-					end
+        local item = npcBot:GetItemInSlot(i)
+		if item ~= nil then
+			if string.find(item:GetName(),"recipe") ~= nil or string.find(item:GetName(),"item_boots") ~= nil or string.find(item:GetName(),"item_bottle") then
+				return true
+			end
 
-					if(item:GetName()=="item_ward_observer" and item:GetCurrentCharges() > 1) then
-						return true;
-					end
-				end
+			if(item:GetName()=="item_ward_observer" and item:GetCurrentCharges() > 1) then
+				return true
+			end
+		end
     end
 
-    return false;
+    return false
 end
 
 function U.CourierThink(npcBot)

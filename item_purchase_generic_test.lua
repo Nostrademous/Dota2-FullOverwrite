@@ -19,11 +19,15 @@ local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
 -- Declarations
 -------------------------------------------------------------------------------
 
-local X = {	startingItems = {},
-						utilityItems = {},
-						coreItems = {},
-						extentionItems = {	offensiveItems={},
-																defensiveItems={}	}	}
+local X = {	
+	startingItems = {},
+	utilityItems = {},
+	coreItems = {},
+	extentionItems = {	
+		offensiveItems={},
+		defensiveItems={}	
+	}	
+}
 
 X.PurchaseOrder = {}
 X.BoughtItems = {}

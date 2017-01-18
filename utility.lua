@@ -54,6 +54,37 @@ U.Locations = {
 ["DireBotShrine"]= Vector(4173,-1613),
 };
 
+U["tableBuildings"] = {
+    [constants.TEAM_RADIANT] = {
+        Locations["RadiantBase"],
+        Locations["RBT1"],
+        Locations["RBT2"],
+        Locations["RBT2"],
+        Locations["RMT1"],
+        Locations["RMT2"],
+        Locations["RMT2"],
+        Locations["RTT1"],
+        Locations["RTT2"],
+        Locations["RTT2"],
+        Locations["RadiantTopShrine"],
+        Locations["RadiantBotShrine"],
+    },
+    [constants.TEAM_DIRE] = {
+        Locations["DireBase"],
+        Locations["DBT1"],
+        Locations["DBT2"],
+        Locations["DBT2"],
+        Locations["DMT1"],
+        Locations["DMT2"],
+        Locations["DMT2"],
+        Locations["DTT1"],
+        Locations["DTT2"],
+        Locations["DTT2"],
+        Locations["DireTopShrine"],
+        Locations["DireBotShrine"],
+    }
+}
+
 U["tableNeutralCamps"] = {
 	[constants.TEAM_RADIANT] = {
 		[1] = {
@@ -473,6 +504,14 @@ end
 
 function U.GetOtherTeam()
 	if GetTeam()==TEAM_RADIANT then
+		return TEAM_DIRE;
+	else
+		return TEAM_RADIANT;
+	end
+end
+
+function U.GetOppositeTeamTo(team)
+    if team==TEAM_RADIANT then
 		return TEAM_DIRE;
 	else
 		return TEAM_RADIANT;
@@ -1164,6 +1203,29 @@ function U.HaveTeleportation(npcBot)
 		return true
 	end
 	return false
+end
+
+-- Returns the closest building of team >team< to a unit. uilding
+function U.GetClosesBuilding(unit, team)
+    local min_dist = 99999999
+    local building = ""
+    for b, vector in pairs(U.tableBuildings) do
+        local d = GetUnitToLocationDistance(unit, vector)
+        if d < min_dist then
+            min_dist = d
+            building = b
+        end
+    end
+    return building
+end
+
+function U.GetPositionBetweenBuildings(unit, team)
+    local allied_building = U.GetClosesBuilding(unit, team)
+    local d_allied = GetUnitToLocationDistance(unit, allied_building)
+    local enemy_building = U.GetClosesBuilding(unit, U.GetOppositeTeamTo(team))
+    local d_enemy = GetUnitToLocationDistance(unit, enemy_building)
+    
+    return d_allied / (d_allied + d_enemy)
 end
 
 function U.deepcopy(orig)

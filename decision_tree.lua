@@ -368,48 +368,54 @@ function X:Determine_AmISafe(bot)
 	if Enemies ~= nil then
 		nEn = #Enemies;
 	end
-	
-	local nAl = 0;
 
-	if Allies ~= nil then
-		for _,ally in pairs(Allies) do
-			if utils.NotNilOrDead(ally) then
-				nAl = nAl + 1;
+	-- No enemie's close, nothing to fear
+	-- TODO: Just a hotfix!
+	if nEn > 0 then
+
+		local nAl = 0;
+
+		if Allies ~= nil then
+			for _,ally in pairs(Allies) do
+				if utils.NotNilOrDead(ally) then
+					nAl = nAl + 1;
+				end
 			end
 		end
-	end
-	
-	local nTo = 0;
-	if Towers ~= nil then
-		nTo = #Towers;
-	end
-	
-	if ((bot:GetHealth()/bot:GetMaxHealth()) < 0.33) or (bot:GetMana()/bot:GetMaxMana() < 0.07 and self:getPrevAction() == ACTION_LANING) then
-		self:setHeroVar("IsRetreating", true)
-		return 1;
-	end
-	
-	if Allies == nil or #Allies < 2 then
-		local MaxStun = 0;
-		
-		for _,enemy in pairs(Enemies) do
-			if utils.NotNilOrDead(enemy) and enemy:GetHealth()/enemy:GetMaxHealth()>0.4 then
-				MaxStun = Max(MaxStun, Max(enemy:GetStunDuration(true) , enemy:GetSlowDuration(true)/1.5) );
-			end
+
+		local nTo = 0;
+		if Towers ~= nil then
+			nTo = #Towers;
 		end
-	
-		local enemyDamage=0;
-		for _,enemy in pairs(Enemies) do
-			if utils.NotNilOrDead(enemy) and enemy:GetHealth()/enemy:GetMaxHealth() > 0.4 then
-				local damage = enemy:GetEstimatedDamageToTarget(true, bot, MaxStun, DAMAGE_TYPE_ALL);
-				enemyDamage = enemyDamage + damage;
-			end
-		end
-		
-		if 0.6*enemyDamage > bot:GetHealth() then
+
+		if ((bot:GetHealth()/bot:GetMaxHealth()) < 0.33) or (bot:GetMana()/bot:GetMaxMana() < 0.07 and self:getPrevAction() == ACTION_LANING) then
 			self:setHeroVar("IsRetreating", true)
 			return 1;
 		end
+
+		if Allies == nil or #Allies < 2 then
+			local MaxStun = 0;
+
+			for _,enemy in pairs(Enemies) do
+				if utils.NotNilOrDead(enemy) and enemy:GetHealth()/enemy:GetMaxHealth()>0.4 then
+					MaxStun = Max(MaxStun, Max(enemy:GetStunDuration(true) , enemy:GetSlowDuration(true)/1.5) );
+				end
+			end
+
+			local enemyDamage=0;
+			for _,enemy in pairs(Enemies) do
+				if utils.NotNilOrDead(enemy) and enemy:GetHealth()/enemy:GetMaxHealth() > 0.4 then
+					local damage = enemy:GetEstimatedDamageToTarget(true, bot, MaxStun, DAMAGE_TYPE_ALL);
+					enemyDamage = enemyDamage + damage;
+				end
+			end
+
+			if 0.6*enemyDamage > bot:GetHealth() then
+				self:setHeroVar("IsRetreating", true)
+				return 1;
+			end
+		end
+
 	end
 	
 	if utils.IsTowerAttackingMe() then

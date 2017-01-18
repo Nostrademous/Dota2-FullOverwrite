@@ -138,11 +138,11 @@ X["item_vitality_booster"]  = {"item_vitality_booster"}
 X["item_void_stone"]  = {"item_void_stone"}
 
 X["item_wind_lace"]  = {"item_wind_lace"}
-					
+
 --------------------------------------------------------------------------------------------
 -- Items made from basics
 --------------------------------------------------------------------------------------------
-					
+
 X["item_abyssal_blade"] = { X["item_basher"], X["item_vanguard"], "item_recipe_abyssal_blade" }
 
 X["item_aether_lens"] = { "item_energy_booster", "item_ring_of_health", "item_recipe_aether_lens" }
@@ -258,7 +258,7 @@ X["item_necronomicon_1"] = { "item_staff_of_wizardry", "item_belt_of_strength", 
 X["item_necronomicon_2"] = { "item_staff_of_wizardry", "item_belt_of_strength", "item_recipe_necronomicon", "item_recipe_necronomicon" }
 
 X["item_necronomicon_3"] = { "item_staff_of_wizardry", "item_belt_of_strength", "item_recipe_necronomicon", "item_recipe_necronomicon", "item_recipe_necronomicon" }
-			
+
 X["item_null_talisman"] = { "item_mantle", "item_circlet", "item_recipe_null_talisman" }
 
 X["item_oblivion_staff"] = { "item_quarterstaff", "item_robe", "item_sobi_mask" }
@@ -286,15 +286,15 @@ X["item_radiance"] = { "item_relic", "item_recipe_radiance" }
 X["item_rapier"] = { "item_demon_edge", "item_relic" }
 
 X["item_refresher"] = { X["item_pers"], X["item_pers"], "item_recipe_refresher" }
-								
+
 X["item_ring_of_aquila"] = { X["item_ring_of_basilius"], X["item_wraith_band"] }
-							
+
 X["item_ring_of_basilius"] = {	"item_ring_of_protection", "item_sobi_mask"	}
-								
+
 X["item_rod_of_atos"] = { "item_vitality_booster", "item_staff_of_wizardry", "item_staff_of_wizardry" }
 
 X["item_sange"] = { "item_belt_of_strength", "item_ogre_axe", "item_recipe_sange" }
-							
+
 X["item_sange_and_yasha"] = { X["item_sange"], X["item_yasha"] }
 
 X["item_satanic"] = { "item_lifesteal", "item_reaver", "item_mithril_hammer" }
@@ -334,17 +334,17 @@ X["item_yasha"] = { "item_boots_of_elves", "item_blade_of_alacrity", "item_recip
 --------------------------------------------------------------------------------------------
 
 function X:GetItemValueNumber(item)
-	if item = "item_ward_observer"
+	if item == "item_ward_observer" then
 		return 10000
-	elseif item = "item_dust"
+	elseif item == "item_dust" then
 		return 10000
-	elseif item = "item_ward_sentry"
+	elseif item == "item_ward_sentry" then
 		return 10000
-	elseif item =  "item_smoke_of_deceit"
+	elseif item ==  "item_smoke_of_deceit" then
 		return 10000
-	elseif item = "item_cheese"
+	elseif item == "item_cheese" then
 		return 10000
-	elseif item = "item_tpscroll"
+	elseif item == "item_tpscroll" then
 		return 10000
 	else
 		return GetItemCost(sNextItem)

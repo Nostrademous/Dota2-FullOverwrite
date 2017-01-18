@@ -543,7 +543,11 @@ function X:Determine_ShouldIDefendLane(bot)
 end
 
 function X:Determine_ShouldRoam(bot)
-	return getHeroVar("Role") == ROLE_ROAMER or (getHeroVar("Role") == ROLE_ROAMER and getHeroVar("Self"):IsKillComboRead(bot))
+	return getHeroVar("Role") == ROLE_ROAMER or (getHeroVar("Role") == ROLE_ROAMER and getHeroVar("Self"):IsReadyToRoam(bot))
+end
+
+function X:IsReadyToRoam(bot)
+    return false
 end
 
 function X:Determine_ShouldJungle(bot)

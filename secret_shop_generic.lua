@@ -57,15 +57,14 @@ function Think( NextItem )
 	local npcBot = GetBot()
 	if	NextItem == nil then
 		setHeroVar("IsGoingToShop", false)
-		return
+		return false
 	end
 	
-	if npcBot:IsUsingAbility() or npcBot:IsChanneling() then return	end
+	if npcBot:IsUsingAbility() or npcBot:IsChanneling() then return	false end
 
-	
 	if (not IsItemPurchasedFromSecretShop(NextItem)) or npcBot:GetGold() < GetItemCost( NextItem ) then
 		setHeroVar("IsGoingToShop", false)
-		return
+		return false
 	end
 	
 	local secLoc = GetSecretShop()
@@ -74,19 +73,16 @@ function Think( NextItem )
 		if GetUnitToLocationDistance(npcBot, secLoc) < 250 then
 			if npcBot:GetGold() >= GetItemCost( NextItem ) then
 				npcBot:Action_PurchaseItem( NextItem )
-				table.remove( NextItem, 1 )
 				setHeroVar("IsGoingToShop", false)
-				local me = getHeroVar("Self")
-				me:removeAction(constants.ACTION_SECRETSHOP)
 				utils.InitPath()
-				return
+				return true
 			else
 				setHeroVar("IsGoingToShop", false)
-				return
+				return false
 			end
 		else
-			utils.MoveSafelyToLocation(secLoc)
-			return
+			utils.MoveSafelyToLocation(npcBot, secLoc)
+			return false
 		end
 	end
 end

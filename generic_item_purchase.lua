@@ -58,7 +58,7 @@ function ItemPurchaseThink(tableItemsToBuyAsMid, tableItemsToBuyAsHardCarry, tab
 	sNextItem = roleTable[1]
 	
 	if sNextItem ~= nil then
-		--[[
+		
 		if IsItemPurchasedFromSecretShop( sNextItem ) then -- and (not IsItemPurchasedFromSideShop(sNextItem)) then
 			npcBot:SetNextItemPurchaseValue( GetItemCost( sNextItem ) )
 
@@ -72,20 +72,25 @@ function ItemPurchaseThink(tableItemsToBuyAsMid, tableItemsToBuyAsHardCarry, tab
 						secret_shop_generic.OnStart()
 					end
 				end
-				secret_shop_generic.Think(sNextItem)
+				local bDone = secret_shop_generic.Think(sNextItem)
+				if bDone then
+					me:RemoveAction(constants.ACTION_SECRETSHOP)
+					table.remove( roleTable, 1 )
+					npcBot:SetNextItemPurchaseValue( 0 )
+				end
 			end
-		--]]
+		
 		--elseif IsItemPurchasedFromSideShop( sNextItem ) then
 		--	print(getHeroVar("Name"), " - ", sNextItem, " available from Side Shop")
-		--else
-		npcBot:SetNextItemPurchaseValue( GetItemCost( sNextItem ) )
+		else
+			npcBot:SetNextItemPurchaseValue( GetItemCost( sNextItem ) )
 
-		if ( npcBot:GetGold() >= GetItemCost( sNextItem ) ) then
-			npcBot:Action_PurchaseItem( sNextItem )
-			table.remove( roleTable, 1 )
-			npcBot:SetNextItemPurchaseValue( 0 )
+			if ( npcBot:GetGold() >= GetItemCost( sNextItem ) ) then
+				npcBot:Action_PurchaseItem( sNextItem )
+				table.remove( roleTable, 1 )
+				npcBot:SetNextItemPurchaseValue( 0 )
+			end
 		end
-		--end
 	end
 end
 

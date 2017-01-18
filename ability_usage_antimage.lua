@@ -6,6 +6,18 @@
 _G._savedEnv = getfenv()
 module( "ability_usage_antimage", package.seeall )
 
+local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
+
+function setHeroVar(var, value)
+	local bot = bot or GetBot()
+	gHeroVar.SetVar(bot:GetPlayerID(), var, value)
+end
+
+function getHeroVar(var)
+	local bot = bot or GetBot()
+	return gHeroVar.GetVar(bot:GetPlayerID(), var)
+end
+
 function AbilityUsageThink()
 	if ( GetGameState() ~= GAME_STATE_GAME_IN_PROGRESS and GetGameState() ~= GAME_STATE_PRE_GAME ) then return end
 	
@@ -85,7 +97,7 @@ function ConsiderManaVoid(abilityMV)
 	--------------------------------------
 
 	-- If we're going after someone
-	local npcTarget = npcBot:GetTarget();
+	local npcTarget = getHeroVar("Target")
 
 	if ( npcTarget ~= nil ) then
 		local manaDiff = npcTarget:GetMaxMana() - npcTarget:GetMana()

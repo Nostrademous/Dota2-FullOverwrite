@@ -69,6 +69,13 @@ end
 function X:PrintActionTransition(name)
 	self:setCurrentAction(self:GetAction());
 	
+	--[[
+	if self:getPrevAction() == ACTION_FIGHT then
+		self:RemoveAction(ACTION_FIGHT)
+		self:setHeroVar("Target", nil)
+	end
+	--]]
+	
 	if ( self:getCurrentAction() ~= self:getPrevAction() ) then
 		print("["..name.."] Action Transition: "..self:getPrevAction().." --> "..self:getCurrentAction());
 		self:setPrevAction(self:getCurrentAction());
@@ -212,13 +219,24 @@ function X:Think(bot)
 	end
 	
 	--AM I CHANNELING AN ABILITY/ITEM (i.e. TP Scroll, Ultimate, etc.)
-	if ( bot:IsUsingAbility() or bot:IsChanneling() ) then
-		local bRet = self:DoWhileChanneling(bot);
+	if bot:IsChanneling() then
+		local bRet = self:DoWhileChanneling(bot)
 		if bRet then return end
+	end
+	
+	-- Check if our bot was trying to harass with an ability using Out of Range Casting variable
+	-- Give them 2.0 seconds to use it or fall through to further logic
+	local oorC = self:getHeroVar("OutOfRangeCasting")
+	if bot:GetCurrentActionType() == BOT_ACTION_TYPE_USE_ABILITY and ( oorc ~= nil and (oorC-GameTime()) < 2.0 ) then
+		print("CLEARING OORC ABILITY USE")
+		bot:Action_ClearActions() 
+		return
 	end
 	
 	--FIXME: Is this the right place to do this???
 	utils.CourierThink(bot)
+	-- FIXME - right place?
+	self:ConsiderItemUse()
 	
 	local safe = self:Determine_AmISafe(bot)
 	if safe ~= 0 or self:GetAction() == ACTION_RETREAT then
@@ -226,13 +244,10 @@ function X:Think(bot)
 		if bRet then return end
 	end
 	
-	-- FIXME - right place?
-	self:ConsiderItemUse()
-	
 	local bRet = self:ConsiderAbilityUse()
 	if bRet then return end
 	
-	if ( self:Determine_ShouldIFighting(bot) ) then
+	if ( self:Determine_ShouldIFighting(bot) or self:GetAction() == ACTION_FIGHT ) then
 		local bRet = self:DoFight(bot)
 		if bRet then return end
 	end
@@ -329,39 +344,57 @@ end
 
 function X:Determine_AmISafe(bot)	
 	if bot:GetHealth()/bot:GetMaxHealth() > 0.9 and bot:GetMana()/bot:GetMaxMana() > 0.9 then
-		if utils.IsTowerAttackingMe() then return 2 end
-		if utils.IsCreepAttackingMe() then return 3 end
+		if utils.IsTowerAttackingMe() then 
+			return 2
+		end
+		if utils.IsCreepAttackingMe() then
+			if self:getHeroVar("Target") == nil then
+				return 3
+			end
+		end
 		self:setHeroVar("IsRetreating", false)
-		return 0;
+		return 0
 	end
 	
 	if bot:GetHealth()/bot:GetMaxHealth() > 0.65 and bot:GetMana()/bot:GetMaxMana() > 0.6 and GetUnitToLocationDistance(bot, GetLocationAlongLane(self:getHeroVar("CurLane"), 0)) > 6000 then
-		if utils.IsTowerAttackingMe() then return 2 end
-		if utils.IsCreepAttackingMe() then return 3 end
+		if utils.IsTowerAttackingMe() then
+			return 2
+		end
+		if utils.IsCreepAttackingMe() then
+			if self:getHeroVar("Target") == nil then
+				return 3
+			end
+		end
 		self:setHeroVar("IsRetreating", false)
-		return 0;
+		return 0
 	end
 	
 	if bot:GetHealth()/bot:GetMaxHealth() > 0.8 and bot:GetMana()/bot:GetMaxMana() > 0.36 and GetUnitToLocationDistance(bot, GetLocationAlongLane(self:getHeroVar("CurLane"), 0)) > 6000 then
-		if utils.IsTowerAttackingMe() then return 2 end
-		if utils.IsCreepAttackingMe() then return 3 end
+		if utils.IsTowerAttackingMe() then
+			return 2
+		end
+		if utils.IsCreepAttackingMe() then
+			if self:getHeroVar("Target") == nil then
+				return 3
+			end
+		end
 		self:setHeroVar("IsRetreating", false)
-		return 0;
+		return 0
 	end
 	
 	if self:getHeroVar("IsRetreating") ~= nil and self:getHeroVar("IsRetreating") == true then
-		return 1;
+		return 1
 	end
 	
 	local Enemies = bot:GetNearbyHeroes(1500, true, BOT_MODE_NONE);
 	local Allies = bot:GetNearbyHeroes(1500, false, BOT_MODE_NONE);
 	local Towers = bot:GetNearbyTowers(900, true);
 	
-	local nEn = 0;
+	local nEn = 0
 	if Enemies ~= nil then
 		nEn = #Enemies;
 	end
-	
+
 	local nAl = 0;
 
 	if Allies ~= nil then
@@ -371,26 +404,27 @@ function X:Determine_AmISafe(bot)
 			end
 		end
 	end
-	
+
 	local nTo = 0;
 	if Towers ~= nil then
 		nTo = #Towers;
 	end
-	
-	if (bot:GetHealth() < (bot:GetMaxHealth()*0.17*(nEn-nAl+1) + nTo*110)) or ((bot:GetHealth()/bot:GetMaxHealth()) < 0.33) or (bot:GetMana()/bot:GetMaxMana() < 0.07 and self:getPrevAction() == ACTION_LANING) then
+
+	if ((bot:GetHealth()/bot:GetMaxHealth()) < 0.33 and self:GetAction() ~= ACTION_JUNGLING) or 
+		(bot:GetMana()/bot:GetMaxMana() < 0.07 and self:getPrevAction() == ACTION_LANING) then
 		self:setHeroVar("IsRetreating", true)
 		return 1;
 	end
-	
+
 	if Allies == nil or #Allies < 2 then
 		local MaxStun = 0;
-		
+
 		for _,enemy in pairs(Enemies) do
 			if utils.NotNilOrDead(enemy) and enemy:GetHealth()/enemy:GetMaxHealth()>0.4 then
 				MaxStun = Max(MaxStun, Max(enemy:GetStunDuration(true) , enemy:GetSlowDuration(true)/1.5) );
 			end
 		end
-	
+
 		local enemyDamage=0;
 		for _,enemy in pairs(Enemies) do
 			if utils.NotNilOrDead(enemy) and enemy:GetHealth()/enemy:GetMaxHealth() > 0.4 then
@@ -398,7 +432,7 @@ function X:Determine_AmISafe(bot)
 				enemyDamage = enemyDamage + damage;
 			end
 		end
-		
+
 		if 0.6*enemyDamage > bot:GetHealth() then
 			self:setHeroVar("IsRetreating", true)
 			return 1;
@@ -409,7 +443,9 @@ function X:Determine_AmISafe(bot)
 		return 2
 	end
 	if utils.IsCreepAttackingMe() then
-		return 3
+		if self:getHeroVar("Target") == nil then
+			return 3
+		end
 	end
 	
 	self:setHeroVar("IsRetreating", false)
@@ -417,14 +453,44 @@ function X:Determine_AmISafe(bot)
 end
 
 function X:Determine_ShouldIFighting(bot)
-	local weakestHero, myDamage, score = utils.FindTarget(1400)
-	if weakestHero == nil or not weakestHero:CanBeSeen() then
-		return false
+	local weakestHero, myDamage, score = utils.FindTarget(1200)
+	
+	if utils.NotNilOrDead(weakestHero) then
+		local bFight = myDamage > weakestHero:GetHealth() and score > 1
+		
+		if bFight then
+			if self:HasAction(ACTION_FIGHT) == false then
+				print(utils.GetHeroName(bot), " - Fighting ", utils.GetHeroName(weakestHero))
+				self:AddAction(ACTION_FIGHT)
+				self:setHeroVar("Target", weakestHero)
+			end
+			
+			if weakestHero ~= getHeroVar("Target") then
+				print(utils.GetHeroName(bot), " - Fight Change - Fighting ", utils.GetHeroName(weakestHero))
+				self:setHeroVar("Target", weakestHero)
+			end
+		end
+		
+		return bFight
 	end
 	
-	local bFight = (weakestHero ~= nil) and ( myDamage > weakestHero:GetHealth() ) and ( score > 1 )
-	bot:SetTarget(weakestHero)
-	return bFight
+	if getHeroVar("Target") ~= nil then
+		if (not utils.NotNilOrDead(weakestHero)) or (not weakestHero:CanBeSeen()) then
+			print(utils.GetHeroName(bot), " - Stopping my fight... lost hero")
+			self:RemoveAction(ACTION_FIGHT)
+			self:setHeroVar("Target", nil)
+			return false
+		end
+		
+		if (GameTime() - bot:GetLastAttackTime()) > 3.0 or bot:GetAttackTarget() ~= getHeroVar("Target") then
+			print(utils.GetHeroName(bot), " - Stopping my fight... done chasing")
+			self:RemoveAction(ACTION_FIGHT)
+			self:setHeroVar("Target", nil)
+			return false
+		end
+	end
+	
+	return false
 end
 
 function X:Determine_DoAlliesNeedHelp(bot)
@@ -532,7 +598,7 @@ function X:DoRetreat(bot, reason)
 			self:AddAction(ACTION_RETREAT)
 			retreat_generic.OnStart(bot)
 		end
-		
+		item_usage.UseMovementItems()
 		retreat_generic.Think(bot)
 	elseif reason == 2 then
 		if ( self:HasAction(ACTION_RETREAT) == false ) then
@@ -612,23 +678,41 @@ function X:DoRetreat(bot, reason)
 end
 
 function X:DoFight(bot)
-	local target = bot:GetTarget()
+	local target = self:getHeroVar("Target")
 	if utils.NotNilOrDead(target) then
-		local Towers = bot:GetNearbyTowers(900, true)
+		local Towers = bot:GetNearbyTowers(1200, true)
 		if Towers ~= nil and #Towers == 0 then
-			bot:Action_AttackUnit(target, true)
+			if target:IsAttackImmune() or (bot:GetLastAttackTime() + bot:GetSecondsPerAttack()) > GameTime() then
+				item_usage.UseMovementItems()
+				print(utils.GetHeroName(bot), " - moving to target 1")
+				bot:Action_MoveToLocation(target:GetLocation())
+			else
+				print(utils.GetHeroName(bot), " - attacking target 1")
+				bot:Action_AttackUnit(target, false)
+			end
+			return true
 		else
 			for _, tow in pairs(Towers) do
 				if GetUnitToLocationDistance( bot, tow:GetLocation() ) < 900 then
+					self:RemoveAction(ACTION_FIGHT)
+					self:setHeroVar("Target", nil)
 					return false
 				end
 			end
-			bot:Action_AttackUnit(target, true)
+			if target:IsAttackImmune() or (bot:GetLastAttackTime() + bot:GetSecondsPerAttack()) > GameTime() then
+				print(utils.GetHeroName(bot), " - moving to target 2")
+				bot:Action_MoveToLocation(target:GetLocation())
+			else
+				print(utils.GetHeroName(bot), " - attacking target 2")
+				bot:Action_AttackUnit(target, false)
+			end
+			return true
 		end
 	else
-		bot:SetTarget(nil)
+		self:RemoveAction(ACTION_FIGHT)
+		self:setHeroVar("Target", nil)
 	end
-	return true
+	return false
 end
 
 function X:DoDefendAlly(bot)

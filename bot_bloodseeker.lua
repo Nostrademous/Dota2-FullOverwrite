@@ -59,17 +59,29 @@ function Think()
 	bloodseekerBot:Think(npcBot)
 end
 
-function bloodseekerBot:DoRetreat(bot)
-	return false -- we're fine
-	-- TODO: what if we're not??
+function bloodseekerBot:DoRetreat(bot, safe)
+	if safe == 3 then -- just creeps
+		if (bot:GetHealth()/bot:GetMaxHealth()) < 0.15 then
+			-- TODO: find a better reason code
+			return dt:DoRetreat(bot, 1) -- reason 1 is enemy. 3 would be creeps. But we don't want fancy backoffs. We just want to go home
+		end
+		return false
+	else -- tower (in the jungle??) or enemy
+		return dt:DoRetreat(bot, safe)
+	end
 end
 
 function bloodseekerBot:GetMaxClearableCampLevel(bot)
 	-- TODO: when to start killing ancients?
+	if DotaTime() < 30 then
+		return constants.CAMP_EASY
+	end
+
 	local bloodrage = bot:GetAbilityByName("bloodseeker_bloodrage")
 	if utils.HaveItem(bot, "item_iron_talon") and bloodrage:GetLevel() >= 2 then
 		return constants.CAMP_HARD
 	end
+
 	return constants.CAMP_MEDIUM
 end
 

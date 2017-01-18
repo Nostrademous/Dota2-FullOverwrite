@@ -48,6 +48,7 @@ linaBot = LinaBot:new{actionStack = linaActionStack, abilityPriority = LinaAbili
 linaBot.Init = false
 
 function linaBot:DoHeroSpecificInit(bot)
+	self:setHeroVar("OutOfRangeCasting", -1000.0)
 	self:setHeroVar("PerformingUltCombo", false)
 	self:setHeroVar("comboTarget", nil)
 end

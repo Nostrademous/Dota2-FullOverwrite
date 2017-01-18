@@ -84,7 +84,7 @@ local function MovingToLane(npcBot)
 		return;
 	end
 	
-	utils.MoveSafelyToLocation(dest);
+	utils.MoveSafelyToLocation(npcBot, dest);
 end
 
 local function Start(npcBot)
@@ -139,9 +139,9 @@ local function MovingToPos(npcBot)
 	local cpos = GetLaneFrontLocation(utils.GetOtherTeam(),CurLane,0.0);
 	local bpos = GetLocationAlongLane(CurLane,LanePos-0.02);
 	
-	local dest = utils.VectorTowards(cpos, bpos, 550);
+	local dest = utils.VectorTowards(cpos, bpos, 500);
 	if utils.IsMelee(npcBot) then
-		dest = utils.VectorTowards(cpos, bpos, 250);
+		dest = utils.VectorTowards(cpos, bpos, 750);
 	end
 	
 	local rndtilt = RandomVector(150);
@@ -160,15 +160,15 @@ local function WaitingForCS(npcBot)
 end
 
 local function GettingBack(npcBot)	
-	local AllyCreeps = npcBot:GetNearbyCreeps(EyeRange,false);
-	local AllyTowers = npcBot:GetNearbyTowers(EyeRange,false);
+	local AllyCreeps = npcBot:GetNearbyCreeps(EyeRange, false)
+	local AllyTowers = npcBot:GetNearbyTowers(EyeRange, false)
 	
 	if #AllyCreeps > 0 or LanePos < 0.18 then
 		LaningState = LaningStates.Moving;
 		return;
 	end
 	
-	npcBot:Action_MoveToLocation(GetLocationAlongLane(CurLane,Max(LanePos-0.03,0.0)));
+	npcBot:Action_MoveToLocation(GetLocationAlongLane(CurLane, Max(LanePos-0.03, 0.0)))
 end
 
 local function DenyNearbyCreeps(npcBot)
@@ -184,7 +184,7 @@ local function DenyNearbyCreeps(npcBot)
 		return false;
 	end
 
-	AttackRange = npcBot:GetAttackRange() + npcBot:GetBoundingRadius();
+	AttackRange = npcBot:GetAttackRange()
 
 	local eDamage = npcBot:GetEstimatedDamageToTarget(true, WeakestCreep, npcBot:GetAttackSpeed(), DAMAGE_TYPE_PHYSICAL)
 	if utils.IsMelee(npcBot) then
@@ -218,63 +218,20 @@ local function DenyNearbyCreeps(npcBot)
 	return false;
 end
 
-local function DenyCreeps(npcBot)
-
-	local AllyCreeps = npcBot:GetNearbyCreeps(EyeRange,false);
-	if AllyCreeps==nil or #AllyCreeps==0 then
-		return false;
+local function PushCS(npcBot, WeakestCreep, EnemyCreeps, nAc, damage, AS)
+	if WeakestCreep:GetHealth() > damage and WeakestCreep:GetHealth() < (damage + 17*nAc*AS) and nAc > 1 then
+		if #EnemyCreeps > 1 then
+			if EnemyCreeps[1] ~= WeakestCreep then
+				npcBot:Action_AttackUnit(EnemyCreeps[1], false)
+			else
+				npcBot:Action_AttackUnit(EnemyCreeps[2], false)
+			end
+		else
+			return
+		end
 	end
 	
-	local WeakestCreep, WeakestCreepHealth = utils.GetWeakestCreep(AllyCreeps);
-	
-	if WeakestCreep==nil then
-		return false;
-	end
-
-	AttackRange = npcBot:GetAttackRange() + npcBot:GetBoundingRadius();
-	
-	local eDamage = npcBot:GetEstimatedDamageToTarget(true, WeakestCreep, npcBot:GetAttackSpeed(), DAMAGE_TYPE_PHYSICAL) 
-	if utils.IsMelee(npcBot) then
-		damage = eDamage + utils.GetCreepHealthDeltaPerSec(WeakestCreep) * (npcBot:GetAttackPoint() / (1 + npcBot:GetAttackSpeed()))
-	else
-		damage = eDamage + utils.GetCreepHealthDeltaPerSec(WeakestCreep) * (npcBot:GetAttackPoint() / (1 + npcBot:GetAttackSpeed()) + GetUnitToUnitDistance(npcBot,WeakestCreep) / 1100)
-	end
-	
-	if WeakestCreep ~= nil and damage > WeakestCreep:GetMaxHealth() then
-		-- this occasionally will happen when a creep gets nuked by a target or AOE ability and takes
-		-- a large amount of damage so it has a huge health drop delta, in that case just use eDamage
-		damage = eDamage
-	end
-		
-	if damage > WeakestCreepHealth and utils.GetDistance(npcBot:GetLocation(),WeakestCreep:GetLocation()) < AttackRange then
-		npcBot:Action_AttackUnit(WeakestCreep, true);
-		return true;
-	end
-	
-	local approachScalar = 2.0
-	if utils.IsMelee(npcBot) then
-		approachScalar = 2.5
-	end
-	
-	if WeakestCreepHealth < approachScalar*damage and utils.GetDistance(npcBot:GetLocation(),WeakestCreep:GetLocation()) > AttackRange() then
-		local dest=utils.VectorTowards(WeakestCreep:GetLocation(),GetLocationAlongLane(CurLane,LanePos-0.03),AttackRange-20);
-		
-		npcBot:Action_MoveToLocation(dest);
-		return true;
-	end
-
-	return false;
-end
-
-local function PushCS(npcBot, WeakestCreep, nAc, damage, AS)
-	
-	--[[
-	if WeakestCreep:GetHealth() > damage and WeakestCreep:GetHealth() < (damage + 17*nAc*AS) and nAc>1 then
-		return;
-	end
-	--]]
-	
-	npcBot:Action_AttackUnit(WeakestCreep, false);
+	npcBot:Action_AttackUnit(WeakestCreep, false)
 end
 
 local function CSing(npcBot)
@@ -292,8 +249,8 @@ local function CSing(npcBot)
 		return;
 	end	
 	
-	AttackRange = npcBot:GetAttackRange() + npcBot:GetBoundingRadius();
-	AttackSpeed = npcBot:GetAttackPoint();
+	AttackRange = npcBot:GetAttackRange()
+	AttackSpeed = npcBot:GetAttackPoint()
 	
 	local AlliedHeroes = npcBot:GetNearbyHeroes(EyeRange,false,BOT_MODE_NONE);
 	local Enemies = npcBot:GetNearbyHeroes(EyeRange,true,BOT_MODE_NONE);
@@ -337,13 +294,13 @@ local function CSing(npcBot)
 		end
 		
 		if WeakestCreep ~= nil and WeakestCreepHealth < damage then
-			npcBot:Action_AttackUnit(WeakestCreep, true);
-			return;
+			npcBot:Action_AttackUnit(WeakestCreep, true)
+			return
 		end
 		
 		if ShouldPush and WeakestCreep ~= nil then
-			PushCS(npcBot, WeakestCreep, nAc, damage, AttackSpeed);
-			return;
+			PushCS(npcBot, WeakestCreep, EnemyCreeps, nAc, damage, AttackSpeed)
+			return
 		end
 		
 		local approachScalar = 2.0
@@ -352,21 +309,34 @@ local function CSing(npcBot)
 		end
 		
 		if (not ShouldPush) and WeakestCreepHealth < damage*approachScalar and GetUnitToUnitDistance(npcBot,WeakestCreep) > AttackRange then
-			local dest = utils.VectorTowards(WeakestCreep:GetLocation(),GetLocationAlongLane(CurLane,LanePos-0.03),AttackRange-20);
-			npcBot:Action_MoveToLocation(dest);
-			return;
+			local dest = utils.VectorTowards(WeakestCreep:GetLocation(),GetLocationAlongLane(CurLane,LanePos-0.03), AttackRange-20)
+			npcBot:Action_MoveToLocation(dest)
+			return
 		end
 	
 		if not ShouldPush then
 			if DenyNearbyCreeps(npcBot) then
-				return;
+				return
 			end
 		end
 	elseif not NoCoreAround then
 		-- we are not a Core, we are not pushing, deny only
 		if not ShouldPush then
-			if DenyCreeps(npcBot) then
-				return;
+			if DenyNearbyCreeps(npcBot) then
+				return
+			end
+		end
+	end
+	
+	local orb = getHeroVar("HasOrbAbility")
+	if orb ~= nil then
+		local ability = npcBot:GetAbilityByName(orb)
+		if ability ~= nil and ability:IsFullyCastable() then
+			local WeakestHero, _ = utils.GetWeakestHero(npcBot, ability:GetCastRange())
+			if WeakestHero ~= nil then
+				print(utils.GetHeroName(npcBot), " harassing ", utils.GetHeroName(WeakestHero), " with ", ability:GetName())
+				npcBot:Action_UseAbilityOnEntity(ability, WeakestHero)
+				return
 			end
 		end
 	end

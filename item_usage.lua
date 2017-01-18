@@ -77,17 +77,17 @@ function UseRegenItems()
 		end
 		
 		local tango_shared = utils.IsItemAvailable("item_tango_single");
-		if tango_shared ~= nil then
+		if tango_shared ~= nil  and tango_shared:IsFullyCastable() then
 			if (npcBot:GetMaxHealth()-npcBot:GetHealth()) > 200 and not npcBot:HasModifier("modifier_tango_heal") then
 				local trees = npcBot:GetNearbyTrees( 165 )
 				if #trees > 0 then
-					npcBot:Action_UseAbilityOnTree(tango, trees[1])
+					npcBot:Action_UseAbilityOnTree(tango_shared, trees[1])
 				end
 			end
 		end
 		
 		local tango = utils.IsItemAvailable("item_tango");
-		if tango ~= nil then
+		if tango ~= nil and tango:IsFullyCastable() then
 			if (npcBot:GetMaxHealth()-npcBot:GetHealth()) > 200 and not npcBot:HasModifier("modifier_tango_heal") then
 				local trees = npcBot:GetNearbyTrees( 165 )
 				if #trees > 0 then
@@ -107,12 +107,26 @@ function UseTeamItems()
 		return nil
 	end
 	
-	local arcane = utils.IsItemAvailable("item_arcane_boots");
-    if arcane ~= nil then
+	local arcane = utils.IsItemAvailable("item_arcane_boots")
+    if arcane ~= nil and arcane:IsFullyCastable() then
 		if (npcBot:GetMaxMana() - npcBot:GetMana()) > 160 then
-			npcBot:Action_UseAbility(arcane);
-			return nil;
+			npcBot:Action_UseAbility(arcane)
+			return nil
 		end
+	end
+end
+
+function UseMovementItems()
+	local npcBot = GetBot()
+	
+	if npcBot:IsChanneling() then
+		return nil
+	end
+	
+	local pb = utils.HaveItem(npcBot, "item_phase_boots")
+	if pb ~= nil and pb:IsFullyCastable() then
+		npcBot:Action_UseAbility(pb)
+		return nil
 	end
 end
 
@@ -143,20 +157,22 @@ function UseTP()
 		npcBot:GetGold() > 50 then
 		local savedValue = npcBot:GetNextItemPurchaseValue()
 		npcBot:Action_PurchaseItem( "item_tpscroll" )
-		tp = utils.HaveItem("item_tpscroll")
+		tp = utils.HaveItem(npcBot, "item_tpscroll")
 		npcBot:SetNextItemPurchaseValue(savedValue)
 	end
 		
 	if tp ~= nil and tp:IsFullyCastable() then
 		-- dest (below) should find farthest away tower to TP to in our assigned lane, even if tower is dead it will
 		-- just default to closest location we can TP to in that direction	
-		if GetUnitToLocationDistance(npcBot, dest) > 3000 then
+		if GetUnitToLocationDistance(npcBot, dest) > 3000 and GetUnitToLocationDistance(npcBot, utils.Fountain(GetTeam())) < 200 then
 			npcBot:Action_UseAbilityOnLocation(tp, dest);
 		end
 	end
 end
 
 function UseItems()
+	if ( GetGameState() ~= GAME_STATE_GAME_IN_PROGRESS and GetGameState() ~= GAME_STATE_PRE_GAME ) then return nil end
+
 	local npcBot = GetBot()
 	
 	if npcBot:IsChanneling() or npcBot:IsUsingAbility() then
@@ -179,7 +195,43 @@ function UseItems()
 		return nil
 	end
 	
+	considerDropItems()
+	
 	return nil
+end
+
+function considerDropItems()
+	swapBackpackIntoInventory()
+	
+	local npcBot = GetBot()
+	
+	for i = 6, 8, 1 do
+		local bItem = npcBot:GetItemInSlot(i)
+		if bItem ~= nil then
+			for j = 1, 5, 1 do
+				local item = npcBot:GetItemInSlot(j)
+				if item ~= nil and item:GetName() == "item_branches" and bItem:GetName() ~= "item_branches" then
+					npcBot:Action_SwapItems(i, j)
+				end
+			end
+		end
+	end
+end
+
+function swapBackpackIntoInventory()
+	local npcBot = GetBot()
+	if utils.NumberOfItems(npcBot) < 6 and utils.NumberOfItemsInBackpack(npcBot) > 0 then
+		for i = 6, 8, 1 do
+			if npcBot:GetItemInSlot(i) ~= nil then
+				for j = 1, 5, 1 do
+					local item = npcBot:GetItemInSlot(j)
+					if item == nil then
+						npcBot:Action_SwapItems(i, j)
+					end
+				end
+			end
+		end
+	end
 end
 
 for k,v in pairs( item_usage ) do	_G._savedEnv[k] = v end

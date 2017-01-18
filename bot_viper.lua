@@ -4,6 +4,8 @@
 -------------------------------------------------------------------------------
 
 require( GetScriptDirectory().."/constants" )
+require ( GetScriptDirectory().."/ability_usage_viper" )
+
 local utils = require( GetScriptDirectory().."/utility" )
 local dt = require( GetScriptDirectory().."/decision_tree" )
 
@@ -46,6 +48,11 @@ viperBot.Init = false;
 
 function viperBot:DoHeroSpecificInit(bot)
 	self:setHeroVar("HasOrbAbility", SKILL_Q)
+	self:setHeroVar("OutOfRangeCasting", -1000.0)
+end
+
+function viperBot:ConsiderAbilityUse()
+	return ability_usage_viper.AbilityUsageThink()
 end
 
 function Think()

@@ -929,12 +929,12 @@ end
 function U.LevelUp(bot, AbilityPriority)
 	if ( GetGameState() ~= GAME_STATE_GAME_IN_PROGRESS and GetGameState() ~= GAME_STATE_PRE_GAME ) then return end;
 	
-	local ability = bot:GetAbilityByName(AbilityPriority[1]);
+	local ability = bot:GetAbilityByName(AbilityPriority[1])
 	
 	if ( ability == nil ) then
-		print( " [" .. getHeroVar("Name") .. "] FAILED AT Leveling " .. AbilityPriority[1] );
-		table.remove( AbilityPriority, 1 );
-		return;
+		print( getHeroVar("Name") .. " FAILED AT Leveling " .. AbilityPriority[1] )
+		table.remove( AbilityPriority, 1 )
+		return
 	end
 	
 	--[[
@@ -945,8 +945,8 @@ function U.LevelUp(bot, AbilityPriority)
 	--]]
 	
 	if ( ability:CanAbilityBeUpgraded() and ability:GetLevel() < ability:GetMaxLevel() ) then
-		bot:Action_LevelAbility(AbilityPriority[1]);
-		print( " [" .. getHeroVar("Name") .. "] Leveling " .. ability:GetName() );
+		bot:Action_LevelAbility(AbilityPriority[1])
+		print( getHeroVar("Name") .. " Leveling " .. ability:GetName() )
 		table.remove( AbilityPriority, 1 );
 	end
 end

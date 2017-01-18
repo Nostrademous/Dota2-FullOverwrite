@@ -92,7 +92,7 @@ local function MoveToCamp(bot)
 		bot:Action_MoveToLocation(getHeroVar("currentCamp")[constants.VECTOR])
 		return
 	end
-	local neutrals = bot:GetNearbyCreeps(EyeRange,true);
+	local neutrals = bot:GetNearbyCreeps(EyeRange, true)
 	if #neutrals == 0 then -- no creeps here
 		local jungle = jungle_status.GetJungle(GetTeam()) or {}
 		jungle = FindCampsByMaxDifficulty(jungle, getHeroVar("Self"):GetMaxClearableCampLevel(bot))
@@ -133,9 +133,9 @@ local function CleanCamp(bot)
 	-- TODO: don't attack enemy creeps, unless they attack us / make sure we stay in jungle
 	-- TODO: instead of stacking, could we just kill them and move ou of the camp?
 	-- TODO: make sure we can actually kill the camp.
-	local time = DotaTime() % 120
+	local dtime = DotaTime() % 120
 	local stacktime = getHeroVar("currentCamp")[constants.STACK_TIME]
-	if time >= stacktime and time <= stacktime + 1 then
+	if dtime >= stacktime and dtime <= stacktime + 1 then
 		JunglingState = JunglingStates.Stack
 		print(utils.GetHeroName(bot), "stacks")
 		setHeroVar("waituntil", utils.NextNeutralSpawn())

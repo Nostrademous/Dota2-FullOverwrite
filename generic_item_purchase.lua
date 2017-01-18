@@ -74,7 +74,7 @@ function ItemPurchaseThink(tableItemsToBuyAsMid, tableItemsToBuyAsHardCarry, tab
 				end
 				local bDone = secret_shop_generic.Think(sNextItem)
 				if bDone then
-					me:removeAction(constants.ACTION_SECRETSHOP)
+					me:RemoveAction(constants.ACTION_SECRETSHOP)
 					table.remove( roleTable, 1 )
 					npcBot:SetNextItemPurchaseValue( 0 )
 				end

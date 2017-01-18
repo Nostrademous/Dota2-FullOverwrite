@@ -3,6 +3,7 @@
 --- GITHUB REPO: https://github.com/Nostrademous/Dota2-FullOverwrite
 -------------------------------------------------------------------------------
 
+require( GetScriptDirectory().."/secret_shop_generic" )
 local utils = require( GetScriptDirectory().."/utility" )
 local items = require(GetScriptDirectory().."/items" )
 local myEnemies = require( GetScriptDirectory().."/enemy_data" )
@@ -19,12 +20,13 @@ local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
 -------------------------------------------------------------------------------
 
 local X = {	startingItems = {},
-					utilityItems = {},
-					coreItems = {},
-					extentionItems = {	offensiveItems={},
-													defensiveItems={}	}	}
+						utilityItems = {},
+						coreItems = {},
+						extentionItems = {	offensiveItems={},
+																defensiveItems={}	}	}
 
 X.PurchaseOrder = {}
+X.BoughtItems = {}
 
 -------------------------------------------------------------------------------
 -- Init
@@ -75,9 +77,7 @@ end
 
 -------------------------------------------------------------------------------
 -- Think
---[[
-	ToDo: Selling items for better ones
---]]
+-- ToDo: Selling items for better ones
 -------------------------------------------------------------------------------
 
 function X:Think(npcBot)
@@ -92,21 +92,47 @@ function X:Think(npcBot)
 	if ( (npcBot:GetNextItemPurchaseValue() > 0) and (npcBot:GetGold() < npcBot:GetNextItemPurchaseValue()) ) then
 		return
 	end
-	
+
 	-- If we want a new item we determine which one first
 	self:UpdatePurchaseOrder(npcBot)
+
+	--[[
+	-- Maybe sell items (not tested)	
+	self:ConsiderSellingItems(npcBot)
+	--]]
 
 	-- Get the next item
 	local sNextItem = self.PurchaseOrder[1]
 
-	-- Set cost
-	npcBot:SetNextItemPurchaseValue(GetItemCost(sNextItem))
+	if sNextItem ~= nil then
+		-- Set cost
+		npcBot:SetNextItemPurchaseValue(GetItemCost(sNextItem))
 
-	-- Enough gold -> buy, remove
-	if(npcBot:GetGold() >= GetItemCost(sNextItem)) then
-		npcBot:Action_PurchaseItem(sNextItem)
-		table.remove(self.PurchaseOrder, 1)
-		npcBot:SetNextItemPurchaseValue(0)
+		-- Enough gold -> buy, remove
+		if(npcBot:GetGold() >= GetItemCost(sNextItem)) then
+			-- Next item only available in secret shop?
+			if IsItemPurchasedFromSecretShop(sNextItem) then
+				local me = utils.getHeroVar("Self")
+				if me:GetAction() ~= constants.ACTION_SECRETSHOP then
+					print(utils.getHeroVar("Name"), " - ", sNextItem, " is ONLY available from Secret Shop")
+					if ( me:HasAction(constants.ACTION_SECRETSHOP) == false ) then
+						me:AddAction(constants.ACTION_SECRETSHOP)
+						print(utils.GetHeroName(npcBot), " STARTING TO HEAD TO SECRET SHOP ")
+						secret_shop_generic.OnStart()
+					end
+				end
+				local bDone = secret_shop_generic.Think(sNextItem)
+				if bDone then
+					me:RemoveAction(constants.ACTION_SECRETSHOP)
+					table.remove(self.PurchaseOrder, 1 )
+					npcBot:SetNextItemPurchaseValue( 0 )
+				end
+			else
+				npcBot:Action_PurchaseItem(sNextItem)
+				table.remove(self.PurchaseOrder, 1)
+				npcBot:SetNextItemPurchaseValue(0)
+			end
+		end
 	end
 end
 
@@ -116,7 +142,7 @@ end
 
 function X:UpdatePurchaseOrder(npcBot)
 	-- Core (doesn't buy utility items such as wards)
-	if IsCore() then
+	if utils.IsCore() then
 		-- Still starting items to buy?
 		if (#self.startingItems == 0) then
 			-- Still core items to buy?
@@ -129,6 +155,7 @@ function X:UpdatePurchaseOrder(npcBot)
 					self.PurchaseOrder[#self.PurchaseOrder+1] = p
 				end
 				-- Remove entry
+				self.BoughtItems[#self.BoughtItems+1] = self.startingItems[1]
 				table.remove(self.coreItems, 1)
 			end
 		else
@@ -137,6 +164,7 @@ function X:UpdatePurchaseOrder(npcBot)
 				self.PurchaseOrder[#self.PurchaseOrder+1] = p
 			end
 			-- Remove entry
+			self.BoughtItems[#self.BoughtItems+1] = self.startingItems[1]
 			table.remove(self.startingItems, 1)
 		end
 	-- Support
@@ -151,6 +179,85 @@ function X:UpdatePurchaseOrder(npcBot)
 				Buying consumable items like raindrops if there is a lot of magical damage
 				Buying salves for cores?
 	--]]
+	end
+end
+
+function X:ConsiderSellingItems(bot)
+	--[[
+	Idea: Check if items we want to buy need the item,
+	 			if not sell it. (E.g. two branches in inventory, we want to buy stick)
+				Check both items that are still going to be bought (starting, core)
+				as well as already bought items
+	--]]
+	local ItemsToConsiderSelling = {}
+
+	if utils.NumberOfItems(bot) == 6 then
+		print("Considering selling items")
+		local items = {}
+		-- Store name of the items in a table
+		for i = 0,5,1 do
+			local item = bot:GetItemInSlot(i)
+			table.insert(items, item:GetName())
+		end
+
+		for _,p in pairs(items) do
+			local bSell = true
+			-- Check through all starting items
+			for _,k in pairs(self.startingItems) do
+				-- Assembled item?
+				if #items[k] > 1 then
+					-- If item is part of an item we want to buy then don't sell it
+					if utils.InTable(item[k], p) then
+						bSell = false
+					end
+				end
+			end
+			-- Same for core items
+			for _,k in pairs(self.coreItems) do
+				-- Assembled item?
+				if #items[k] > 1 then
+					if utils.InTable(item[k], p) then
+						bSell = false
+					end
+				end
+			end
+			-- Same for bought items (parts probably still in purchase queue)
+			for _,k in pairs(self.BoughtItems) do
+				-- Assembled item?
+				if #items[k] > 1 then
+					if utils.InTable(item[k], p) then
+						bSell = false
+					end
+				end
+			end
+			-- Do we really want to sell the item?
+			if bSell then
+				print("Considering selling "..p)
+				ItemsToConsiderSelling[#ItemsToConsiderSelling+1] = p
+				--[[
+				Haven't tried if it works yet..
+
+				local hToSell = utils.HaveItem(bot, p)
+				bot:Action_SellItem(hToSell)
+				--]]
+			end
+		end
+
+		local hItemToSell
+		local iItemValue = 1000000
+		-- Now check which item is least valuable to us
+		for _,p in pairs(ItemsToConsiderSelling) do
+			local iVal = items.GetItemValueNumber(p)
+			-- If the value of this item is lower change handle
+			if iVal < iItemValue and iVal > 0 then
+				hItemToSell = utils.HaveItem(bot, p)
+			end
+		end
+
+		-- Sell if we found an item to sell
+		if hItemToSell ~= nil then
+			bot:Action_SellItem(hItemToSell)
+		end
 	end
 end
 
@@ -192,7 +299,7 @@ function X:ConsiderBuyingExtensions(bot)
 
 	-- Determine if we have a retreat ability that we must be able to use (blinks etc)
 	local retreatAbility
-	if getHeroVar("HasMovementAbility") ~= nil then
+	if utils.getHeroVar("HasMovementAbility") ~= nil then
 		retreatAbility = true
 		print("Has retreat")
 	else
@@ -202,12 +309,12 @@ function X:ConsiderBuyingExtensions(bot)
 
 	-- Remove evasion items if # true strike enemies > 1
 	if TrueStrikeCount > 0 then
-		if InTable(self.extensionItems.defensiveItems, "item_solar_crest") then
-			local ItemIndex = PosInTable(self.extensionItems.defensiveItems, "item_solar_crest")
+		if utils.InTable(self.extensionItems.defensiveItems, "item_solar_crest") then
+			local ItemIndex = utils.PosInTable(self.extensionItems.defensiveItems, "item_solar_crest")
 			table.remove(self.extensionItems.defensiveItems, ItemIndex)
 			print("Removing evasion")
-		elseif InTable(self.extensionItems.offensiveItems, "item_butterfly") then
-			local ItemIndex = PosInTable(self.extensionItems.defensiveItems, "item_butterfly")
+		elseif utils.InTable(self.extensionItems.offensiveItems, "item_butterfly") then
+			local ItemIndex = utils.PosInTable(self.extensionItems.defensiveItems, "item_butterfly")
 			table.remove(self.extensionItems.defensiveItems, ItemIndex)
 			print("Removing evasion")
 		end
@@ -215,24 +322,24 @@ function X:ConsiderBuyingExtensions(bot)
 
 	-- Remove magic immunty if not needed
 	if DamageMagicalPure > DamagePhysical then
-		if InTable(self.extensionItems.defensiveItems, "item_hood_of_defiance") or InTable(self.extensionItems.defensiveItems, "item_pipe") then
+		if utils.InTable(self.extensionItems.defensiveItems, "item_hood_of_defiance") or InTable(self.extensionItems.defensiveItems, "item_pipe") then
 			print("Considering magic damage reduction")
-		elseif InTable(self.extensionItems.defensiveItems, "item_black_king_bar") then
+		elseif utils.InTable(self.extensionItems.defensiveItems, "item_black_king_bar") then
 			if retreatAbility and SilenceCount > 1 then
 				print("Considering buying bkb")
 			elseif SilenceCount > 2 or DamageTime > 8 then
 				print("Considering buying bkb")
 			else
-				local ItemIndex = PosInTable(self.extensionItems.defensiveItems, "item_black_king_bar")
+				local ItemIndex = utils.PosInTable(self.extensionItems.defensiveItems, "item_black_king_bar")
 				table.remove(self.extensionItems.defensiveItems, ItemIndex)
 				print("Removing bkb")
 			end
 		end
-	elseif InTable(self.extensionItems.defensiveItems, "item_black_king_bar") then
+	elseif utils.InTable(self.extensionItems.defensiveItems, "item_black_king_bar") then
 		if retreatAbility and SilenceCount > 1 then
-			if InTable(self.extensionItems.defensiveItems, "item_manta") then
+			if utils.InTable(self.extensionItems.defensiveItems, "item_manta") then
 				print("Considering buying manta")
-			elseif InTable(self.extensionItems.defensiveItems, "item_euls") then
+			elseif utils.InTable(self.extensionItems.defensiveItems, "item_euls") then
 				print("Considering buying euls")
 			else
 				print("Considering buying bkb")
@@ -240,13 +347,13 @@ function X:ConsiderBuyingExtensions(bot)
 		elseif SilenceCount > 2 then
 			if DamageTime > 12 then
 				print("Considering buying bkb")
-			elseif InTable(self.extensionItems.defensiveItems, "item_manta") then
+			elseif utils.InTable(self.extensionItems.defensiveItems, "item_manta") then
 				print("Considering buying manta")
-			elseif InTable(self.extensionItems.defensiveItems, "item_euls") then
+			elseif utils.InTable(self.extensionItems.defensiveItems, "item_euls") then
 				print("Considering buying euls")
 			end
 		else
-			local ItemIndex = PosInTable(self.extensionItems.defensiveItems, "item_black_king_bar")
+			local ItemIndex = utils.PosInTable(self.extensionItems.defensiveItems, "item_black_king_bar")
 			table.remove(self.extensionItems.defensiveItems, ItemIndex)
 			print("Removing bkb")
 		end
@@ -254,45 +361,6 @@ function X:ConsiderBuyingExtensions(bot)
 		-- ToDo: Check if enemy has retreat abilities and consider therefore buying stun/silence
 
 	end
-end
-
--------------------------------------------------------------------------------
--- Table and utility functions (export to utility.lua probably)
--------------------------------------------------------------------------------
-
-function getHeroVar(var)
-	local bot = GetBot()
-	return gHeroVar.GetVar(bot:GetPlayerID(), var)
-end
-
-function IsCore()
-	if getHeroVar("Role") == constants.ROLE_HARDCARRY
-		or getHeroVar("Role") == constants.ROLE_MID
-		or getHeroVar("Role") == constants.ROLE_OFFLANE then
-			return true;
-	end
-
-	return false;
-end
-
-function InTable (tab, val)
-    for index, value in ipairs (tab) do
-        if value == val then
-            return true
-        end
-    end
-
-    return false
-end
-
-function PosInTable(tab, val)
-	for index,value in ipairs(tab) do
-		if value == val then
-			return index
-		end
-	end
-
-	return -1
 end
 
 -------------------------------------------------------------------------------

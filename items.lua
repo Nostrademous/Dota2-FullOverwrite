@@ -347,7 +347,7 @@ function X:GetItemValueNumber(item)
 	elseif item == "item_tpscroll" then
 		return 10000
 	else
-		return GetItemCost(sNextItem)
+		return GetItemCost(item)
 	end
 end
 

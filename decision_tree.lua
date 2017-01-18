@@ -281,7 +281,7 @@ function X:Think(bot)
 		if bRet then return end
 	end
 	
-	if ( self:Determine_ShouldRoam(bot) ) then
+	if ( self:Determine_ShouldRoam(bot)  or self:GetAction() == ACTION_ROAMING ) then
 		local bRet = self:DoRoam(bot)
 		if bRet then return end
 	end
@@ -543,7 +543,7 @@ function X:Determine_ShouldIDefendLane(bot)
 end
 
 function X:Determine_ShouldRoam(bot)
-	return false
+	return getHeroVar("Role") == ROLE_ROAMER or (getHeroVar("Role") == ROLE_ROAMER and getHeroVar("Self"):IsKillComboRead(bot))
 end
 
 function X:Determine_ShouldJungle(bot)
@@ -748,6 +748,14 @@ function X:DoDefendLane(bot)
 end
 
 function X:DoRoam(bot)
+    if ( self:HasAction(ACTION_ROAMING) == false ) then
+		print(utils.GetHeroName(bot), " STARTING TO ROAM ")
+		self:AddAction(ACTION_ROAMING);
+		roaming_generic.OnStart(bot);
+	end
+	
+	roaming_generic.Think(bot)
+	
 	return true
 end
 

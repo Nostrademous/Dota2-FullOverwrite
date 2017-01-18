@@ -85,6 +85,11 @@ function bloodseekerBot:GetMaxClearableCampLevel(bot)
 	return constants.CAMP_MEDIUM
 end
 
+function bloodseekerBot:IsKillComboReady(bot)
+    local rupture = bot:GetAbilityByName("bloodseeker_bloodrage")
+    return rupture:IsFullyCastable() -- that's all we need
+end
+
 function bloodseekerBot:DoCleanCamp(bot, neutrals)
 	local bloodraged =  bot:HasModifier("modifier_bloodseeker_bloodrage")
 	local bloodrage = bot:GetAbilityByName("bloodseeker_bloodrage")

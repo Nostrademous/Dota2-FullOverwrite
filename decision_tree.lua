@@ -22,6 +22,9 @@ local ACTION_CHANNELING	= constants.ACTION_CHANNELING
 local ACTION_MOVING		= constants.ACTION_MOVING
 local ACTION_SECRETSHOP	= constants.ACTION_SECRETSHOP
 local ACTION_RUNEPICKUP = constants.ACTION_RUNEPICKUP
+local ACTION_ROSHAN		= constants.ACTION_ROSHAN
+local ACTION_DEFENDALLY	= constants.ACTION_DEFENDALLY
+local ACTION_DEFENDLANE	= constants.ACTION_DEFENDLANE
 
 local X = { currentAction = ACTION_NONE, prevAction = ACTION_NONE, actionStack = {}, abilityPriority = {} }
 
@@ -684,10 +687,8 @@ function X:DoFight(bot)
 		if Towers ~= nil and #Towers == 0 then
 			if target:IsAttackImmune() or (bot:GetLastAttackTime() + bot:GetSecondsPerAttack()) > GameTime() then
 				item_usage.UseMovementItems()
-				print(utils.GetHeroName(bot), " - moving to target 1")
 				bot:Action_MoveToLocation(target:GetLocation())
 			else
-				print(utils.GetHeroName(bot), " - attacking target 1")
 				bot:Action_AttackUnit(target, false)
 			end
 			return true

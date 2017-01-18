@@ -413,14 +413,23 @@ function U.NotNilOrDead(unit)
 end
 
 function U.GetHeroLevel()
-    local npcBot = GetBot();
-    local respawnTable = {8, 10, 12, 14, 16, 26, 28, 30, 32, 34, 36, 46, 48, 50, 52, 54, 56, 66, 70, 74, 78,  82, 86, 90, 100};
-    local nRespawnTime = npcBot:GetRespawnTime() +1;
+    local npcBot = GetBot()
+    local respawnTable = {8, 10, 12, 14, 16, 26, 28, 30, 32, 34, 36, 46, 48, 50, 52, 54, 56, 66, 70, 74, 78,  82, 86, 90, 100}
+    local nRespawnTime = npcBot:GetRespawnTime() +1
+	
+	local respawnAdj = getHeroVar("RespawnAdjustment")
+	if respawnAdj ~= nil then
+		nRespawnTime = nRespawnTime - respawnAdj
+	end
+	
     for k,v in pairs (respawnTable) do
         if v == nRespawnTime then
-        return k;
+			return k
         end
     end
+	
+	print(U.GetHeroName(npcBot), "-  U.GetHeroLevel ERROR: Was looking for: ", nRespawnTime)
+	return 1
 end
 
 function U.TimePassed(prevTime, amount)
@@ -442,17 +451,18 @@ function U.LevelUp(bot, AbilityPriority)
 		return
 	end
 
-	--[[
-	print( " [" .. getHeroVar("Name") .. "] Contemplating " .. ability:GetName() .. " " .. ability:GetLevel() .. "/" .. ability:GetMaxLevel() );
-	if ( ability:CanAbilityBeUpgraded() ) then
-		print( "Ability Can Be Upgraded" );
-	end
-	--]]
-
 	if ( ability:CanAbilityBeUpgraded() and ability:GetLevel() < ability:GetMaxLevel() ) then
 		bot:Action_LevelAbility(AbilityPriority[1])
 		print( getHeroVar("Name") .. " Leveling " .. ability:GetName() )
-		table.remove( AbilityPriority, 1 );
+		table.remove( AbilityPriority, 1 )
+		
+		local aName = ability:GetName()
+		local start, finish = string.find(aName, "respawn_reduction_")
+		if finish ~= nil then
+			local num = string.sub(aName, finish+1, string.len(aName))
+			num = tonumber(num)
+			setHeroVar("RespawnAdjustment", num)
+		end
 	end
 end
 

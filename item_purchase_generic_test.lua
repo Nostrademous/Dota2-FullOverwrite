@@ -19,18 +19,72 @@ local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
 -- Declarations
 -------------------------------------------------------------------------------
 
-local X = {	
-	startingItems = {},
-	utilityItems = {},
-	coreItems = {},
-	extentionItems = {	
-		offensiveItems={},
-		defensiveItems={}	
-	}	
+local X = {
+	ItemsToBuyAsHardCarry = {
+		StartingItems = {},
+		UtilityItems = {},
+		CoreItems = {},
+		ExtentionItems = {
+			OffensiveItems={},
+			DefensiveItems={}
+		}
+	},
+	ItemsToBuyAsMid = {
+		StartingItems = {},
+		UtilityItems = {},
+		CoreItems = {},
+		ExtentionItems = {
+			OffensiveItems={},
+			DefensiveItems={}
+		}
+	},
+	ItemsToBuyAsOfflane = {
+		StartingItems = {},
+		UtilityItems = {},
+		CoreItems = {},
+		ExtentionItems = {
+			OffensiveItems={},
+			DefensiveItems={}
+		}
+	},
+	ItemsToBuyAsSupport = {
+		StartingItems = {},
+		UtilityItems = {},
+		CoreItems = {},
+		ExtentionItems = {
+			OffensiveItems={},
+			DefensiveItems={}
+		}
+	},
+	ItemsToBuyAsJungler = {
+		StartingItems = {},
+		UtilityItems = {},
+		CoreItems = {},
+		ExtentionItems = {
+			OffensiveItems={},
+			DefensiveItems={}
+		}
+	},
+	ItemsToBuyAsRoamer = {
+		StartingItems = {},
+		UtilityItems = {},
+		CoreItems = {},
+		ExtentionItems = {
+			OffensiveItems={},
+			DefensiveItems={}
+		}
+	}
 }
 
 X.PurchaseOrder = {}
 X.BoughtItems = {}
+X.StartingItems = {}
+X.UtilityItems = {}
+X.CoreItems = {}
+X.ExtensionItems = {
+	OffensiveItems = {},
+	DefensiveItems = {}
+}
 
 -------------------------------------------------------------------------------
 -- Init
@@ -47,36 +101,39 @@ end
 -- Properties
 -------------------------------------------------------------------------------
 
-function X:getStartingItems()
-	return self.startingItems
+function X:GetStartingItems()
+	return self.StartingItems
 end
 
-function X:setStartingItems(items)
-	self.startingItems = items
+function X:SetStartingItems(items)
+	self.StartingItems = items
 end
 
-function X:getUtilityItems()
-	return self.utilityItems
+function X:GetUtilityItems()
+	return self.UtilityItems
 end
 
-function X:setUtilityItems(items)
-  self.utilityItems = items
+function X:SetUtilityItems(items)
+  self.UtilityItems = items
 end
 
-function X:getCoreItems()
-	return self.coreItems
+function X:GetCoreItems()
+	return self.CoreItems
 end
 
-function X:setCoreItems(items)
-	self.coreItems = items
+function X:SetCoreItems(items)
+	self.CoreItems = items
 end
 
-function X:getExtensionItems()
-	return self.extensionItems[1], self.extensionItems[2]
+function X:GetExtensionItems()
+	return self.ExtensionItems[1], self.ExtensionItems[2]
 end
 
-function X:setExtensionItems(offensiveItems, defensiveItems)
-	self.extensionItems = {offensiveItems, defensiveItems}
+function X:SetExtensionItems(items)
+	self.ExtensionItems = {
+													items[1],
+													items[2]
+												}
 end
 
 -------------------------------------------------------------------------------
@@ -87,21 +144,28 @@ end
 function X:Think(npcBot)
 
 	-- If bot nothing bail
-	if npcBot == nil then return end
+	if npcBot == nil then
+		return
+	end
 
 	-- If game not in progress bail
-	if ( GetGameState() ~= GAME_STATE_GAME_IN_PROGRESS and GetGameState() ~= GAME_STATE_PRE_GAME ) then return end
+	if ( GetGameState() ~= GAME_STATE_GAME_IN_PROGRESS and GetGameState() ~= GAME_STATE_PRE_GAME ) then
+		 return
+ 	end
 
 	-- If there's an item to be purchased already bail
 	if ( (npcBot:GetNextItemPurchaseValue() > 0) and (npcBot:GetGold() < npcBot:GetNextItemPurchaseValue()) ) then
 		return
 	end
 
+	-- Initialize role-based purchase table
+	self:InitTable()
+
 	-- If we want a new item we determine which one first
 	self:UpdatePurchaseOrder(npcBot)
 
 	--[[
-	-- Maybe sell items (not tested)	
+	-- Maybe sell items (not tested)
 	self:ConsiderSellingItems(npcBot)
 	--]]
 
@@ -144,32 +208,71 @@ end
 -- Utilitly functions
 -------------------------------------------------------------------------------
 
+function X:InitTable()
+	-- Tables already initialized, bail
+	if self.StartingItems ~= nil and self.UtilityItems ~= nil and self.CoreItems ~= nil and self.ExtensionItems ~= nil then
+		return
+	else
+		if (utils.getHeroVar("Role") == role.ROLE_MID ) then
+			SetStartingItems(self.ItemsToBuyAsMid.StartingItems)
+			SetUtilityItems(self.ItemsToBuyAsMid.UtilityItems)
+			SetCoreItems(self.ItemsToBuyAsMid.CoreItems)
+			SetExtensionItems(self.ItemsToBuyAsMid.ExtensionItems)
+		elseif (utils.getHeroVar("Role") == role.ROLE_HARDCARRY ) then
+			SetStartingItems(self.ItemsToBuyAsHardCarry.StartingItems)
+			SetUtilityItems(self.ItemsToBuyAsHardCarry.UtilityItems)
+			SetCoreItems(self.ItemsToBuyAsHardCarry.CoreItems)
+			SetExtensionItems(self.ItemsToBuyAsHardCarry.ExtensionItems)
+		elseif (utils.getHeroVar("Role") == role.ROLE_OFFLANE ) then
+			SetStartingItems(self.ItemsToBuyAsOfflane.StartingItems)
+			SetUtilityItems(self.ItemsToBuyAsOfflane.UtilityItems)
+			SetCoreItems(self.ItemsToBuyAsOfflane.CoreItems)
+			SetExtensionItems(self.ItemsToBuyAsOfflane.ExtensionItems)
+		elseif (utils.getHeroVar("Role") == role.ROLE_HARDSUPPORT or getHeroVar("Role") == role.ROLE_SEMISUPPORT ) then
+			SetStartingItems(self.ItemsToBuyAsSupport.StartingItems)
+			SetUtilityItems(self.ItemsToBuyAsSupport.UtilityItems)
+			SetCoreItems(self.ItemsToBuyAsSupport.CoreItems)
+			SetExtensionItems(self.ItemsToBuyAsSupport.ExtensionItems)
+		elseif (utils.getHeroVar("Role") == role.ROLE_JUNGLER ) then
+			SetStartingItems(self.ItemsToBuyAsJungler.StartingItems)
+			SetUtilityItems(self.ItemsToBuyAsJungler.UtilityItems)
+			SetCoreItems(self.ItemsToBuyAsJungler.CoreItems)
+			SetExtensionItems(self.ItemsToBuyAsJungler.ExtensionItems)
+		elseif (utils.getHeroVar("Role") == role.ROLE_ROAMER ) then
+			SetStartingItems(self.ItemsToBuyAsRoamer.StartingItems)
+			SetUtilityItems(self.ItemsToBuyAsRoamer.UtilityItems)
+			SetCoreItems(self.ItemsToBuyAsRoamer.CoreItems)
+			SetExtensionItems(self.ItemsToBuyAsRoamer.ExtensionItems)
+		end
+	end
+end
+
 function X:UpdatePurchaseOrder(npcBot)
 	-- Core (doesn't buy utility items such as wards)
 	if utils.IsCore() then
 		-- Still starting items to buy?
-		if (#self.startingItems == 0) then
+		if (#self.StartingItems == 0) then
 			-- Still core items to buy?
-			if( #self.coreItems == 0) then
+			if( #self.CoreItems == 0) then
 				-- Otherwise consider buying extension items
 				self:ConsiderBuyingExtensions(npcBot)
 			else
 				-- Put the core items in the purchase order
-				for _,p in pairs(items[self.coreItems[1]]) do
+				for _,p in pairs(items[self.CoreItems[1]]) do
 					self.PurchaseOrder[#self.PurchaseOrder+1] = p
 				end
 				-- Remove entry
-				self.BoughtItems[#self.BoughtItems+1] = self.startingItems[1]
-				table.remove(self.coreItems, 1)
+				self.BoughtItems[#self.BoughtItems+1] = self.StartingItems[1]
+				table.remove(self.CoreItems, 1)
 			end
 		else
 			-- Put the core items in the purchase order
-			for _,p in pairs(items[self.startingItems[1]]) do
+			for _,p in pairs(items[self.StartingItems[1]]) do
 				self.PurchaseOrder[#self.PurchaseOrder+1] = p
 			end
 			-- Remove entry
-			self.BoughtItems[#self.BoughtItems+1] = self.startingItems[1]
-			table.remove(self.startingItems, 1)
+			self.BoughtItems[#self.BoughtItems+1] = self.StartingItems[1]
+			table.remove(self.StartingItems, 1)
 		end
 	-- Support
 	else
@@ -196,7 +299,7 @@ function X:ConsiderSellingItems(bot)
 	local ItemsToConsiderSelling = {}
 
 	if utils.NumberOfItems(bot) == 6 then
-		print("Considering selling items")
+		print(utils.getHeroVar("Name").." - Considering selling items")
 		local items = {}
 		-- Store name of the items in a table
 		for i = 0,5,1 do
@@ -207,7 +310,7 @@ function X:ConsiderSellingItems(bot)
 		for _,p in pairs(items) do
 			local bSell = true
 			-- Check through all starting items
-			for _,k in pairs(self.startingItems) do
+			for _,k in pairs(self.StartingItems) do
 				-- Assembled item?
 				if #items[k] > 1 then
 					-- If item is part of an item we want to buy then don't sell it
@@ -217,7 +320,7 @@ function X:ConsiderSellingItems(bot)
 				end
 			end
 			-- Same for core items
-			for _,k in pairs(self.coreItems) do
+			for _,k in pairs(self.CoreItems) do
 				-- Assembled item?
 				if #items[k] > 1 then
 					if utils.InTable(item[k], p) then
@@ -236,7 +339,7 @@ function X:ConsiderSellingItems(bot)
 			end
 			-- Do we really want to sell the item?
 			if bSell then
-				print("Considering selling "..p)
+				print(utils.getHeroVar("Name").." - Considering selling "..p)
 				ItemsToConsiderSelling[#ItemsToConsiderSelling+1] = p
 				--[[
 				Haven't tried if it works yet..
@@ -281,7 +384,7 @@ function X:ConsiderBuyingExtensions(bot)
 		end
 		print(utils.GetHeroName(myEnemies.Enemies[p].obj).." has "..DamageTime.." seconds of disable")
 	end
-	print("Total # of silences: "..SilenceCount.." enemies with true strike: "..TrueStrikeCount)
+	print(utils.getHeroVar("Name").." - Total # of silences: "..SilenceCount.." enemies with true strike: "..TrueStrikeCount)
 		-- Stores the possible damage over 5s + stun/slow duration from all enemies
 	local DamageMagicalPure
 	local DamagePhysical
@@ -305,61 +408,61 @@ function X:ConsiderBuyingExtensions(bot)
 	local retreatAbility
 	if utils.getHeroVar("HasMovementAbility") ~= nil then
 		retreatAbility = true
-		print("Has retreat")
+		print(utils.getHeroVar("Name").." - Has retreat")
 	else
 		retreatAbility = false
-		print("Has no retreat")
+		print(utils.getHeroVar("Name").." - Has no retreat")
 	end
 
 	-- Remove evasion items if # true strike enemies > 1
 	if TrueStrikeCount > 0 then
-		if utils.InTable(self.extensionItems.defensiveItems, "item_solar_crest") then
-			local ItemIndex = utils.PosInTable(self.extensionItems.defensiveItems, "item_solar_crest")
-			table.remove(self.extensionItems.defensiveItems, ItemIndex)
-			print("Removing evasion")
-		elseif utils.InTable(self.extensionItems.offensiveItems, "item_butterfly") then
-			local ItemIndex = utils.PosInTable(self.extensionItems.defensiveItems, "item_butterfly")
-			table.remove(self.extensionItems.defensiveItems, ItemIndex)
-			print("Removing evasion")
+		if utils.InTable(self.ExtensionItems.DefensiveItems, "item_solar_crest") then
+			local ItemIndex = utils.PosInTable(self.ExtensionItems.DefensiveItems, "item_solar_crest")
+			table.remove(self.ExtensionItems.DefensiveItems, ItemIndex)
+			print(utils.getHeroVar("Name").." - Removing evasion")
+		elseif utils.InTable(self.ExtensionItems.OffensiveItems, "item_butterfly") then
+			local ItemIndex = utils.PosInTable(self.ExtensionItems.DefensiveItems, "item_butterfly")
+			table.remove(self.ExtensionItems.DefensiveItems, ItemIndex)
+			print(utils.getHeroVar("Name").." - Removing evasion")
 		end
 	end
 
 	-- Remove magic immunty if not needed
 	if DamageMagicalPure > DamagePhysical then
-		if utils.InTable(self.extensionItems.defensiveItems, "item_hood_of_defiance") or InTable(self.extensionItems.defensiveItems, "item_pipe") then
-			print("Considering magic damage reduction")
-		elseif utils.InTable(self.extensionItems.defensiveItems, "item_black_king_bar") then
+		if utils.InTable(self.ExtensionItems.DefensiveItems, "item_hood_of_defiance") or InTable(self.ExtensionItems.DefensiveItems, "item_pipe") then
+			print(utils.getHeroVar("Name").." - Considering magic damage reduction")
+		elseif utils.InTable(self.ExtensionItems.DefensiveItems, "item_black_king_bar") then
 			if retreatAbility and SilenceCount > 1 then
-				print("Considering buying bkb")
+				print(utils.getHeroVar("Name").." - Considering buying bkb")
 			elseif SilenceCount > 2 or DamageTime > 8 then
-				print("Considering buying bkb")
+				print(utils.getHeroVar("Name").." - Considering buying bkb")
 			else
-				local ItemIndex = utils.PosInTable(self.extensionItems.defensiveItems, "item_black_king_bar")
-				table.remove(self.extensionItems.defensiveItems, ItemIndex)
-				print("Removing bkb")
+				local ItemIndex = utils.PosInTable(self.ExtensionItems.DefensiveItems, "item_black_king_bar")
+				table.remove(self.ExtensionItems.DefensiveItems, ItemIndex)
+				print(utils.getHeroVar("Name").." - Removing bkb")
 			end
 		end
-	elseif utils.InTable(self.extensionItems.defensiveItems, "item_black_king_bar") then
+	elseif utils.InTable(self.ExtensionItems.DefensiveItems, "item_black_king_bar") then
 		if retreatAbility and SilenceCount > 1 then
-			if utils.InTable(self.extensionItems.defensiveItems, "item_manta") then
-				print("Considering buying manta")
-			elseif utils.InTable(self.extensionItems.defensiveItems, "item_euls") then
-				print("Considering buying euls")
+			if utils.InTable(self.ExtensionItems.DefensiveItems, "item_manta") then
+				print(utils.getHeroVar("Name").." - Considering buying manta")
+			elseif utils.InTable(self.ExtensionItems.DefensiveItems, "item_euls") then
+				print(utils.getHeroVar("Name").." - Considering buying euls")
 			else
-				print("Considering buying bkb")
+				print(utils.getHeroVar("Name").." - Considering buying bkb")
 			end
 		elseif SilenceCount > 2 then
 			if DamageTime > 12 then
-				print("Considering buying bkb")
-			elseif utils.InTable(self.extensionItems.defensiveItems, "item_manta") then
-				print("Considering buying manta")
-			elseif utils.InTable(self.extensionItems.defensiveItems, "item_euls") then
-				print("Considering buying euls")
+				print(utils.getHeroVar("Name").." - Considering buying bkb")
+			elseif utils.InTable(self.ExtensionItems.DefensiveItems, "item_manta") then
+				print(utils.getHeroVar("Name").." - Considering buying manta")
+			elseif utils.InTable(self.ExtensionItems.DefensiveItems, "item_euls") then
+				print(utils.getHeroVar("Name").." - Considering buying euls")
 			end
 		else
-			local ItemIndex = utils.PosInTable(self.extensionItems.defensiveItems, "item_black_king_bar")
-			table.remove(self.extensionItems.defensiveItems, ItemIndex)
-			print("Removing bkb")
+			local ItemIndex = utils.PosInTable(self.ExtensionItems.DefensiveItems, "item_black_king_bar")
+			table.remove(self.ExtensionItems.DefensiveItems, ItemIndex)
+			print(utils.getHeroVar("Name").." - Removing bkb")
 		end
 	else
 		-- ToDo: Check if enemy has retreat abilities and consider therefore buying stun/silence

@@ -109,45 +109,50 @@ local tableItemsToBuyAsRoamer = {
 }
 --]]
 
-local StartingItems = {	
-	"item_stout_shield",
-	"item_tango",
-	"item_flask",
-	"item_branches",
-	"item_branches"
-}
-
-local UtilityItems = { 
-	"item_flask" 
-}
-
-local CoreItems = {	
-	"item_power_treads_agi",
-	"item_bfury",
-	"item_vanguard",
-	"item_yasha",
-	"item_manta",
-	"item_abyssal_blade"
-}
-
-local ExtensionItems = {	
-	{	
-		"item_butterfly",
-		"item_monkey_king_bar" 
+local ItemsToBuyAsHardCarry = {
+	StartingItems = {
+		"item_stout_shield",
+		"item_tango",
+		"item_flask",
+		"item_branches",
+		"item_branches"
 	},
-	{	
-		"item_heart",
-		"item_black_king_bar",
-		"item_aghs_scepter" 
-	} 
+	UtilityItems = {
+		"item_flask"
+	},
+	CoreItems = {
+		"item_power_treads_agi",
+		"item_bfury",
+		"item_vanguard",
+		"item_yasha",
+		"item_manta",
+		"item_abyssal_blade"
+	},
+	ExtensionItems = {
+		{
+			"item_butterfly",
+			"item_monkey_king_bar"
+		},
+		{
+			"item_heart",
+			"item_black_king_bar",
+			"item_aghs_scepter"
+		}
+	}
 }
 
-ToBuy = item_purchase:new()
+local ItemsToBuyAsMid = {}
+local ItemsToBuyAsOfflane = {}
+local ItemsToBuyAsSupport = {}
+local ItemsToBuyAsJungler = {}
+local ItemsToBuyAsRoamer = {}
 
-ToBuy:setStartingItems(StartingItems)
-ToBuy:setUtilityItems(UtilityItems)
-ToBuy:setCoreItems(CoreItems)
-ToBuy:setExtensionItems(ExtensionItems[1],ExtensionItems[2])
+ToBuy = item_purchase:new(ItemsToBuyAsHardCarry,
+													ItemsToBuyAsMid,
+													ItemsToBuyAsOfflane,
+													ItemsToBuyAsSupport,
+													ItemsToBuyAsJungler,
+													ItemsToBuyAsRoamer)
 
 ----------------------------------------------------------------------------------------------------
 

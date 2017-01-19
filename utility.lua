@@ -253,12 +253,12 @@ U.DireSafeSpots={
 -------------------------------------------------------------------------------
 
 function setHeroVar(var, value)
-	local bot = bot or GetBot()
+	local bot = GetBot()
 	gHeroVar.SetVar(bot:GetPlayerID(), var, value)
 end
 
 function getHeroVar(var)
-	local bot = bot or GetBot()
+	local bot = GetBot()
 	return gHeroVar.GetVar(bot:GetPlayerID(), var)
 end
 

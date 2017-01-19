@@ -16,6 +16,20 @@ local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
 --]]
 
 -------------------------------------------------------------------------------
+-- Helper Functions for accessing Global Hero Data
+-------------------------------------------------------------------------------
+
+function setHeroVar(var, value)
+	local bot = GetBot()
+	gHeroVar.SetVar(bot:GetPlayerID(), var, value)
+end
+
+function getHeroVar(var)
+	local bot = GetBot()
+	return gHeroVar.GetVar(bot:GetPlayerID(), var)
+end
+
+-------------------------------------------------------------------------------
 -- Declarations
 -------------------------------------------------------------------------------
 
@@ -149,10 +163,18 @@ function X:Think(npcBot)
 	end
 
 	-- If game not in progress bail
+<<<<<<< HEAD
 	if ( GetGameState() ~= GAME_STATE_GAME_IN_PROGRESS and GetGameState() ~= GAME_STATE_PRE_GAME ) then
 		 return
  	end
 
+=======
+	if ( GetGameState() ~= GAME_STATE_GAME_IN_PROGRESS and GetGameState() ~= GAME_STATE_PRE_GAME ) then return end
+	
+	-- Initialization
+	self:Init(npcBot)
+	
+>>>>>>> 660027698439267fd28165b13b86d05536d4fb5e
 	-- If there's an item to be purchased already bail
 	if ( (npcBot:GetNextItemPurchaseValue() > 0) and (npcBot:GetGold() < npcBot:GetNextItemPurchaseValue()) ) then
 		return
@@ -207,9 +229,10 @@ function X:Think(npcBot)
 end
 
 -------------------------------------------------------------------------------
--- Utilitly functions
+-- Utility functions
 -------------------------------------------------------------------------------
 
+<<<<<<< HEAD
 function X:InitTable()
 	-- Tables already initialized, bail
 	if self.StartingItems ~= nil and self.UtilityItems ~= nil and self.CoreItems ~= nil and self.ExtensionItems ~= nil then
@@ -246,6 +269,13 @@ function X:InitTable()
 			SetCoreItems(self.ItemsToBuyAsRoamer.CoreItems)
 			SetExtensionItems(self.ItemsToBuyAsRoamer.ExtensionItems)
 		end
+=======
+function X:Init(npcBot)
+	local bInit = getHeroVar("ItemPurchaseInitialized")
+	if bInit == nil then
+		print(getHeroVar("Name"), " - Initializing Item Purchase class - Role: ", getHeroVar("Role"))
+		setHeroVar("ItemPurchaseInitialized", true)
+>>>>>>> 660027698439267fd28165b13b86d05536d4fb5e
 	end
 end
 

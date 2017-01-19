@@ -297,6 +297,14 @@ end
 -- Functions
 -------------------------------------------------------------------------------
 
+function U.GetOppositeTeamTo(team)
+  if team == constants.TEAM_RADIANT then
+    return constants.TEAM_DIRE
+  else
+    return constants.TEAM_RADIANT
+  end
+end
+
 -------------------------------------------------------------------------------
 -- Table Functions
 -------------------------------------------------------------------------------
@@ -871,6 +879,32 @@ function U.Fountain(team)
 	return Vector(7015,6534);
 end
 
+
+
+-- Returns the closest building of team >team< to a unit. uilding
+function U.GetClosestBuilding(unit, team)
+    local min_dist = 99999999
+    local building = ""
+    for b, vector in pairs(U.tableBuildings[team]) do
+        local d = GetUnitToLocationDistance(unit, vector)
+        if d < min_dist then
+            min_dist = d
+            building = b
+        end
+    end
+    return U.tableBuildings[team][building]
+end
+
+-- Get the position between buildings (0 = sittings on teams tower, 1 = sitting on enemy's tower)
+function U.GetPositionBetweenBuildings(unit, team)
+    local allied_building = U.GetClosestBuilding(unit, team)
+    local d_allied = GetUnitToLocationDistance(unit, allied_building)
+    local enemy_building = U.GetClosestBuilding(unit, U.GetOppositeTeamTo(team))
+    local d_enemy = GetUnitToLocationDistance(unit, enemy_building)
+
+    return d_allied / (d_allied + d_enemy)
+end
+
 -------------------------------------------------------------------------------
 -- Creep Functions
 -------------------------------------------------------------------------------
@@ -1249,29 +1283,6 @@ function U.HaveTeleportation(npcBot)
 		return true
 	end
 	return false
-end
-
--- Returns the closest building of team >team< to a unit. uilding
-function U.GetClosestBuilding(unit, team)
-    local min_dist = 99999999
-    local building = ""
-    for b, vector in pairs(U.tableBuildings[team]) do
-        local d = GetUnitToLocationDistance(unit, vector)
-        if d < min_dist then
-            min_dist = d
-            building = b
-        end
-    end
-    return U.tableBuildings[team][building]
-end
-
-function U.GetPositionBetweenBuildings(unit, team)
-    local allied_building = U.GetClosestBuilding(unit, team)
-    local d_allied = GetUnitToLocationDistance(unit, allied_building)
-    local enemy_building = U.GetClosestBuilding(unit, U.GetOppositeTeamTo(team))
-    local d_enemy = GetUnitToLocationDistance(unit, enemy_building)
-
-    return d_allied / (d_allied + d_enemy)
 end
 
 function U.IsItemAvailable(item_name)

@@ -45,6 +45,7 @@ X.ExtensionItems = {
 }
 
 local LastThink = -500.0
+local LastSupportThink = -10000.0
 
 -------------------------------------------------------------------------------
 -- Init
@@ -225,48 +226,77 @@ function X:Init(npcBot)
 end
 
 function X:UpdatePurchaseOrder(npcBot)
-	-- Core (doesn't buy utility items such as wards)
-	if utils.IsCore() then
-		-- Still starting items to buy?
-		if (#self.StartingItems == 0) then
-			-- Still core items to buy?
-			if( #self.CoreItems == 0) then
-				-- Otherwise consider buying extension items
-				print("FIXME: if enemy_data is fixed enable buying extensions")
-				--[[
-				Not active until enemy_data problem is solved
-				self:ConsiderBuyingExtensions(npcBot)
-				--]]
-			else
-				-- Put the core items in the purchase order
-				for _,p in pairs(items[self.coreItems[1]]) do
-					table.insert(self.PurchaseOrder, p)
+	-- insert support items first if available
+	if not utils.IsCore() then
+	--[[
+	Idea: Buy starting items, then buy either core / extension items unless there is more important utility to buy.
+				Upgrade courier at 3:00, buy all available wards and if needed detection (no smoke).
+
+	ToDo: Function to return number of invisible enemies.
+				Buying consumable items like raindrops if there is a lot of magical damage
+				Buying salves/whatever for cores if it makes sense
+	--]]
+		local tDelta = RealTime() - LastCourierThink
+		-- throttle support item decisions to every 10s
+		if tDelta > 10000 then
+			if IsCourierAvailable() then
+				-- since smokes are not being used we don't buy them yet
+				local wards = GetItemStockCount("item_ward_observer")
+				local tomes = GetItemStockCount("item_tome_of_knowledge")
+				local flyingCour = GetItemStockCount("item_flying_courier")
+				-- buy all available wards
+				if wards > 0 then
+					while wards > 0 do
+						table.insert(self.PurchaseOrder, 1, "item_ward_observer")
+						wards = wards - 1
+					end
 				end
-				-- Remove entry
-				table.insert(self.BoughtItems, self.coreItems[1])
-				table.remove(self.coreItems, 1)
+				-- buy all available tomes
+				if tomes > 0 then
+					while tomes > 0 do
+						table.insert(self.PurchaseOrder, 1, "item_tome_of_knowledge")
+						tomes = tomes - 1
+					end
+				end
+				-- buy flying courier if available (only 1x)
+				if flyingCour > 0 then
+					if not utils.InTable(self.BoughtItems, "item_flying_courier") then
+						table.insert(self.PurchaseOrder, 1, "item_flying_courier")
+					end
+				end
+			else
+				-- we have no courier, buy it
+				table.insert(self.PurchaseOrder, 1, "item_courier")
 			end
+		end
+	end
+	-- Still starting items to buy?
+	if (#self.StartingItems == 0) then
+		-- Still core items to buy?
+		if( #self.CoreItems == 0) then
+			-- Otherwise consider buying extension items
+			print("FIXME: if enemy_data is fixed enable buying extensions")
+			--[[
+			Not active until enemy_data problem is solved
+			self:ConsiderBuyingExtensions(npcBot)
+			--]]
 		else
-			-- Put the starting items in the purchase order
-			for _,p in pairs(items[self.startingItems[1]]) do
+			-- Put the core items in the purchase order
+			for _,p in pairs(items[self.coreItems[1]]) do
 				table.insert(self.PurchaseOrder, p)
 			end
 			-- Remove entry
-			table.insert(self.BoughtItems, self.startingItems[1])
-			table.remove(self.startingItems, 1)
+			table.insert(self.BoughtItems, self.coreItems[1])
+			table.remove(self.coreItems, 1)
 		end
-	-- Support
 	else
-	--[[
-	Idea: 	buy starting items (always, should have courier and wards if hard support),
-				then buy either core / extension items unless there is more important utility to buy.
-				Upgrade courier at 3:00, buy all available wards and if needed detection (no smoke).
-
-	ToDo: 	Functions to check if item in stock
-				Function to return number of invisible enemies.
-				Buying consumable items like raindrops if there is a lot of magical damage
-				Buying salves for cores?
-	--]]
+		-- Put the starting items in the purchase order
+		for _,p in pairs(items[self.startingItems[1]]) do
+			table.insert(self.PurchaseOrder, p)
+		end
+		-- Remove entry
+		table.insert(self.BoughtItems, self.startingItems[1])
+		table.remove(self.startingItems, 1)
 	end
 end
 

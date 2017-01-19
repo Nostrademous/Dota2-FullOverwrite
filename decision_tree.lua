@@ -141,6 +141,9 @@ end
 -------------------------------------------------------------------------------
 
 function X:DoInit(bot)
+	--print( "Initializing PlayerID: ", bot:GetPlayerID() )
+	if GetTeamMember( GetTeam(), 1 ) == nil or GetTeamMember( GetTeam(), 5 ) == nil then return end
+	
 	self.pID = bot:GetPlayerID() -- do this to reduce calls to bot:GetPlayerID() in the future
 	gHeroVar.InitHeroVar(self.pID)
 	
@@ -173,13 +176,16 @@ function X:DoHeroSpecificInit(bot)
 end
 
 function X:Think(bot)
-	jungle_status.checkSpawnTimer()
-
-	if ( GetGameState() ~= GAME_STATE_GAME_IN_PROGRESS and GetGameState() ~= GAME_STATE_PRE_GAME ) then return end;
-	
-	if not self.Init then
-		self:DoInit(bot)
+	if ( GetGameState() == GAME_STATE_TEAM_SHOWCASE ) then
+		if not self.Init then
+			self:DoInit(bot)
+		end
 	end
+
+	if ( GetGameState() ~= GAME_STATE_GAME_IN_PROGRESS and GetGameState() ~= GAME_STATE_PRE_GAME ) then return end
+	
+	-- check if jungle respawn timer was hit to repopulate our table
+	jungle_status.checkSpawnTimer()
 	
 	--[[
 		FIRST DECISIONS THAT DON'T AFFECT THE MY ACTION STATES

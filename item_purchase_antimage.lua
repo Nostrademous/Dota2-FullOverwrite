@@ -13,6 +13,7 @@ local ItemsToBuyAsHardCarry = {
 		"item_tango",
 		"item_flask",
 		"item_branches",
+		"item_branches",
 		"item_branches"
 	},
 	UtilityItems = {
@@ -66,8 +67,7 @@ local myExtensionItems = {
 	DefensiveItems = {}
 }
 
--- to init the possible purchase tables
-local Init = false
+local init = false
 
 amBuy = ToBuy:new()
 -- set our members to our localized values so we don't fall through to parent's class members
@@ -78,20 +78,21 @@ amBuy.UtilityItems = myUtilityItems
 amBuy.CoreItems = myCoreItems
 amBuy.ExtensionItems = myExtensionItems
 
+amBuy.ItemsToBuyAsHardCarry = ItemsToBuyAsHardCarry
+amBuy.ItemsToBuyAsMid = ItemsToBuyAsMid
+amBuy.ItemsToBuyAsOfflane = ItemsToBuyAsOfflane
+amBuy.ItemsToBuyAsSupport = ItemsToBuyAsSupport
+amBuy.ItemsToBuyAsJungler = ItemsToBuyAsJungler
+amBuy.ItemsToBuyAsRoamer = ItemsToBuyAsRoamer
+
 ----------------------------------------------------------------------------------------------------
 
 function ItemPurchaseThink()
 	local npcBot = GetBot()
 
-	-- init the tables the first time
-	if not Init then
-		amBuy:InitTable(ItemsToBuyAsHardCarry,
-										ItemsToBuyAsMid,
-										ItemsToBuyAsOfflane,
-										ItemsToBuyAsSupport,
-										ItemsToBuyAsJungler,
-										ItemsToBuyAsRoamer)
-		Init = true
+	if not init then
+			-- init the tables
+			init = amBuy:InitTable()
 	end
 
 	amBuy:Think(npcBot)

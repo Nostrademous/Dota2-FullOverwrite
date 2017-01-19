@@ -34,6 +34,13 @@ end
 -------------------------------------------------------------------------------
 local X = {}
 
+X.ItemsToBuyAsHardCarry = {}
+X.ItemsToBuyAsMid = {}
+X.ItemsToBuyAsOfflane = {}
+X.ItemsToBuyAsSupport = {}
+X.ItemsToBuyAsJungler = {}
+X.ItemsToBuyAsRoamer = {}
+
 X.PurchaseOrder = {}
 X.BoughtItems = {}
 X.StartingItems = {}
@@ -44,8 +51,8 @@ X.ExtensionItems = {
 	DefensiveItems = {}
 }
 
-local LastThink = -500.0
-local LastSupportThink = -10000.0
+X.LastThink = -1000.0
+X.LastSupportThink = -1000.0
 
 -------------------------------------------------------------------------------
 -- Init
@@ -91,7 +98,7 @@ function X:GetExtensionItems()
 end
 
 function X:SetExtensionItems(items)
-	self.ExtensionItems = { items[1], items[2] }
+	self.ExtensionItems = items
 end
 
 -------------------------------------------------------------------------------
@@ -100,9 +107,9 @@ end
 -------------------------------------------------------------------------------
 
 function X:Think(npcBot)
-	local tDelta = RealTime() - LastThink
+	local tDelta = RealTime() - self.LastThink
 	-- throttle think for better performance
-	if tDelta > 500 then
+	if tDelta > 0.25 then
 		-- If bot nothing bail
 		if npcBot == nil then return end
 
@@ -114,16 +121,13 @@ function X:Think(npcBot)
 		-- If there's an item to be purchased already bail
 		if ( (npcBot:GetNextItemPurchaseValue() > 0) and (npcBot:GetGold() < npcBot:GetNextItemPurchaseValue()) ) then return end
 
-		-- Initialize role-based purchase table
-		self:InitTable()
-
 		-- If we want a new item we determine which one first
 		if #self.PurchaseOrder == 0 then
 			self:UpdatePurchaseOrder(npcBot)
 		end
 
 		-- Consider selling items
-		self:ConsiderSellingItems(npcBot)
+		-- self:ConsiderSellingItems(npcBot)
 
 		-- Get the next item
 		local sNextItem = self.PurchaseOrder[1]
@@ -158,7 +162,7 @@ function X:Think(npcBot)
 				end
 			end
 		end
-		LastThink = RealTime()
+		self.LastThink = RealTime()
 	end
 end
 
@@ -166,53 +170,54 @@ end
 -- Utility functions
 -------------------------------------------------------------------------------
 
-function X:InitTable(	ItemsToBuyAsMid,
-	ItemsToBuyAsHardCarry,
-	ItemsToBuyAsOfflane,
-	ItemsToBuyAsSupport,
-	ItemsToBuyAsJungler,
-	ItemsToBuyAsRoamer )
+function X:InitTable()
 	-- Don't do this before the game starts
-	if ( GetGameState() ~= GAME_STATE_GAME_IN_PROGRESS and GetGameState() ~= GAME_STATE_PRE_GAME ) then return end
+	if ( GetGameState() ~= GAME_STATE_GAME_IN_PROGRESS and GetGameState() ~= GAME_STATE_PRE_GAME ) then	return false end
 	-- Tables already initialized, bail
-	if self.StartingItems ~= nil
-		and self.UtilityItems ~= nil
-		and self.CoreItems ~= nil
-		and self.ExtensionItems ~= nil then
-		return
+	if #self.StartingItems > 0
+		or #self.UtilityItems > 0
+		or #self.CoreItems > 0
+		or #self.ExtensionItems > 0 then
+		return false
 	else
 		-- Init tables based on role
 		if (getHeroVar("Role") == role.ROLE_MID ) then
-			SetStartingItems(self.ItemsToBuyAsMid.StartingItems)
-			SetUtilityItems(self.ItemsToBuyAsMid.UtilityItems)
-			SetCoreItems(self.ItemsToBuyAsMid.CoreItems)
-			SetExtensionItems(self.ItemsToBuyAsMid.ExtensionItems)
+			self:SetStartingItems(self.ItemsToBuyAsMid.StartingItems)
+			self:SetUtilityItems(self.ItemsToBuyAsMid.UtilityItems)
+			self:SetCoreItems(self.ItemsToBuyAsMid.CoreItems)
+			self:SetExtensionItems(self.ItemsToBuyAsMid.ExtensionItems)
+			return true
 		elseif (getHeroVar("Role") == role.ROLE_HARDCARRY ) then
-			SetStartingItems(self.ItemsToBuyAsHardCarry.StartingItems)
-			SetUtilityItems(self.ItemsToBuyAsHardCarry.UtilityItems)
-			SetCoreItems(self.ItemsToBuyAsHardCarry.CoreItems)
-			SetExtensionItems(self.ItemsToBuyAsHardCarry.ExtensionItems)
+			self:SetStartingItems(self.ItemsToBuyAsHardCarry.StartingItems)
+			self:SetUtilityItems(self.ItemsToBuyAsHardCarry.UtilityItems)
+			self:SetCoreItems(self.ItemsToBuyAsHardCarry.CoreItems)
+			self:SetExtensionItems(self.ItemsToBuyAsHardCarry.ExtensionItems)
+			return true
 		elseif (getHeroVar("Role") == role.ROLE_OFFLANE ) then
-			SetStartingItems(self.ItemsToBuyAsOfflane.StartingItems)
-			SetUtilityItems(self.ItemsToBuyAsOfflane.UtilityItems)
-			SetCoreItems(self.ItemsToBuyAsOfflane.CoreItems)
-			SetExtensionItems(self.ItemsToBuyAsOfflane.ExtensionItems)
+			self:SetStartingItems(self.ItemsToBuyAsOfflane.StartingItems)
+			self:SetUtilityItems(self.ItemsToBuyAsOfflane.UtilityItems)
+			self:SetCoreItems(self.ItemsToBuyAsOfflane.CoreItems)
+			self:SetExtensionItems(self.ItemsToBuyAsOfflane.ExtensionItems)
+			return true
 		elseif (getHeroVar("Role") == role.ROLE_HARDSUPPORT
 			or getHeroVar("Role") == role.ROLE_SEMISUPPORT ) then
-			SetStartingItems(self.ItemsToBuyAsSupport.StartingItems)
-			SetUtilityItems(self.ItemsToBuyAsSupport.UtilityItems)
-			SetCoreItems(self.ItemsToBuyAsSupport.CoreItems)
-			SetExtensionItems(self.ItemsToBuyAsSupport.ExtensionItems)
+			self:SetStartingItems(self.ItemsToBuyAsSupport.StartingItems)
+			self:SetUtilityItems(self.ItemsToBuyAsSupport.UtilityItems)
+			self:SetCoreItems(self.ItemsToBuyAsSupport.CoreItems)
+			self:SetExtensionItems(self.ItemsToBuyAsSupport.ExtensionItems)
+			return true
 		elseif (getHeroVar("Role") == role.ROLE_JUNGLER ) then
-			SetStartingItems(self.ItemsToBuyAsJungler.StartingItems)
-			SetUtilityItems(self.ItemsToBuyAsJungler.UtilityItems)
-			SetCoreItems(self.ItemsToBuyAsJungler.CoreItems)
-			SetExtensionItems(self.ItemsToBuyAsJungler.ExtensionItems)
+			self:SetStartingItems(self.ItemsToBuyAsJungler.StartingItems)
+			self:SetUtilityItems(self.ItemsToBuyAsJungler.UtilityItems)
+			self:SetCoreItems(self.ItemsToBuyAsJungler.CoreItems)
+			self:SetExtensionItems(self.ItemsToBuyAsJungler.ExtensionItems)
+			return true
 		elseif (getHeroVar("Role") == role.ROLE_ROAMER ) then
-			SetStartingItems(self.ItemsToBuyAsRoamer.StartingItems)
-			SetUtilityItems(self.ItemsToBuyAsRoamer.UtilityItems)
-			SetCoreItems(self.ItemsToBuyAsRoamer.CoreItems)
-			SetExtensionItems(self.ItemsToBuyAsRoamer.ExtensionItems)
+			self:SetStartingItems(self.ItemsToBuyAsRoamer.StartingItems)
+			self:SetUtilityItems(self.ItemsToBuyAsRoamer.UtilityItems)
+			self:SetCoreItems(self.ItemsToBuyAsRoamer.CoreItems)
+			self:SetExtensionItems(self.ItemsToBuyAsRoamer.ExtensionItems)
+			return true
 		end
 	end
 end
@@ -236,9 +241,9 @@ function X:UpdatePurchaseOrder(npcBot)
 				Buying consumable items like raindrops if there is a lot of magical damage
 				Buying salves/whatever for cores if it makes sense
 	--]]
-		local tDelta = RealTime() - LastCourierThink
+		local tDelta = RealTime() - self.LastSupportThink
 		-- throttle support item decisions to every 10s
-		if tDelta > 10000 then
+		if tDelta > 10.0 then
 			if IsCourierAvailable() then
 				-- since smokes are not being used we don't buy them yet
 				local wards = GetItemStockCount("item_ward_observer")
@@ -268,6 +273,7 @@ function X:UpdatePurchaseOrder(npcBot)
 				-- we have no courier, buy it
 				table.insert(self.PurchaseOrder, 1, "item_courier")
 			end
+			self.LastSupportThink = RealTime()
 		end
 	end
 	-- Still starting items to buy?
@@ -282,21 +288,21 @@ function X:UpdatePurchaseOrder(npcBot)
 			--]]
 		else
 			-- Put the core items in the purchase order
-			for _,p in pairs(items[self.coreItems[1]]) do
+			for _,p in pairs(items[self.CoreItems[1]]) do
 				table.insert(self.PurchaseOrder, p)
 			end
 			-- Remove entry
-			table.insert(self.BoughtItems, self.coreItems[1])
-			table.remove(self.coreItems, 1)
+			table.insert(self.BoughtItems, self.CoreItems[1])
+			table.remove(self.CoreItems, 1)
 		end
 	else
 		-- Put the starting items in the purchase order
-		for _,p in pairs(items[self.startingItems[1]]) do
+		for _,p in pairs(items[self.StartingItems[1]]) do
 			table.insert(self.PurchaseOrder, p)
 		end
 		-- Remove entry
-		table.insert(self.BoughtItems, self.startingItems[1])
-		table.remove(self.startingItems, 1)
+		table.insert(self.BoughtItems, self.StartingItems[1])
+		table.remove(self.StartingItems, 1)
 	end
 end
 
@@ -359,13 +365,15 @@ function X:ConsiderSellingItems(bot)
 		local iItemValue = 1000000
 		-- Now check which item is least valuable to us
 		for _,p in pairs(ItemsToConsiderSelling) do
-			local iVal = items.GetItemValueNumber(p)
+
+			local iVal = items.GetItemValueNumber(p:GetName())
 			-- If the value of this item is lower change handle
 			if iVal < iItemValue and iVal > 0 then
-				hItemToSell = utils.HaveItem(bot, p)
+				local slot = bot:FindItemSlot(item_name)
+				hItemToSell = bot:GetItemInSlot(slot)
 			end
 		end
-
+		print(hItemToSell:GetName().." selling")
 		-- Sell if we found an item to sell
 		if hItemToSell ~= nil then
 			bot:Action_SellItem(hItemToSell)

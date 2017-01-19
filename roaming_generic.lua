@@ -50,35 +50,37 @@ local RoamingState=RoamingStates.FindTarget;
 
 function OnStart(npcBot)
 	RoamingState=RoamingStates.FindTarget;
-    setHeroVar("move_ticks") = 0
+    setHeroVar("move_ticks", 0)
 end
 
 ----------------------------------
 
 local function FindTarget(bot)
-	local enemies = bot:GetNearbyHeroes(999999, true, BOT_MODE_NONE); -- check all enemies
+	local enemies = GetUnitList(UNIT_LIST_ENEMY_HEROES); -- check all enemies
     if #enemies == 0 then
         return false
     end
     local ratings = {}
     for i, e in pairs(enemies) do
         local r = 0
-        r += HealthFactor * (1 - e:GetHealth()/e:GetMaxHealth())
-        print(utils.GetHeroName(e), 1 - e:GetHealth()/e:GetMaxHealth())
-        print(utils.GetHeroName(e), HealthFactor * (1 - e:GetHealth()/e:GetMaxHealth()))
+        r = r + HealthFactor * (1 - e:GetHealth()/e:GetMaxHealth())
         -- time to get there in 10s units
-        r += DistanceFactor * GetUnitToUnitDistance(bot, e) / 300 / 10 -- TODO: get move speed
-        print(utils.GetHeroName(e), GetUnitToUnitDistance(bot, e) / 300 / 10)
-        print(utils.GetHeroName(e), DistanceFactor * GetUnitToUnitDistance(bot, e) / 300 / 10)
-        r += UnitPosFactor * (1 - utils.GetPositionBetweenBuildings(e, GetTeam()))
-        print(utils.GetHeroName(e), 1 - utils.GetPositionBetweenBuildings(e, GetTeam()))
-        print(utils.GetHeroName(e), UnitPosFactor * (1 - utils.GetPositionBetweenBuildings(e, GetTeam())))
-        print(utils.GetHeroName(e), r)
+        r = r - DistanceFactor * GetUnitToUnitDistance(bot, e) / 300 / 10 -- TODO: get move speed
+        r = r + UnitPosFactor * (1 - utils.GetPositionBetweenBuildings(e, GetTeam()))
+				if true then
+		      print(utils.GetHeroName(e), 1 - e:GetHealth()/e:GetMaxHealth())
+		      print(utils.GetHeroName(e), HealthFactor * (1 - e:GetHealth()/e:GetMaxHealth()))
+		      print(utils.GetHeroName(e), GetUnitToUnitDistance(bot, e) / 300 / 10)
+		      print(utils.GetHeroName(e), DistanceFactor * GetUnitToUnitDistance(bot, e) / 300 / 10)
+		      print(utils.GetHeroName(e), 1 - utils.GetPositionBetweenBuildings(e, GetTeam()))
+		      print(utils.GetHeroName(e), UnitPosFactor * (1 - utils.GetPositionBetweenBuildings(e, GetTeam())))
+		      print(utils.GetHeroName(e), r)
+				end
         -- TODO: rate the number of heroes
         ratings[i] = {r, e}
     end
-    table.sort(ratings, function(a, b) return a[2] > b[2] end) -- sort by rating, descending
-    local target = ratings[1][1]
+    table.sort(ratings, function(a, b) return a[1] > b[1] end) -- sort by rating, descending
+    local target = ratings[1][2]
     setHeroVar("RoamTarget", target)
     setHeroVar("move_ticks", 0)
     print(utils.GetHeroName(bot), "let's kill", utils.GetHeroName(target))
@@ -88,17 +90,16 @@ end
 
 local function KillTarget(bot)
     local move_ticks = getHeroVar("move_ticks")
-    
     if move_ticks > 50 then -- time to check for targets again
-        RoamingState = RoamingStates.KillTarget
+        RoamingState = RoamingStates.FindTarget
         return true
     else
         setHeroVar("move_ticks", move_ticks + 1)
     end
 
 	local target = getHeroVar("RoamTarget")
-    if target:CanBeSeen() then
-        bot:Action_MoveToUnit(target) -- Let's go there
+    if target ~= nil and target:GetHealth() ~= -1 and target:CanBeSeen() then
+        bot:Action_AttackUnit(target, true) -- Let's go there
         return true
     else
         RoamingState = RoamingStates.KillTarget
@@ -128,7 +129,7 @@ function Think(npcBot)
 	local result = States[RoamingState](npcBot);
 
 	setHeroVar("RoamingState", RoamingState);
-    
+
     return result
 end
 

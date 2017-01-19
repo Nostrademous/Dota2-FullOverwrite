@@ -56,32 +56,32 @@ U.Locations = {
 
 U["tableBuildings"] = {
     [constants.TEAM_RADIANT] = {
-        Locations["RadiantBase"],
-        Locations["RBT1"],
-        Locations["RBT2"],
-        Locations["RBT2"],
-        Locations["RMT1"],
-        Locations["RMT2"],
-        Locations["RMT2"],
-        Locations["RTT1"],
-        Locations["RTT2"],
-        Locations["RTT2"],
-        Locations["RadiantTopShrine"],
-        Locations["RadiantBotShrine"],
+        U.Locations["RadiantBase"],
+        U.Locations["RBT1"],
+        U.Locations["RBT2"],
+        U.Locations["RBT2"],
+        U.Locations["RMT1"],
+        U.Locations["RMT2"],
+        U.Locations["RMT2"],
+        U.Locations["RTT1"],
+        U.Locations["RTT2"],
+        U.Locations["RTT2"],
+        U.Locations["RadiantTopShrine"],
+        U.Locations["RadiantBotShrine"],
     },
     [constants.TEAM_DIRE] = {
-        Locations["DireBase"],
-        Locations["DBT1"],
-        Locations["DBT2"],
-        Locations["DBT2"],
-        Locations["DMT1"],
-        Locations["DMT2"],
-        Locations["DMT2"],
-        Locations["DTT1"],
-        Locations["DTT2"],
-        Locations["DTT2"],
-        Locations["DireTopShrine"],
-        Locations["DireBotShrine"],
+        U.Locations["DireBase"],
+        U.Locations["DBT1"],
+        U.Locations["DBT2"],
+        U.Locations["DBT2"],
+        U.Locations["DMT1"],
+        U.Locations["DMT2"],
+        U.Locations["DMT2"],
+        U.Locations["DTT1"],
+        U.Locations["DTT2"],
+        U.Locations["DTT2"],
+        U.Locations["DireTopShrine"],
+        U.Locations["DireBotShrine"],
     }
 }
 
@@ -1206,25 +1206,25 @@ function U.HaveTeleportation(npcBot)
 end
 
 -- Returns the closest building of team >team< to a unit. uilding
-function U.GetClosesBuilding(unit, team)
+function U.GetClosestBuilding(unit, team)
     local min_dist = 99999999
     local building = ""
-    for b, vector in pairs(U.tableBuildings) do
+    for b, vector in pairs(U.tableBuildings[team]) do
         local d = GetUnitToLocationDistance(unit, vector)
         if d < min_dist then
             min_dist = d
             building = b
         end
     end
-    return building
+    return U.tableBuildings[team][building]
 end
 
 function U.GetPositionBetweenBuildings(unit, team)
-    local allied_building = U.GetClosesBuilding(unit, team)
+    local allied_building = U.GetClosestBuilding(unit, team)
     local d_allied = GetUnitToLocationDistance(unit, allied_building)
-    local enemy_building = U.GetClosesBuilding(unit, U.GetOppositeTeamTo(team))
+    local enemy_building = U.GetClosestBuilding(unit, U.GetOppositeTeamTo(team))
     local d_enemy = GetUnitToLocationDistance(unit, enemy_building)
-    
+
     return d_allied / (d_allied + d_enemy)
 end
 

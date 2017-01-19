@@ -11,6 +11,7 @@ require( GetScriptDirectory().."/role" )
 require( GetScriptDirectory().."/laning_generic" )
 require( GetScriptDirectory().."/jungling_generic" )
 require( GetScriptDirectory().."/retreat_generic" )
+require( GetScriptDirectory().."/roaming_generic" )
 require( GetScriptDirectory().."/item_usage" )
 require( GetScriptDirectory().."/jungle_status" )
 
@@ -543,7 +544,7 @@ function X:Determine_ShouldIDefendLane(bot)
 end
 
 function X:Determine_ShouldRoam(bot)
-	return getHeroVar("Role") == ROLE_ROAMER or (getHeroVar("Role") == ROLE_ROAMER and getHeroVar("Self"):IsReadyToRoam(bot))
+	return getHeroVar("Role") == ROLE_ROAMER or (getHeroVar("Role") == ROLE_JUNGLER and getHeroVar("Self"):IsReadyToRoam(bot))
 end
 
 function X:IsReadyToRoam(bot)

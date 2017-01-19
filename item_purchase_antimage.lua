@@ -144,10 +144,27 @@ local ExtensionItems = {
 
 ToBuy = item_purchase:new()
 
-ToBuy:setStartingItems(StartingItems)
-ToBuy:setUtilityItems(UtilityItems)
-ToBuy:setCoreItems(CoreItems)
-ToBuy:setExtensionItems(ExtensionItems[1],ExtensionItems[2])
+-- create a 2nd layer of isolation so this bot has it's own instance not shared with other bots
+function ToBuy:new(o)
+	o = o or item_purchase:new(o)
+	setmetatable(o, self)
+	self.__index = self
+	return o
+end
+
+-- we need these so if multiple bots inherit from the generic class they don't get mixed with each other
+local myPurchaseOrder = {}
+local myBoughtItems = {}
+
+amBuy = ToBuy:new()
+-- set our members to our localized values so we don't fall through to parent's class members
+amBuy.PurchaseOrder = myPurchaseOrder
+amBuy.BoughtItems = myBoughtItems
+
+amBuy:setStartingItems(StartingItems)
+amBuy:setUtilityItems(UtilityItems)
+amBuy:setCoreItems(CoreItems)
+amBuy:setExtensionItems(ExtensionItems[1],ExtensionItems[2])
 
 ----------------------------------------------------------------------------------------------------
 
@@ -158,7 +175,7 @@ function ItemPurchaseThink()
 
 	local npcBot = GetBot()
 
-	ToBuy:Think(npcBot)
+	amBuy:Think(npcBot)
 end
 
 ----------------------------------------------------------------------------------------------------

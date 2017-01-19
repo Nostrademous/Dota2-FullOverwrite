@@ -206,7 +206,7 @@ function X:Think(bot)
 	
 	---[[
 	-- UPDATE GLOBAL INFO --
-	enemyData.UpdateEnemyInfo()
+	--enemyData.UpdateEnemyInfo()
 	
 	-- DEBUG ENEMY DUMP
 	--[[

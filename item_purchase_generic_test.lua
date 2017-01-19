@@ -6,8 +6,9 @@
 require( GetScriptDirectory().."/secret_shop_generic" )
 local utils = require( GetScriptDirectory().."/utility" )
 local items = require(GetScriptDirectory().."/items" )
-local myEnemies = require( GetScriptDirectory().."/enemy_data" )
 local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
+
+enemyData = require( GetScriptDirectory().."/enemy_data" )
 
 --[[
 	The idea is that you get a list of starting items, utility items, core items and extension items.
@@ -301,15 +302,15 @@ function X:ConsiderBuyingExtensions(bot)
 	local TrueStrikeCount
 	-- Get total disable time
 	for p = 1, 5, 1 do
-		if myEnemies.Enemies[p].obj ~= nil then
-			DamageTime = DamageTime + (myEnemies.Enemies[p].obj:GetSlowDuration(true) / 2)
-			DamageTime = DamageTime + myEnemies.Enemies[p].obj:GetStunDuration(true)
-			if myEnemies.Enemies[p].obj:HasSilence() then
+		if enemyData.Enemies[p].obj ~= nil then
+			DamageTime = DamageTime + (enemyData.Enemies[p].obj:GetSlowDuration(true) / 2)
+			DamageTime = DamageTime + enemyData.Enemies[p].obj:GetStunDuration(true)
+			if enemyData.Enemies[p].obj:HasSilence() then
 				SilenceCount = SilenceCount + 1
-			elseif myEnemies.Enemies[p].obj:IsUnableToMiss() then
+			elseif enemyData.Enemies[p].obj:IsUnableToMiss() then
 				TrueStrikeCount = TrueStrikeCount +1
 			end
-			print(utils.GetHeroName(myEnemies.Enemies[p].obj).." has "..DamageTime.." seconds of disable")
+			print(utils.GetHeroName(enemyData.Enemies[p].obj).." has "..DamageTime.." seconds of disable")
 		end
 	end
 	print("Total # of silences: "..SilenceCount.." enemies with true strike: "..TrueStrikeCount)
@@ -318,11 +319,11 @@ function X:ConsiderBuyingExtensions(bot)
 	local DamagePhysical
 	-- Get possible damage (physical/magical+pure)
 	for p = 1, 5, 1 do
-		if myEnemies.Enemies[p].obj ~= nil then
-			DamageMagicalPure = DamageMagicalPure + myEnemies.Enemies[p].obj:GetEstimatedDamageToTarget(true, bot, DamageTime, DAMAGE_TYPE_MAGICAL)
-			DamageMagicalPure = DamageMagicalPure + myEnemies.Enemies[p].obj:GetEstimatedDamageToTarget(true, bot, DamageTime, DAMAGE_TYPE_PURE)
-			DamagePhysical = DamagePhysical + myEnemies.Enemies[p].obj:GetEstimatedDamageToTarget(true, bot, DamageTime, DAMAGE_TYPE_PHYSICAL)
-			print(utils.GetHeroName(myEnemies.Enemies[p].obj).." deals "..DamageMagicalPure.." magical and pure damage and "..DamagePhysical.." physical damage (5s)")
+		if enemyData.Enemies[p].obj ~= nil then
+			DamageMagicalPure = DamageMagicalPure + enemyData.Enemies[p].obj:GetEstimatedDamageToTarget(true, bot, DamageTime, DAMAGE_TYPE_MAGICAL)
+			DamageMagicalPure = DamageMagicalPure + enemyData.Enemies[p].obj:GetEstimatedDamageToTarget(true, bot, DamageTime, DAMAGE_TYPE_PURE)
+			DamagePhysical = DamagePhysical + enemyData.Enemies[p].obj:GetEstimatedDamageToTarget(true, bot, DamageTime, DAMAGE_TYPE_PHYSICAL)
+			print(utils.GetHeroName(enemyData.Enemies[p].obj).." deals "..DamageMagicalPure.." magical and pure damage and "..DamagePhysical.." physical damage (5s)")
 		end
 	end
 

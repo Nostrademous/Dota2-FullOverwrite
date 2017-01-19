@@ -4,15 +4,17 @@
 -------------------------------------------------------------------------------
 
 require( GetScriptDirectory().."/constants" )
-local utils = require( GetScriptDirectory().."/utility" )
-local enemyData = require( GetScriptDirectory().."/enemy_data" )
-local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
 require( GetScriptDirectory().."/role" )
 require( GetScriptDirectory().."/laning_generic" )
 require( GetScriptDirectory().."/jungling_generic" )
 require( GetScriptDirectory().."/retreat_generic" )
 require( GetScriptDirectory().."/item_usage" )
 require( GetScriptDirectory().."/jungle_status" )
+
+local utils = require( GetScriptDirectory().."/utility" )
+local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
+
+enemyData = require( GetScriptDirectory().."/enemy_data" )
 
 local ACTION_NONE		= constants.ACTION_NONE
 local ACTION_LANING		= constants.ACTION_LANING
@@ -126,8 +128,6 @@ function X:GetAction()
 	return self:getActionStack()[1];
 end
 
-X.prevEnemyDump = -1000.0
-
 function X:setHeroVar(var, value)
 	gHeroVar.SetVar(self.pID, var, value)
 end
@@ -141,6 +141,8 @@ end
 -------------------------------------------------------------------------------
 
 function X:DoInit(bot)
+	gHeroVar.SetGlobalVar("PrevEnemyDataDump", -1000.0)
+	
 	--print( "Initializing PlayerID: ", bot:GetPlayerID() )
 	if GetTeamMember( GetTeam(), 1 ) == nil or GetTeamMember( GetTeam(), 5 ) == nil then return end
 	
@@ -206,16 +208,14 @@ function X:Think(bot)
 	
 	---[[
 	-- UPDATE GLOBAL INFO --
-	--enemyData.UpdateEnemyInfo()
+	enemyData.UpdateEnemyInfo()
 	
 	-- DEBUG ENEMY DUMP
-	--[[
-	checkLevel, newTime = utils.TimePassed(self.prevEnemyDump, 5.0);
+	checkLevel, newTime = utils.TimePassed(gHeroVar.GetGlobalVar("PrevEnemyDataDump"), 5.0)
 	if checkLevel then
-		self.prevEnemyDump = newTime;
-		enemyData.PrintEnemyInfo();
+		gHeroVar.SetGlobalVar("PrevEnemyDataDump", newTime)
+		enemyData.PrintEnemyInfo()
 	end
-	--]]
 	
 	-- NOW DECISIONS THAT MODIFY MY ACTION STATES
 	---]]

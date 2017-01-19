@@ -4,9 +4,7 @@
 -------------------------------------------------------------------------------
 
 require( GetScriptDirectory().."/constants" )
-require( GetScriptDirectory().."/item_purchase_antimage" )
 require ( GetScriptDirectory().."/ability_usage_antimage" )
-local utils = require( GetScriptDirectory().."/utility" )
 local dt = require( GetScriptDirectory().."/decision_tree" )
 
 local SKILL_Q = "antimage_mana_break";

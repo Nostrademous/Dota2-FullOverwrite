@@ -1,11 +1,19 @@
 -------------------------------------------------------------------------------
---- AUTHOR: Nostrademous
+--- AUTHOR: Nostrademous, dralois
 --- GITHUB REPO: https://github.com/Nostrademous/Dota2-FullOverwrite
 -------------------------------------------------------------------------------
 
+--[[
 require( GetScriptDirectory().."/generic_item_purchase" )
+--]]
 
-local tableItemsToBuyAsSupport = { 
+local items = require( GetScriptDirectory().."/items" )
+local item_purchase = require( GetScriptDirectory().."/item_purchase_generic_test" )
+
+----------------------------------------------------------------------------------------------------
+
+--[[
+local tableItemsToBuyAsSupport = {
 	"item_tango",
 	"item_tango",
 	"item_clarity",
@@ -33,7 +41,7 @@ local tableItemsToBuyAsSupport = {
 	"item_cyclone",
 };
 
-local tableItemsToBuyAsMid = { 
+local tableItemsToBuyAsMid = {
 	"item_circlet",
 	"item_mantle",
 	"item_recipe_null_talisman",
@@ -60,8 +68,8 @@ local tableItemsToBuyAsMid = {
 	"item_ultimate_orb",
 	"item_ultimate_orb",
 };
-			
-local tableItemsToBuyAsHardCarry = { 
+
+local tableItemsToBuyAsHardCarry = {
 	"item_stout_shield",
 	"item_tango",
 	"item_flask",
@@ -99,11 +107,75 @@ local tableItemsToBuyAsJungler = {
 
 local tableItemsToBuyAsRoamer = {
 }
+--]]
+
+local StartingItems = {	
+	"item_stout_shield",
+	"item_tango",
+	"item_flask",
+	"item_branches",
+	"item_branches"
+}
+
+local UtilityItems = { 
+	"item_flask" 
+}
+
+local CoreItems = {	
+	"item_power_treads_agi",
+	"item_bfury",
+	"item_vanguard",
+	"item_yasha",
+	"item_manta",
+	"item_abyssal_blade"
+}
+
+local ExtensionItems = {	
+	{	
+		"item_butterfly",
+		"item_monkey_king_bar" 
+	},
+	{	
+		"item_heart",
+		"item_black_king_bar",
+		"item_aghs_scepter" 
+	} 
+}
+
+ToBuy = item_purchase:new()
+
+-- create a 2nd layer of isolation so this bot has it's own instance not shared with other bots
+function ToBuy:new(o)
+	o = o or item_purchase:new(o)
+	setmetatable(o, self)
+	self.__index = self
+	return o
+end
+
+-- we need these so if multiple bots inherit from the generic class they don't get mixed with each other
+local myPurchaseOrder = {}
+local myBoughtItems = {}
+
+amBuy = ToBuy:new()
+-- set our members to our localized values so we don't fall through to parent's class members
+amBuy.PurchaseOrder = myPurchaseOrder
+amBuy.BoughtItems = myBoughtItems
+
+amBuy:setStartingItems(StartingItems)
+amBuy:setUtilityItems(UtilityItems)
+amBuy:setCoreItems(CoreItems)
+amBuy:setExtensionItems(ExtensionItems[1],ExtensionItems[2])
 
 ----------------------------------------------------------------------------------------------------
 
 function ItemPurchaseThink()
+	--[[
 	generic_item_purchase.ItemPurchaseThink(tableItemsToBuyAsMid, tableItemsToBuyAsHardCarry, tableItemsToBuyAsOfflane, tableItemsToBuyAsSupport, tableItemsToBuyAsJungler, tableItemsToBuyAsRoamer)
+	--]]
+
+	local npcBot = GetBot()
+
+	amBuy:Think(npcBot)
 end
 
 ----------------------------------------------------------------------------------------------------

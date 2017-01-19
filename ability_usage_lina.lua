@@ -36,42 +36,6 @@ function AbilityUsageThink()
 	abilityLSA = npcBot:GetAbilityByName( Abilities[1] );
 	abilityDS = npcBot:GetAbilityByName( Abilities[2] );
 	abilityLB = npcBot:GetAbilityByName( Abilities[4] );
-	
-	--[[
-	-- do combo
-	if getHeroVar("PerformingUltCombo") or ConsiderUltCombo() then
-		if getHeroVar("comboTarget") == nil and getHeroVar("PerformingUltCombo") == false then 
-			setHeroVar("comboTarget", UseUltCombo())
-		end
-		
-		local comboTarget = getHeroVar("comboTarget")
-		if comboTarget ~= nil and comboTarget:IsAlive() then
-			if CanCastLightStrikeArrayOnTarget( comboTarget ) and abilityLSA:IsFullyCastable() then
-				local locDelta = comboTarget:GetExtrapolatedLocation(abilityLSA:GetCastPoint())
-				npcBot:Action_UseAbilityOnLocation( abilityLSA, comboTarget:GetLocation()+locDelta )
-				print ( " Hit them with LSA ..." )
-				return true
-			end
-			
-			if CanCastDragonSlaveOnTarget( comboTarget ) and abilityDS:IsFullyCastable() and comboTarget:IsStunned() then
-				npcBot:Action_UseAbilityOnLocation( abilityDS, comboTarget:GetLocation() )
-				print ( "And Hit them with DS ..." )
-				return true
-			end
-			
-			if CanCastLagunaBladeOnTarget( comboTarget ) and abilityLB:IsFullyCastable() then
-				npcBot:Action_UseAbilityOnEntity( abilityLB, comboTarget )
-				print ( "And FINISH THEM with LB!!!!" )
-				setHeroVar("PerformingUltCombo", false)
-				setHeroVar("comboTarget", nil)
-				return true
-			end
-		else
-			setHeroVar("PerformingUltCombo", false)
-			setHeroVar("comboTarget", nil)
-		end
-	end
-	--]]
 
 	local EnemyHeroes = npcBot:GetNearbyHeroes(1200, true, BOT_MODE_NONE)
 	local EnemyCreeps = npcBot:GetNearbyCreeps(1200, true)
@@ -130,69 +94,6 @@ function CanCastLagunaBladeOnTarget( npcTarget )
 end
 
 ----------------------------------------------------------------------------------------------------
-
-function UseUltCombo()
-	local npcBot = GetBot()
-	
-	local WeakestEnemy = nil
-	local LowestHP = 10000.0
-	
-	local aq = npcBot:GetAbilityByName(Abilities[1])
-	local aw = npcBot:GetAbilityByName(Abilities[2])
-	local ar = npcBot:GetAbilityByName(Abilities[4])
-	
-	local nCastRange = aw:GetCastRange()
-	local nRadius = abilityLSA:GetSpecialValueInt( "light_strike_array_aoe" )
-	
-	local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nCastRange + nRadius, true, BOT_MODE_NONE )
-	for _,npcEnemy in pairs( tableNearbyEnemyHeroes ) do
-		if npcEnemy ~= nil and npcEnemy:IsAlive() then	
-			if LowestHP > npcEnemy:GetHealth() and npcEnemy:GetHealth() > 0 then
-				WeakestEnemy = npcEnemy
-				LowestHP = npcEnemy:GetHealth()
-			end
-		end
-	end
-	
-	if WeakestEnemy == nil or LowestHP < 1 then
-		return nil
-	end
-	
-	local comboDmg = WeakestEnemy:GetActualDamage( aw:GetAbilityDamage(), aw:GetDamageType() )
-	comboDmg = comboDmg + WeakestEnemy:GetActualDamage( aq:GetAbilityDamage(), aq:GetDamageType() )
-	local arDT = ar:GetDamageType()
-	if npcBot:HasScepter() then arDT = DAMAGE_TYPE_PURE end
-	comboDmg = comboDmg + WeakestEnemy:GetActualDamage( ar:GetAbilityDamage(), arDT )
-	
-	if LowestHP < comboDmg and aw:GetCastRange() > GetUnitToUnitDistance(npcBot, WeakestEnemy) then
-		print( "Lina Comboing for ", WeakestEnemy:GetUnitName() )
-		setHeroVar("PerformingUltCombo", true)
-		return WeakestEnemy
-	end
-	return nil
-end
-
-function ConsiderUltCombo()
-	local npcBot = GetBot()
-	
-	local aq = npcBot:GetAbilityByName(Abilities[1]);
-	local aw = npcBot:GetAbilityByName(Abilities[2]);
-	local ar = npcBot:GetAbilityByName(Abilities[4]);
-	
-	if aq:GetLevel() < 1 or aw:GetLevel() < 1 or ar:GetLevel() < 1 then
-		return false
-	end
-	
-	if not ( aq:IsFullyCastable() and aw:IsFullyCastable() and ar:IsFullyCastable() ) then
-		return false
-	end
-	
-	if ( aq:GetManaCost() + aw:GetManaCost() + ar:GetManaCost() ) > npcBot:GetMana() then
-		return false
-	end
-	
-	return true
-end
 
 function ConsiderLightStrikeArrayFighting(abilityLSA, enemy)
     local npcBot = GetBot()

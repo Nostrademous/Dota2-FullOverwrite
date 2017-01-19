@@ -6,6 +6,7 @@
 _G._savedEnv = getfenv()
 module( "retreat_generic", package.seeall )
 
+require( GetScriptDirectory().."/item_usage" )
 local utils = require( GetScriptDirectory().."/utility")
 local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
 
@@ -25,18 +26,6 @@ end
 
 local function Updates(npcBot)
 	setHeroVar("RetreatPos", utils.PositionAlongLane(npcBot, getHeroVar("CurLane")))
-end
-
-local function UseForce(nextmove)
-	local npcBot = GetBot();
-
-	local force = utils.IsItemAvailable("item_force_staff");
-	
-	if force~=nil and utils.IsFacingLocation(npcBot, nextmove, 25)  then
-		npcBot:Action_UseAbilityOnEntity(force, npcBot);
-		return false;
-	end
-	return true;
 end
 
 function Think(npcBot, retreatAbility)
@@ -70,8 +59,8 @@ function Think(npcBot, retreatAbility)
 		end
 		
 	end
-	
-	UseForce(nextmove)
+
+	item_usage.UseMovementItems(nextmove)
 	npcBot:Action_MoveToLocation(nextmove)
 end
 

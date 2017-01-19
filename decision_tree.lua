@@ -23,6 +23,9 @@ local ACTION_CHANNELING	= constants.ACTION_CHANNELING
 local ACTION_MOVING		= constants.ACTION_MOVING
 local ACTION_SECRETSHOP	= constants.ACTION_SECRETSHOP
 local ACTION_RUNEPICKUP = constants.ACTION_RUNEPICKUP
+local ACTION_ROSHAN		= constants.ACTION_ROSHAN
+local ACTION_DEFENDALLY	= constants.ACTION_DEFENDALLY
+local ACTION_DEFENDLANE	= constants.ACTION_DEFENDLANE
 
 local X = { currentAction = ACTION_NONE, prevAction = ACTION_NONE, actionStack = {}, abilityPriority = {} }
 
@@ -139,6 +142,9 @@ end
 -------------------------------------------------------------------------------
 
 function X:DoInit(bot)
+	--print( "Initializing PlayerID: ", bot:GetPlayerID() )
+	if GetTeamMember( GetTeam(), 1 ) == nil or GetTeamMember( GetTeam(), 5 ) == nil then return end
+	
 	self.pID = bot:GetPlayerID() -- do this to reduce calls to bot:GetPlayerID() in the future
 	gHeroVar.InitHeroVar(self.pID)
 	
@@ -171,13 +177,16 @@ function X:DoHeroSpecificInit(bot)
 end
 
 function X:Think(bot)
-	jungle_status.checkSpawnTimer()
-
-	if ( GetGameState() ~= GAME_STATE_GAME_IN_PROGRESS and GetGameState() ~= GAME_STATE_PRE_GAME ) then return end;
-	
-	if not self.Init then
-		self:DoInit(bot)
+	if ( GetGameState() == GAME_STATE_TEAM_SHOWCASE ) then
+		if not self.Init then
+			self:DoInit(bot)
+		end
 	end
+
+	if ( GetGameState() ~= GAME_STATE_GAME_IN_PROGRESS and GetGameState() ~= GAME_STATE_PRE_GAME ) then return end
+	
+	-- check if jungle respawn timer was hit to repopulate our table
+	jungle_status.checkSpawnTimer()
 	
 	--[[
 		FIRST DECISIONS THAT DON'T AFFECT THE MY ACTION STATES
@@ -198,7 +207,7 @@ function X:Think(bot)
 	
 	---[[
 	-- UPDATE GLOBAL INFO --
-	--enemyData.UpdateEnemyInfo();
+	--enemyData.UpdateEnemyInfo()
 	
 	-- DEBUG ENEMY DUMP
 	--[[
@@ -603,7 +612,6 @@ function X:DoRetreat(bot, reason)
 			self:AddAction(ACTION_RETREAT)
 			retreat_generic.OnStart(bot)
 		end
-		item_usage.UseMovementItems()
 		retreat_generic.Think(bot)
 	elseif reason == 2 then
 		if ( self:HasAction(ACTION_RETREAT) == false ) then
@@ -685,33 +693,36 @@ end
 function X:DoFight(bot)
 	local target = self:getHeroVar("Target")
 	if utils.NotNilOrDead(target) then
-		local Towers = bot:GetNearbyTowers(1200, true)
+		local Towers = bot:GetNearbyTowers(750, true)
 		if Towers ~= nil and #Towers == 0 then
 			if target:IsAttackImmune() or (bot:GetLastAttackTime() + bot:GetSecondsPerAttack()) > GameTime() then
 				item_usage.UseMovementItems()
-				print(utils.GetHeroName(bot), " - moving to target 1")
 				bot:Action_MoveToLocation(target:GetLocation())
 			else
-				print(utils.GetHeroName(bot), " - attacking target 1")
 				bot:Action_AttackUnit(target, false)
 			end
 			return true
 		else
+			local towerDmgToMe = 0
+			local myDmgToTarget = bot:GetEstimatedDamageToTarget( true, target, 4.0, DAMAGE_TYPE_ALL )
 			for _, tow in pairs(Towers) do
-				if GetUnitToLocationDistance( bot, tow:GetLocation() ) < 900 then
-					self:RemoveAction(ACTION_FIGHT)
-					self:setHeroVar("Target", nil)
-					return false
+				if GetUnitToLocationDistance( bot, tow:GetLocation() ) < 750 then
+					towerDmgToMe = towerDmgToMe + tow:GetEstimatedDamageToTarget( false, bot, 4.0, DAMAGE_TYPE_PHYSICAL )
 				end
 			end
-			if target:IsAttackImmune() or (bot:GetLastAttackTime() + bot:GetSecondsPerAttack()) > GameTime() then
-				print(utils.GetHeroName(bot), " - moving to target 2")
-				bot:Action_MoveToLocation(target:GetLocation())
+			if myDmgToTarget > target:GetHealth() and towerDmgToMe < (bot:GetHealth() + 100) then
+				--print(utils.GetHeroName(bot), " - we are tower diving for the kill")
+				if target:IsAttackImmune() or (bot:GetLastAttackTime() + bot:GetSecondsPerAttack()) > GameTime() then
+					bot:Action_MoveToLocation(target:GetLocation())
+				else
+					bot:Action_AttackUnit(target, false)
+				end
+				return true
 			else
-				print(utils.GetHeroName(bot), " - attacking target 2")
-				bot:Action_AttackUnit(target, false)
+				self:RemoveAction(ACTION_FIGHT)
+				self:setHeroVar("Target", nil)
+				return false
 			end
-			return true
 		end
 	else
 		self:RemoveAction(ACTION_FIGHT)

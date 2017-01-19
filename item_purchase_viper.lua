@@ -12,10 +12,10 @@ local item_purchase = require( GetScriptDirectory().."/item_purchase_generic_tes
 
 ----------------------------------------------------------------------------------------------------
 
-local StartingItems = {	
-	"item_boots",
-	"item_circlet",
-	"item_wraith_band"
+local StartingItems = {
+	"item_stout_shield",
+	"item_flask",
+	"item_faerie_fire",
 }
 
 local UtilityItems = { 
@@ -23,17 +23,17 @@ local UtilityItems = {
 }
 
 local CoreItems = {	
+	"item_power_treads_agi",
 	"item_ring_of_aquila",
-	"item_power_treads_str",
-	"item_mekansm",
-	
+	"item_mekansm"
 }
 
 local ExtensionItems = {	
-	{	
+	{
+		"item_assault" 
 	},
 	{	
-		"item_assault" 
+		"item_heart"
 	} 
 }
 

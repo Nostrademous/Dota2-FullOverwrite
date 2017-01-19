@@ -17,8 +17,8 @@ X.Enemies[5] = { obj = nil, last_seen = -1000.0 }
 
 X.Missing = {}
 
-X.Lock = false;
-X.MissingThreshold = 10.0;
+X.Lock = false
+X.MissingThreshold = 10.0
 
 -------------------------------------------------------------------------------
 -- FUNCTIONS - implement rudimentary atomic operation insurance
@@ -34,41 +34,41 @@ local function UpdateEnemiesMissing()
 	for p = 1, 5, 1 do
 		local entry = X.Enemies[p]
 		if EnemyEntryValidAndAlive(entry) then
-			local tDelta = RealTime() - entry.last_seen;
+			local tDelta = RealTime() - entry.last_seen
 			if tDelta > X.MissingThreshold then
-				local enemy = entry.obj;
-				X.Missing[utils.GetHeroName(enemy)] = tDelta;
+				local enemy = entry.obj
+				X.Missing[utils.GetHeroName(enemy)] = tDelta
 			end
 		end
 	end
 end
 
 function X.SetMissingThreshold(value)
-	X.MissingThreshold = value;
+	X.MissingThreshold = value
 end
 
 function X.UpdateEnemyInfo()
-	if ( GetGameState() ~= GAME_STATE_GAME_IN_PROGRESS and GetGameState() ~= GAME_STATE_PRE_GAME ) then return end;
+	if ( GetGameState() ~= GAME_STATE_GAME_IN_PROGRESS and GetGameState() ~= GAME_STATE_PRE_GAME ) then return end
 	
-	if ( X.Lock ) then return end;
+	if ( X.Lock ) then return end
 	
-	X.Lock = true;
+	X.Lock = true
 	
 	for p = 1, 5, 1 do
-		local tDelta = RealTime() - X.Enemies[p].last_seen;
+		local tDelta = RealTime() - X.Enemies[p].last_seen
 		-- throttle our update to once every 1 second for each enemy
 		if tDelta >= 1.0 then
-			local enemy = GetTeamMember(utils.GetOtherTeam(), p);
+			local enemy = GetTeamMember(utils.GetOtherTeam(), p)
 			if ( enemy ~= nil and enemy:GetHealth() ~= -1 ) then
-				X.Enemies[p].obj = enemy;
-				X.Enemies[p].last_seen = RealTime();
+				X.Enemies[p].obj = enemy
+				X.Enemies[p].last_seen = RealTime()
 			end
 		end
 	end
 	
-	UpdateEnemiesMissing();
+	UpdateEnemiesMissing()
 	
-	X.Lock = false;
+	X.Lock = false
 end
 
 function X.PrintEnemyInfo()
@@ -91,14 +91,14 @@ function X.PrintEnemyInfo()
 end
 
 function X.GetMissingEnemies()
-	if ( X.Lock ) then return end;
-	X.Lock = true;
+	if ( X.Lock ) then return end
+	X.Lock = true
 	
-	local copy = utils.deepcopy(X.Missing);
+	local copy = utils.deepcopy(X.Missing)
 	
 	X.Lock = false;
 	
-	return copy;
+	return copy
 end
 
-return X;
+return X

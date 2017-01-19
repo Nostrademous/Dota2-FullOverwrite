@@ -11,6 +11,17 @@ require( GetScriptDirectory().."/constants" )
 
 local utils = require( GetScriptDirectory().."/utility" )
 local dt = require( GetScriptDirectory().."/decision_tree" )
+local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
+
+function setHeroVar(var, value)
+	local bot = GetBot()
+	gHeroVar.SetVar(bot:GetPlayerID(), var, value)
+end
+
+function getHeroVar(var)
+	local bot = GetBot()
+	return gHeroVar.GetVar(bot:GetPlayerID(), var)
+end
 
 local BLOODSEEKER_SKILL_Q = "bloodseeker_bloodrage";
 local BLOODSEEKER_SKILL_W = "bloodseeker_blood_bath";
@@ -59,15 +70,31 @@ function Think()
 	bloodseekerBot:Think(npcBot)
 end
 
-function bloodseekerBot:DoRetreat(bot, safe)
-	if safe == 3 then -- just creeps
-		if (bot:GetHealth()/bot:GetMaxHealth()) < 0.15 then
-			-- TODO: find a better reason code
-			return dt:DoRetreat(bot, 1) -- reason 1 is enemy. 3 would be creeps. But we don't want fancy backoffs. We just want to go home
+-- We over-write DoRetreat behavior for JUNLGER Bloodseeker
+function bloodseekerBot:DoRetreat(bot, reason)
+	-- if we got creep damage and are a JUNGLER do special stuff
+	if reason == 3 and getHeroVar("Role") == constants.ROLE_JUNGLER then
+		-- if our health is lower than maximum( 15% health, 100 health )
+		if bot:GetHealth() < math.max(bot:GetMaxHealth()*0.15, 100) then
+			setHeroVar("IsRetreating", true)
+			if ( self:HasAction(constants.ACTION_RETREAT) == false ) then
+				self:AddAction(constants.ACTION_RETREAT)
+				setHeroVar("IsInLane", false)
+			end
 		end
+		-- if we are retreating - piggyback on retreat logic movement code
+		if self:GetAction() == constants.ACTION_RETREAT then
+			-- we use '.' instead of ':' and pass 'self' so it is the correct self
+			return dt.DoRetreat(self, bot, 1)
+		end
+		
+		-- we are not retreating, allow decision tree logic to fall through
+		-- to the next level
 		return false
-	else -- tower (in the jungle??) or enemy
-		return dt:DoRetreat(bot, safe)
+	-- if we are not a jungler, invoke default DoRetreat behavior
+	else
+		-- we use '.' instead of ':' and pass 'self' so it is the correct self
+		return dt.DoRetreat(self, bot, reason)
 	end
 end
 
@@ -78,7 +105,9 @@ function bloodseekerBot:GetMaxClearableCampLevel(bot)
 	end
 
 	local bloodrage = bot:GetAbilityByName("bloodseeker_bloodrage")
-	if utils.HaveItem(bot, "item_iron_talon") and bloodrage:GetLevel() >= 2 then
+	if bloodrage:GetLevel() >= 4 then
+		return constants.CAMP_ANCIENT
+	elseif utils.HaveItem(bot, "item_iron_talon") and bloodrage:GetLevel() >= 2 then
 		return constants.CAMP_HARD
 	end
 

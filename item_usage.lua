@@ -116,8 +116,9 @@ function UseTeamItems()
 	end
 end
 
-function UseMovementItems()
+function UseMovementItems(location) 
 	local npcBot = GetBot()
+	local location = location or npcBot:GetLocation()
 	
 	if npcBot:IsChanneling() then
 		return nil
@@ -126,6 +127,12 @@ function UseMovementItems()
 	local pb = utils.HaveItem(npcBot, "item_phase_boots")
 	if pb ~= nil and pb:IsFullyCastable() then
 		npcBot:Action_UseAbility(pb)
+		return nil
+	end
+
+	local force = utils.HaveItem(npcBot, "item_force_staff")
+	if force ~= nil and utils.IsFacingLocation(npcBot, location, 25) then
+		npcBot:Action_UseAbilityOnEntity(force, npcBot)
 		return nil
 	end
 end

@@ -162,7 +162,9 @@ function X:Think(npcBot)
 	self:InitTable()
 
 	-- If we want a new item we determine which one first
-	self:UpdatePurchaseOrder(npcBot)
+	if #self.PurchaseOrder == 0 then
+		self:UpdatePurchaseOrder(npcBot)
+	end
 
 	--[[
 	-- Maybe sell items (not tested)
@@ -258,6 +260,7 @@ function X:UpdatePurchaseOrder(npcBot)
 				self:ConsiderBuyingExtensions(npcBot)
 			else
 				-- Put the core items in the purchase order
+<<<<<<< HEAD
 				for _,p in pairs(items[self.CoreItems[1]]) do
 					self.PurchaseOrder[#self.PurchaseOrder+1] = p
 				end
@@ -273,6 +276,25 @@ function X:UpdatePurchaseOrder(npcBot)
 			-- Remove entry
 			self.BoughtItems[#self.BoughtItems+1] = self.StartingItems[1]
 			table.remove(self.StartingItems, 1)
+=======
+				for _,p in pairs(items[self.coreItems[1]]) do
+					--print(utils.GetHeroName(npcBot), " adding core item to purchase queue: ", p)
+					table.insert(self.PurchaseOrder, p)
+				end
+				-- Remove entry
+				table.insert(self.BoughtItems, self.coreItems[1])
+				table.remove(self.coreItems, 1)
+			end
+		else
+			-- Put the core items in the purchase order
+			for _,p in pairs(items[self.startingItems[1]]) do
+				--print(utils.GetHeroName(npcBot), " adding starting item to purchase queue: ", p)
+				table.insert(self.PurchaseOrder, p)
+			end
+			-- Remove entry
+			table.insert(self.BoughtItems, self.startingItems[1])
+			table.remove(self.startingItems, 1)
+>>>>>>> 601b13c7bc9e4f1a3cb71ee2406feb8327f102b6
 		end
 	-- Support
 	else
@@ -339,8 +361,13 @@ function X:ConsiderSellingItems(bot)
 			end
 			-- Do we really want to sell the item?
 			if bSell then
+<<<<<<< HEAD
 				print(utils.getHeroVar("Name").." - Considering selling "..p)
 				ItemsToConsiderSelling[#ItemsToConsiderSelling+1] = p
+=======
+				print("Considering selling "..p)
+				table.insert(ItemsToConsiderSelling, p)
+>>>>>>> 601b13c7bc9e4f1a3cb71ee2406feb8327f102b6
 				--[[
 				Haven't tried if it works yet..
 
@@ -375,14 +402,16 @@ function X:ConsiderBuyingExtensions(bot)
 	local TrueStrikeCount
 	-- Get total disable time
 	for p = 1, 5, 1 do
-		DamageTime = DamageTime + (myEnemies.Enemies[p].obj:GetSlowDuration(true) / 2)
-		DamageTime = DamageTime + myEnemies.Enemies[p].obj:GetStunDuration(true)
-		if myEnemies.Enemies[p].obj:HasSilence() then
-			SilenceCount = SilenceCount + 1
-		elseif myEnemies.Enemies[p].obj:IsUnableToMiss() then
-			TrueStrikeCount = TrueStrikeCount +1
+		if myEnemies.Enemies[p].obj ~= nil then
+			DamageTime = DamageTime + (myEnemies.Enemies[p].obj:GetSlowDuration(true) / 2)
+			DamageTime = DamageTime + myEnemies.Enemies[p].obj:GetStunDuration(true)
+			if myEnemies.Enemies[p].obj:HasSilence() then
+				SilenceCount = SilenceCount + 1
+			elseif myEnemies.Enemies[p].obj:IsUnableToMiss() then
+				TrueStrikeCount = TrueStrikeCount +1
+			end
+			print(utils.GetHeroName(myEnemies.Enemies[p].obj).." has "..DamageTime.." seconds of disable")
 		end
-		print(utils.GetHeroName(myEnemies.Enemies[p].obj).." has "..DamageTime.." seconds of disable")
 	end
 	print(utils.getHeroVar("Name").." - Total # of silences: "..SilenceCount.." enemies with true strike: "..TrueStrikeCount)
 		-- Stores the possible damage over 5s + stun/slow duration from all enemies
@@ -390,10 +419,12 @@ function X:ConsiderBuyingExtensions(bot)
 	local DamagePhysical
 	-- Get possible damage (physical/magical+pure)
 	for p = 1, 5, 1 do
-		DamageMagicalPure = DamageMagicalPure + myEnemies.Enemies[p].obj:GetEstimatedDamageToTarget(true, bot, DamageTime, DAMAGE_TYPE_MAGICAL)
-		DamageMagicalPure = DamageMagicalPure + myEnemies.Enemies[p].obj:GetEstimatedDamageToTarget(true, bot, DamageTime, DAMAGE_TYPE_PURE)
-		DamagePhysical = DamagePhysical + myEnemies.Enemies[p].obj:GetEstimatedDamageToTarget(true, bot, DamageTime, DAMAGE_TYPE_PHYSICAL)
-		print(utils.GetHeroName(myEnemies.Enemies[p].obj).." deals "..DamageMagicalPure.." magical and pure damage and "..DamagePhysical.." physical damage (5s)")
+		if myEnemies.Enemies[p].obj ~= nil then
+			DamageMagicalPure = DamageMagicalPure + myEnemies.Enemies[p].obj:GetEstimatedDamageToTarget(true, bot, DamageTime, DAMAGE_TYPE_MAGICAL)
+			DamageMagicalPure = DamageMagicalPure + myEnemies.Enemies[p].obj:GetEstimatedDamageToTarget(true, bot, DamageTime, DAMAGE_TYPE_PURE)
+			DamagePhysical = DamagePhysical + myEnemies.Enemies[p].obj:GetEstimatedDamageToTarget(true, bot, DamageTime, DAMAGE_TYPE_PHYSICAL)
+			print(utils.GetHeroName(myEnemies.Enemies[p].obj).." deals "..DamageMagicalPure.." magical and pure damage and "..DamagePhysical.." physical damage (5s)")
+		end
 	end
 
 	--[[

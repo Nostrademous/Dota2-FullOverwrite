@@ -346,6 +346,12 @@ function X:GetItemValueNumber(item)
 		return 10000
 	elseif item == "item_tpscroll" then
 		return 10000
+	elseif item == "item_gem" then
+		return 10000
+	elseif item == "item_courier" then
+		return 10000
+	elseif item == "item_flying_courier" then
+		return 10000
 	else
 		return GetItemCost(item)
 	end

@@ -42,7 +42,7 @@ function ED.UpdateEnemyInfo()
 			end
 		end
 	end
-	
+
 	ED.Lock = false
 end
 

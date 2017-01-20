@@ -211,7 +211,8 @@ function X:Think(bot)
 	enemyData.UpdateEnemyInfo()
 	
 	-- DEBUG ENEMY DUMP
-	checkLevel, newTime = utils.TimePassed(gHeroVar.GetGlobalVar("PrevEnemyDataDump"), 5.0)
+	-- Dump enemy info every 15 seconds
+	checkLevel, newTime = utils.TimePassed(gHeroVar.GetGlobalVar("PrevEnemyDataDump"), 15.0)
 	if checkLevel then
 		gHeroVar.SetGlobalVar("PrevEnemyDataDump", newTime)
 		enemyData.PrintEnemyInfo()

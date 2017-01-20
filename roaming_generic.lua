@@ -37,6 +37,7 @@ local BackTimerGen=-1000;
 local HealthFactor = 1
 local UnitPosFactor = 1
 local DistanceFactor = 0.1
+local HeroCountFactor = 0.3
 
 local IsCore = nil;
 
@@ -60,28 +61,48 @@ local function FindTarget(bot)
     if #enemies == 0 then
         return false
     end
+    local allies = GetUnitList(UNIT_LIST_ALLY_HEROES)
     local ratings = {}
     for i, e in pairs(enemies) do
-        local r = 0
-        r = r + HealthFactor * (1 - e:GetHealth()/e:GetMaxHealth())
-        -- time to get there in 10s units
-        r = r - DistanceFactor * GetUnitToUnitDistance(bot, e) / 300 / 10 -- TODO: get move speed
-        r = r + UnitPosFactor * (1 - utils.GetPositionBetweenBuildings(e, GetTeam()))
-				if true then
-		      print(utils.GetHeroName(e), 1 - e:GetHealth()/e:GetMaxHealth())
-		      print(utils.GetHeroName(e), HealthFactor * (1 - e:GetHealth()/e:GetMaxHealth()))
-		      print(utils.GetHeroName(e), GetUnitToUnitDistance(bot, e) / 300 / 10)
-		      print(utils.GetHeroName(e), DistanceFactor * GetUnitToUnitDistance(bot, e) / 300 / 10)
-		      print(utils.GetHeroName(e), 1 - utils.GetPositionBetweenBuildings(e, GetTeam()))
-		      print(utils.GetHeroName(e), UnitPosFactor * (1 - utils.GetPositionBetweenBuildings(e, GetTeam())))
-		      print(utils.GetHeroName(e), r)
-				end
-        -- TODO: rate the number of heroes
-        ratings[i] = {r, e}
+        if e:CanBeSeen() then
+            local r = 0
+            r = r + HealthFactor * (1 - e:GetHealth()/e:GetMaxHealth())
+            -- time to get there in 10s units
+            r = r - DistanceFactor * GetUnitToUnitDistance(bot, e) / 300 / 10 -- TODO: get move speed
+            r = r + UnitPosFactor * (1 - utils.GetPositionBetweenBuildings(e, GetTeam()))
+            local hero_count = 0
+            for _, enemy in pairs(enemies) do
+                if enemy.CanBeSeen() and utils.GetHeroName(enemy) ~= utils.GetHeroName(e) then
+                    if GetUnitToUnitDistance(enemy, e) < 1500 then
+                        hero_count = hero_count - 1
+                    end
+                end
+            end
+            for _, ally in pairs(allies) do
+                if utils.GetHeroName(ally) ~= utils.GetHeroName(bot) then
+                    if GetUnitToUnitDistance(ally, e) < 1500 then
+                        hero_count = hero_count + 1
+                    end
+                end
+            end
+            r = r + HeroCountFactor * hero_count
+            if true then
+                  print(utils.GetHeroName(e), 1 - e:GetHealth()/e:GetMaxHealth())
+                  print(utils.GetHeroName(e), HealthFactor * (1 - e:GetHealth()/e:GetMaxHealth()))
+                  print(utils.GetHeroName(e), GetUnitToUnitDistance(bot, e) / 300 / 10)
+                  print(utils.GetHeroName(e), DistanceFactor * GetUnitToUnitDistance(bot, e) / 300 / 10)
+                  print(utils.GetHeroName(e), 1 - utils.GetPositionBetweenBuildings(e, GetTeam()))
+                  print(utils.GetHeroName(e), UnitPosFactor * (1 - utils.GetPositionBetweenBuildings(e, GetTeam())))
+                  print(utils.GetHeroName(e), hero_count)
+                  print(utils.GetHeroName(e), HeroCountFactor * hero_count)
+                  print(utils.GetHeroName(e), r)
+            end
+            ratings[i] = {r, e}
+        end
     end
     table.sort(ratings, function(a, b) return a[1] > b[1] end) -- sort by rating, descending
     local target = ratings[1][2]
-    setHeroVar("RoamTarget", target)
+    setHeroVar("Target", target)
     setHeroVar("move_ticks", 0)
     print(utils.GetHeroName(bot), "let's kill", utils.GetHeroName(target))
     RoamingState = RoamingStates.KillTarget
@@ -97,7 +118,7 @@ local function KillTarget(bot)
         setHeroVar("move_ticks", move_ticks + 1)
     end
 
-	local target = getHeroVar("RoamTarget")
+	local target = getHeroVar("Target")
     if target ~= nil and target:GetHealth() ~= -1 and target:CanBeSeen() then
 				if GetUnitToUnitDistance(bot, target) < 1000 then
 					getHeroVar("Self"):RemoveAction(ACTION_ROAMING)
@@ -107,6 +128,7 @@ local function KillTarget(bot)
 				else
         	bot:Action_AttackUnit(target, true) -- Let's go there
 				end
+        -- TODO: consider being sneaky
         return true
     else
         RoamingState = RoamingStates.KillTarget

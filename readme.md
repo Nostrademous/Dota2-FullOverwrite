@@ -1,13 +1,12 @@
--------------------------------------------------------------------------------
---- AUTHOR: Nostrademous
---- GITHUB REPO: https://github.com/Nostrademous/Dota2-FullOverwrite
--------------------------------------------------------------------------------
+
+### AUTHOR: Nostrademous
+### GITHUB REPO: https://github.com/Nostrademous/Dota2-FullOverwrite
 
 This is a full bot over-write implementation. This means that for each hero 
 (eventually all of them, but we start with small sample) we will implement 
-a bot_<heroName>.lua file with an implementation of the Think() function.
+a bot_\<heroName>.lua file with an implementation of the Think() function.
 
-This is a WORK IN PROGRESS. I share it in the hope that other developers will 
+This is a **WORK IN PROGRESS**. I share it in the hope that other developers will 
 find it useful and potentially contribute by requesting pull commits against 
 this code base building a better community bot framework. 
 
@@ -16,16 +15,20 @@ author and many contributors of the "Dota 2 Bot Scripting Forums" which can be
 found here: http://dev.dota2.com/forumdisplay.php?f=497
 
 Code Layout:
+------------
+
 The design intention was to largely leverage the concept of class-based 
 inheritance as existant in Object Oriented Programming languagues, but in LUA.
 To that end, there exists a "decision_tree.lua" base class that loosely 
 defines the behavior of every bot we make by the virtue of the fact that all 
-bot_<heroName>.lua files will derive off of it. This allows the hero-specific 
+bot_\<heroName>.lua files will derive off of it. This allows the hero-specific 
 files to only over-load those decision_tree.lua functions that they want the 
 specific hero to handle differently, while keeping other aspects of bot 
 behavior untouched.
 
 Current Files:
+--------------
+
 * readme.md - this file
 
 * constants.lua - constants that allow for easy use of our defined values 
@@ -110,21 +113,30 @@ Current Files:
 	now only need to define the appropriate ROLE specific table for item purchase 
 	order (i.e., Mid, HardCarry, Support, etc).
 	
-* bot_<heroName>.lua - three exist for now - Lina, Viper and Antimage. Look, 
+* bot_\<heroName>.lua - three exist for now - Lina, Viper and Antimage. Look, 
 	they are hard-coded implmenetations for now that don't build according 
 	to the game state, but rather to a hardcoded ordering. This will need to 
 	be largely re-written in an intelligent fashion eventually so it makes 
 	choices that respond to what's happening in the game and based on the 
 	makeup of enemy heroes. These heroes require supporting lua files to 
-	really function: item_purchase_<heroName>.lua and ability_usage_<heroName>.lua
+	really function: item_purchase_\<heroName>.lua and ability_usage_\<heroName>.lua
 	These exist for Lina only. The existing hero files were created to demo 
 	some of the possibilities of decision_tree function over-loading.
 	
-* other files are in support of bot_<heroName> files
+* other files are in support of bot_\<heroName> files
 
 TODOs/FIXMEs:
-Lots - we need fighting logic, rune logic, ward logic, tower attack logic, 
-ally defend logic, tower defend logic, bot 5-man assembly logic, roshan logic, etc.
-We need lots of item_purchasing for heroes and lots more heroes.
+-------------
+
+Lots, we need :
+- fighting logic
+- rune logic
+- ward logic
+- tower attack logic 
+- ally defend logic
+- tower defend logic
+- bot 5-man assembly logic
+- roshan logic, etc.
+- item_purchasing for heroes and lots more heroes.
 
 Some FIXMEs are commented in code - I add them as a tag to get back to with ideas.

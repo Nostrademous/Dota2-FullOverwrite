@@ -99,7 +99,14 @@ local function KillTarget(bot)
 
 	local target = getHeroVar("RoamTarget")
     if target ~= nil and target:GetHealth() ~= -1 and target:CanBeSeen() then
-        bot:Action_AttackUnit(target, true) -- Let's go there
+				if GetUnitToUnitDistance(bot, target) < 1000 then
+					getHeroVar("Self"):RemoveAction(ACTION_ROAMING)
+					getHeroVar("Self"):AddAction(ACTION_FIGHT)
+					print(utils.GetHeroName(bot), "found his target!")
+					-- TODO: kill!
+				else
+        	bot:Action_AttackUnit(target, true) -- Let's go there
+				end
         return true
     else
         RoamingState = RoamingStates.KillTarget

@@ -692,7 +692,7 @@ function X:DoFight(bot)
 		if Towers ~= nil and #Towers == 0 then
 			if target:IsAttackImmune() or (bot:GetLastAttackTime() + bot:GetSecondsPerAttack()) > GameTime() then
 				item_usage.UseMovementItems()
-				bot:Action_MoveToLocation(target:GetLocation())
+				bot:Action_MoveToUnit(target)
 			else
 				bot:Action_AttackUnit(target, false)
 			end
@@ -708,7 +708,7 @@ function X:DoFight(bot)
 			if myDmgToTarget > target:GetHealth() and towerDmgToMe < (bot:GetHealth() + 100) then
 				--print(utils.GetHeroName(bot), " - we are tower diving for the kill")
 				if target:IsAttackImmune() or (bot:GetLastAttackTime() + bot:GetSecondsPerAttack()) > GameTime() then
-					bot:Action_MoveToLocation(target:GetLocation())
+					bot:Action_MoveToUnit(target)
 				else
 					bot:Action_AttackUnit(target, false)
 				end
@@ -808,7 +808,7 @@ end
 function X:DoMove(bot, loc)
 	if loc then
 		self:AddAction(ACTION_MOVING);
-		bot:Action_AttackMove(loc); -- MoveToLocation is quantized and imprecise
+		bot:Action_MoveToLocation(loc)
 	end
 	return true
 end

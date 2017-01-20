@@ -8,7 +8,7 @@ local utils = require( GetScriptDirectory().."/utility" )
 local items = require(GetScriptDirectory().."/items" )
 local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
 
-enemyData = require( GetScriptDirectory().."/enemy_data" )
+local enemyData = require( GetScriptDirectory().."/enemy_data" )
 
 --[[
 	The idea is that you get a list of starting items, utility items, core items and extension items.

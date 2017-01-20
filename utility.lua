@@ -1251,7 +1251,7 @@ function U.CourierThink(npcBot)
 
 	if npcBot:IsAlive() and (npcBot:GetStashValue() > 500 or npcBot:GetCourierValue() > 0 or U.HasImportantItem()) and GetCourierState(courier) == COURIER_STATE_IDLE then
 		--print("got item");
-		npcBot:Action_Courier(courier, COURIER_ACTION_TRANSFER_ITEMS)
+		--npcBot:Action_Courier(courier, COURIER_ACTION_TRANSFER_ITEMS)
 		npcBot:Action_Courier(courier, COURIER_ACTION_TAKE_AND_TRANSFER_ITEMS)
 		return
 	end

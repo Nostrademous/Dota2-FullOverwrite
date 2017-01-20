@@ -14,7 +14,7 @@ local ItemsToBuyAsHardCarry = {
 		"item_flask",
 		"item_branches",
 		"item_branches",
-		"item_branches"
+		"item_quelling_blade"
 	},
 	UtilityItems = {
 		"item_flask"

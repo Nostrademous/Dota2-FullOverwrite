@@ -19,27 +19,29 @@ function getHeroVar(var)
 end
 
 function AbilityUsageThink()
-	if ( GetGameState() ~= GAME_STATE_GAME_IN_PROGRESS and GetGameState() ~= GAME_STATE_PRE_GAME ) then return end
+	if ( GetGameState() ~= GAME_STATE_GAME_IN_PROGRESS and GetGameState() ~= GAME_STATE_PRE_GAME ) then return false end
 	
 	local npcBot = GetBot()
-	if not npcBot:IsAlive() then return end
+	if not npcBot:IsAlive() then return false end
 	
-	local EnemyHeroes = npcBot:GetNearbyHeroes(1200, true, BOT_MODE_NONE);
+	local EnemyHeroes = npcBot:GetNearbyHeroes(1200, true, BOT_MODE_NONE)
 	
-	if #EnemyHeroes == 0 then return end
+	if #EnemyHeroes == 0 then return false end
 
 	-- Check if we're already using an ability
-	if ( npcBot:IsUsingAbility() ) then return end;
+	if npcBot:IsUsingAbility() then return false end
 
-	abilityMV = npcBot:GetAbilityByName( "antimage_mana_void" );
+	abilityMV = npcBot:GetAbilityByName( "antimage_mana_void" )
 
 	-- Consider using each ability
-	castMVDesire, castMVTarget = ConsiderManaVoid(abilityMV);
+	castMVDesire, castMVTarget = ConsiderManaVoid( abilityMV )
 
 	if castMVDesire > 0 then
-		npcBot:Action_UseAbilityOnEntity( abilityMV, castMVTarget );
-		return;
+		npcBot:Action_UseAbilityOnEntity( abilityMV, castMVTarget )
+		return true
 	end
+	
+	return false
 end
 
 ----------------------------------------------------------------------------------------------------
@@ -62,13 +64,13 @@ function ConsiderManaVoid(abilityMV)
 	-- Get some of its values
 	local nRadius = abilityMV:GetSpecialValueInt( "mana_void_aoe_radius" )
 	local nDmgPerMana = abilityMV:GetSpecialValueFloat( "mana_void_damage_per_mana" )
-	local nCastRange = abilityMV:GetCastRange();
+	local nCastRange = abilityMV:GetCastRange()
 
 	--------------------------------------
 	-- Global high-priorty usage
 	--------------------------------------
 
-	local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nCastRange, true, BOT_MODE_NONE );
+	local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nCastRange, true, BOT_MODE_NONE )
 	local channelingHero = nil
 	local lowestManaHero = nil
 	local highestManaDiff = 0
@@ -83,11 +85,15 @@ function ConsiderManaVoid(abilityMV)
 		end
 	end
 	
-	local aoeDmg = highestManaDiff * nDmgPerMana
+	if lowestManaHero == nil then return BOT_ACTION_DESIRE_NONE, nil end
 	
-	if channelingHero ~= nil and channelingHero:GetHealth() < aoeDmg and GetUnitToUnitDistance(channelingHero, lowestManaHero) < nRadius then
+	local aoeDmg = highestManaDiff * nDmgPerMana
+	local actualDmgChannel = channelingHero:GetActualDamage( aoeDmg, DAMAGE_TYPE_MAGICAL )
+	local actualDmgLowest = lowestManaHero:GetActualDamage( aoeDmg, DAMAGE_TYPE_MAGICAL )
+	
+	if channelingHero ~= nil and channelingHero:GetHealth() < actualDmgChannel and GetUnitToUnitDistance(channelingHero, lowestManaHero) < nRadius then
 		return BOT_ACTION_DESIRE_HIGH, lowestManaHero
-	else
+	elseif lowestManaHero:GetHealth() < actualDmgChannel then
 		--FIXME: Figure out how many deaths ulting each hero would result in - pick greatest # if above 0
 		return BOT_ACTION_DESIRE_HIGH, lowestManaHero
 	end

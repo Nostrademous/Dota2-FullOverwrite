@@ -290,8 +290,9 @@ function X:UpdatePurchaseOrder(npcBot)
 		else
 			-- Put the core items in the purchase order
 			local newItem = {}
-			items:GetItemsTable(newItem, self.CoreItems[1])
+		  items:GetItemsTable(newItem, items[self.CoreItems[1]])
 			for _,p in pairs(newItem) do
+				print(getHeroVar("Name").." - "..p)
 				table.insert(self.PurchaseOrder, p)
 			end
 			-- Remove entry
@@ -301,8 +302,9 @@ function X:UpdatePurchaseOrder(npcBot)
 	else
 		-- Put the starting items in the purchase order
 		local newItem = {}
-		items:GetItemsTable(newItem, self.StartingItems[1])
+		items:GetItemsTable(newItem, items[self.StartingItems[1]])
 		for _,p in pairs(newItem) do
+			print(getHeroVar("Name").." - "..p)
 			table.insert(self.PurchaseOrder, p)
 		end
 		-- Remove entry

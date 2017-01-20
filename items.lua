@@ -232,11 +232,11 @@ X["item_phase_boots"] = { "item_boots", "item_blades_of_attack", "item_blades_of
 
 X["item_poor_mans_shield"] = { "item_stout_shield", "item_slippers", "item_slippers" }
 
-X["item_power_treads_agi"] = { "item_boots_of_elves", "item_boots", "item_gloves" }
+X["item_power_treads_agi"] = { "item_boots", "item_boots_of_elves", "item_gloves" }
 
-X["item_power_treads_int"] = { "item_robe", "item_boots", "item_gloves" }
+X["item_power_treads_int"] = { "item_boots", "item_robe", "item_gloves" }
 
-X["item_power_treads_str"] = { "item_belt_of_strength", "item_boots", "item_gloves" }
+X["item_power_treads_str"] = { "item_boots", "item_belt_of_strength", "item_gloves" }
 
 X["item_radiance"] = { "item_relic", "item_recipe_radiance" }
 
@@ -380,7 +380,7 @@ function X:GetItemsTable(output, input)
     input_map = {}
     -- forward DFS order
     for i = 1, #input do
-			table.insert(input_map,  self:GetItemsTable(output, input[i]))
+			input_map[#input_map+1] = self:GetItemsTable(output, input[i])
     end
   else
     input_map = #output + 1

@@ -289,7 +289,9 @@ function X:UpdatePurchaseOrder(npcBot)
 			--]]
 		else
 			-- Put the core items in the purchase order
-			for _,p in pairs(items[self.CoreItems[1]]) do
+			local newItem = {}
+			items:GetItemsTable(newItem, self.CoreItems[1])
+			for _,p in pairs(newItem) do
 				table.insert(self.PurchaseOrder, p)
 			end
 			-- Remove entry
@@ -298,7 +300,9 @@ function X:UpdatePurchaseOrder(npcBot)
 		end
 	else
 		-- Put the starting items in the purchase order
-		for _,p in pairs(items[self.StartingItems[1]]) do
+		local newItem = {}
+		items:GetItemsTable(newItem, self.StartingItems[1])
+		for _,p in pairs(newItem) do
 			table.insert(self.PurchaseOrder, p)
 		end
 		-- Remove entry
@@ -467,7 +471,7 @@ function X:ConsiderBuyingExtensions(bot)
 		if retreatAbility and SilenceCount > 1 then
 			if utils.InTable(self.ExtensionItems.DefensiveItems, "item_manta") then
 				print(getHeroVar("Name").." - Considering buying manta")
-			elseif utils.InTable(self.ExtensionItems.DefensiveItems, "item_euls") then
+			elseif utils.InTable(self.ExtensionItems.DefensiveItems, "item_cyclone") then
 				print(getHeroVar("Name").." - Considering buying euls")
 			else
 				print(getHeroVar("Name").." - Considering buying bkb")
@@ -477,7 +481,7 @@ function X:ConsiderBuyingExtensions(bot)
 				print(getHeroVar("Name").." - Considering buying bkb")
 			elseif utils.InTable(self.ExtensionItems.DefensiveItems, "item_manta") then
 				print(getHeroVar("Name").." - Considering buying manta")
-			elseif utils.InTable(self.ExtensionItems.DefensiveItems, "item_euls") then
+			elseif utils.InTable(self.ExtensionItems.DefensiveItems, "item_cyclone") then
 				print(getHeroVar("Name").." - Considering buying euls")
 			end
 		else

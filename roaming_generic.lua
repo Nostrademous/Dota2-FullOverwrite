@@ -102,7 +102,7 @@ local function FindTarget(bot)
     end
     table.sort(ratings, function(a, b) return a[1] > b[1] end) -- sort by rating, descending
     local target = ratings[1][2]
-    setHeroVar("RoamTarget", target)
+    setHeroVar("Target", target)
     setHeroVar("move_ticks", 0)
     print(utils.GetHeroName(bot), "let's kill", utils.GetHeroName(target))
     RoamingState = RoamingStates.KillTarget
@@ -118,7 +118,7 @@ local function KillTarget(bot)
         setHeroVar("move_ticks", move_ticks + 1)
     end
 
-	local target = getHeroVar("RoamTarget")
+	local target = getHeroVar("Target")
     if target ~= nil and target:GetHealth() ~= -1 and target:CanBeSeen() then
         bot:Action_AttackUnit(target, true) -- Let's go there
         -- TODO: consider being sneaky

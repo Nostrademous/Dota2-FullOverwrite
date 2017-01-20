@@ -245,7 +245,7 @@ function X:UpdatePurchaseOrder(npcBot)
 		local tDelta = RealTime() - self.LastSupportThink
 		-- throttle support item decisions to every 10s
 		if tDelta > 10.0 then
-			if GetNumCouriers() == 0 then
+			if GetNumCouriers() > 0 then
 				-- since smokes are not being used we don't buy them yet
 				local wards = GetItemStockCount("item_ward_observer")
 				local tomes = GetItemStockCount("item_tome_of_knowledge")
@@ -396,6 +396,7 @@ function X:ConsiderBuyingExtensions(bot)
 	local DamageTime = 5
 	local SilenceCount
 	local TrueStrikeCount
+	
 	-- Get total disable time
 	for p = 1, 5, 1 do
 		if enemyData.Enemies[p].obj ~= nil then
@@ -411,6 +412,7 @@ function X:ConsiderBuyingExtensions(bot)
 	end
 	print(getHeroVar("Name").." - Total # of silences: "..SilenceCount.." enemies with true strike: "..TrueStrikeCount)
 		-- Stores the possible damage over 5s + stun/slow duration from all enemies
+		
 	local DamageMagicalPure
 	local DamagePhysical
 	-- Get possible damage (physical/magical+pure)

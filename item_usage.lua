@@ -50,16 +50,16 @@ function UseRegenItems()
 	
 	if not npcBot:HasModifier("modifier_fountain_aura_buff") then
 
-		local mekansm = utils.IsItemAvailable("item_mekansm");
-		local Allies = npcBot:GetNearbyHeroes(900, false, BOT_MODE_NONE);
-		if mekansm ~= nil and mekansm:IsFullyCastable then
+		local mekansm = utils.IsItemAvailable("item_mekansm")
+		local Allies = npcBot:GetNearbyHeroes(900, false, BOT_MODE_NONE)
+		if mekansm ~= nil and mekansm:IsFullyCastable() then
 			if (npcBot:GetHealth()/npcBot:GetMaxHealth()<0.15) or (Allies:GetHealth()/Allies:GetMaxHealth()<0.15) then
 				npcBot.Action_UseAbility(mekansm)
 				return nil
 			end
 		end
 
-		local clarity = utils.IsItemAvailable("item_clarity");
+		local clarity = utils.IsItemAvailable("item_clarity")
 		if clarity ~= nil then
 			if (Enemies == nil or #Enemies == 0) then
 				if (npcBot:GetMaxMana()-npcBot:GetMana()) > 200 and not npcBot:HasModifier("modifier_clarity_potion") then
@@ -118,9 +118,9 @@ function UseTeamItems()
 		return nil
 	end
 
-	local mekansm = utils.IsItemAvailable("item_mekansm");
-	local Allies = npcBot:GetNearbyHeroes(900, false, BOT_MODE_NONE);
-	if mekansm ~= nil and mekansm:IsFullyCastable then
+	local mekansm = utils.IsItemAvailable("item_mekansm")
+	local Allies = npcBot:GetNearbyHeroes(900, false, BOT_MODE_NONE)
+	if mekansm ~= nil and mekansm:IsFullyCastable() then
 		if (npcBot:GetHealth()/npcBot:GetMaxHealth()<0.15) or (Allies:GetHealth()/Allies:GetMaxHealth()<0.15) then
 			npcBot.Action_UseAbility(mekansm)
 			return nil

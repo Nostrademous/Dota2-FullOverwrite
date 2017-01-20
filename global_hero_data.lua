@@ -16,8 +16,15 @@ function X.SetVar(pID, var, value)
 end
 
 function X.GetVar(pID, var)
-	if X[pID][var] == nil then return nil end
 	return X[pID][var]
+end
+
+function X.SetGlobalVar(var, value)
+	X[var] = value
+end
+
+function X.GetGlobalVar(var)
+	return X[var]
 end
 
 return X

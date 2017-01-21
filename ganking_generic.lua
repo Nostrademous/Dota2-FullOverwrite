@@ -5,7 +5,7 @@
 
 -------
 _G._savedEnv = getfenv()
-module( "roaming_generic", package.seeall )
+module( "ganking_generic", package.seeall )
 ----------
 local utils = require( GetScriptDirectory().."/utility")
 require( GetScriptDirectory().."/constants" )
@@ -42,27 +42,24 @@ local MinRating = 1.0;
 
 local IsCore = nil;
 
-local RoamingStates={
+local GankingStates={
 	FindTarget=0,
 	KillTarget=1
 }
 
-local RoamingState=RoamingStates.FindTarget;
+local GankingState=GankingStates.FindTarget;
 
 
 function OnStart(npcBot)
-	RoamingState=RoamingStates.FindTarget;
+	GankingState=GankingStates.FindTarget;
     setHeroVar("move_ticks", 0)
 end
 
 ----------------------------------
 
 local function FindTarget(bot)
-	-- TODO: don't do this every frame and for every roaming hero. Should be part of team level logic.
+	-- TODO: don't do this every frame and for every ganking hero. Should be part of team level logic.
 	local enemies = GetUnitList(UNIT_LIST_ENEMY_HEROES); -- check all enemies
-    if #enemies == 0 then
-        return false
-    end
     local allies = GetUnitList(UNIT_LIST_ALLIED_HEROES)
     local ratings = {}
     for i, e in pairs(enemies) do
@@ -102,6 +99,9 @@ local function FindTarget(bot)
             ratings[#ratings+1] = {r, e}
         end
     end
+	  if #ratings == 0 then
+	      return false
+	  end
     table.sort(ratings, function(a, b) return a[1] > b[1] end) -- sort by rating, descending
 		local rating = ratings[1][1]
 		if rating < MinRating then -- not worth
@@ -111,14 +111,14 @@ local function FindTarget(bot)
     setHeroVar("GankTarget", target)
     setHeroVar("move_ticks", 0)
     print(utils.GetHeroName(bot), "let's kill", utils.GetHeroName(target))
-    RoamingState = RoamingStates.KillTarget
+    GankingState = GankingStates.KillTarget
     return true
 end
 
 local function KillTarget(bot)
     local move_ticks = getHeroVar("move_ticks")
     if move_ticks > 50 then -- time to check for targets again
-        RoamingState = RoamingStates.FindTarget
+        GankingState = GankingStates.FindTarget
         return true
     else
         setHeroVar("move_ticks", move_ticks + 1)
@@ -127,7 +127,7 @@ local function KillTarget(bot)
 	local target = getHeroVar("GankTarget")
     if target ~= nil and target:GetHealth() ~= -1 and target:CanBeSeen() then
 				if GetUnitToUnitDistance(bot, target) < 1000 then
-					getHeroVar("Self"):RemoveAction(ACTION_ROAMING)
+					getHeroVar("Self"):RemoveAction(ACTION_GANKING)
 					getHeroVar("Self"):AddAction(ACTION_FIGHT)
 					setHeroVar("Target", target)
 					print(utils.GetHeroName(bot), "found his target!")
@@ -138,7 +138,7 @@ local function KillTarget(bot)
         -- TODO: consider being sneaky
         return true
     else
-        RoamingState = RoamingStates.KillTarget
+        GankingState = GankingStates.KillTarget
         return true
     end
 end
@@ -146,15 +146,15 @@ end
 ----------------------------------
 
 local States = {
-[RoamingStates.FindTarget]=FindTarget,
-[RoamingStates.KillTarget]=KillTarget
+[GankingStates.FindTarget]=FindTarget,
+[GankingStates.KillTarget]=KillTarget
 }
 
 ----------------------------------
 
 local function Updates(npcBot)
-	if getHeroVar("RoamingState") ~= nil then
-		RoamingState = getHeroVar("RoamingState");
+	if getHeroVar("GankingState") ~= nil then
+		GankingState = getHeroVar("GankingState");
 	end
 end
 
@@ -162,9 +162,9 @@ end
 function Think(npcBot)
 	Updates(npcBot);
 
-	local result = States[RoamingState](npcBot);
+	local result = States[GankingState](npcBot);
 
-	setHeroVar("RoamingState", RoamingState);
+	setHeroVar("GankingState", GankingState);
 
     return result
 end

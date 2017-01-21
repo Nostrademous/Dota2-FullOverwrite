@@ -88,7 +88,7 @@ function bloodseekerBot:DoRetreat(bot, reason)
 			-- we use '.' instead of ':' and pass 'self' so it is the correct self
 			return dt.DoRetreat(self, bot, 1)
 		end
-		
+
 		-- we are not retreating, allow decision tree logic to fall through
 		-- to the next level
 		return false
@@ -114,7 +114,7 @@ function bloodseekerBot:GetMaxClearableCampLevel(bot)
 	return constants.CAMP_MEDIUM
 end
 
-function bloodseekerBot:IsReadyToRoam(bot)
+function bloodseekerBot:IsReadyToGank(bot)
     local rupture = bot:GetAbilityByName("bloodseeker_rupture")
     return rupture:IsFullyCastable() -- that's all we need
 end

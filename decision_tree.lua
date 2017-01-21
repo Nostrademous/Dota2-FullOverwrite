@@ -28,6 +28,7 @@ local ACTION_RUNEPICKUP = constants.ACTION_RUNEPICKUP
 local ACTION_ROSHAN		= constants.ACTION_ROSHAN
 local ACTION_DEFENDALLY	= constants.ACTION_DEFENDALLY
 local ACTION_DEFENDLANE	= constants.ACTION_DEFENDLANE
+local ACTION_WARD		= constants.ACTION_WARD
 
 local X = { currentAction = ACTION_NONE, prevAction = ACTION_NONE, actionStack = {}, abilityPriority = {} }
 
@@ -212,14 +213,12 @@ function X:Think(bot)
 	enemyData.UpdateEnemyInfo()
 	
 	-- DEBUG ENEMY DUMP
-	checkLevel, newTime = utils.TimePassed(gHeroVar.GetGlobalVar("PrevEnemyDataDump"), 5.0)
+	-- Dump enemy info every 15 seconds
+	checkLevel, newTime = utils.TimePassed(gHeroVar.GetGlobalVar("PrevEnemyDataDump"), 15.0)
 	if checkLevel then
 		gHeroVar.SetGlobalVar("PrevEnemyDataDump", newTime)
 		enemyData.PrintEnemyInfo()
 	end
-	
-	-- NOW DECISIONS THAT MODIFY MY ACTION STATES
-	---]]
 		
 	--AM I ALIVE
     if( not bot:IsAlive() ) then
@@ -247,6 +246,10 @@ function X:Think(bot)
 	utils.CourierThink(bot)
 	-- FIXME - right place?
 	self:ConsiderItemUse()
+	
+	------------------------------------------------
+	-- NOW DECISIONS THAT MODIFY MY ACTION STATES --
+	------------------------------------------------
 	
 	local safe = self:Determine_AmISafe(bot)
 	if safe ~= 0 or self:GetAction() == ACTION_RETREAT then
@@ -276,7 +279,7 @@ function X:Think(bot)
 		if bRet then return end
 	end
 	
-	if ( self:Determine_ShouldTeamRoshan(bot) ) then
+	if ( self:Determine_ShouldTeamRoshan(bot) or self:GetAction() == ACTION_ROSHAN ) then
 		local bRet = self:DoRoshan(bot)
 		if bRet then return end
 	end
@@ -301,7 +304,7 @@ function X:Think(bot)
 		if bRet then return end
 	end
 	
-	if ( self:Determine_ShouldWard(bot) ) then
+	if ( self:Determine_ShouldWard(bot) or self:GetAction() == ACTION_WARD ) then
 		local bRet = self:DoWard(bot)
 		if bRet then return end
 	end
@@ -329,18 +332,19 @@ function X:DoWhileDead(bot)
 end
 
 function X:DoWhileChanneling(bot)
-	-- TODO: Check Items like Glimmer Cape for activation if wanted
+	-- FIXME: Check Items like Glimmer Cape for activation if wanted
 	return true
 end
 
 function X:ConsiderBuyback(bot)
-	-- TODO: Write Buyback logic here
+	-- FIXME: Write Buyback logic here
 	if ( bot:HasBuyback() ) then
 		return false -- FIXME: for now always return false
 	end
 	return false
 end
 
+-- BELOW -- Pure Abstract Function - Designed for Overload
 function X:ConsiderAbilityUse()
 	return false
 end
@@ -561,10 +565,18 @@ function X:IsReadyToRoam(bot)
 end
 
 function X:Determine_ShouldJungle(bot)
-	return self:getHeroVar("Role") == ROLE_JUNGLER
+	local bRoleJungler = self:getHeroVar("Role") == ROLE_JUNGLER
+	--FIXME: Implement other reasons when/why we would want to jungle
+	return bRoleJungler
 end
 
 function X:Determine_ShouldTeamRoshan(bot)
+	if (false) then -- FIXME: Implement
+		if self:HasAction(ACTION_ROSHAN) == false then
+			print(utils.GetHeroName(bot), " - Going to Fight Roshan")
+			self:AddAction(ACTION_ROSHAN)
+		end
+	end
 	return false
 end
 
@@ -587,11 +599,18 @@ function X:Determine_ShouldGetRune(bot)
 end
 
 function X:Determine_ShouldWard(bot)
+	if (false) then -- FIXME: Implement
+		if self:HasAction(ACTION_WARD) == false then
+			print(utils.GetHeroName(bot), " - Going to place Wards")
+			self:AddAction(ACTION_WARD)
+		end
+	end
 	return false
 end
 
 function X:Determine_ShouldLane(bot)
-	return self:getHeroVar("Role") ~= ROLE_JUNGLER
+	local notJungler = self:getHeroVar("Role") ~= ROLE_JUNGLER
+	return notJungler
 end
 
 function X:Determine_WhereToMove(bot)
@@ -697,7 +716,7 @@ function X:DoFight(bot)
 		if Towers ~= nil and #Towers == 0 then
 			if target:IsAttackImmune() or (bot:GetLastAttackTime() + bot:GetSecondsPerAttack()) > GameTime() then
 				item_usage.UseMovementItems()
-				bot:Action_MoveToLocation(target:GetLocation())
+				bot:Action_MoveToUnit(target)
 			else
 				bot:Action_AttackUnit(target, false)
 			end
@@ -713,7 +732,7 @@ function X:DoFight(bot)
 			if myDmgToTarget > target:GetHealth() and towerDmgToMe < (bot:GetHealth() + 100) then
 				--print(utils.GetHeroName(bot), " - we are tower diving for the kill")
 				if target:IsAttackImmune() or (bot:GetLastAttackTime() + bot:GetSecondsPerAttack()) > GameTime() then
-					bot:Action_MoveToLocation(target:GetLocation())
+					bot:Action_MoveToUnit(target)
 				else
 					bot:Action_AttackUnit(target, false)
 				end
@@ -790,6 +809,8 @@ function X:DoJungle(bot)
 end
 
 function X:DoRoshan(bot)
+	--FIXME: Implement Roshan fight and clear action stack when he dead
+	self:RemoveAction(ACTION_ROSHAN)
 	return true
 end
 
@@ -805,6 +826,7 @@ function X:DoGetRune(bot)
 end
 
 function X:DoWard(bot)
+	self:RemoveAction(ACTION_WARD)
 	return true
 end
 
@@ -823,7 +845,7 @@ end
 function X:DoMove(bot, loc)
 	if loc then
 		self:AddAction(ACTION_MOVING);
-		bot:Action_AttackMove(loc); -- MoveToLocation is quantized and imprecise
+		bot:Action_MoveToLocation(loc)
 	end
 	return true
 end

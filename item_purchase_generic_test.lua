@@ -8,7 +8,7 @@ local utils = require( GetScriptDirectory().."/utility" )
 local items = require(GetScriptDirectory().."/items" )
 local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
 
-enemyData = require( GetScriptDirectory().."/enemy_data" )
+local enemyData = require( GetScriptDirectory().."/enemy_data" )
 
 --[[
 	The idea is that you get a list of starting items, utility items, core items and extension items.
@@ -245,7 +245,7 @@ function X:UpdatePurchaseOrder(npcBot)
 		local tDelta = RealTime() - self.LastSupportThink
 		-- throttle support item decisions to every 10s
 		if tDelta > 10.0 then
-			if IsCourierAvailable() then
+			if GetNumCouriers() > 0 then
 				-- since smokes are not being used we don't buy them yet
 				local wards = GetItemStockCount("item_ward_observer")
 				local tomes = GetItemStockCount("item_tome_of_knowledge")
@@ -289,7 +289,10 @@ function X:UpdatePurchaseOrder(npcBot)
 			--]]
 		else
 			-- Put the core items in the purchase order
-			for _,p in pairs(items[self.CoreItems[1]]) do
+			local newItem = {}
+		  items:GetItemsTable(newItem, items[self.CoreItems[1]])
+			for _,p in pairs(newItem) do
+				print(getHeroVar("Name").." - "..p)
 				table.insert(self.PurchaseOrder, p)
 			end
 			-- Remove entry
@@ -298,7 +301,10 @@ function X:UpdatePurchaseOrder(npcBot)
 		end
 	else
 		-- Put the starting items in the purchase order
-		for _,p in pairs(items[self.StartingItems[1]]) do
+		local newItem = {}
+		items:GetItemsTable(newItem, items[self.StartingItems[1]])
+		for _,p in pairs(newItem) do
+			print(getHeroVar("Name").." - "..p)
 			table.insert(self.PurchaseOrder, p)
 		end
 		-- Remove entry
@@ -322,7 +328,7 @@ function X:ConsiderSellingItems(bot)
 		-- Store name of the items in a table
 		for i = 0,5,1 do
 			local item = bot:GetItemInSlot(i)
-			table.insert(items, item:GetName())
+			table.insert(items, item)
 		end
 
 		for _,p in pairs(items) do
@@ -332,7 +338,7 @@ function X:ConsiderSellingItems(bot)
 				-- Assembled item?
 				if #items[k] > 1 then
 					-- If item is part of an item we want to buy then don't sell it
-					if utils.InTable(item[k], p) then
+					if utils.InTable(item[k], p:GetName()) then
 						bSell = false
 					end
 				end
@@ -341,23 +347,23 @@ function X:ConsiderSellingItems(bot)
 			for _,k in pairs(self.CoreItems) do
 				-- Assembled item?
 				if #items[k] > 1 then
-					if utils.InTable(item[k], p) then
+					if utils.InTable(item[k], p:GetName()) then
 						bSell = false
 					end
 				end
 			end
-			-- Same for bought items (parts probably still in purchase queue)
+			-- Same for bought items (parts probably still in purchase queue or stash)
 			for _,k in pairs(self.BoughtItems) do
 				-- Assembled item?
 				if #items[k] > 1 then
-					if utils.InTable(item[k], p) then
+					if utils.InTable(item[k], p:GetName()) then
 						bSell = false
 					end
 				end
 			end
 			-- Do we really want to sell the item?
 			if bSell then
-				print("Considering selling "..p)
+				print("Considering selling "..p:GetName())
 				table.insert(ItemsToConsiderSelling, p)
 			end
 		end
@@ -366,12 +372,10 @@ function X:ConsiderSellingItems(bot)
 		local iItemValue = 1000000
 		-- Now check which item is least valuable to us
 		for _,p in pairs(ItemsToConsiderSelling) do
-
 			local iVal = items.GetItemValueNumber(p:GetName())
 			-- If the value of this item is lower change handle
 			if iVal < iItemValue and iVal > 0 then
-				local slot = bot:FindItemSlot(item_name)
-				hItemToSell = bot:GetItemInSlot(slot)
+				hItemToSell = p
 			end
 		end
 		print(hItemToSell:GetName().." selling")
@@ -390,32 +394,29 @@ function X:ConsiderBuyingExtensions(bot)
 
 	-- Start with 5s of time to do damage
 	local DamageTime = 5
-	local SilenceCount
-	local TrueStrikeCount
+	
 	-- Get total disable time
-	for p = 1, 5, 1 do
-		if enemyData.Enemies[p].obj ~= nil then
-			DamageTime = DamageTime + (enemyData.Enemies[p].obj:GetSlowDuration(true) / 2)
-			DamageTime = DamageTime + enemyData.Enemies[p].obj:GetStunDuration(true)
-			if enemyData.Enemies[p].obj:HasSilence() then
-				SilenceCount = SilenceCount + 1
-			elseif enemyData.Enemies[p].obj:IsUnableToMiss() then
-				TrueStrikeCount = TrueStrikeCount +1
-			end
-			print(utils.GetHeroName(enemyData.Enemies[p].obj).." has "..DamageTime.." seconds of disable")
-		end
-	end
+	DamageTime = DamageTime + (enemyData.GetEnemyTeamSlowDuration() / 2)
+	DamageTime = DamageTime + enemyData.GetEnemyTeamStunDuration()
+	local SilenceCount = enemyData.GetEnemyTeamNumSilences()
+	local TrueStrikeCount = enemyData.GetEnemyTeamNumTruestrike()
+	
+	print(utils.GetHeroName(enemyData.Enemies[p].obj).." has "..DamageTime.." seconds of disable")
+
 	print(getHeroVar("Name").." - Total # of silences: "..SilenceCount.." enemies with true strike: "..TrueStrikeCount)
 		-- Stores the possible damage over 5s + stun/slow duration from all enemies
+		
 	local DamageMagicalPure
 	local DamagePhysical
 	-- Get possible damage (physical/magical+pure)
 	for p = 1, 5, 1 do
-		if enemyData.Enemies[p].obj ~= nil then
-			DamageMagicalPure = DamageMagicalPure + enemyData.Enemies[p].obj:GetEstimatedDamageToTarget(true, bot, DamageTime, DAMAGE_TYPE_MAGICAL)
-			DamageMagicalPure = DamageMagicalPure + enemyData.Enemies[p].obj:GetEstimatedDamageToTarget(true, bot, DamageTime, DAMAGE_TYPE_PURE)
+		--FIXME: Figure out a way to store this for previously visible enemy heroes
+		local enemy = GetTeamMember( utils.GetOtherTeam(), p )
+		if enemy ~= nil then
+			DamageMagicalPure = DamageMagicalPure + enemy:GetEstimatedDamageToTarget(true, bot, DamageTime, DAMAGE_TYPE_MAGICAL)
+			DamageMagicalPure = DamageMagicalPure + enemy:GetEstimatedDamageToTarget(true, bot, DamageTime, DAMAGE_TYPE_PURE)
 			DamagePhysical = DamagePhysical + enemyData.Enemies[p].obj:GetEstimatedDamageToTarget(true, bot, DamageTime, DAMAGE_TYPE_PHYSICAL)
-			print(utils.GetHeroName(enemyData.Enemies[p].obj).." deals "..DamageMagicalPure.." magical and pure damage and "..DamagePhysical.." physical damage (5s)")
+			print(utils.GetHeroName(enemy).." deals "..DamageMagicalPure.." magical and pure damage and "..DamagePhysical.." physical damage (5s)")
 		end
 	end
 
@@ -469,7 +470,7 @@ function X:ConsiderBuyingExtensions(bot)
 		if retreatAbility and SilenceCount > 1 then
 			if utils.InTable(self.ExtensionItems.DefensiveItems, "item_manta") then
 				print(getHeroVar("Name").." - Considering buying manta")
-			elseif utils.InTable(self.ExtensionItems.DefensiveItems, "item_euls") then
+			elseif utils.InTable(self.ExtensionItems.DefensiveItems, "item_cyclone") then
 				print(getHeroVar("Name").." - Considering buying euls")
 			else
 				print(getHeroVar("Name").." - Considering buying bkb")
@@ -479,7 +480,7 @@ function X:ConsiderBuyingExtensions(bot)
 				print(getHeroVar("Name").." - Considering buying bkb")
 			elseif utils.InTable(self.ExtensionItems.DefensiveItems, "item_manta") then
 				print(getHeroVar("Name").." - Considering buying manta")
-			elseif utils.InTable(self.ExtensionItems.DefensiveItems, "item_euls") then
+			elseif utils.InTable(self.ExtensionItems.DefensiveItems, "item_cyclone") then
 				print(getHeroVar("Name").." - Considering buying euls")
 			end
 		else

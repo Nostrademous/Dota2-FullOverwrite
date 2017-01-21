@@ -11,6 +11,10 @@ function X.InitHeroVar(pID)
 	end
 end
 
+function X.HasID(pID)
+	return X[pID] ~= nil
+end
+
 function X.SetVar(pID, var, value)
 	X[pID][var] = value
 end

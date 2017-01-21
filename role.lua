@@ -60,6 +60,7 @@ local listHC = {
 	"npc_dota_hero_sven",
 	"npc_dota_hero_terrorblade",
 	"npc_dota_hero_tiny",
+	"npc_dota_hero_viper",
 	"npc_dota_hero_weaver",
 	--"npc_dota_hero_windrunner",
 };
@@ -172,7 +173,7 @@ local listOFF = {
 	"npc_dota_hero_techies", --TECHIES EXIST! ACCEPT IT!
 	"npc_dota_hero_tidehunter",
 	"npc_dota_hero_tiny",
-	"npc_dota_hero_timbersaw",
+	"npc_dota_hero_shredder",
 	"npc_dota_hero_troll_warlord",
 	"npc_dota_hero_tusk",
 	"npc_dota_hero_undying",

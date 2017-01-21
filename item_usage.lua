@@ -30,6 +30,7 @@ function UseRegenItems()
 	local Enemies = npcBot:GetNearbyHeroes(850, true, BOT_MODE_NONE)
 	
 	local bottle = utils.IsItemAvailable("item_bottle");
+
     if bottle ~= nil and bottle:GetCurrentCharges() > 0 and not npcBot:HasModifier("modifier_bottle_regeneration") 
 		and not npcBot:HasModifier("modifier_clarity_potion") and not npcBot:HasModifier("modifier_flask_healing") then
 		
@@ -48,7 +49,25 @@ function UseRegenItems()
 	end
 	
 	if not npcBot:HasModifier("modifier_fountain_aura_buff") then
-		local clarity = utils.IsItemAvailable("item_clarity");
+
+		local mekansm = utils.IsItemAvailable("item_mekansm")
+		local Allies = npcBot:GetNearbyHeroes(900, false, BOT_MODE_NONE)
+		if mekansm ~= nil and mekansm:IsFullyCastable() then
+			if (npcBot:GetHealth()/npcBot:GetMaxHealth()) < 0.15 then
+				npcBot.Action_UseAbility(mekansm)
+				return nil
+			end
+			if #Allies > 0 then
+				for _, ally in pairs(Allies) do
+					if (ally:GetHealth()/ally:GetMaxHealth()) < 0.15 then
+						npcBot.Action_UseAbility(mekansm)
+						return nil
+					end
+				end
+			end
+		end
+
+		local clarity = utils.IsItemAvailable("item_clarity")
 		if clarity ~= nil then
 			if (Enemies == nil or #Enemies == 0) then
 				if (npcBot:GetMaxMana()-npcBot:GetMana()) > 200 and not npcBot:HasModifier("modifier_clarity_potion") then
@@ -106,12 +125,31 @@ function UseTeamItems()
 	if npcBot:IsChanneling() or npcBot:IsUsingAbility() then
 		return nil
 	end
-	
-	local arcane = utils.IsItemAvailable("item_arcane_boots")
-    if arcane ~= nil and arcane:IsFullyCastable() then
-		if (npcBot:GetMaxMana() - npcBot:GetMana()) > 160 then
-			npcBot:Action_UseAbility(arcane)
-			return nil
+
+	if not npcBot:HasModifier("modifier_fountain_aura_buff") then
+		local mekansm = utils.IsItemAvailable("item_mekansm")
+		local Allies = npcBot:GetNearbyHeroes(900, false, BOT_MODE_NONE)
+		if mekansm ~= nil and mekansm:IsFullyCastable() then
+			if (npcBot:GetHealth()/npcBot:GetMaxHealth()) < 0.15 then
+				npcBot.Action_UseAbility(mekansm)
+				return nil
+			end
+			if #Allies > 0 then
+				for _, ally in pairs(Allies) do
+					if (ally:GetHealth()/ally:GetMaxHealth()) < 0.15 then
+						npcBot.Action_UseAbility(mekansm)
+						return nil
+					end
+				end
+			end
+		end
+
+		local arcane = utils.IsItemAvailable("item_arcane_boots")
+		if arcane ~= nil and arcane:IsFullyCastable() then
+			if (npcBot:GetMaxMana() - npcBot:GetMana()) > 160 then
+				npcBot:Action_UseAbility(arcane)
+				return nil
+			end
 		end
 	end
 end

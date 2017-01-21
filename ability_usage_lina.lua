@@ -107,6 +107,10 @@ function ConsiderLightStrikeArrayFighting(abilityLSA, enemy)
 
 	local locDelta = enemy:GetExtrapolatedLocation(abilityLSA:GetCastPoint())
 	local EnemyLocation = enemy:GetLocation() + locDelta
+	
+	if enemy:IsStunned() or enemy:IsRooted() then
+		EnemyLocation = enemy:GetLocation()
+	end
 
 	local d = GetUnitToLocationDistance(npcBot, EnemyLocation)
 
@@ -186,8 +190,12 @@ function ConsiderDragonSlaveFighting(abilityDS, enemy)
 	local d = GetUnitToUnitDistance(npcBot,enemy);
 
 	if d < nCastRange and CanCastDragonSlaveOnTarget(enemy) then
-		local locDelta = enemy:GetExtrapolatedLocation(abilityDS:GetCastPoint())
-		return BOT_ACTION_DESIRE_HIGH, enemy:GetLocation() + locDelta
+		if enemy:IsStunned() or enemy:IsRooted() then
+			return BOT_ACTION_DESIRE_HIGH, enemy:GetLocation()
+		else
+			local locDelta = enemy:GetExtrapolatedLocation(abilityDS:GetCastPoint())
+			return BOT_ACTION_DESIRE_HIGH, enemy:GetLocation() + locDelta
+		end
 	end
 
 	return BOT_ACTION_DESIRE_NONE, 0;

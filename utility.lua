@@ -451,26 +451,6 @@ function U.NotNilOrDead(unit)
 	return false;
 end
 
-function U.GetHeroLevel()
-    local npcBot = GetBot()
-    local respawnTable = {8, 10, 12, 14, 16, 26, 28, 30, 32, 34, 36, 46, 48, 50, 52, 54, 56, 66, 70, 74, 78,  82, 86, 90, 100}
-    local nRespawnTime = npcBot:GetRespawnTime() +1
-	
-	local respawnAdj = getHeroVar("RespawnAdjustment")
-	if respawnAdj ~= nil then
-		nRespawnTime = nRespawnTime - respawnAdj
-	end
-	
-    for k,v in pairs (respawnTable) do
-        if v == nRespawnTime then
-			return k
-        end
-    end
-	
-	print(U.GetHeroName(npcBot), "-  U.GetHeroLevel ERROR: Was looking for: ", nRespawnTime)
-	return 1
-end
-
 function U.TimePassed(prevTime, amount)
 	if ( (GameTime() - prevTime) > amount ) then
 		return true, GameTime();
@@ -507,9 +487,9 @@ end
 
 function U.GetOtherTeam()
 	if GetTeam()==TEAM_RADIANT then
-		return TEAM_DIRE;
+		return TEAM_DIRE
 	else
-		return TEAM_RADIANT;
+		return TEAM_RADIANT
 	end
 end
 
@@ -1160,7 +1140,7 @@ function U.FindTarget(dist)
 				end
 			end
 
-			local lvl = U.GetHeroLevel()
+			local lvl = npcBot:GetLevel()
 			local score = Min(myDamage/enemy:GetHealth(),4) + (nMyFriends)/1.7 - (nfriends)/1.7 - GetUnitToUnitDistance(enemy,npcBot)/3500 -(1-npcBot:GetHealth()/npcBot:GetMaxHealth()) - nTo/(Min(lvl/8,3)) + fTo/(Min(lvl/8,3)) - nEc/(2*lvl) + nAc/(2*lvl);
 			if score > MaxScore then
 				damage = myDamage
@@ -1318,17 +1298,27 @@ function U.HasImportantItem()
 end
 
 function U.CourierThink(npcBot)
+	if GetNumCouriers() == 0 then return end
+	
 	local checkLevel, newTime = U.TimePassed(getHeroVar("LastCourierThink"), 1.0);
 
 	if not checkLevel then return end
 	setHeroVar("LastCourierThink", newTime)
 
 	--print(U.GetHeroName(npcBot), " SV: ", npcBot:GetStashValue(), ", CV: ", npcBot:GetCourierValue(), ", HII: ", U.HasImportantItem())
+	
+	local courier = GetCourier(0)
+	--[[
+	if GetCourierState(courier) ~= COURIER_STATE_IDLE and GetCourierState(courier) ~= COURIER_STATE_AT_BASE and GetCourierState(courier) ~= COURIER_STATE_DEAD then
+		npcBot:Action_Courier(GetCourier(0), COURIER_ACTION_BURST)
+	end
+	--]]
 
 	if npcBot:IsAlive() and (npcBot:GetStashValue() > 500 or npcBot:GetCourierValue() > 0 or U.HasImportantItem()) and IsCourierAvailable() then
 		--print("got item");
-		npcBot:Action_CourierDeliver();
-		return;
+		--npcBot:Action_Courier(courier, COURIER_ACTION_TAKE_AND_TRANSFER_ITEMS)
+		npcBot:Action_Courier(courier, 6)
+		return
 	end
 end
 

@@ -58,6 +58,7 @@ end
 ----------------------------------
 
 local function FindTarget(bot)
+	-- TODO: don't do this every frame and for every roaming hero. Should be part of team level logic.
 	local enemies = GetUnitList(UNIT_LIST_ENEMY_HEROES); -- check all enemies
     if #enemies == 0 then
         return false
@@ -87,7 +88,7 @@ local function FindTarget(bot)
                 end
             end
             r = r + HeroCountFactor * hero_count
-            if true then
+            if false then
                   print(utils.GetHeroName(e), 1 - e:GetHealth()/e:GetMaxHealth())
                   print(utils.GetHeroName(e), HealthFactor * (1 - e:GetHealth()/e:GetMaxHealth()))
                   print(utils.GetHeroName(e), GetUnitToUnitDistance(bot, e) / 300 / 10)

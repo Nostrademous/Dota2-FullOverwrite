@@ -69,7 +69,7 @@ function EnemyData.UpdateEnemyInfo()
 end
 
 function EnemyData.GetEnemyTeamSlowDuration()
-	if ( EnemyData.Lock ) then return end
+	if ( EnemyData.Lock ) then return 0 end
 	EnemyData.Lock = true
 	
 	local duration = 0
@@ -85,7 +85,7 @@ function EnemyData.GetEnemyTeamSlowDuration()
 end
 
 function EnemyData.GetEnemyTeamStunDuration()
-	if ( EnemyData.Lock ) then return end
+	if ( EnemyData.Lock ) then return 0 end
 	EnemyData.Lock = true
 	
 	local duration = 0
@@ -101,7 +101,7 @@ function EnemyData.GetEnemyTeamStunDuration()
 end
 
 function EnemyData.GetEnemyTeamNumSilences()
-	if ( EnemyData.Lock ) then return end
+	if ( EnemyData.Lock ) then return 0 end
 	EnemyData.Lock = true
 	
 	local num = 0
@@ -117,7 +117,7 @@ function EnemyData.GetEnemyTeamNumSilences()
 end
 
 function EnemyData.GetEnemyTeamNumTruestrike()
-	if ( EnemyData.Lock ) then return end
+	if ( EnemyData.Lock ) then return 0 end
 	EnemyData.Lock = true
 	
 	local num = 0

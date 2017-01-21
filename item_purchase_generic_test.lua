@@ -394,22 +394,15 @@ function X:ConsiderBuyingExtensions(bot)
 
 	-- Start with 5s of time to do damage
 	local DamageTime = 5
-	local SilenceCount
-	local TrueStrikeCount
 	
 	-- Get total disable time
-	for p = 1, 5, 1 do
-		if enemyData.Enemies[p].obj ~= nil then
-			DamageTime = DamageTime + (enemyData.Enemies[p].obj:GetSlowDuration(true) / 2)
-			DamageTime = DamageTime + enemyData.Enemies[p].obj:GetStunDuration(true)
-			if enemyData.Enemies[p].obj:HasSilence() then
-				SilenceCount = SilenceCount + 1
-			elseif enemyData.Enemies[p].obj:IsUnableToMiss() then
-				TrueStrikeCount = TrueStrikeCount +1
-			end
-			print(utils.GetHeroName(enemyData.Enemies[p].obj).." has "..DamageTime.." seconds of disable")
-		end
-	end
+	DamageTime = DamageTime + (enemyData.GetEnemyTeamSlowDuration() / 2)
+	DamageTime = DamageTime + enemyData.GetEnemyTeamStunDuration()
+	local SilenceCount = enemyData.GetEnemyTeamNumSilences()
+	local TrueStrikeCount = enemyData.GetEnemyTeamNumTruestrike()
+	
+	print(utils.GetHeroName(enemyData.Enemies[p].obj).." has "..DamageTime.." seconds of disable")
+
 	print(getHeroVar("Name").." - Total # of silences: "..SilenceCount.." enemies with true strike: "..TrueStrikeCount)
 		-- Stores the possible damage over 5s + stun/slow duration from all enemies
 		
@@ -417,11 +410,13 @@ function X:ConsiderBuyingExtensions(bot)
 	local DamagePhysical
 	-- Get possible damage (physical/magical+pure)
 	for p = 1, 5, 1 do
-		if enemyData.Enemies[p].obj ~= nil then
-			DamageMagicalPure = DamageMagicalPure + enemyData.Enemies[p].obj:GetEstimatedDamageToTarget(true, bot, DamageTime, DAMAGE_TYPE_MAGICAL)
-			DamageMagicalPure = DamageMagicalPure + enemyData.Enemies[p].obj:GetEstimatedDamageToTarget(true, bot, DamageTime, DAMAGE_TYPE_PURE)
+		--FIXME: Figure out a way to store this for previously visible enemy heroes
+		local enemy = GetTeamMember( utils.GetOtherTeam(), p )
+		if enemy ~= nil then
+			DamageMagicalPure = DamageMagicalPure + enemy:GetEstimatedDamageToTarget(true, bot, DamageTime, DAMAGE_TYPE_MAGICAL)
+			DamageMagicalPure = DamageMagicalPure + enemy:GetEstimatedDamageToTarget(true, bot, DamageTime, DAMAGE_TYPE_PURE)
 			DamagePhysical = DamagePhysical + enemyData.Enemies[p].obj:GetEstimatedDamageToTarget(true, bot, DamageTime, DAMAGE_TYPE_PHYSICAL)
-			print(utils.GetHeroName(enemyData.Enemies[p].obj).." deals "..DamageMagicalPure.." magical and pure damage and "..DamagePhysical.." physical damage (5s)")
+			print(utils.GetHeroName(enemy).." deals "..DamageMagicalPure.." magical and pure damage and "..DamagePhysical.." physical damage (5s)")
 		end
 	end
 

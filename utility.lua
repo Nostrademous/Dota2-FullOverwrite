@@ -448,9 +448,9 @@ end
 
 function U.GetOtherTeam()
 	if GetTeam()==TEAM_RADIANT then
-		return TEAM_DIRE;
+		return TEAM_DIRE
 	else
-		return TEAM_RADIANT;
+		return TEAM_RADIANT
 	end
 end
 

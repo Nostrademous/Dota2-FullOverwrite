@@ -764,15 +764,17 @@ function X:DoDefendLane(bot)
 end
 
 function X:DoRoam(bot)
+	local ret = roaming_generic.Think(bot)
+
+	if ret then
     if ( self:HasAction(ACTION_ROAMING) == false ) then
-		print(utils.GetHeroName(bot), " STARTING TO ROAM ")
-		self:AddAction(ACTION_ROAMING);
-		roaming_generic.OnStart(bot);
+			print(utils.GetHeroName(bot), " STARTING TO ROAM ")
+			self:AddAction(ACTION_ROAMING);
+			roaming_generic.OnStart(bot);
+		end
 	end
-	
-	roaming_generic.Think(bot)
-	
-	return true
+
+	return ret
 end
 
 function X:DoJungle(bot)

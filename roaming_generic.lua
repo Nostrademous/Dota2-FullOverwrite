@@ -38,6 +38,7 @@ local HealthFactor = 1
 local UnitPosFactor = 1
 local DistanceFactor = 0.1
 local HeroCountFactor = 0.3
+local MinRating = 1.0;
 
 local IsCore = nil;
 
@@ -101,8 +102,11 @@ local function FindTarget(bot)
         end
     end
     table.sort(ratings, function(a, b) return a[1] > b[1] end) -- sort by rating, descending
+		local rating = ratings[1][1]
+		if rating < MinRating then -- not worth
+			return false
+		end
     local target = ratings[1][2]
-		if target ~= nil then print("target is allright so far") end
     setHeroVar("GankTarget", target)
     setHeroVar("move_ticks", 0)
     print(utils.GetHeroName(bot), "let's kill", utils.GetHeroName(target))
@@ -120,26 +124,19 @@ local function KillTarget(bot)
     end
 
 	local target = getHeroVar("GankTarget")
-		if target == nil then
-			print("target is nil")
-		else
-			print(target:GetHealth())
-			print(target:CanBeSeen())
-		end
     if target ~= nil and target:GetHealth() ~= -1 and target:CanBeSeen() then
 				if GetUnitToUnitDistance(bot, target) < 1000 then
 					getHeroVar("Self"):RemoveAction(ACTION_ROAMING)
 					getHeroVar("Self"):AddAction(ACTION_FIGHT)
+					setHeroVar("Target", target)
 					print(utils.GetHeroName(bot), "found his target!")
 					-- TODO: kill!
 				else
-					print("ATTACK!")
         	bot:Action_AttackUnit(target, true) -- Let's go there
 				end
         -- TODO: consider being sneaky
         return true
     else
-				print("Can't find target!")
         RoamingState = RoamingStates.KillTarget
         return true
     end

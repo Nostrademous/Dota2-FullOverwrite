@@ -8,6 +8,7 @@ require( GetScriptDirectory().."/role" )
 require( GetScriptDirectory().."/laning_generic" )
 require( GetScriptDirectory().."/jungling_generic" )
 require( GetScriptDirectory().."/retreat_generic" )
+require( GetScriptDirectory().."/ganking_generic" )
 require( GetScriptDirectory().."/item_usage" )
 require( GetScriptDirectory().."/jungle_status" )
 
@@ -292,7 +293,12 @@ function X:Think(bot)
 		local bRet = self:DoDefendLane(bot)
 		if bRet then return end
 	end
-	
+
+	if ( self:Determine_ShouldGank(bot)  or self:GetAction() == ACTION_GANKING ) then
+		local bRet = self:DoGank(bot)
+		if bRet then return end
+	end
+
 	if ( self:Determine_ShouldRoam(bot) ) then
 		local bRet = self:DoRoam(bot)
 		if bRet then return end
@@ -555,6 +561,14 @@ function X:Determine_ShouldIDefendLane(bot)
 	return false
 end
 
+function X:Determine_ShouldGank(bot)
+	return getHeroVar("Role") == ROLE_ROAMER or (getHeroVar("Role") == ROLE_JUNGLER and getHeroVar("Self"):IsReadyToGank(bot))
+end
+
+function X:IsReadyToGank(bot)
+    return false
+end
+
 function X:Determine_ShouldRoam(bot)
 	return false
 end
@@ -775,6 +789,20 @@ end
 
 function X:DoDefendLane(bot)
 	return true
+end
+
+function X:DoGank(bot)
+	local ret = ganking_generic.Think(bot)
+
+	if ret then
+    if ( self:HasAction(ACTION_GANKING) == false ) then
+			print(utils.GetHeroName(bot), " STARTING TO GANK ")
+			self:AddAction(ACTION_GANKING);
+			ganking_generic.OnStart(bot);
+		end
+	end
+
+	return ret
 end
 
 function X:DoRoam(bot)

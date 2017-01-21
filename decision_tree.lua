@@ -75,14 +75,14 @@ end
 
 function X:PrintActionTransition(name)
 	self:setCurrentAction(self:GetAction());
-	
+
 	--[[
 	if self:getPrevAction() == ACTION_FIGHT then
 		self:RemoveAction(ACTION_FIGHT)
 		self:setHeroVar("Target", nil)
 	end
 	--]]
-	
+
 	if ( self:getCurrentAction() ~= self:getPrevAction() ) then
 		print("["..name.."] Action Transition: "..self:getPrevAction().." --> "..self:getCurrentAction());
 		self:setPrevAction(self:getCurrentAction());
@@ -91,7 +91,7 @@ end
 
 function X:AddAction(action)
 	if action == ACTION_NONE then return end;
-	
+
 	local k = self:HasAction(action);
 	if k then
 		table.remove(self:getActionStack(), k);
@@ -107,19 +107,19 @@ function X:HasAction(action)
 end
 
 function X:RemoveAction(action)
-	
+
 	--print("Removing Action".. action)
-	
+
 	if action == ACTION_NONE then return end;
-	
+
 	local k = self:HasAction(action);
 	if k then
 		table.remove(self:getActionStack(), k);
 	end
-	
+
 	local a = self:GetAction()
 	--print("Next Action".. a)
-	
+
 	self:setCurrentAction(a);
 end
 
@@ -139,27 +139,27 @@ function X:getHeroVar(var)
 end
 
 -------------------------------------------------------------------------------
--- MAIN THINK FUNCTION - DO NOT OVER-LOAD 
+-- MAIN THINK FUNCTION - DO NOT OVER-LOAD
 -------------------------------------------------------------------------------
 
 function X:DoInit(bot)
 	gHeroVar.SetGlobalVar("PrevEnemyDataDump", -1000.0)
-	
+
 	--print( "Initializing PlayerID: ", bot:GetPlayerID() )
 	if GetTeamMember( GetTeam(), 1 ) == nil or GetTeamMember( GetTeam(), 5 ) == nil then return end
-	
+
 	self.pID = bot:GetPlayerID() -- do this to reduce calls to bot:GetPlayerID() in the future
 	gHeroVar.InitHeroVar(self.pID)
-	
+
 	self:setHeroVar("Self", self)
 	self:setHeroVar("Name", utils.GetHeroName(bot))
 	self:setHeroVar("LastCourierThink", -1000.0)
 	self:setHeroVar("LastLevelUpThink", -1000.0)
-	
+
 	role.GetRoles()
 	if role.RolesFilled() then
 		self.Init = true
-		
+
 		for i = 1, 5, 1 do
 			local hero = GetTeamMember( GetTeam(), i )
 			if hero:GetUnitName() == bot:GetUnitName() then
@@ -171,7 +171,7 @@ function X:DoInit(bot)
 		end
 	end
 	print( self:getHeroVar("Name"), " initialized - Lane: ", self:getHeroVar("CurLane"), ", Role: ", self:getHeroVar("Role") )
-	
+
 	self:DoHeroSpecificInit(bot)
 end
 
@@ -187,10 +187,10 @@ function X:Think(bot)
 	end
 
 	if ( GetGameState() ~= GAME_STATE_GAME_IN_PROGRESS and GetGameState() ~= GAME_STATE_PRE_GAME ) then return end
-	
+
 	-- check if jungle respawn timer was hit to repopulate our table
 	jungle_status.checkSpawnTimer()
-	
+
 	--[[
 		FIRST DECISIONS THAT DON'T AFFECT THE MY ACTION STATES
 		:: Leveling Up Abilities, Buying Items (in most cases), Using Courier
@@ -207,11 +207,11 @@ function X:Think(bot)
 	-- DEBUG NOTIFICATION
 	self:setCurrentAction(self:GetAction())
 	self:PrintActionTransition(utils.GetHeroName(bot))
-	
+
 	---[[
 	-- UPDATE GLOBAL INFO --
 	enemyData.UpdateEnemyInfo()
-	
+
 	-- DEBUG ENEMY DUMP
 	-- Dump enemy info every 15 seconds
 	checkLevel, newTime = utils.TimePassed(gHeroVar.GetGlobalVar("PrevEnemyDataDump"), 15.0)
@@ -219,76 +219,76 @@ function X:Think(bot)
 		gHeroVar.SetGlobalVar("PrevEnemyDataDump", newTime)
 		enemyData.PrintEnemyInfo()
 	end
-		
+
 	--AM I ALIVE
     if( not bot:IsAlive() ) then
 		--print( "You are dead, nothing to do!!!");
 		local bRet = self:DoWhileDead(bot)
 		if bRet then return end
 	end
-	
+
 	--AM I CHANNELING AN ABILITY/ITEM (i.e. TP Scroll, Ultimate, etc.)
 	if bot:IsChanneling() then
 		local bRet = self:DoWhileChanneling(bot)
 		if bRet then return end
 	end
-	
+
 	-- Check if our bot was trying to harass with an ability using Out of Range Casting variable
 	-- Give them 2.0 seconds to use it or fall through to further logic
 	local oorC = self:getHeroVar("OutOfRangeCasting")
 	if bot:GetCurrentActionType() == BOT_ACTION_TYPE_USE_ABILITY and ( oorc ~= nil and (oorC-GameTime()) < 2.0 ) then
 		print("CLEARING OORC ABILITY USE")
-		bot:Action_ClearActions() 
+		bot:Action_ClearActions()
 		return
 	end
-	
+
 	--FIXME: Is this the right place to do this???
 	utils.CourierThink(bot)
 	-- FIXME - right place?
 	self:ConsiderItemUse()
-	
+
 	------------------------------------------------
 	-- NOW DECISIONS THAT MODIFY MY ACTION STATES --
 	------------------------------------------------
-	
+
 	local safe = self:Determine_AmISafe(bot)
 	if safe ~= 0 or self:GetAction() == ACTION_RETREAT then
 		local bRet = self:DoRetreat(bot, safe)
 		if bRet then return end
 	end
-	
+
 	local bRet = self:ConsiderAbilityUse()
 	if bRet then return end
-	
+
 	if ( self:Determine_ShouldIFighting(bot) or self:GetAction() == ACTION_FIGHT ) then
 		local bRet = self:DoFight(bot)
 		if bRet then return end
 	end
-	
+
 	if ( self:Determine_ShouldGetRune(bot) or self:GetAction() == ACTION_RUNEPICKUP ) then
 		local bRet = self:DoGetRune(bot)
 		if bRet then return end
 	end
-	
+
 	if ( self:GetAction() == ACTION_SECRETSHOP ) then
 		return
 	end
-	
+
 	if ( self:Determine_DoAlliesNeedHelp(bot) ) then
 		local bRet = self:DoDefendAlly(bot)
 		if bRet then return end
 	end
-	
+
 	if ( self:Determine_ShouldTeamRoshan(bot) or self:GetAction() == ACTION_ROSHAN ) then
 		local bRet = self:DoRoshan(bot)
 		if bRet then return end
 	end
-	
+
 	if ( self:Determine_ShouldIPushLane(bot) ) then
 		local bRet = self:DoPushLane(bot)
 		if bRet then return end
 	end
-	
+
 	if ( self:Determine_ShouldIDefendLane(bot) ) then
 		local bRet = self:DoDefendLane(bot)
 		if bRet then return end
@@ -308,17 +308,17 @@ function X:Think(bot)
 		local bRet = self:DoJungle(bot)
 		if bRet then return end
 	end
-	
+
 	if ( self:Determine_ShouldWard(bot) or self:GetAction() == ACTION_WARD ) then
 		local bRet = self:DoWard(bot)
 		if bRet then return end
 	end
-	
+
 	if ( self:Determine_ShouldLane(bot) or self:GetAction() == ACTION_LANING ) then
 		local bRet = self:DoLane(bot)
 		if bRet then return end
 	end
-	
+
 	local loc = self:Determine_WhereToMove(bot)
 	local bRet = self:DoMove(bot, loc)
 end
@@ -361,9 +361,9 @@ function X:ConsiderItemUse()
 	end
 end
 
-function X:Determine_AmISafe(bot)	
+function X:Determine_AmISafe(bot)
 	if bot:GetHealth()/bot:GetMaxHealth() > 0.9 and bot:GetMana()/bot:GetMaxMana() > 0.9 then
-		if utils.IsTowerAttackingMe() then 
+		if utils.IsTowerAttackingMe() then
 			return 2
 		end
 		if utils.IsCreepAttackingMe() then
@@ -374,7 +374,7 @@ function X:Determine_AmISafe(bot)
 		self:setHeroVar("IsRetreating", false)
 		return 0
 	end
-	
+
 	if bot:GetHealth()/bot:GetMaxHealth() > 0.65 and bot:GetMana()/bot:GetMaxMana() > 0.6 and GetUnitToLocationDistance(bot, GetLocationAlongLane(self:getHeroVar("CurLane"), 0)) > 6000 then
 		if utils.IsTowerAttackingMe() then
 			return 2
@@ -387,7 +387,7 @@ function X:Determine_AmISafe(bot)
 		self:setHeroVar("IsRetreating", false)
 		return 0
 	end
-	
+
 	if bot:GetHealth()/bot:GetMaxHealth() > 0.8 and bot:GetMana()/bot:GetMaxMana() > 0.36 and GetUnitToLocationDistance(bot, GetLocationAlongLane(self:getHeroVar("CurLane"), 0)) > 6000 then
 		if utils.IsTowerAttackingMe() then
 			return 2
@@ -400,15 +400,15 @@ function X:Determine_AmISafe(bot)
 		self:setHeroVar("IsRetreating", false)
 		return 0
 	end
-	
+
 	if self:getHeroVar("IsRetreating") ~= nil and self:getHeroVar("IsRetreating") == true then
 		return 1
 	end
-	
+
 	local Enemies = bot:GetNearbyHeroes(1500, true, BOT_MODE_NONE);
 	local Allies = bot:GetNearbyHeroes(1500, false, BOT_MODE_NONE);
 	local Towers = bot:GetNearbyTowers(900, true);
-	
+
 	local nEn = 0
 	if Enemies ~= nil then
 		nEn = #Enemies;
@@ -429,7 +429,7 @@ function X:Determine_AmISafe(bot)
 		nTo = #Towers;
 	end
 
-	if ((bot:GetHealth()/bot:GetMaxHealth()) < 0.33 and self:GetAction() ~= ACTION_JUNGLING) or 
+	if ((bot:GetHealth()/bot:GetMaxHealth()) < 0.33 and self:GetAction() ~= ACTION_JUNGLING) or
 		(bot:GetMana()/bot:GetMaxMana() < 0.07 and self:getPrevAction() == ACTION_LANING) then
 		self:setHeroVar("IsRetreating", true)
 		return 1;
@@ -457,7 +457,7 @@ function X:Determine_AmISafe(bot)
 			return 1;
 		end
 	end
-	
+
 	if utils.IsTowerAttackingMe() then
 		return 2
 	end
@@ -466,33 +466,33 @@ function X:Determine_AmISafe(bot)
 			return 3
 		end
 	end
-	
+
 	self:setHeroVar("IsRetreating", false)
 	return 0;
 end
 
 function X:Determine_ShouldIFighting(bot)
 	local weakestHero, myDamage, score = utils.FindTarget(1200)
-	
+
 	if utils.NotNilOrDead(weakestHero) then
 		local bFight = myDamage > weakestHero:GetHealth() and score > 1
-		
+
 		if bFight then
 			if self:HasAction(ACTION_FIGHT) == false then
 				print(utils.GetHeroName(bot), " - Fighting ", utils.GetHeroName(weakestHero))
 				self:AddAction(ACTION_FIGHT)
 				self:setHeroVar("Target", weakestHero)
 			end
-			
+
 			if weakestHero ~= getHeroVar("Target") then
 				print(utils.GetHeroName(bot), " - Fight Change - Fighting ", utils.GetHeroName(weakestHero))
 				self:setHeroVar("Target", weakestHero)
 			end
 		end
-		
+
 		return bFight
 	end
-	
+
 	if getHeroVar("Target") ~= nil then
 		if (not utils.NotNilOrDead(weakestHero)) or (not weakestHero:CanBeSeen()) then
 			print(utils.GetHeroName(bot), " - Stopping my fight... lost hero")
@@ -500,7 +500,7 @@ function X:Determine_ShouldIFighting(bot)
 			self:setHeroVar("Target", nil)
 			return false
 		end
-		
+
 		if (GameTime() - bot:GetLastAttackTime()) > 3.0 or bot:GetAttackTarget() ~= getHeroVar("Target") then
 			print(utils.GetHeroName(bot), " - Stopping my fight... done chasing")
 			self:RemoveAction(ACTION_FIGHT)
@@ -508,7 +508,7 @@ function X:Determine_ShouldIFighting(bot)
 			return false
 		end
 	end
-	
+
 	return false
 end
 
@@ -519,24 +519,24 @@ end
 function X:Determine_ShouldIPushLane(bot)
 	-- DETERMINE MY SURROUNDING INFO --
 	local RANGE = 1200
-	
+
 	--GET HEROES WITHIN XYZ UNIT RANGE
 	local EnemyHeroes = bot:GetNearbyHeroes(RANGE, true, BOT_MODE_NONE);
 	--local AllyHeroes = bot:GetNearbyHeroes(RANGE, false, BOT_MODE_NONE);
-	
+
 	--GET TOWERS WITHIN XYZ UNIT RANGE
 	local EnemyTowers = bot:GetNearbyTowers(RANGE, true);
 	local AllyTowers = bot:GetNearbyTowers(RANGE, false);
-	
+
 	--GET CREEPS WITHIN XYZ UNIT RANGE
 	local EnemyCreeps = bot:GetNearbyCreeps(RANGE, true);
 	local AllyCreeps = bot:GetNearbyCreeps(RANGE, false);
 
 	local EnemyTowers = bot:GetNearbyTowers(900, true)
-	if EnemyTowers == nil or #EnemyTowers == 0 then 
-		return false 
+	if EnemyTowers == nil or #EnemyTowers == 0 then
+		return false
 	end
-		
+
 	if #AllyCreeps >= #EnemyCreeps and #EnemyHeroes == 0 then
 		local NearAC = 0
 		for _,creep in pairs(AllyCreeps) do
@@ -544,13 +544,13 @@ function X:Determine_ShouldIPushLane(bot)
 				NearAC = NearAC + 1
 			end
 		end
-		
+
 		if NearAC > 0 then
 			--print(utils.GetHeroName(bot), " :: Pushing Tower")
 			return true
 		end
 	end
-	
+
 	if ( EnemyTowers[1]:GetHealth() / EnemyTowers[1]:GetMaxHealth() ) < 0.1 then
 		return true
 	end
@@ -591,7 +591,7 @@ end
 
 function X:Determine_ShouldGetRune(bot)
 	if GetGameState() ~= GAME_STATE_GAME_IN_PROGRESS then return false end
-	
+
 	for _,r in pairs(constants.RuneSpots) do
 		local loc = GetRuneSpawnLocation(r)
 		if utils.GetDistance(bot:GetLocation(), loc) < 1000 and GetRuneStatus(r) == RUNE_STATUS_AVAILABLE then
@@ -602,7 +602,7 @@ function X:Determine_ShouldGetRune(bot)
 			end
 		end
 	end
-	
+
 	local bRet = self:DoGetRune(bot) -- grab a rune if we near one as we jungle
 	if bRet then return bRet end
 end
@@ -658,7 +658,7 @@ function X:DoRetreat(bot, reason)
 			else
 				self:setHeroVar("TargetOfRunAwayFromCreepOrTower", Vector(mypos[1] + 400, mypos[2] + 400))
 			end
-			
+
 			local d = GetUnitToLocationDistance(bot, self:getHeroVar("TargetOfRunAwayFromCreepOrTower"));
 			if(d > 200) then
 				bot:Action_MoveToLocation(self:getHeroVar("TargetOfRunAwayFromCreepOrTower"));
@@ -693,7 +693,7 @@ function X:DoRetreat(bot, reason)
 			else
 				self:setHeroVar("TargetOfRunAwayFromCreepOrTower", Vector(mypos[1] + 400, mypos[2] + 400))
 			end
-			
+
 			local d = GetUnitToLocationDistance(bot, self:getHeroVar("TargetOfRunAwayFromCreepOrTower"));
 			if(d > 200) then
 				bot:Action_MoveToLocation(self:getHeroVar("TargetOfRunAwayFromCreepOrTower"));
@@ -765,17 +765,17 @@ end
 
 function X:DoPushLane(bot)
 	self:setHeroVar("ShouldPush", true)
-	
+
 	local Towers = bot:GetNearbyTowers(750,true);
 	if Towers==nil or #Towers==0 then
 		return false
 	end
-	
+
 	local tower=Towers[1];
 	if tower == nil or (not tower:IsAlive()) then
 		return false
 	end
-		
+
 	if tower ~= nil then
 		if GetUnitToUnitDistance(tower, bot) < bot:GetAttackRange() then
 			bot:Action_AttackUnit(tower, false);
@@ -815,9 +815,9 @@ function X:DoJungle(bot)
 		self:AddAction(ACTION_JUNGLING);
 		jungling_generic.OnStart(bot);
 	end
-	
+
 	jungling_generic.Think(bot)
-	
+
 	return true
 end
 
@@ -849,9 +849,9 @@ function X:DoLane(bot)
 		self:AddAction(ACTION_LANING)
 		laning_generic.OnStart(bot)
 	end
-	
+
 	laning_generic.Think(bot)
-	
+
 	return true
 end
 

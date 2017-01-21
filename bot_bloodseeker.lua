@@ -73,6 +73,7 @@ end
 -- We over-write DoRetreat behavior for JUNLGER Bloodseeker
 function bloodseekerBot:DoRetreat(bot, reason)
 	-- if we got creep damage and are a JUNGLER do special stuff
+    -- TODO: shouldn't this check the action, insted of the role?
 	if reason == 3 and getHeroVar("Role") == constants.ROLE_JUNGLER then
 		-- if our health is lower than maximum( 15% health, 100 health )
 		if bot:GetHealth() < math.max(bot:GetMaxHealth()*0.15, 100) then
@@ -87,7 +88,7 @@ function bloodseekerBot:DoRetreat(bot, reason)
 			-- we use '.' instead of ':' and pass 'self' so it is the correct self
 			return dt.DoRetreat(self, bot, 1)
 		end
-		
+
 		-- we are not retreating, allow decision tree logic to fall through
 		-- to the next level
 		return false
@@ -99,7 +100,6 @@ function bloodseekerBot:DoRetreat(bot, reason)
 end
 
 function bloodseekerBot:GetMaxClearableCampLevel(bot)
-	-- TODO: when to start killing ancients?
 	if DotaTime() < 30 then
 		return constants.CAMP_EASY
 	end
@@ -112,6 +112,11 @@ function bloodseekerBot:GetMaxClearableCampLevel(bot)
 	end
 
 	return constants.CAMP_MEDIUM
+end
+
+function bloodseekerBot:IsReadyToGank(bot)
+    local rupture = bot:GetAbilityByName("bloodseeker_rupture")
+    return rupture:IsFullyCastable() -- that's all we need
 end
 
 function bloodseekerBot:DoCleanCamp(bot, neutrals)

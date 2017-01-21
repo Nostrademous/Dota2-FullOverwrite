@@ -61,7 +61,7 @@ function Think(npcBot, retreatAbility)
 	end
 
 	item_usage.UseMovementItems(nextmove)
-	npcBot:Action_MoveToLocation(nextmove)
+	utils.MoveSafelyToLocation(npcBot, nextmove)
 end
 
 --------

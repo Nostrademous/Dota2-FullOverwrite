@@ -54,13 +54,13 @@ function UseRegenItems()
 		local Allies = npcBot:GetNearbyHeroes(900, false, BOT_MODE_NONE)
 		if mekansm ~= nil and mekansm:IsFullyCastable() then
 			if (npcBot:GetHealth()/npcBot:GetMaxHealth()) < 0.15 then
-				npcBot.Action_UseAbility(mekansm)
+				npcBot:Action_UseAbility(mekansm)
 				return nil
 			end
 			if #Allies > 0 then
 				for _, ally in pairs(Allies) do
 					if (ally:GetHealth()/ally:GetMaxHealth()) < 0.15 then
-						npcBot.Action_UseAbility(mekansm)
+						npcBot:Action_UseAbility(mekansm)
 						return nil
 					end
 				end
@@ -131,13 +131,13 @@ function UseTeamItems()
 		local Allies = npcBot:GetNearbyHeroes(900, false, BOT_MODE_NONE)
 		if mekansm ~= nil and mekansm:IsFullyCastable() then
 			if (npcBot:GetHealth()/npcBot:GetMaxHealth()) < 0.15 then
-				npcBot.Action_UseAbility(mekansm)
+				npcBot:Action_UseAbility(mekansm)
 				return nil
 			end
 			if #Allies > 0 then
 				for _, ally in pairs(Allies) do
 					if (ally:GetHealth()/ally:GetMaxHealth()) < 0.15 then
-						npcBot.Action_UseAbility(mekansm)
+						npcBot:Action_UseAbility(mekansm)
 						return nil
 					end
 				end

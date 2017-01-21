@@ -88,10 +88,10 @@ function ConsiderManaVoid(abilityMV)
 	if lowestManaHero == nil then return BOT_ACTION_DESIRE_NONE, nil end
 	
 	local aoeDmg = highestManaDiff * nDmgPerMana
-	local actualDmgChannel = channelingHero:GetActualDamage( aoeDmg, DAMAGE_TYPE_MAGICAL )
 	local actualDmgLowest = lowestManaHero:GetActualDamage( aoeDmg, DAMAGE_TYPE_MAGICAL )
 	
-	if channelingHero ~= nil and channelingHero:GetHealth() < actualDmgChannel and GetUnitToUnitDistance(channelingHero, lowestManaHero) < nRadius then
+	if channelingHero ~= nil and channelingHero:GetHealth() < channelingHero:GetActualDamage( aoeDmg, DAMAGE_TYPE_MAGICAL ) 
+		and GetUnitToUnitDistance(channelingHero, lowestManaHero) < nRadius then
 		return BOT_ACTION_DESIRE_HIGH, lowestManaHero
 	elseif lowestManaHero:GetHealth() < actualDmgChannel then
 		--FIXME: Figure out how many deaths ulting each hero would result in - pick greatest # if above 0

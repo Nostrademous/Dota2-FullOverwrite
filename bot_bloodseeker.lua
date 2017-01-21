@@ -68,6 +68,11 @@ function Think()
     local npcBot = GetBot()
 
 	bloodseekerBot:Think(npcBot)
+	
+	if npcBot:GetLevel() == 25 and getHeroVar("Role") ~= constants.ROLE_HARDCARRY then
+		setHeroVar("Role", constants.ROLE_HARDCARRY)
+		setHeroVar("CurLane", LANE_BOT) --FIXME: don't hardcode this
+	end
 end
 
 -- We over-write DoRetreat behavior for JUNLGER Bloodseeker

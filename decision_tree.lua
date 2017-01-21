@@ -361,7 +361,8 @@ function X:Determine_AmISafe(bot)
 			return 2
 		end
 		if utils.IsCreepAttackingMe() then
-			if self:getHeroVar("Target") == nil then
+			local pushing = self:getHeroVar("ShouldPush")
+			if self:getHeroVar("Target") == nil or pushing == nil or pushing == false then
 				return 3
 			end
 		end
@@ -374,7 +375,8 @@ function X:Determine_AmISafe(bot)
 			return 2
 		end
 		if utils.IsCreepAttackingMe() then
-			if self:getHeroVar("Target") == nil then
+			local pushing = self:getHeroVar("ShouldPush")
+			if self:getHeroVar("Target") == nil or pushing == nil or pushing == false then
 				return 3
 			end
 		end
@@ -387,7 +389,8 @@ function X:Determine_AmISafe(bot)
 			return 2
 		end
 		if utils.IsCreepAttackingMe() then
-			if self:getHeroVar("Target") == nil then
+			local pushing = self:getHeroVar("ShouldPush")
+			if self:getHeroVar("Target") == nil or pushing == nil or pushing == false then
 				return 3
 			end
 		end
@@ -456,7 +459,8 @@ function X:Determine_AmISafe(bot)
 		return 2
 	end
 	if utils.IsCreepAttackingMe() then
-		if self:getHeroVar("Target") == nil then
+		local pushing = self:getHeroVar("ShouldPush")
+		if self:getHeroVar("Target") == nil or pushing == nil or pushing == false then
 			return 3
 		end
 	end
@@ -466,6 +470,23 @@ function X:Determine_AmISafe(bot)
 end
 
 function X:Determine_ShouldIFighting(bot)
+	local Allies = GetUnitList(UNIT_LIST_ALLIED_HEROES)
+	for _, friend in pairs(Allies) do
+		local friendID = friend:GetPlayerID()
+		if self.pID ~= friendID and gHeroVar.HasID(friendID) and GetUnitToUnitDistance(bot, friend) <= 2500 then
+			--print("Me: ", self.pID, ", Friend: ", friendID, ", Dist: ", GetUnitToUnitDistance(bot, friend))
+			local friendsTarget = gHeroVar.GetVar(friendID, "Target")
+			if friendsTarget ~= nil then
+				utils.PartyChat(self:getHeroVar("Name").." helping out my Buddy "..utils.GetHeroName(friend).." get a kill on "..utils.GetHeroName(friendsTarget))
+				self:setHeroVar("Target", friendsTarget)
+				if self:HasAction(ACTION_FIGHT) == false then
+					self:AddAction(ACTION_FIGHT)
+				end
+				return bFight
+			end
+		end
+	end
+
 	local weakestHero, myDamage, score = utils.FindTarget(1200)
 	
 	if utils.NotNilOrDead(weakestHero) then

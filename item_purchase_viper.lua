@@ -23,14 +23,16 @@ local ItemsToBuyAsHardCarry = {
 	CoreItems = {
 		"item_power_treads_agi",
 		"item_ring_of_aquila",
-		"item_mekansm"
+		"item_mekansm",
+		"item_dragon_lance"
 	},
 	ExtensionItems = {
 		{
-		"item_assault"
+			"item_ultimate_scepter",
+			"item_assault"
 		},
 		{
-		"item_heart"
+			"item_heart"
 		}
 	}
 }
@@ -46,40 +48,44 @@ local ItemsToBuyAsMid = {
 	CoreItems = {
 		"item_power_treads_agi",
 		"item_ring_of_aquila",
-		"item_mekansm"
+		"item_mekansm",
+		"item_dragon_lance"
 	},
 	ExtensionItems = {
 		{
-		"item_assault"
+			"item_ultimate_scepter",
+			"item_assault"
 		},
 		{
-		"item_heart"
+			"item_heart"
 		}
 	}
 }
 local ItemsToBuyAsOfflane = {
-		StartingItems = {
-			"item_stout_shield",
-			"item_flask",
-			"item_faerie_fire",
-		},
-		UtilityItems = {
-			"item_flask"
-		},
-		CoreItems = {
-			"item_power_treads_agi",
-			"item_ring_of_aquila",
-			"item_mekansm"
-		},
-		ExtensionItems = {
-			{
+	StartingItems = {
+		"item_stout_shield",
+		"item_flask",
+		"item_faerie_fire",
+	},
+	UtilityItems = {
+		"item_flask"
+	},
+	CoreItems = {
+		"item_power_treads_agi",
+		"item_ring_of_aquila",
+		"item_mekansm",
+		"item_dragon_lance"
+	},
+	ExtensionItems = {
+		{
+			"item_ultimate_scepter",
 			"item_assault"
-			},
-			{
+		},
+		{
 			"item_heart"
-			}
 		}
 	}
+}
 local ItemsToBuyAsSupport = {}
 local ItemsToBuyAsJungler = {}
 local ItemsToBuyAsRoamer = {}

@@ -22,18 +22,6 @@ function getHeroVar(var)
 end
 ----------
 
-local CurLane = nil;
-local EyeRange=1200;
-local BaseDamage=50;
-local AttackRange=150;
-local AttackSpeed=0.6;
-local LastTiltTime=0.0;
-
-local DamageThreshold=1.0;
-local MoveThreshold=1.0;
-
-local BackTimerGen=-1000;
-
 local HealthFactor = 1
 local UnitPosFactor = 1
 local DistanceFactor = 0.1
@@ -47,17 +35,16 @@ local GankingStates={
 	KillTarget=1
 }
 
-local GankingState=GankingStates.FindTarget;
-
+local GankingState = GankingStates.FindTarget
 
 function OnStart(npcBot)
-	GankingState=GankingStates.FindTarget;
+	GankingState=GankingStates.FindTarget
     setHeroVar("move_ticks", 0)
 end
 
 ----------------------------------
 
-local function FindTarget(bot)
+local function FindKillTarget(bot)
 	-- TODO: don't do this every frame and for every ganking hero. Should be part of team level logic.
 	local enemies = GetUnitList(UNIT_LIST_ENEMY_HEROES); -- check all enemies
     local allies = GetUnitList(UNIT_LIST_ALLIED_HEROES)
@@ -110,12 +97,12 @@ local function FindTarget(bot)
     local target = ratings[1][2]
     setHeroVar("GankTarget", target)
     setHeroVar("move_ticks", 0)
-    print(utils.GetHeroName(bot), "let's kill", utils.GetHeroName(target))
+    utils.PartyChat(utils.GetHeroName(bot).." let's kill "..utils.GetHeroName(target))
     GankingState = GankingStates.KillTarget
     return true
 end
 
-local function KillTarget(bot)
+local function KillKillTarget(bot)
     local move_ticks = getHeroVar("move_ticks")
     if move_ticks > 50 then -- time to check for targets again
         GankingState = GankingStates.FindTarget
@@ -125,36 +112,38 @@ local function KillTarget(bot)
     end
 
 	local target = getHeroVar("GankTarget")
-    if target ~= nil and target:GetHealth() ~= -1 and target:CanBeSeen() then
-				if GetUnitToUnitDistance(bot, target) < 1000 then
-					getHeroVar("Self"):RemoveAction(ACTION_GANKING)
-					getHeroVar("Self"):AddAction(ACTION_FIGHT)
-					setHeroVar("Target", target)
-					print(utils.GetHeroName(bot), "found his target!")
-					-- TODO: kill!
-				else
-        	bot:Action_AttackUnit(target, true) -- Let's go there
-				end
+    if target ~= nil and target:IsAlive() and target:CanBeSeen() then
+		if GetUnitToUnitDistance(bot, target) < 1000 then
+			getHeroVar("Self"):RemoveAction(ACTION_GANKING)
+			getHeroVar("Self"):AddAction(ACTION_FIGHT)
+			setHeroVar("Target", target)
+			print(utils.GetHeroName(bot), "found his target!")
+			-- TODO: kill!
+		else
+			bot:Action_AttackUnit(target, true) -- Let's go there
+		end
         -- TODO: consider being sneaky
         return true
     else
-        GankingState = GankingStates.KillTarget
-        return true
+        GankingState = GankingStates.FindTarget
+		getHeroVar("Self"):RemoveAction(ACTION_GANKING)
+		setHeroVar("GankTarget", nil)
+        return false
     end
 end
 
 ----------------------------------
 
 local States = {
-[GankingStates.FindTarget]=FindTarget,
-[GankingStates.KillTarget]=KillTarget
+[GankingStates.FindTarget]=FindKillTarget,
+[GankingStates.KillTarget]=KillKillTarget
 }
 
 ----------------------------------
 
 local function Updates(npcBot)
 	if getHeroVar("GankingState") ~= nil then
-		GankingState = getHeroVar("GankingState");
+		GankingState = getHeroVar("GankingState")
 	end
 end
 
@@ -162,9 +151,9 @@ end
 function Think(npcBot)
 	Updates(npcBot);
 
-	local result = States[GankingState](npcBot);
+	local result = States[GankingState](npcBot)
 
-	setHeroVar("GankingState", GankingState);
+	setHeroVar("GankingState", GankingState)
 
     return result
 end

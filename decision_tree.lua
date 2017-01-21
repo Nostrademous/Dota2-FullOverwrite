@@ -251,7 +251,7 @@ function X:Think(bot)
 	-- NOW DECISIONS THAT MODIFY MY ACTION STATES --
 	------------------------------------------------
 
-	local safe = self:Determine_AmISafe(bot)
+	local safe = self:Determine_ShouldIRetreat(bot)
 	if safe ~= 0 or self:GetAction() == ACTION_RETREAT then
 		local bRet = self:DoRetreat(bot, safe)
 		if bRet then return end
@@ -361,15 +361,16 @@ function X:ConsiderItemUse()
 	end
 end
 
-function X:Determine_AmISafe(bot)
+function X:Determine_ShouldIRetreat(bot)
 	if bot:GetHealth()/bot:GetMaxHealth() > 0.9 and bot:GetMana()/bot:GetMaxMana() > 0.9 then
 		if utils.IsTowerAttackingMe() then
-			return 2
+			return constants.RETREAT_TOWER
 		end
 		if utils.IsCreepAttackingMe() then
 			local pushing = self:getHeroVar("ShouldPush")
 			if self:getHeroVar("Target") == nil or pushing == nil or pushing == false then
-				return 3
+				return constants.RETREAT_CREEP
+	
 			end
 		end
 		self:setHeroVar("IsRetreating", false)
@@ -378,12 +379,12 @@ function X:Determine_AmISafe(bot)
 
 	if bot:GetHealth()/bot:GetMaxHealth() > 0.65 and bot:GetMana()/bot:GetMaxMana() > 0.6 and GetUnitToLocationDistance(bot, GetLocationAlongLane(self:getHeroVar("CurLane"), 0)) > 6000 then
 		if utils.IsTowerAttackingMe() then
-			return 2
+			return constants.RETREAT_TOWER
 		end
 		if utils.IsCreepAttackingMe() then
 			local pushing = self:getHeroVar("ShouldPush")
 			if self:getHeroVar("Target") == nil or pushing == nil or pushing == false then
-				return 3
+				return constants.RETREAT_CREEP
 			end
 		end
 		self:setHeroVar("IsRetreating", false)
@@ -392,12 +393,12 @@ function X:Determine_AmISafe(bot)
 
 	if bot:GetHealth()/bot:GetMaxHealth() > 0.8 and bot:GetMana()/bot:GetMaxMana() > 0.36 and GetUnitToLocationDistance(bot, GetLocationAlongLane(self:getHeroVar("CurLane"), 0)) > 6000 then
 		if utils.IsTowerAttackingMe() then
-			return 2
+			return constants.RETREAT_TOWER
 		end
 		if utils.IsCreepAttackingMe() then
 			local pushing = self:getHeroVar("ShouldPush")
 			if self:getHeroVar("Target") == nil or pushing == nil or pushing == false then
-				return 3
+				return constants.RETREAT_CREEP
 			end
 		end
 		self:setHeroVar("IsRetreating", false)
@@ -405,7 +406,7 @@ function X:Determine_AmISafe(bot)
 	end
 
 	if self:getHeroVar("IsRetreating") ~= nil and self:getHeroVar("IsRetreating") == true then
-		return 1
+		return constants.RETREAT_DANGER
 	end
 
 	local Enemies = bot:GetNearbyHeroes(1500, true, BOT_MODE_NONE);
@@ -435,7 +436,7 @@ function X:Determine_AmISafe(bot)
 	if ((bot:GetHealth()/bot:GetMaxHealth()) < 0.33 and self:GetAction() ~= ACTION_JUNGLING) or
 		(bot:GetMana()/bot:GetMaxMana() < 0.07 and self:getPrevAction() == ACTION_LANING) then
 		self:setHeroVar("IsRetreating", true)
-		return 1;
+		return constants.RETREAT_DANGER
 	end
 
 	if Allies == nil or #Allies < 2 then
@@ -457,22 +458,22 @@ function X:Determine_AmISafe(bot)
 
 		if 0.6*enemyDamage > bot:GetHealth() then
 			self:setHeroVar("IsRetreating", true)
-			return 1;
+			return constants.RETREAT_DANGER
 		end
 	end
 
 	if utils.IsTowerAttackingMe() then
-		return 2
+		return constants.RETREAT_TOWER
 	end
 	if utils.IsCreepAttackingMe() then
 		local pushing = self:getHeroVar("ShouldPush")
 		if self:getHeroVar("Target") == nil or pushing == nil or pushing == false then
-			return 3
+			return constants.RETREAT_CREEP
 		end
 	end
 
 	self:setHeroVar("IsRetreating", false)
-	return 0;
+	return 0
 end
 
 function X:Determine_ShouldIFighting(bot)
@@ -655,14 +656,14 @@ function X:Determine_WhereToMove(bot)
 end
 
 function X:DoRetreat(bot, reason)
-	if reason == 1 then
+	if reason == constants.RETREAT_DANGER then
 		if ( self:HasAction(ACTION_RETREAT) == false ) then
 			print(utils.GetHeroName(bot), " STARTING TO RETREAT ")
 			self:AddAction(ACTION_RETREAT)
 			retreat_generic.OnStart(bot)
 		end
 		retreat_generic.Think(bot)
-	elseif reason == 2 then
+	elseif reason == constants.RETREAT_TOWER then
 		if ( self:HasAction(ACTION_RETREAT) == false ) then
 			print(utils.GetHeroName(bot), " STARTING TO RETREAT b/c of tower damage")
 			self:AddAction(ACTION_RETREAT)
@@ -697,7 +698,7 @@ function X:DoRetreat(bot, reason)
 			end
 			bot:Action_MoveToLocation(self:getHeroVar("TargetOfRunAwayFromCreepOrTower"))
 		end
-	elseif reason == 3 then
+	elseif reason == constants.RETREAT_CREEP then
 		if ( self:HasAction(ACTION_RETREAT) == false ) then
 			print(utils.GetHeroName(bot), " STARTING TO RETREAT b/c of creep damage")
 			self:AddAction(ACTION_RETREAT)
@@ -787,21 +788,21 @@ end
 function X:DoPushLane(bot)
 	self:setHeroVar("ShouldPush", true)
 
-	local Towers = bot:GetNearbyTowers(750,true);
+	local Towers = bot:GetNearbyTowers(750, true)
 	if Towers==nil or #Towers==0 then
 		return false
 	end
 
-	local tower=Towers[1];
+	local tower=Towers[1]
 	if tower == nil or (not tower:IsAlive()) then
 		return false
 	end
 
 	if tower ~= nil then
 		if GetUnitToUnitDistance(tower, bot) < bot:GetAttackRange() then
-			bot:Action_AttackUnit(tower, false);
+			bot:Action_AttackUnit(tower, false)
 		else
-			bot:Action_MoveToLocation(tower:GetLocation());
+			bot:Action_MoveToLocation(tower:GetLocation())
 		end
 		return true
 	end
@@ -813,15 +814,13 @@ function X:DoDefendLane(bot)
 end
 
 function X:DoGank(bot)
-	local ret = ganking_generic.Think(bot)
-
-	if ret then
     if ( self:HasAction(ACTION_GANKING) == false ) then
-			print(utils.GetHeroName(bot), " STARTING TO GANK ")
-			self:AddAction(ACTION_GANKING);
-			ganking_generic.OnStart(bot);
-		end
+		print(utils.GetHeroName(bot), " STARTING TO GANK ")
+		self:AddAction(ACTION_GANKING)
+		ganking_generic.OnStart(bot)
 	end
+	
+	local ret = ganking_generic.Think(bot)
 
 	return ret
 end
@@ -833,8 +832,8 @@ end
 function X:DoJungle(bot)
 	if ( self:HasAction(ACTION_JUNGLING) == false ) then
 		print(utils.GetHeroName(bot), " STARTING TO JUNGLE ")
-		self:AddAction(ACTION_JUNGLING);
-		jungling_generic.OnStart(bot);
+		self:AddAction(ACTION_JUNGLING)
+		jungling_generic.OnStart(bot)
 	end
 
 	jungling_generic.Think(bot)

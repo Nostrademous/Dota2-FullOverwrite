@@ -449,7 +449,7 @@ function X:ConsiderBuyingExtensions()
 			DamageMagicalPure = DamageMagicalPure + enemy:GetEstimatedDamageToTarget(true, bot, DamageTime, DAMAGE_TYPE_MAGICAL)
 			--DamageMagicalPure = DamageMagicalPure + enemy:GetEstimatedDamageToTarget(true, bot, DamageTime, DAMAGE_TYPE_PURE)
 			DamagePhysical = DamagePhysical + enemy:GetEstimatedDamageToTarget(true, bot, DamageTime, DAMAGE_TYPE_PHYSICAL)
-			print(utils.GetHeroName(enemy).." deals "..DamageMagicalPure.." magical and pure damage and "..DamagePhysical.." physical damage (5s)")
+			--print(utils.GetHeroName(enemy).." deals "..DamageMagicalPure.." magical and pure damage and "..DamagePhysical.." physical damage (5s)")
 		end
 	end
 
@@ -465,10 +465,10 @@ function X:ConsiderBuyingExtensions()
 	local retreatAbility
 	if getHeroVar("HasMovementAbility") ~= nil then
 		retreatAbility = true
-		print(getHeroVar("Name").." - Has retreat")
+		--print(getHeroVar("Name").." - Has retreat")
 	else
 		retreatAbility = false
-		print(getHeroVar("Name").." - Has no retreat")
+		--print(getHeroVar("Name").." - Has no retreat")
 	end
 
 	-- Remove evasion items if # true strike enemies > 1
@@ -476,50 +476,50 @@ function X:ConsiderBuyingExtensions()
 		if utils.InTable(self.ExtensionItems.DefensiveItems, "item_solar_crest") then
 			local ItemIndex = utils.PosInTable(self.ExtensionItems.DefensiveItems, "item_solar_crest")
 			table.remove(self.ExtensionItems.DefensiveItems, ItemIndex)
-			print(getHeroVar("Name").." - Removing evasion")
+			--print(getHeroVar("Name").." - Removing evasion")
 		elseif utils.InTable(self.ExtensionItems.OffensiveItems, "item_butterfly") then
 			local ItemIndex = utils.PosInTable(self.ExtensionItems.DefensiveItems, "item_butterfly")
 			table.remove(self.ExtensionItems.DefensiveItems, ItemIndex)
-			print(getHeroVar("Name").." - Removing evasion")
+			--print(getHeroVar("Name").." - Removing evasion")
 		end
 	end
 
 	-- Remove magic immunty if not needed
 	if DamageMagicalPure > DamagePhysical then
-		if utils.InTable(self.ExtensionItems.DefensiveItems, "item_hood_of_defiance") or InTable(self.ExtensionItems.DefensiveItems, "item_pipe") then
+		if utils.InTable(self.ExtensionItems.DefensiveItems, "item_hood_of_defiance") or utils.InTable(self.ExtensionItems.DefensiveItems, "item_pipe") then
 			print(getHeroVar("Name").." - Considering magic damage reduction")
 		elseif utils.InTable(self.ExtensionItems.DefensiveItems, "item_black_king_bar") then
 			if retreatAbility and SilenceCount > 1 then
-				print(getHeroVar("Name").." - Considering buying bkb")
+				--print(getHeroVar("Name").." - Considering buying bkb")
 			elseif SilenceCount > 2 or DamageTime > 8 then
-				print(getHeroVar("Name").." - Considering buying bkb")
+				--print(getHeroVar("Name").." - Considering buying bkb")
 			else
 				local ItemIndex = utils.PosInTable(self.ExtensionItems.DefensiveItems, "item_black_king_bar")
 				table.remove(self.ExtensionItems.DefensiveItems, ItemIndex)
-				print(getHeroVar("Name").." - Removing bkb")
+				--print(getHeroVar("Name").." - Removing bkb")
 			end
 		end
 	elseif utils.InTable(self.ExtensionItems.DefensiveItems, "item_black_king_bar") then
 		if retreatAbility and SilenceCount > 1 then
 			if utils.InTable(self.ExtensionItems.DefensiveItems, "item_manta") then
-				print(getHeroVar("Name").." - Considering buying manta")
+				--print(getHeroVar("Name").." - Considering buying manta")
 			elseif utils.InTable(self.ExtensionItems.DefensiveItems, "item_cyclone") then
 				print(getHeroVar("Name").." - Considering buying euls")
 			else
-				print(getHeroVar("Name").." - Considering buying bkb")
+				--print(getHeroVar("Name").." - Considering buying bkb")
 			end
 		elseif SilenceCount > 2 then
 			if DamageTime > 12 then
-				print(getHeroVar("Name").." - Considering buying bkb")
+				--print(getHeroVar("Name").." - Considering buying bkb")
 			elseif utils.InTable(self.ExtensionItems.DefensiveItems, "item_manta") then
-				print(getHeroVar("Name").." - Considering buying manta")
+				--print(getHeroVar("Name").." - Considering buying manta")
 			elseif utils.InTable(self.ExtensionItems.DefensiveItems, "item_cyclone") then
 				print(getHeroVar("Name").." - Considering buying euls")
 			end
 		else
 			local ItemIndex = utils.PosInTable(self.ExtensionItems.DefensiveItems, "item_black_king_bar")
 			table.remove(self.ExtensionItems.DefensiveItems, ItemIndex)
-			print(getHeroVar("Name").." - Removing bkb")
+			--print(getHeroVar("Name").." - Removing bkb")
 		end
 	else
 		-- ToDo: Check if enemy has retreat abilities and consider therefore buying stun/silence

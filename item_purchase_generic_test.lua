@@ -117,14 +117,23 @@ function X:Think(npcBot)
 		if ( GetGameState() ~= GAME_STATE_GAME_IN_PROGRESS and GetGameState() ~= GAME_STATE_PRE_GAME ) then return end
 
 		-- Initialization
-		self:Init(npcBot)
+		self:Init()
 
 		-- If there's an item to be purchased already bail
 		if ( (npcBot:GetNextItemPurchaseValue() > 0) and (npcBot:GetGold() < npcBot:GetNextItemPurchaseValue()) ) then return end
 
 		-- If we want a new item we determine which one first
 		if #self.PurchaseOrder == 0 then
-			self:UpdatePurchaseOrder(npcBot)
+			-- update order
+			self:UpdatePurchaseOrder()
+			print(getHeroVar("Name").." - ".." purchase order")
+			for _,p in pairs(self.PurchaseOrder) do
+				print(p)
+			end
+			print(getHeroVar("Name").." - ".." bought")
+			for _,p in pairs(self.BoughtItems) do
+				print(p)
+			end
 		end
 
 		-- Consider selling items
@@ -223,7 +232,7 @@ function X:InitTable()
 	end
 end
 
-function X:Init(npcBot)
+function X:Init()
 	local bInit = getHeroVar("ItemPurchaseInitialized")
 	if bInit == nil then
 		print(getHeroVar("Name"), " - Initializing Item Purchase class - Role: ", getHeroVar("Role"))
@@ -231,7 +240,7 @@ function X:Init(npcBot)
 	end
 end
 
-function X:UpdatePurchaseOrder(npcBot)
+function X:UpdatePurchaseOrder()
 	-- insert support items first if available
 	if not utils.IsCore() then
 	--[[
@@ -287,24 +296,52 @@ function X:UpdatePurchaseOrder(npcBot)
 			-- Put the core items in the purchase order
 			local newItem = {}
 		  items:GetItemsTable(newItem, items[self.CoreItems[1]])
-			for _,p in pairs(newItem) do
-				print(getHeroVar("Name").." - "..p)
-				table.insert(self.PurchaseOrder, p)
+			if #newItem > 1 then
+				print("next item has #parts: "..#newItem)
+				for _,p in pairs(newItem) do
+					local insert = true
+					for _,k in pairs(self.BoughtItems) do
+						if k == p then
+							local pos = utils.PosInTable(self.BoughtItems, k)
+							table.remove(self.BoughtItems, pos)
+							insert = false
+						end
+					end
+					if insert then
+						table.insert(self.PurchaseOrder, p)
+					end
+				end
+				table.insert(self.BoughtItems, self.CoreItems[1])
+			else
+				table.insert(self.BoughtItems, self.CoreItems[1])
+				table.insert(self.PurchaseOrder, newItem[1])
 			end
-			-- Remove entry
-			table.insert(self.BoughtItems, self.CoreItems[1])
 			table.remove(self.CoreItems, 1)
 		end
 	else
 		-- Put the starting items in the purchase order
 		local newItem = {}
 		items:GetItemsTable(newItem, items[self.StartingItems[1]])
-		for _,p in pairs(newItem) do
-			print(getHeroVar("Name").." - "..p)
-			table.insert(self.PurchaseOrder, p)
+		if #newItem > 1 then
+			print("next item has #parts: "..#newItem)
+			for _,p in pairs(newItem) do
+				local insert = true
+				for _,k in pairs(self.BoughtItems) do
+					if k == p then
+						local pos = utils.PosInTable(self.BoughtItems, k)
+						table.remove(self.BoughtItems, pos)
+						insert = false
+					end
+				end
+				if insert then
+					table.insert(self.PurchaseOrder, p)
+				end
+			end
+			table.insert(self.BoughtItems, self.StartingItems[1])
+		else
+			table.insert(self.BoughtItems, self.StartingItems[1])
+			table.insert(self.PurchaseOrder, newItem[1])
 		end
-		-- Remove entry
-		table.insert(self.BoughtItems, self.StartingItems[1])
 		table.remove(self.StartingItems, 1)
 	end
 end
@@ -382,15 +419,16 @@ function X:ConsiderSellingItems(bot)
 	end
 end
 
-function X:ConsiderBuyingExtensions(bot)
+function X:ConsiderBuyingExtensions()
 	--[[
 	ToDo: Change how we fetch enemy information, the way it's currently done
 				is either slow or might not even work at all. Wait for new version of enemy_data.
 	--]]
+	local bot = GetBot()
 
 	-- Start with 5s of time to do damage
 	local DamageTime = 5
-	
+
 	-- Get total disable time
 	DamageTime = DamageTime + (enemyData.GetEnemyTeamSlowDuration() / 2)
 	DamageTime = DamageTime + enemyData.GetEnemyTeamStunDuration()

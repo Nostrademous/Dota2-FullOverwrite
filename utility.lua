@@ -1154,6 +1154,15 @@ function U.FindTarget(dist)
 	return candidate, damage, MaxScore
 end
 
+function U.EnemyHasBreakableBuff(bot, enemy)
+	if enemy:HasModifier("modifier_clarity_potion") or 
+		enemy:HasModifier("modifier_flask_healing") or 
+		enemy:HasModifier("modifier_bottle_regeneration") then
+		return true
+	end
+	return false
+end
+
 -------------------------------------------------------------------------------
 -- Item & Courier Functions
 -------------------------------------------------------------------------------

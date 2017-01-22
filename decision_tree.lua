@@ -498,7 +498,7 @@ function X:Determine_ShouldIFighting(bot)
 				end
 			end
 		end
-		if not bFriendFighting then self:setHeroVar("HelpingFriend", nil)
+		if not bFriendFighting then self:setHeroVar("HelpingFriend", nil) end
 	end
 	
 	local myFriend = self:getHeroVar("HelpingFriend")

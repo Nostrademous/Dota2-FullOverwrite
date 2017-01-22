@@ -172,6 +172,18 @@ function UseMovementItems(location)
 		npcBot:Action_UseAbilityOnEntity(force, npcBot)
 		return nil
 	end
+	
+	local sb = utils.HaveItem(npcBot, "item_invis_sword")
+	if sb ~= nil and sb:IsFullyCastable() then
+		npcBot:Action_UseAbility(sb)
+		return nil
+	end
+	
+	local se = utils.HaveItem(npcBot, "item_silver_edge")
+	if se ~= nil and se:IsFullyCastable() then
+		npcBot:Action_UseAbility(se)
+		return nil
+	end
 end
 
 function UseTP()

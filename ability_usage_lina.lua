@@ -106,7 +106,7 @@ function ConsiderLightStrikeArrayFighting(abilityLSA, enemy)
 	local nCastRange = abilityLSA:GetCastRange()
 
 	local locDelta = enemy:GetExtrapolatedLocation(abilityLSA:GetCastPoint())
-	local EnemyLocation = enemy:GetLocation() + locDelta
+	local EnemyLocation = locDelta -- + enemy:GetLocation()
 	
 	if enemy:IsStunned() or enemy:IsRooted() then
 		EnemyLocation = enemy:GetLocation()
@@ -144,8 +144,7 @@ function ConsiderLightStrikeArray(abilityLSA)
 	local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nCastRange + nRadius + 200, true, BOT_MODE_NONE );
 	for _,npcEnemy in pairs( tableNearbyEnemyHeroes ) do
 		if npcEnemy:IsChanneling() then
-			local locDelta = npcEnemy:GetExtrapolatedLocation(abilityLSA:GetCastPoint())
-			return BOT_ACTION_DESIRE_HIGH, npcEnemy:GetLocation() + locDelta
+			return BOT_ACTION_DESIRE_HIGH, npcEnemy:GetLocation()
 		end
 	end
 
@@ -168,12 +167,12 @@ function ConsiderLightStrikeArray(abilityLSA)
 		if npcBot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) and (npcBot:GetHealth()/npcBot:GetMaxHealth()) < 0.5 then
 			if CanCastLightStrikeArrayOnTarget( npcEnemy ) and abilityLSA:GetCastRange() > GetUnitToUnitDistance(npcBot, npcEnemy) then
 				local locDelta = npcEnemy:GetExtrapolatedLocation(abilityLSA:GetCastPoint())
-				return BOT_ACTION_DESIRE_MODERATE, npcEnemy:GetLocation() + locDelta;
+				return BOT_ACTION_DESIRE_MODERATE, locDelta -- + npcEnemy:GetLocation()
 			end
 		end
 	end
 
-	return BOT_ACTION_DESIRE_NONE, 0;
+	return BOT_ACTION_DESIRE_NONE, 0
 end
 
 ----------------------------------------------------------------------------------------------------
@@ -194,7 +193,7 @@ function ConsiderDragonSlaveFighting(abilityDS, enemy)
 			return BOT_ACTION_DESIRE_HIGH, enemy:GetLocation()
 		else
 			local locDelta = enemy:GetExtrapolatedLocation(abilityDS:GetCastPoint())
-			return BOT_ACTION_DESIRE_HIGH, enemy:GetLocation() + locDelta
+			return BOT_ACTION_DESIRE_HIGH, locDelta -- + enemy:GetLocation()locDelta -- + enemy:GetLocation()
 		end
 	end
 

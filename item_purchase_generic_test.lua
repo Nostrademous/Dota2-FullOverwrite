@@ -282,11 +282,7 @@ function X:UpdatePurchaseOrder(npcBot)
 		-- Still core items to buy?
 		if( #self.CoreItems == 0) then
 			-- Otherwise consider buying extension items
-			print("FIXME: if enemy_data is fixed enable buying extensions")
-			--[[
-			Not active until enemy_data problem is solved
 			self:ConsiderBuyingExtensions(npcBot)
-			--]]
 		else
 			-- Put the core items in the purchase order
 			local newItem = {}
@@ -401,21 +397,20 @@ function X:ConsiderBuyingExtensions(bot)
 	local SilenceCount = enemyData.GetEnemyTeamNumSilences()
 	local TrueStrikeCount = enemyData.GetEnemyTeamNumTruestrike()
 	
-	print(utils.GetHeroName(enemyData.Enemies[p].obj).." has "..DamageTime.." seconds of disable")
+	--print("EnemyTeam has "..DamageTime.." seconds of disable")
 
-	print(getHeroVar("Name").." - Total # of silences: "..SilenceCount.." enemies with true strike: "..TrueStrikeCount)
-		-- Stores the possible damage over 5s + stun/slow duration from all enemies
+	--print(getHeroVar("Name").." - Total # of silences: "..SilenceCount.." enemies with true strike: "..TrueStrikeCount)
 		
-	local DamageMagicalPure
-	local DamagePhysical
+	local DamageMagicalPure = 0
+	local DamagePhysical = 0
 	-- Get possible damage (physical/magical+pure)
 	for p = 1, 5, 1 do
 		--FIXME: Figure out a way to store this for previously visible enemy heroes
 		local enemy = GetTeamMember( utils.GetOtherTeam(), p )
 		if enemy ~= nil then
 			DamageMagicalPure = DamageMagicalPure + enemy:GetEstimatedDamageToTarget(true, bot, DamageTime, DAMAGE_TYPE_MAGICAL)
-			DamageMagicalPure = DamageMagicalPure + enemy:GetEstimatedDamageToTarget(true, bot, DamageTime, DAMAGE_TYPE_PURE)
-			DamagePhysical = DamagePhysical + enemyData.Enemies[p].obj:GetEstimatedDamageToTarget(true, bot, DamageTime, DAMAGE_TYPE_PHYSICAL)
+			--DamageMagicalPure = DamageMagicalPure + enemy:GetEstimatedDamageToTarget(true, bot, DamageTime, DAMAGE_TYPE_PURE)
+			DamagePhysical = DamagePhysical + enemy:GetEstimatedDamageToTarget(true, bot, DamageTime, DAMAGE_TYPE_PHYSICAL)
 			print(utils.GetHeroName(enemy).." deals "..DamageMagicalPure.." magical and pure damage and "..DamagePhysical.." physical damage (5s)")
 		end
 	end

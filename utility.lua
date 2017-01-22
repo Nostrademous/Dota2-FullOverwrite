@@ -310,6 +310,7 @@ end
 -------------------------------------------------------------------------------
 
 function U.InTable (tab, val)
+	if not tab then return false end
     for index, value in ipairs (tab) do
         if value == val then
             return true

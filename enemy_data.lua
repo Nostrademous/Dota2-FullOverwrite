@@ -107,7 +107,9 @@ function EnemyData.GetEnemyTeamNumSilences()
 	local num = 0
 	for k, v in pairs(EnemyData) do
 		if type(k) == "number" then
-			num = num + tonumber(v.HasSilence)
+			if v.HasSilence then
+				num = num + 1
+			end
 		end
 	end
 
@@ -123,7 +125,9 @@ function EnemyData.GetEnemyTeamNumTruestrike()
 	local num = 0
 	for k, v in pairs(EnemyData) do
 		if type(k) == "number" then
-			num = num + tonumber(v.HasTruestrike)
+			if v.HasTruestrike then
+				num = num + 1
+			end
 		end
 	end
 

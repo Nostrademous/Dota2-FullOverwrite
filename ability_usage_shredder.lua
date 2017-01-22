@@ -235,7 +235,7 @@ function AbilityUsageThink()
 	end
 	
 	local Allies = npcBot:GetNearbyHeroes(1000, false, BOT_MODE_NONE)
-	local nAl = 1
+	local nAl = 0
 	if Allies ~= nil then
 		nAl = nAl + #Allies
 	end

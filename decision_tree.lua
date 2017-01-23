@@ -307,7 +307,7 @@ function X:Think(bot)
 		if bRet then return end
 	end
 
-	if ( self:Determine_ShouldGank(bot) ) then
+	if ( self:GetAction() == ACTION_GANK or self:Determine_ShouldGank(bot) ) then
 		local bRet = self:DoGank(bot)
 		if bRet then return end
 	end
@@ -668,7 +668,10 @@ end
 
 function X:Determine_ShouldGank(bot)
 	local me = getHeroVar("Self")
-	return getHeroVar("Role") == ROLE_ROAMER or (getHeroVar("Role") == ROLE_JUNGLER and me.IsReadyToGank(me, bot))
+	if getHeroVar("Role") == ROLE_ROAMER or (getHeroVar("Role") == ROLE_JUNGLER and me:IsReadyToGank(bot)) then
+		return ganking_generic.FindTarget(bot)
+	end
+	return false
 end
 
 function X:IsReadyToGank(bot)
@@ -800,18 +803,18 @@ function X:DoRetreat(bot, reason)
 			elseif ( GetTeam() == TEAM_RADIANT ) then
 				cLane = self:getHeroVar("CurLane")
 				if cLane == LANE_BOT then
-					self:setHeroVar("TargetOfRunAwayFromCreepOrTower", Vector(mypos[1], mypos[2] - 400))
+					self:setHeroVar("TargetOfRunAwayFromCreepOrTower", Vector(mypos[1], mypos[2] - 300))
 				elseif cLane == LANE_TOP then
-					self:setHeroVar("TargetOfRunAwayFromCreepOrTower", Vector(mypos[1] - 400, mypos[2] - 200))
+					self:setHeroVar("TargetOfRunAwayFromCreepOrTower", Vector(mypos[1] - 400, mypos[2]))
 				else
 					self:setHeroVar("TargetOfRunAwayFromCreepOrTower", Vector(mypos[1] - 300, mypos[2] - 300))
 				end
 			else
 				cLane = self:getHeroVar("CurLane")
 				if cLane == LANE_BOT then
-					self:setHeroVar("TargetOfRunAwayFromCreepOrTower", Vector(mypos[1] + 400, mypos[2] + 200))
+					self:setHeroVar("TargetOfRunAwayFromCreepOrTower", Vector(mypos[1] + 300, mypos[2]))
 				elseif cLane == LANE_TOP then
-					self:setHeroVar("TargetOfRunAwayFromCreepOrTower", Vector(mypos[1] + 400, mypos[2]))
+					self:setHeroVar("TargetOfRunAwayFromCreepOrTower", Vector(mypos[1], mypos[2] + 400))
 				else
 					self:setHeroVar("TargetOfRunAwayFromCreepOrTower", Vector(mypos[1] + 300, mypos[2] + 300))
 				end
@@ -864,41 +867,47 @@ end
 
 function X:DoFight(bot)
 	local target = self:getHeroVar("Target")
-	if utils.NotNilOrDead(target) then
-		local Towers = bot:GetNearbyTowers(750, true)
-		if Towers ~= nil and #Towers == 0 then
-			if target:IsAttackImmune() or (bot:GetLastAttackTime() + bot:GetSecondsPerAttack()) > GameTime() then
-				item_usage.UseMovementItems()
-				bot:Action_MoveToUnit(target)
-			else
-				bot:Action_AttackUnit(target, false)
-			end
-			return true
-		else
-			local towerDmgToMe = 0
-			local myDmgToTarget = bot:GetEstimatedDamageToTarget( true, target, 4.0, DAMAGE_TYPE_ALL )
-			for _, tow in pairs(Towers) do
-				if GetUnitToLocationDistance( bot, tow:GetLocation() ) < 750 then
-					towerDmgToMe = towerDmgToMe + tow:GetEstimatedDamageToTarget( false, bot, 4.0, DAMAGE_TYPE_PHYSICAL )
-				end
-			end
-			if myDmgToTarget > target:GetHealth() and towerDmgToMe < (bot:GetHealth() + 100) then
-				--print(utils.GetHeroName(bot), " - we are tower diving for the kill")
+	if target ~= nil then
+		if target:IsAlive() then
+			local Towers = bot:GetNearbyTowers(750, true)
+			if Towers ~= nil and #Towers == 0 then
 				if target:IsAttackImmune() or (bot:GetLastAttackTime() + bot:GetSecondsPerAttack()) > GameTime() then
+					item_usage.UseMovementItems()
 					bot:Action_MoveToUnit(target)
 				else
 					bot:Action_AttackUnit(target, false)
 				end
 				return true
 			else
-				self:RemoveAction(ACTION_FIGHT)
-				self:setHeroVar("Target", nil)
-				return false
+				local towerDmgToMe = 0
+				local myDmgToTarget = bot:GetEstimatedDamageToTarget( true, target, 4.0, DAMAGE_TYPE_ALL )
+				for _, tow in pairs(Towers) do
+					if GetUnitToLocationDistance( bot, tow:GetLocation() ) < 750 then
+						towerDmgToMe = towerDmgToMe + tow:GetEstimatedDamageToTarget( false, bot, 4.0, DAMAGE_TYPE_PHYSICAL )
+					end
+				end
+				local gankTarget = self:getHeroVar("GankTarget")
+				if ( myDmgToTarget > target:GetHealth() or gankTarget ~= nil) and towerDmgToMe < (bot:GetHealth() + 100) then
+					--print(utils.GetHeroName(bot), " - we are tower diving for the kill")
+					if target:IsAttackImmune() or (bot:GetLastAttackTime() + bot:GetSecondsPerAttack()) > GameTime() then
+						bot:Action_MoveToUnit(target)
+					else
+						bot:Action_AttackUnit(target, false)
+					end
+					return true
+				else
+					self:RemoveAction(ACTION_FIGHT)
+					self:setHeroVar("Target", nil)
+					self:setHeroVar("GankTarget", nil)
+					return false
+				end
 			end
+		else
+			utils.AllChat("Suck it!")
+			self:RemoveAction(ACTION_FIGHT)
+			self:setHeroVar("Target", nil)
+			self:setHeroVar("GankTarget", nil)
 		end
-	else
-		self:RemoveAction(ACTION_FIGHT)
-		self:setHeroVar("Target", nil)
 	end
 	return false
 end
@@ -939,16 +948,18 @@ function X:DoGank(bot)
     if ( self:HasAction(ACTION_GANKING) == false ) then
 		print(utils.GetHeroName(bot), " STARTING TO GANK ")
 		self:AddAction(ACTION_GANKING)
-		ganking_generic.OnStart(bot)
 	end
 	
-	if self:IsReadyToGank(bot) == false then
+	local bKill = ganking_generic.KillTarget(bot)
+	
+	if not bKill then
+		utils.myPrint("clearing gank")
 		self:RemoveAction(ACTION_GANKING)
+		self:setHeroVar("GankTarget", nil)
+		self:setHeroVar("Target", nil)
 	end
 	
-	local ret = ganking_generic.Think(bot)
-
-	return ret
+	return true
 end
 
 function X:DoRoam(bot)

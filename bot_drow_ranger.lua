@@ -4,8 +4,8 @@
 -------------------------------------------------------------------------------
 
 require( GetScriptDirectory().."/constants" )
-require( GetScriptDirectory().."/item_purchase_bloodseeker" )
-require ( GetScriptDirectory().."/ability_usage_bloodseeker" )
+require( GetScriptDirectory().."/item_purchase_drow_ranger" )
+require ( GetScriptDirectory().."/ability_usage_drow_ranger" )
 require( GetScriptDirectory().."/jungling_generic" )
 require( GetScriptDirectory().."/constants" )
 
@@ -23,60 +23,61 @@ function getHeroVar(var)
 	return gHeroVar.GetVar(bot:GetPlayerID(), var)
 end
 
-local BLOODSEEKER_SKILL_Q = "bloodseeker_bloodrage";
-local BLOODSEEKER_SKILL_W = "bloodseeker_blood_bath";
-local BLOODSEEKER_SKILL_E = "bloodseeker_thirst";
-local BLOODSEEKER_SKILL_R = "bloodseeker_rupture";
+local DROW_RANGER_SKILL_Q = "drow_ranger_frost_arrows";
+local DROW_RANGER_SKILL_W = "drow_ranger_wave_of_silence";
+local DROW_RANGER_SKILL_E = "drow_ranger_trueshot";
+local DROW_RANGER_SKILL_R = "drow_ranger_marksmanship";
 
-local BLOODSEEKER_ABILITY1 = "special_bonus_armor_5"
-local BLOODSEEKER_ABILITY2 = "special_bonus_attack_damage_25"
-local BLOODSEEKER_ABILITY3 = "special_bonus_attack_speed_30"
-local BLOODSEEKER_ABILITY4 = "special_bonus_hp_250"
-local BLOODSEEKER_ABILITY5 = "special_bonus_respawn_reduction_30"
-local BLOODSEEKER_ABILITY6 = "special_bonus_all_stats_10"
-local BLOODSEEKER_ABILITY7 = "special_bonus_unique_bloodseeker"
-local BLOODSEEKER_ABILITY8 = "special_bonus_lifesteal_30"
+local DROW_RANGER_ABILITY1 = "special_bonus_armor_5"
+local DROW_RANGER_ABILITY2 = "special_bonus_attack_damage_25"
+local DROW_RANGER_ABILITY3 = "special_bonus_attack_speed_30"
+local DROW_RANGER_ABILITY4 = "special_bonus_hp_250"
+local DROW_RANGER_ABILITY5 = "special_bonus_respawn_reduction_30"
+local DROW_RANGER_ABILITY6 = "special_bonus_all_stats_10"
+local DROW_RANGER_ABILITY7 = "special_bonus_unique_bloodseeker"
+local DROW_RANGER_ABILITY8 = "special_bonus_lifesteal_30"
 
-local BloodseekerAbilityPriority = {
-	BLOODSEEKER_SKILL_Q,    BLOODSEEKER_SKILL_E,    BLOODSEEKER_SKILL_Q,    BLOODSEEKER_SKILL_E,    BLOODSEEKER_SKILL_Q,
-    BLOODSEEKER_SKILL_R,    BLOODSEEKER_SKILL_W,    BLOODSEEKER_SKILL_E,    BLOODSEEKER_SKILL_W,    BLOODSEEKER_ABILITY2,
-    BLOODSEEKER_SKILL_Q,    BLOODSEEKER_SKILL_R,    BLOODSEEKER_SKILL_W,    BLOODSEEKER_SKILL_W,    BLOODSEEKER_ABILITY3,
-    BLOODSEEKER_SKILL_E,    BLOODSEEKER_SKILL_R,    BLOODSEEKER_ABILITY5,   BLOODSEEKER_ABILITY8
+local DrowRangerAbilityPriority = {
+	DROW_RANGER_SKILL_Q,    DROW_RANGER_SKILL_E,    DROW_RANGER_SKILL_W,    DROW_RANGER_SKILL_Q,    DROW_RANGER_SKILL_Q,
+    DROW_RANGER_SKILL_R,    DROW_RANGER_SKILL_Q,    DROW_RANGER_SKILL_E,    DROW_RANGER_SKILL_E,    DROW_RANGER_ABILITY2,
+    DROW_RANGER_SKILL_W,    DROW_RANGER_SKILL_R,    DROW_RANGER_SKILL_E,    DROW_RANGER_SKILL_W,    DROW_RANGER_ABILITY3,
+    DROW_RANGER_SKILL_W,    DROW_RANGER_SKILL_R,    DROW_RANGER_ABILITY5,   DROW_RANGER_ABILITY8
 };
 
-local bloodseekerActionStack = { [1] = constants.ACTION_NONE }
+local drowRangerActionStack = { [1] = constants.ACTION_NONE }
 
-botBS = dt:new()
+botDrow = dt:new()
 
-function botBS:new(o)
+function botDrow:new(o)
 	o = o or dt:new(o)
 	setmetatable(o, self)
 	self.__index = self
 	return o
 end
 
-bloodseekerBot = botBS:new{actionStack = bloodseekerActionStack, abilityPriority = BloodseekerAbilityPriority}
---bloodseekerBot:printInfo()
+drowRangerBot = botDrow:new{actionStack = drowRangerActionStack, abilityPriority = DrowRangerAbilityPriority}
+--drowRangerBot:printInfo()
 
-bloodseekerBot.Init = false
+drowRangerBot.Init = false
 
-function bloodseekerBot:ConsiderAbilityUse()
-	ability_usage_bloodseeker.AbilityUsageThink()
+function drowRangerBot:ConsiderAbilityUse()
+	ability_usage_drow_ranger.AbilityUsageThink()
 end
 
 function Think()
     local npcBot = GetBot()
-
-	bloodseekerBot:Think(npcBot)
 	
-	if npcBot:GetLevel() == 25 and getHeroVar("Role") ~= constants.ROLE_HARDCARRY then
-		setHeroVar("Role", constants.ROLE_HARDCARRY)
-		setHeroVar("CurLane", LANE_BOT) --FIXME: don't hardcode this
+	drowRangerBot:Think(npcBot)
+	
+	if npcBot:GetLevel() == 6 and not (utils.HaveItem(bot, "item_dragon_lance")) then
+		drowRangerBot:DoJungle(npcBot)
+	else
+		drowRangerBot:DoPushLane(npcBot)
 	end
 end
 
--- We over-write DoRetreat behavior for JUNLGER Bloodseeker
-function bloodseekerBot:DoRetreat(bot, reason)
+-- We over-write DoRetreat behavior for JUNGLER Drow Ranger
+function drowRangerBot:DoRetreat(bot, reason)
 	-- if we got creep damage and are a JUNGLER do special stuff
     local pushing = getHeroVar("ShouldPush")
 	if reason == constants.RETREAT_CREEP and 
@@ -105,46 +106,46 @@ function bloodseekerBot:DoRetreat(bot, reason)
 	end
 end
 
-function bloodseekerBot:GetMaxClearableCampLevel(bot)
+function drowRangerBot:GetMaxClearableCampLevel(bot)
 	if DotaTime() < 30 then
 		return constants.CAMP_EASY
 	end
 
-	local bloodrage = bot:GetAbilityByName("bloodseeker_bloodrage")
-	if bloodrage:GetLevel() >= 4 then
+	local marksmanship = bot:GetAbilityByName("drow_ranger_marksmanship")
+	
+	if utils.HaveItem(bot, "item_dragon_lance") and marksmanship:GetLevel() >= 1 then
 		return constants.CAMP_ANCIENT
-	elseif utils.HaveItem(bot, "item_iron_talon") and bloodrage:GetLevel() >= 2 then
+	elseif utils.HaveItem(bot, "item_power_treads") and marksmanship:GetLevel() == 1 then
 		return constants.CAMP_HARD
 	end
 
 	return constants.CAMP_MEDIUM
 end
 
-function bloodseekerBot:IsReadyToGank(bot)
-    local rupture = bot:GetAbilityByName("bloodseeker_rupture")
-    return rupture:IsFullyCastable() -- that's all we need
-end
+-- function drowRangerBot:IsReadyToGank(bot)
+    -- local frostArrow = bot:GetAbilityByName("drow_ranger_frost_arrows")
+	
+	-- if utils.HaveItem(bot, "item_dragon_lance") and frostArrow:GetLevel >= 4 then
+		-- return true
+	-- end
+    -- return false -- that's all we need
+-- end
 
-function bloodseekerBot:DoCleanCamp(bot, neutrals)
-	local bloodraged =  bot:HasModifier("modifier_bloodseeker_bloodrage")
-	local bloodrage = bot:GetAbilityByName("bloodseeker_bloodrage")
-	if not bloodraged and bloodrage:IsCooldownReady() then -- bloodrage all the time
-		bot:Action_UseAbilityOnEntity(bloodrage, bot)
-	end
-	table.sort(neutrals, function(n1, n2) return n1:GetHealth() < n2:GetHealth() end) -- sort by health
-	local it = utils.IsItemAvailable("item_iron_talon")
-	if bloodraged and it ~= nil then -- we are bloodraged and have an iron talon
-		local it_target = neutrals[#neutrals] -- neutral with most health
-		if it_target:GetHealth() > 0.5 * it_target:GetMaxHealth() then -- is it worth it? TODO: add a absolute minimum / use it on big guys only
-			bot:Action_UseAbilityOnEntity(it, it_target); -- TODO: make sure it's not an ancient!
-		end
-	end
+function drowRangerBot:DoCleanCamp(bot, neutrals)
+
+	local frostArrow = bot:GetAbilityByName("drow_ranger_frost_arrows")
+	
 	for i, neutral in ipairs(neutrals) do
+		
 		local eDamage = bot:GetEstimatedDamageToTarget(true, neutral, bot:GetAttackSpeed(), DAMAGE_TYPE_PHYSICAL)
-		if not (eDamage > neutral:GetHealth()) or bloodraged then -- make sure we lasthit with bloodrage on
-			bot:Action_AttackUnit(neutral, true)
+		if not (eDamage > neutral:GetHealth()) then 
+			
+			if not (neutral:HasModifier("modifier_drow_ranger_frost_arrows_slow")) then -- TODO: add kiting when creep is to strong
+				bot:Action_UseAbilityOnEntity(frostArrow, neutral);
+				bot:Action_AttackUnit(neutral, true)
+			end
+				bot:Action_AttackUnit(neutral, true)
 			break
 		end
 	end
-	-- TODO: don't attack if we should wait on all neutrals!
 end

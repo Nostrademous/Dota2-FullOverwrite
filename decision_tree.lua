@@ -341,6 +341,14 @@ end
 -------------------------------------------------------------------------------
 
 function X:DoWhileDead(bot)
+	-- clear our actionStack except for ACTION_IDLE
+	local as = self:getActionStack()
+	if #as > 1 then
+		for i = #as-1, 1, -1 do
+			table.remove(as, i)
+		end
+	end
+
 	self:MoveItemsFromStashToInventory(bot);
 	local bb = self:ConsiderBuyback(bot);
 	if (bb) then
@@ -521,6 +529,7 @@ function X:Determine_ShouldIFighting(bot)
 	if myTarget and ( not myTarget:IsAlive() ) then
 		self:RemoveAction(ACTION_FIGHT)
 		self:setHeroVar("Target", nil)
+		self:setHeroVar("GankTarget", nil)
 		return false
 	end
 	
@@ -598,6 +607,11 @@ function X:Determine_ShouldIFighting(bot)
 		end
 	end
 
+	if self:getHeroVar("GankTarget") ~= nil then
+		bot:Action_AttackUnit(self:getHeroVar("GankTarget"), true)
+		return true
+	end
+	
 	self:RemoveAction(ACTION_FIGHT)
 	self:setHeroVar("Target", nil)
 	return false

@@ -23,19 +23,19 @@ function getHeroVar(var)
 	return gHeroVar.GetVar(bot:GetPlayerID(), var)
 end
 
-local DROW_RANGER_SKILL_Q = "drow_ranger_frost_arrows";
-local DROW_RANGER_SKILL_W = "drow_ranger_wave_of_silence";
-local DROW_RANGER_SKILL_E = "drow_ranger_trueshot";
-local DROW_RANGER_SKILL_R = "drow_ranger_marksmanship";
+local DROW_RANGER_SKILL_Q = "drow_ranger_frost_arrows"
+local DROW_RANGER_SKILL_W = "drow_ranger_wave_of_silence"
+local DROW_RANGER_SKILL_E = "drow_ranger_trueshot"
+local DROW_RANGER_SKILL_R = "drow_ranger_marksmanship"
 
-local DROW_RANGER_ABILITY1 = "special_bonus_armor_5"
-local DROW_RANGER_ABILITY2 = "special_bonus_attack_damage_25"
-local DROW_RANGER_ABILITY3 = "special_bonus_attack_speed_30"
-local DROW_RANGER_ABILITY4 = "special_bonus_hp_250"
-local DROW_RANGER_ABILITY5 = "special_bonus_respawn_reduction_30"
-local DROW_RANGER_ABILITY6 = "special_bonus_all_stats_10"
-local DROW_RANGER_ABILITY7 = "special_bonus_unique_bloodseeker"
-local DROW_RANGER_ABILITY8 = "special_bonus_lifesteal_30"
+local DROW_RANGER_ABILITY1 = "special_bonus_movement_speed_15"
+local DROW_RANGER_ABILITY2 = "special_bonus_all_stats_5"
+local DROW_RANGER_ABILITY3 = "special_bonus_hp_175"
+local DROW_RANGER_ABILITY4 = "special_bonus_attack_speed_20"
+local DROW_RANGER_ABILITY5 = "special_bonus_unique_drow_ranger_1"
+local DROW_RANGER_ABILITY6 = "special_bonus_strength_14"
+local DROW_RANGER_ABILITY7 = "special_bonus_unique_drow_ranger_2"
+local DROW_RANGER_ABILITY8 = "special_bonus_unique_drow_ranger_3"
 
 local DrowRangerAbilityPriority = {
 	DROW_RANGER_SKILL_Q,    DROW_RANGER_SKILL_E,    DROW_RANGER_SKILL_W,    DROW_RANGER_SKILL_Q,    DROW_RANGER_SKILL_Q,

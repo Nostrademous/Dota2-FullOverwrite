@@ -21,7 +21,7 @@ end
 
 local Abilities ={
 	"drow_ranger_frost_arrows",
-	"drow_ranger_silence",
+	"drow_ranger_wave_of_silence",
 	"drow_ranger_trueshot",
 	"drow_ranger_marksmanship"
 }

@@ -74,7 +74,7 @@ local tableItemsToBuyAsHardCarry = {
 	"item_recipe_hurricane_pike", -- completes Hurrican Pike
 	"item_point_booster",
 	"item_blade_of_alacrity", 
-	"item_ogre_axe"
+	"item_ogre_axe",
 	"item_staff_of_wizardry",  -- completes Aghanim's Scepter
 	"item_hyperstone",
 	"item_recipe_mjollnir", -- commpletes Mjollnir

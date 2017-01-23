@@ -69,7 +69,7 @@ function UseRegenItems()
 		local clarity = utils.HaveItem(npcBot, "item_clarity")
 		if clarity ~= nil then
 			if (Enemies == nil or #Enemies == 0) then
-				if (npcBot:GetMaxMana()-npcBot:GetMana()) > 200 and not npcBot:HasModifier("modifier_clarity_potion") then
+				if (npcBot:GetMaxMana()-npcBot:GetMana()) > 200 and not npcBot:HasModifier("modifier_clarity_potion") and not utils.HasActiveDOTDebuff(npcBot)  then
 					npcBot:Action_UseAbilityOnEntity(clarity, npcBot)
 					return nil
 				end
@@ -79,7 +79,7 @@ function UseRegenItems()
 		local flask = utils.HaveItem(npcBot, "item_flask");
 		if flask ~= nil then
 			if (Enemies == nil or #Enemies == 0) then
-				if (npcBot:GetMaxHealth()-npcBot:GetHealth()) > 400 and not npcBot:HasModifier("modifier_flask_healing") then
+				if (npcBot:GetMaxHealth()-npcBot:GetHealth()) > 400 and not npcBot:HasModifier("modifier_flask_healing") and not utils.HasActiveDOTDebuff(npcBot)  then
 					npcBot:Action_UseAbilityOnEntity(flask, npcBot)
 					return nil
 				end

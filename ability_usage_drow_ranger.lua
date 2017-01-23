@@ -4,7 +4,7 @@
 -------------------------------------------------------------------------------
 
 _G._savedEnv = getfenv()
-module( "ability_usage_viper", package.seeall )
+module( "ability_usage_drow_ranger", package.seeall )
 
 local utils = require( GetScriptDirectory().."/utility" )
 local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
@@ -20,39 +20,39 @@ function getHeroVar(var)
 end
 
 local Abilities ={
-	"viper_poison_attack",
-	"viper_nethertoxin",
-	"viper_corrosive_skin",
-	"viper_viper_strike"
+	"drow_ranger_frost_arrows",
+	"drow_ranger_silence",
+	"drow_ranger_trueshot",
+	"drow_ranger_marksmanship"
 }
 
 local function UseQ()
 	local npcBot = GetBot()
 
-	local ability = npcBot:GetAbilityByName(Abilities[1])
-	local ult = npcBot:GetAbilityByName(Abilities[4])
+	local frostArrow = npcBot:GetAbilityByName(Abilities[1])
+	local gust = npcBot:GetAbilityByName(Abilities[2])
 	
-	if (ability == nil) or (not ability:IsFullyCastable()) then
+	if (frostArrow == nil) or (not frostArrow:IsFullyCastable()) then
 		return false
 	end
 	
-	local Enemies = npcBot:GetNearbyHeroes(ability:GetCastRange() + 100, true, BOT_MODE_NONE)
+	local Enemies = npcBot:GetNearbyHeroes(frostArrow:GetCastRange() + 100, true, BOT_MODE_NONE)
 	
-	if #Enemies == 1 and ( ult ~= nil and ult:IsFullyCastable() ) then
+	if #Enemies == 1 and ( gust ~= nil and gust:IsFullyCastable() ) then
 		setHeroVar("Target", Enemies[1])
 		return false
 	end
 	
 	local target = getHeroVar("Target")
-	if target ~= nil and GetUnitToUnitDistance(npcBot, target) < ability:GetCastRange() then
-		npcBot:Action_UseAbilityOnEntity(ability, target)
+	if target ~= nil and GetUnitToUnitDistance(npcBot, target) < frostArrow:GetCastRange() then
+		npcBot:Action_UseAbilityOnEntity(frostArrow, target)
 		return true
 	end
 	
-	if (npcBot:GetMana()/npcBot:GetMaxMana()) > 0.5 and #Enemies > 0 and #Enemies < 3 and (getHeroVar("OutOfRangeCasting") + ability:GetCastPoint()) < GameTime() then
-		local weakestHero, weakestHeroHealth = utils.GetWeakestHero(npcBot, ability:GetCastRange() + 100)
+	if (npcBot:GetMana()/npcBot:GetMaxMana()) > 0.5 and #Enemies > 0 and #Enemies < 3 and (getHeroVar("OutOfRangeCasting") + frostArrow:GetCastPoint()) < GameTime() then
+		local weakestHero, weakestHeroHealth = utils.GetWeakestHero(npcBot, frostArrow:GetCastRange() + 100)
 		if weakestHero ~= nil then
-			npcBot:Action_UseAbilityOnEntity(ability, weakestHero)
+			npcBot:Action_UseAbilityOnEntity(frostArrow, weakestHero)
 			setHeroVar("OutOfRangeCasting", GameTime())
 			return true
 		end
@@ -61,20 +61,25 @@ local function UseQ()
 	return false
 end
 
-local function UseUlt()
+local function UseW()
 	local npcBot = GetBot()
 	
 	local enemy = getHeroVar("Target")
 	if enemy == nil then return false end
 	
-	local ability = npcBot:GetAbilityByName(Abilities[4])
+	local gust = npcBot:GetAbilityByName(Abilities[2])
 	
-	if (ability == nil) or (not ability:IsFullyCastable()) then
+	if (gust == nil) or (not gust:IsFullyCastable()) then
 		return false
 	end
 	
-	if GetUnitToUnitDistance(enemy, npcBot) < ability:GetCastRange() then
-		npcBot:Action_UseAbilityOnEntity(ability, enemy)
+	if GetUnitToUnitDistance(enemy, npcBot) < gust:GetCastRange() and (not enemy.isSilenced) then
+		npcBot:Action_UseAbilityOnEntity(gust, enemy)
+		return true
+	end
+	
+	if GetUnitToUnitDistance(enemy, npcBot) < 450 then
+		npcBot:Action_UseAbilityOnEntity(gust, enemy)
 		return true
 	end
 	
@@ -90,7 +95,7 @@ function AbilityUsageThink()
 	
 	if getHeroVar("Target") == nil then return false end
 
-	if UseUlt() or UseQ() then return true end
+	if UseW() or UseQ() then return true end
 end
 
-for k,v in pairs( ability_usage_viper ) do _G._savedEnv[k] = v end
+for k,v in pairs( ability_usage_drow_ranger ) do _G._savedEnv[k] = v end

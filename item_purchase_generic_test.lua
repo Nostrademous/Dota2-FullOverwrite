@@ -126,6 +126,7 @@ function X:Think(npcBot)
 		if #self.PurchaseOrder == 0 then
 			-- update order
 			self:UpdatePurchaseOrder()
+			--[[
 			print(getHeroVar("Name").." - ".." purchase order")
 			for _,p in pairs(self.PurchaseOrder) do
 				print(p)
@@ -134,6 +135,7 @@ function X:Think(npcBot)
 			for _,p in pairs(self.BoughtItems) do
 				print(p)
 			end
+			--]]
 		end
 
 		-- Consider selling items

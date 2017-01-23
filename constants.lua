@@ -36,6 +36,7 @@ TEAM_DIRE 			= 3
 RETREAT_DANGER 		= 1
 RETREAT_TOWER 		= 2
 RETREAT_CREEP		= 3
+RETREAT_FOUNTAIN	= 4
 
 -------------------------------------------------------------------------------
 -- JUNGLE RELATED --

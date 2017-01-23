@@ -28,14 +28,18 @@ local function Updates(npcBot)
 	setHeroVar("RetreatPos", utils.PositionAlongLane(npcBot, getHeroVar("CurLane")))
 end
 
-function Think(npcBot, retreatAbility)
+function Think(npcBot, loc)
 	Updates(npcBot)
 	
 	local nextmove = GetLocationAlongLane(getHeroVar("CurLane"), 0.0)
-	if getHeroVar("IsInLane") then
-		nextmove = GetLocationAlongLane(getHeroVar("CurLane"), Max(getHeroVar("RetreatPos")-0.03, 0.0))
+	if loc ~= nil then
+		nextmove = loc
 	else
-		nextmove = utils.Fountain(GetTeam())
+		if getHeroVar("IsInLane") then
+			nextmove = GetLocationAlongLane(getHeroVar("CurLane"), Max(getHeroVar("RetreatPos")-0.03, 0.0))
+		else
+			nextmove = utils.Fountain(GetTeam())
+		end
 	end
 	
 	local retreatAbility = getHeroVar("HasMovementAbility")

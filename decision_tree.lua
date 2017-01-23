@@ -22,6 +22,7 @@ local ACTION_LANING		= constants.ACTION_LANING
 local ACTION_RETREAT 	= constants.ACTION_RETREAT
 local ACTION_FIGHT		= constants.ACTION_FIGHT
 local ACTION_CHANNELING	= constants.ACTION_CHANNELING
+local ACTION_JUNGLING	= constants.ACTION_JUNGLING
 local ACTION_MOVING		= constants.ACTION_MOVING
 local ACTION_SECRETSHOP	= constants.ACTION_SECRETSHOP
 local ACTION_RUNEPICKUP = constants.ACTION_RUNEPICKUP
@@ -143,6 +144,7 @@ end
 -------------------------------------------------------------------------------
 
 function X:DoInit(bot)
+	gHeroVar.SetGlobalVar("PrevEnemyUpdateTime", -1000.0)
 	gHeroVar.SetGlobalVar("PrevEnemyDataDump", -1000.0)
 
 	--print( "Initializing PlayerID: ", bot:GetPlayerID() )
@@ -210,14 +212,18 @@ function X:Think(bot)
 
 	---[[
 	-- UPDATE GLOBAL INFO --
-	enemyData.UpdateEnemyInfo()
+	checkLevel, newTime = utils.TimePassed(gHeroVar.GetGlobalVar("PrevEnemyUpdateTime"), 5.0)
+	if checkLevel then
+		gHeroVar.SetGlobalVar("PrevEnemyUpdateTime", newTime)
+		enemyData.UpdateEnemyInfo()
+	end
 
 	-- DEBUG ENEMY DUMP
 	-- Dump enemy info every 15 seconds
 	checkLevel, newTime = utils.TimePassed(gHeroVar.GetGlobalVar("PrevEnemyDataDump"), 15.0)
 	if checkLevel then
 		gHeroVar.SetGlobalVar("PrevEnemyDataDump", newTime)
-		enemyData.PrintEnemyInfo()
+		--enemyData.PrintEnemyInfo()
 	end
 
 	--AM I ALIVE
@@ -233,15 +239,6 @@ function X:Think(bot)
 		if bRet then return end
 	end
 
-	-- Check if our bot was trying to harass with an ability using Out of Range Casting variable
-	-- Give them 2.0 seconds to use it or fall through to further logic
-	local oorC = self:getHeroVar("OutOfRangeCasting")
-	if bot:GetCurrentActionType() == BOT_ACTION_TYPE_USE_ABILITY and ( oorc ~= nil and (oorC-GameTime()) < 2.0 ) then
-		print("CLEARING OORC ABILITY USE")
-		bot:Action_ClearActions()
-		return
-	end
-
 	--FIXME: Is this the right place to do this???
 	utils.CourierThink(bot)
 	-- FIXME - right place?
@@ -251,21 +248,37 @@ function X:Think(bot)
 	-- NOW DECISIONS THAT MODIFY MY ACTION STATES --
 	------------------------------------------------
 
+	if ( self:GetAction() == ACTION_RETREAT ) then
+		local bRet = self:DoRetreat(bot, self:getHeroVar("RetreatReason"))
+		if bRet then return end
+	end
 	local safe = self:Determine_ShouldIRetreat(bot)
-	if safe ~= 0 or self:GetAction() == ACTION_RETREAT then
+	if safe ~= nil then
+		self:setHeroVar("RetreatReason", safe)
 		local bRet = self:DoRetreat(bot, safe)
 		if bRet then return end
 	end
 
+	-- Check if our bot was trying to harass with an ability using Out of Range Casting variable
+	-- Give them 2.0 seconds to use it or fall through to further logic
+	local oorC = self:getHeroVar("OutOfRangeCasting")
+	if bot:GetCurrentActionType() == BOT_ACTION_TYPE_USE_ABILITY and ( oorc ~= nil and (oorC-GameTime()) < 2.0 ) then
+		print("CLEARING OORC ABILITY USE")
+		bot:Action_ClearActions()
+		return
+	end
+	
 	local bRet = self:ConsiderAbilityUse()
 	if bRet then return end
 
-	if ( self:Determine_ShouldIFighting(bot) or self:GetAction() == ACTION_FIGHT ) then
+	-- NOTE: Unlike many others, we should re-evalute need to fight every time and
+	--       not check if GetAction == ACTION_FIGHT
+	if ( self:Determine_ShouldIFighting(bot) ) then
 		local bRet = self:DoFight(bot)
 		if bRet then return end
 	end
 
-	if ( self:Determine_ShouldGetRune(bot) or self:GetAction() == ACTION_RUNEPICKUP ) then
+	if ( self:GetAction() == ACTION_RUNEPICKUP or self:Determine_ShouldGetRune(bot) ) then
 		local bRet = self:DoGetRune(bot)
 		if bRet then return end
 	end
@@ -279,7 +292,7 @@ function X:Think(bot)
 		if bRet then return end
 	end
 
-	if ( self:Determine_ShouldTeamRoshan(bot) or self:GetAction() == ACTION_ROSHAN ) then
+	if ( self:GetAction() == ACTION_ROSHAN or self:Determine_ShouldTeamRoshan(bot) ) then
 		local bRet = self:DoRoshan(bot)
 		if bRet then return end
 	end
@@ -294,7 +307,7 @@ function X:Think(bot)
 		if bRet then return end
 	end
 
-	if ( self:Determine_ShouldGank(bot)  or self:GetAction() == ACTION_GANKING ) then
+	if ( self:Determine_ShouldGank(bot) ) then
 		local bRet = self:DoGank(bot)
 		if bRet then return end
 	end
@@ -304,23 +317,23 @@ function X:Think(bot)
 		if bRet then return end
 	end
 
-	if ( self:Determine_ShouldJungle(bot) or self:GetAction() == ACTION_JUNGLING ) then
+	if ( self:GetAction() == ACTION_JUNGLING or self:Determine_ShouldJungle(bot) ) then
 		local bRet = self:DoJungle(bot)
 		if bRet then return end
 	end
 
-	if ( self:Determine_ShouldWard(bot) or self:GetAction() == ACTION_WARD ) then
+	if ( self:GetAction() == ACTION_WARD or self:Determine_ShouldWard(bot) ) then
 		local bRet = self:DoWard(bot)
 		if bRet then return end
 	end
 
-	if ( self:Determine_ShouldLane(bot) or self:GetAction() == ACTION_LANING ) then
+	if ( self:GetAction() == ACTION_LANING or self:Determine_ShouldLane(bot) ) then
 		local bRet = self:DoLane(bot)
 		if bRet then return end
 	end
 
 	local loc = self:Determine_WhereToMove(bot)
-	local bRet = self:DoMove(bot, loc)
+	self:DoMove(bot, loc)
 end
 
 -------------------------------------------------------------------------------
@@ -370,11 +383,9 @@ function X:Determine_ShouldIRetreat(bot)
 			local pushing = self:getHeroVar("ShouldPush")
 			if self:getHeroVar("Target") == nil or pushing == nil or pushing == false then
 				return constants.RETREAT_CREEP
-	
 			end
 		end
-		self:setHeroVar("IsRetreating", false)
-		return 0
+		return nil
 	end
 
 	if bot:GetHealth()/bot:GetMaxHealth() > 0.65 and bot:GetMana()/bot:GetMaxMana() > 0.6 and GetUnitToLocationDistance(bot, GetLocationAlongLane(self:getHeroVar("CurLane"), 0)) > 6000 then
@@ -387,8 +398,7 @@ function X:Determine_ShouldIRetreat(bot)
 				return constants.RETREAT_CREEP
 			end
 		end
-		self:setHeroVar("IsRetreating", false)
-		return 0
+		return nil
 	end
 
 	if bot:GetHealth()/bot:GetMaxHealth() > 0.8 and bot:GetMana()/bot:GetMaxMana() > 0.36 and GetUnitToLocationDistance(bot, GetLocationAlongLane(self:getHeroVar("CurLane"), 0)) > 6000 then
@@ -401,62 +411,65 @@ function X:Determine_ShouldIRetreat(bot)
 				return constants.RETREAT_CREEP
 			end
 		end
-		self:setHeroVar("IsRetreating", false)
-		return 0
+		return nil
 	end
 
-	if self:getHeroVar("IsRetreating") ~= nil and self:getHeroVar("IsRetreating") == true then
-		return constants.RETREAT_DANGER
-	end
-
-	local Enemies = bot:GetNearbyHeroes(1500, true, BOT_MODE_NONE);
-	local Allies = bot:GetNearbyHeroes(1500, false, BOT_MODE_NONE);
-	local Towers = bot:GetNearbyTowers(900, true);
+	local Enemies = bot:GetNearbyHeroes(1500, true, BOT_MODE_NONE)
+	local Allies = bot:GetNearbyHeroes(1500, false, BOT_MODE_NONE)
+	local Towers = bot:GetNearbyTowers(900, true)
 
 	local nEn = 0
 	if Enemies ~= nil then
-		nEn = #Enemies;
+		nEn = #Enemies
 	end
 
-	local nAl = 0;
+	local nAl = 0
 
 	if Allies ~= nil then
 		for _,ally in pairs(Allies) do
 			if utils.NotNilOrDead(ally) then
-				nAl = nAl + 1;
+				nAl = nAl + 1
 			end
 		end
 	end
 
-	local nTo = 0;
+	local nTo = 0
 	if Towers ~= nil then
-		nTo = #Towers;
+		nTo = #Towers
 	end
 
 	if ((bot:GetHealth()/bot:GetMaxHealth()) < 0.33 and self:GetAction() ~= ACTION_JUNGLING) or
 		(bot:GetMana()/bot:GetMaxMana() < 0.07 and self:getPrevAction() == ACTION_LANING) then
-		self:setHeroVar("IsRetreating", true)
-		return constants.RETREAT_DANGER
+		return constants.RETREAT_FOUNTAIN
 	end
 
-	if Allies == nil or #Allies < 2 then
-		local MaxStun = 0;
+	if nAl < 2 then
+		local MaxStun = 0
+		
+		--enemyData.GetEnemyTeamSlowDuration()/2.0
 
-		for _,enemy in pairs(Enemies) do
-			if utils.NotNilOrDead(enemy) and enemy:GetHealth()/enemy:GetMaxHealth()>0.4 then
-				MaxStun = Max(MaxStun, Max(enemy:GetStunDuration(true) , enemy:GetSlowDuration(true)/1.5) );
-			end
-		end
-
-		local enemyDamage=0;
 		for _,enemy in pairs(Enemies) do
 			if utils.NotNilOrDead(enemy) and enemy:GetHealth()/enemy:GetMaxHealth() > 0.4 then
-				local damage = enemy:GetEstimatedDamageToTarget(true, bot, MaxStun, DAMAGE_TYPE_ALL);
-				enemyDamage = enemyDamage + damage;
+				local bEscape = self:getHeroVar("HasEscape")
+				if bEscape ~= nil and bEscape ~= false then
+					MaxStun = MaxStun + enemy:GetStunDuration(true)
+				else
+					MaxStun = MaxStun + Max(enemy:GetStunDuration(true), enemy:GetSlowDuration(true)/2.0)
+				end
 			end
 		end
 
+		local enemyDamage = 0
+		for _, enemy in pairs(Enemies) do
+			if utils.NotNilOrDead(enemy) and enemy:GetHealth()/enemy:GetMaxHealth() > 0.4 then
+				local damage = enemy:GetEstimatedDamageToTarget(true, bot, MaxStun, DAMAGE_TYPE_ALL)
+				enemyDamage = enemyDamage + damage
+			end
+		end
+
+		--FIXME: Once we have enemy_data working for physical and magic/pure, use that
 		if 0.6*enemyDamage > bot:GetHealth() then
+			print(utils.GetHeroName(bot).." - Retreating - could die in perfect stun overlap")
 			self:setHeroVar("IsRetreating", true)
 			return constants.RETREAT_DANGER
 		end
@@ -467,13 +480,12 @@ function X:Determine_ShouldIRetreat(bot)
 	end
 	if utils.IsCreepAttackingMe() then
 		local pushing = self:getHeroVar("ShouldPush")
-		if self:getHeroVar("Target") == nil or pushing == nil or pushing == false then
+		if self:getHeroVar("Target") == nil or pushing ~= true then
 			return constants.RETREAT_CREEP
 		end
 	end
 
-	self:setHeroVar("IsRetreating", false)
-	return 0
+	return nil
 end
 
 function X:Determine_ShouldIFighting(bot)
@@ -487,18 +499,29 @@ function X:Determine_ShouldIFighting(bot)
 				--print("Me: ", self.pID, ", Friend: ", friendID, ", Dist: ", GetUnitToUnitDistance(bot, friend))
 				local friendsTarget = gHeroVar.GetVar(friendID, "Target")
 				if friendsTarget ~= nil then
-					--print(self:getHeroVar("Name").." helping out my Buddy "..utils.GetHeroName(friend).." get a kill on "..utils.GetHeroName(friendsTarget))
-					self:setHeroVar("Target", friendsTarget)
-					self:setHeroVar("HelpingFriend", friend:GetPlayerID())
-					if self:HasAction(ACTION_FIGHT) == false then
-						self:AddAction(ACTION_FIGHT)
-					end
 					bFriendFighting = true
+					--print(self:getHeroVar("Name").." helping out my Buddy "..utils.GetHeroName(friend).." get a kill on "..utils.GetHeroName(friendsTarget))
+					if GetUnitToUnitDistance(bot, friendsTarget) < 1000 then
+						self:setHeroVar("Target", friendsTarget)
+						self:setHeroVar("HelpingFriend", friend:GetPlayerID())
+						if self:HasAction(ACTION_FIGHT) == false then
+							self:AddAction(ACTION_FIGHT)
+						end				
+					else
+						bot:Action_MoveToUnit(friendsTarget)
+					end
 					return true
 				end
 			end
 		end
 		if not bFriendFighting then self:setHeroVar("HelpingFriend", nil) end
+	end
+	
+	myTarget = self:getHeroVar("Target")
+	if myTarget and ( not myTarget:IsAlive() ) then
+		self:RemoveAction(ACTION_FIGHT)
+		self:setHeroVar("Target", nil)
+		return false
 	end
 	
 	local myFriend = self:getHeroVar("HelpingFriend")
@@ -538,22 +561,45 @@ function X:Determine_ShouldIFighting(bot)
 				self:setHeroVar("Target", nil)
 				return false
 			else
-				item_usage.UseMovementItems()
-				bot:Action_MoveToLocation(weakestHero:GetLastSeenLocation())
-				return true
+				local lastLoc = weakestHero:GetLastSeenLocation()
+				if utils.GetOtherTeam() == TEAM_DIRE then
+					local prob1 = GetUnitPotentialValue(weakestHero, Vector(lastLoc[1] + 500, lastLoc[2]), 1000)
+					local prob2 = GetUnitPotentialValue(weakestHero, Vector(lastLoc[1], lastLoc[2] + 500), 1000)
+					if prob1 > 180 and prob1 > prob2 then
+						item_usage.UseMovementItems()
+						bot:Action_MoveToLocation(Vector(lastLoc[1] + 500, lastLoc[2]))
+						return true
+					elseif prob2 > 180 then
+						item_usage.UseMovementItems()
+						bot:Action_MoveToLocation(Vector(lastLoc[1], lastLoc[2] + 500))
+						return true
+					end
+				else
+					local prob1 = GetUnitPotentialValue(weakestHero, Vector(lastLoc[1] - 500, lastLoc[2]), 1000)
+					local prob2 = GetUnitPotentialValue(weakestHero, Vector(lastLoc[1], lastLoc[2] - 500), 1000)
+					if prob1 > 180 and prob1 > prob2 then
+						item_usage.UseMovementItems()
+						bot:Action_MoveToLocation(Vector(lastLoc[1] - 500, lastLoc[2]))
+						return true
+					elseif prob2 > 180 then
+						item_usage.UseMovementItems()
+						bot:Action_MoveToLocation(Vector(lastLoc[1], lastLoc[2] - 500))
+						return true
+					end
+				end
 			end
 		end
 
-		--[[
-		if (GameTime() - bot:GetLastAttackTime()) > 4.0 or bot:GetAttackTarget() ~= weakestHero then
+		if (GameTime() - bot:GetLastAttackTime()) > 5.0 and weakestHero:GetCurrentMovementSpeed() >= bot:GetCurrentMovementSpeed() then
 			print(utils.GetHeroName(bot), " - Stopping my fight... done chasing")
 			self:RemoveAction(ACTION_FIGHT)
 			self:setHeroVar("Target", nil)
 			return false
 		end
-		--]]
 	end
 
+	self:RemoveAction(ACTION_FIGHT)
+	self:setHeroVar("Target", nil)
 	return false
 end
 
@@ -607,7 +653,8 @@ function X:Determine_ShouldIDefendLane(bot)
 end
 
 function X:Determine_ShouldGank(bot)
-	return getHeroVar("Role") == ROLE_ROAMER or (getHeroVar("Role") == ROLE_JUNGLER and getHeroVar("Self"):IsReadyToGank(bot))
+	local me = getHeroVar("Self")
+	return getHeroVar("Role") == ROLE_ROAMER or (getHeroVar("Role") == ROLE_JUNGLER and me.IsReadyToGank(me, bot))
 end
 
 function X:IsReadyToGank(bot)
@@ -653,10 +700,19 @@ function X:Determine_ShouldGetRune(bot)
 end
 
 function X:Determine_ShouldWard(bot)
-	if (false) then -- FIXME: Implement
-		if self:HasAction(ACTION_WARD) == false then
-			print(utils.GetHeroName(bot), " - Going to place Wards")
-			self:AddAction(ACTION_WARD)
+	if utils.HaveItem(bot, "item_ward_observer") then
+		local alliedMapWards = GetUnitList(UNIT_LIST_ALLIED_WARDS)
+		if #alliedMapWards < 2 then --FIXME: don't hardcode.. you get more wards then you can use this way
+			local wardLoc = utils.GetWardingSpot(self:getHeroVar("CurLane"))
+			if wardLoc ~= nil and utils.EnemiesNearLocation(bot, wardLoc, 2000) < 2 then
+				self:setHeroVar("WardLocation", wardLoc)
+				utils.InitPath()
+				if self:HasAction(ACTION_WARD) == false then
+					print(utils.GetHeroName(bot), " - Going to place Wards")
+					self:AddAction(ACTION_WARD)
+				end
+				return true
+			end
 		end
 	end
 	return false
@@ -670,7 +726,6 @@ end
 function X:Determine_WhereToMove(bot)
 	local loc = GetLocationAlongLane(self:getHeroVar("CurLane"), 0.5);
 	local dist = GetUnitToLocationDistance(bot, loc);
-	--print("Distance: " .. dist);
 	if ( dist <= 1.0 ) then
 		self:RemoveAction(ACTION_MOVING);
 		return nil;
@@ -679,87 +734,117 @@ function X:Determine_WhereToMove(bot)
 end
 
 function X:DoRetreat(bot, reason)
-	if reason == constants.RETREAT_DANGER then
+	--if reason == nil then return false end
+	
+	if reason == constants.RETREAT_FOUNTAIN then
 		if ( self:HasAction(ACTION_RETREAT) == false ) then
-			print(utils.GetHeroName(bot), " STARTING TO RETREAT ")
+			utils.myPrint("DoRetreat - STARTING TO RETREAT TO FOUNTAIN")
 			self:AddAction(ACTION_RETREAT)
 			retreat_generic.OnStart(bot)
 		end
-		retreat_generic.Think(bot)
+		
+		-- if we healed up enough, change our reason for retreating
+		if bot:DistanceFromFountain() >= 5000 and bot:GetHealth()/bot:GetMaxHealth() > 0.6 and bot:GetMana()/bot:GetMaxMana() > 0.6 then
+			--utils.myPrint("DoRetreat - Upgrading from RETREAT_FOUNTAIN to RETREAT_DANGER")
+			self:setHeroVar("RetreatReason", constants.RETREAT_DANGER)
+			return true
+		end
+		
+		if bot:DistanceFromFountain() > 0 or (bot:GetHealth()/bot:GetMaxHealth() < 1.0 or bot:GetMana()/bot:GetMaxMana() < 1.0) then
+			retreat_generic.Think(bot, utils.Fountain(GetTeam()))
+			return true
+		end
+		--utils.myPrint("DoRetreat - RETREAT FOUNTAIN End".." - DfF: ".. bot:DistanceFromFountain()..", H: "..bot:GetHealth())
+	elseif reason == constants.RETREAT_DANGER then
+		if ( self:HasAction(ACTION_RETREAT) == false ) then
+			utils.myPrint("STARTING TO RETREAT b/c OF DANGER")
+			self:AddAction(ACTION_RETREAT)
+			retreat_generic.OnStart(bot)
+		end
+		
+		if self:getHeroVar("IsRetreating") ~= nil and self:getHeroVar("IsRetreating") == true then
+			if bot:TimeSinceDamagedByAnyHero() < 3.0 or 
+				(bot:DistanceFromFountain() < 5000 and bot:GetHealth()/bot:GetMaxHealth() < 1.0) or
+				(bot:DistanceFromFountain() >= 5000 and bot:GetHealth()/bot:GetMaxHealth() < 0.6) then
+				retreat_generic.Think(bot)
+				return true
+			end
+		end
+		--utils.myPrint("DoRetreat - RETREAT DANGER End".." - DfF: "..bot:DistanceFromFountain()..", H: "..bot:GetHealth())
 	elseif reason == constants.RETREAT_TOWER then
 		if ( self:HasAction(ACTION_RETREAT) == false ) then
-			print(utils.GetHeroName(bot), " STARTING TO RETREAT b/c of tower damage")
+			utils.myPrint("STARTING TO RETREAT b/c of tower damage")
 			self:AddAction(ACTION_RETREAT)
 		end
 
-		local mypos = bot:GetLocation();
+		local mypos = bot:GetLocation()
 		if self:getHeroVar("TargetOfRunAwayFromCreepOrTower") == nil then
 			--set the target to go back
 			local bInLane, cLane = utils.IsInLane()
 			if bInLane then
-				self:setHeroVar("TargetOfRunAwayFromCreepOrTower", GetLocationAlongLane(cLane,Max(utils.PositionAlongLane(bot, cLane)-0.04,0.0)))
+				self:setHeroVar("TargetOfRunAwayFromCreepOrTower", GetLocationAlongLane(cLane,Max(utils.PositionAlongLane(bot, cLane)-0.05, 0.0)))
 			elseif ( GetTeam() == TEAM_RADIANT ) then
-				self:setHeroVar("TargetOfRunAwayFromCreepOrTower", Vector(mypos[1] - 400, mypos[2] - 400))
+				cLane = self:getHeroVar("CurLane")
+				if cLane == LANE_BOT then
+					self:setHeroVar("TargetOfRunAwayFromCreepOrTower", Vector(mypos[1], mypos[2] - 400))
+				elseif cLane == LANE_TOP then
+					self:setHeroVar("TargetOfRunAwayFromCreepOrTower", Vector(mypos[1] - 400, mypos[2] - 200))
+				else
+					self:setHeroVar("TargetOfRunAwayFromCreepOrTower", Vector(mypos[1] - 300, mypos[2] - 300))
+				end
 			else
-				self:setHeroVar("TargetOfRunAwayFromCreepOrTower", Vector(mypos[1] + 400, mypos[2] + 400))
+				cLane = self:getHeroVar("CurLane")
+				if cLane == LANE_BOT then
+					self:setHeroVar("TargetOfRunAwayFromCreepOrTower", Vector(mypos[1] + 400, mypos[2] + 200))
+				elseif cLane == LANE_TOP then
+					self:setHeroVar("TargetOfRunAwayFromCreepOrTower", Vector(mypos[1] + 400, mypos[2]))
+				else
+					self:setHeroVar("TargetOfRunAwayFromCreepOrTower", Vector(mypos[1] + 300, mypos[2] + 300))
+				end
 			end
-
-			local d = GetUnitToLocationDistance(bot, self:getHeroVar("TargetOfRunAwayFromCreepOrTower"));
-			if(d > 200) then
-				bot:Action_MoveToLocation(self:getHeroVar("TargetOfRunAwayFromCreepOrTower"));
-			else
-				self:RemoveAction(ACTION_RETREAT);
-				self:setHeroVar("TargetOfRunAwayFromCreepOrTower", nil)
-			end
-			return false
-		else
-			if(GetUnitToLocationDistance(bot, self:getHeroVar("TargetOfRunAwayFromCreepOrTower")) < 200) then
-				-- we are far enough from tower,return to normal state.
-				self:setHeroVar("TargetOfRunAwayFromCreepOrTower", nil)
-				self:RemoveAction(ACTION_RETREAT);
-				return false
-			end
-			bot:Action_MoveToLocation(self:getHeroVar("TargetOfRunAwayFromCreepOrTower"))
 		end
+		
+		local rLoc = self:getHeroVar("TargetOfRunAwayFromCreepOrTower")
+		local d = GetUnitToLocationDistance(bot, rLoc)
+		if d > 50 then
+			bot:Action_MoveToLocation(rLoc)
+			return true
+		end
+		--utils.myPrint("DoRetreat - RETREAT TOWER End")
 	elseif reason == constants.RETREAT_CREEP then
 		if ( self:HasAction(ACTION_RETREAT) == false ) then
-			print(utils.GetHeroName(bot), " STARTING TO RETREAT b/c of creep damage")
+			utils.myPrint("STARTING TO RETREAT b/c of creep damage")
 			self:AddAction(ACTION_RETREAT)
 		end
 
-		local mypos = bot:GetLocation();
+		local mypos = bot:GetLocation()
 		if self:getHeroVar("TargetOfRunAwayFromCreepOrTower") == nil then
 			--set the target to go back
 			local bInLane, cLane = utils.IsInLane()
 			if bInLane then
-				self:setHeroVar("TargetOfRunAwayFromCreepOrTower", GetLocationAlongLane(cLane,Max(utils.PositionAlongLane(bot, cLane)-0.03,0.0)))
+				self:setHeroVar("TargetOfRunAwayFromCreepOrTower", GetLocationAlongLane(cLane, Max(utils.PositionAlongLane(bot, cLane)-0.04, 0.0)))
 			elseif ( GetTeam() == TEAM_RADIANT ) then
-				self:setHeroVar("TargetOfRunAwayFromCreepOrTower", Vector(mypos[1] - 400, mypos[2] - 400))
+				self:setHeroVar("TargetOfRunAwayFromCreepOrTower", Vector(mypos[1] - 300, mypos[2] - 300))
 			else
-				self:setHeroVar("TargetOfRunAwayFromCreepOrTower", Vector(mypos[1] + 400, mypos[2] + 400))
+				self:setHeroVar("TargetOfRunAwayFromCreepOrTower", Vector(mypos[1] + 300, mypos[2] + 300))
 			end
-
-			local d = GetUnitToLocationDistance(bot, self:getHeroVar("TargetOfRunAwayFromCreepOrTower"));
-			if(d > 200) then
-				bot:Action_MoveToLocation(self:getHeroVar("TargetOfRunAwayFromCreepOrTower"));
-			else
-				self:RemoveAction(ACTION_RETREAT);
-				self:setHeroVar("TargetOfRunAwayFromCreepOrTower", nil)
-			end
-			return false
-		else
-			if(GetUnitToLocationDistance(bot, self:getHeroVar("TargetOfRunAwayFromCreepOrTower")) < 200) then
-				-- we are far enough from tower,return to normal state.
-				self:setHeroVar("TargetOfRunAwayFromCreepOrTower", nil)
-				self:RemoveAction(ACTION_RETREAT);
-				return false
-			end
-			bot:Action_MoveToLocation(self:getHeroVar("TargetOfRunAwayFromCreepOrTower"))
 		end
-	else
-		self:RemoveAction(ACTION_RETREAT)
-		return false
+		
+		local rLoc = self:getHeroVar("TargetOfRunAwayFromCreepOrTower")
+		local d = GetUnitToLocationDistance(bot, rLoc)
+		if d > 50 then
+			bot:Action_MoveToLocation(rLoc)
+			return true
+		end
+		--utils.myPrint("DoRetreat - RETREAT CREEP End")
 	end
+	
+	-- If we got here, we are done retreating
+	--utils.myPrint("done retreating from reason: "..reason)
+	self:RemoveAction(ACTION_RETREAT)
+	self:setHeroVar("TargetOfRunAwayFromCreepOrTower", nil)
+	self:setHeroVar("IsRetreating", false)
+	self:setHeroVar("RetreatReason", nil)
 	return true
 end
 
@@ -843,6 +928,10 @@ function X:DoGank(bot)
 		ganking_generic.OnStart(bot)
 	end
 	
+	if self:IsReadyToGank(bot) == false then
+		self:RemoveAction(ACTION_GANKING)
+	end
+	
 	local ret = ganking_generic.Think(bot)
 
 	return ret
@@ -876,14 +965,35 @@ function X:DoGetRune(bot)
 		bot:Action_PickUpRune(getHeroVar("RuneTarget"))
 		return true
 	end
-	setHeroVar("RuneTarget", nil)
+	self:setHeroVar("RuneTarget", nil)
 	self:RemoveAction(ACTION_RUNEPICKUP)
 	return false
 end
 
-function X:DoWard(bot)
-	self:RemoveAction(ACTION_WARD)
-	return true
+function X:DoWard(bot, wardType)
+	local wardType = wardType or "item_ward_observer"
+	local dest = self:getHeroVar("WardLocation")
+	if dest ~= nil then
+		local dist = GetUnitToLocationDistance(bot, dest)
+		-- Observer/Sentry Cast Range is 500
+		if dist <= 500 then
+			local ward = utils.HaveItem(bot, wardType)
+			if ward ~= nil then
+				bot:Action_UseAbilityOnLocation(ward, dest)
+				U.InitPath()
+				self:RemoveAction(ACTION_WARD)
+				self:setHeroVar("WardLocation", nil)
+				return true
+			end
+		else
+			U.MoveSafelyToLocation(bot, dest)
+			return true
+		end
+	else
+		print(utils.GetHeroName(bot), "ERROR - BAD WARD LOC")
+	end
+	
+	return false
 end
 
 function X:DoLane(bot)

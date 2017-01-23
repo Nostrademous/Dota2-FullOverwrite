@@ -88,13 +88,19 @@ local function MovingToLane(npcBot)
 end
 
 local function Start(npcBot)
-	if CurLane ~= LANE_MID then
-		npcBot:Action_MoveToLocation(GetLocationAlongLane(CurLane,0.17));
-	else
-		npcBot:Action_MoveToLocation(GetLocationAlongLane(CurLane,0.25));
+	if CurLane == LANE_MID then
+		npcBot:Action_MoveToLocation(GetRuneSpawnLocation(RUNE_BOUNTY_2))
+	elseif CurLane == LANE_TOP then
+		npcBot:Action_MoveToLocation(GetRuneSpawnLocation(RUNE_BOUNTY_2)+Vector(-250, 1000))
+	elseif CurLane == LANE_BOT then
+		if IsCore then
+			npcBot:Action_MoveToLocation(GetRuneSpawnLocation(RUNE_BOUNTY_1))
+		else
+			npcBot:Action_MoveToLocation(GetRuneSpawnLocation(RUNE_BOUNTY_1)+Vector(-250, -250))
+		end
 	end
-	local AllyCreeps = npcBot:GetNearbyCreeps(EyeRange,false);
-	if (#AllyCreeps > 0) then
+	
+	if DotaTime() > 1 then
 		LaningState = LaningStates.Moving
 	end
 end
@@ -110,11 +116,11 @@ local function Moving(npcBot)
 	end
 
 	if frontier >= LanePos and (noTower or ShouldPush) then
-		local target = GetLocationAlongLane(CurLane,Min(1.0,LanePos+0.03));---
+		local target = GetLocationAlongLane(CurLane,Min(1.0,LanePos+0.03))
 		--print( " Going Forward :: MyLoc: ", npcBot:GetLocation()[1], ",", npcBot:GetLocation()[2], " TARGET: ", target[1], ",", target[2])
 		npcBot:Action_MoveToLocation(target);
 	else
-		local target = GetLocationAlongLane(CurLane,Min(1.0,LanePos-0.03));---
+		local target = GetLocationAlongLane(CurLane,Min(1.0,LanePos-0.03))
 		npcBot:Action_MoveToLocation(target);
 	end
 	
@@ -249,7 +255,7 @@ local function CSing(npcBot)
 		return;
 	end	
 	
-	AttackRange = npcBot:GetAttackRange()
+	AttackRange = npcBot:GetAttackRange() + npcBot:GetBoundingRadius()
 	AttackSpeed = npcBot:GetAttackPoint()
 	
 	local AlliedHeroes = npcBot:GetNearbyHeroes(EyeRange,false,BOT_MODE_NONE);
@@ -303,6 +309,21 @@ local function CSing(npcBot)
 			return
 		end
 		
+		-- check if enemy has a breakable buff
+		if #Enemies == 1 then
+			if utils.EnemyHasBreakableBuff(Enemies[1]) then
+				--print(utils.GetHeroName(Enemies[1]).." has a breakable buff running")
+				if (not utils.UseOrbEffect(npcBot, Enemies[1])) then
+					if GetUnitToUnitDistance(npcBot, Enemies[1]) < (AttackRange+Enemies[1]:GetBoundingRadius()) then
+						npcBot:Action_AttackUnit(Enemies[1], true)
+						return
+					end
+				else
+					return
+				end
+			end
+		end
+		
 		local approachScalar = 2.0
 		if utils.IsMelee(npcBot) then
 			approachScalar = 2.5
@@ -328,18 +349,7 @@ local function CSing(npcBot)
 		end
 	end
 	
-	local orb = getHeroVar("HasOrbAbility")
-	if orb ~= nil then
-		local ability = npcBot:GetAbilityByName(orb)
-		if ability ~= nil and ability:IsFullyCastable() then
-			local WeakestHero, _ = utils.GetWeakestHero(npcBot, ability:GetCastRange())
-			if WeakestHero ~= nil then
-				print(utils.GetHeroName(npcBot), " harassing ", utils.GetHeroName(WeakestHero), " with ", ability:GetName())
-				npcBot:Action_UseAbilityOnEntity(ability, WeakestHero)
-				return
-			end
-		end
-	end
+	utils.UseOrbEffect(npcBot)
 	
 	LaningState = LaningStates.MovingToPos;
 end

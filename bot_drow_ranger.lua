@@ -70,14 +70,17 @@ function drowRangerBot:ConsiderAbilityUse()
 end
 
 function Think()
-    local npcBot = GetBot()
+    local bot = GetBot()
 	
-	drowRangerBot:Think(npcBot)
+	drowRangerBot:Think(bot)
 	
-	if npcBot:GetLevel() == 6 and not (utils.HaveItem(bot, "item_dragon_lance")) then
-		drowRangerBot:DoJungle(npcBot)
-	else
-		drowRangerBot:DoPushLane(npcBot)
+	if bot:GetLevel() >= 6 then
+		if not (utils.HaveItem(bot, "item_dragon_lance")) then
+			drowRangerBot:AddAction(constants.ACTION_JUNGLING)
+		else
+			drowRangerBot:RemoveAction(constants.ACTION_JUNGLING)
+			setHeroVar("ShouldPush", true)
+		end
 	end
 end
 
@@ -89,7 +92,7 @@ function drowRangerBot:DoRetreat(bot, reason)
 		(self:GetAction() ~= constants.ACTION_LANING or (pushing ~= nil and pushing ~= false)) then
 		-- if our health is lower than maximum( 15% health, 100 health )
 		if bot:GetHealth() < math.max(bot:GetMaxHealth()*0.15, 100) then
-			setHeroVar("IsRetreating", true)
+			setHeroVar("RetreatReason", constants.RETREAT_FOUNTAIN)
 			if ( self:HasAction(constants.ACTION_RETREAT) == false ) then
 				self:AddAction(constants.ACTION_RETREAT)
 				setHeroVar("IsInLane", false)
@@ -98,7 +101,7 @@ function drowRangerBot:DoRetreat(bot, reason)
 		-- if we are retreating - piggyback on retreat logic movement code
 		if self:GetAction() == constants.ACTION_RETREAT then
 			-- we use '.' instead of ':' and pass 'self' so it is the correct self
-			return dt.DoRetreat(self, bot, 1)
+			return dt.DoRetreat(self, bot, getHeroVar("RetreatReason"))
 		end
 
 		-- we are not retreating, allow decision tree logic to fall through

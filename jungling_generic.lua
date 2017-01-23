@@ -54,10 +54,14 @@ function OnStart(npcBot)
 	setHeroVar("move_ticks", 0)
 	-- TODO: if there are camps, consider tp'ing to the jungle
 
-	-- TODO: implement stacking
 	-- TODO: Pickup runes
 	-- TODO: help lanes
 	-- TODO: when to stop jungling? (NEVER!!)
+end
+
+function OnResume(bot)
+	print("resume jungling")
+	JunglingState=JunglingStates.FindCamp -- reset state
 end
 
 ----------------------------------
@@ -81,6 +85,10 @@ local function FindCamp(bot)
 end
 
 local function MoveToCamp(bot)
+	if getHeroVar("currentCamp") == nil then
+		JunglingState = JunglingStates.FindCamp
+		return
+	end
 	if GetUnitToLocationDistance(bot, getHeroVar("currentCamp")[constants.VECTOR]) > 200 then
 		local ticks = getHeroVar("move_ticks")
 		if ticks > 50 then -- don't do this every frame
@@ -143,7 +151,8 @@ local function CleanCamp(bot)
 	end
 	local neutrals = bot:GetNearbyCreeps(EyeRange,true);
 	if #neutrals == 0 then -- we did it
-		jungle_status.JungleCampClear(GetTeam(), getHeroVar("currentCamp")[constants.VECTOR])
+		local camp = utils.NearestNeutralCamp(bot, jungle_status.GetJungle(GetTeam())) -- we might not have killed the `currentCamp`
+		jungle_status.JungleCampClear(GetTeam(), camp[constants.VECTOR])
 		print(utils.GetHeroName(bot), "finds camp")
 		JunglingState = JunglingStates.FindCamp
 	else
@@ -184,6 +193,10 @@ end
 
 function Think(npcBot)
 	Updates(npcBot);
+
+	if getHeroVar("Self"):getPrevAction() ~= ACTION_JUNGLING then
+		OnResume(npcBot)
+	end
 
 	States[JunglingState](npcBot);
 

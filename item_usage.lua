@@ -173,6 +173,12 @@ function UseMovementItems(location)
 		return nil
 	end
 	
+	local hp = utils.HaveItem(npcBot, "item_hurricane_pike")
+	if hp ~= nil and utils.IsFacingLocation(npcBot, location, 25) then
+		npcBot:Action_UseAbilityOnEntity(hp, npcBot)
+		return nil
+	end
+	
 	local sb = utils.HaveItem(npcBot, "item_invis_sword")
 	if sb ~= nil and sb:IsFullyCastable() then
 		npcBot:Action_UseAbility(sb)
@@ -182,6 +188,22 @@ function UseMovementItems(location)
 	local se = utils.HaveItem(npcBot, "item_silver_edge")
 	if se ~= nil and se:IsFullyCastable() then
 		npcBot:Action_UseAbility(se)
+		return nil
+	end
+end
+
+function UseDefensiveItems(enemy, triggerDistance) 
+	local npcBot = GetBot()
+	local location = location or npcBot:GetLocation()
+	
+	if npcBot:IsChanneling() then
+		return nil
+	end
+	
+	local hp = utils.HaveItem(npcBot, "item_hurricane_pike")
+	
+	if hp ~= nil and GetUnitToUnitDistance(npcBot, enemy) < triggerDistance then
+		npcBot:Action_UseAbilityOnEntity(hp, enemy)
 		return nil
 	end
 end

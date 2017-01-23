@@ -60,6 +60,11 @@ drowRangerBot = botDrow:new{actionStack = drowRangerActionStack, abilityPriority
 
 drowRangerBot.Init = false
 
+function viperBot:DoHeroSpecificInit(bot)
+	self:setHeroVar("HasOrbAbility", SKILL_Q)
+	self:setHeroVar("OutOfRangeCasting", -1000.0)
+end
+
 function drowRangerBot:ConsiderAbilityUse()
 	ability_usage_drow_ranger.AbilityUsageThink()
 end

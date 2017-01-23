@@ -36,13 +36,6 @@ local function UseQ()
 		return false
 	end
 	
-	local Enemies = npcBot:GetNearbyHeroes(frostArrow:GetCastRange() + 100, true, BOT_MODE_NONE)
-	
-	if #Enemies == 1 and ( gust ~= nil and gust:IsFullyCastable() ) then
-		setHeroVar("Target", Enemies[1])
-		return false
-	end
-	
 	local target = getHeroVar("Target")
 	if target ~= nil and GetUnitToUnitDistance(npcBot, target) < frostArrow:GetCastRange() then
 		npcBot:Action_UseAbilityOnEntity(frostArrow, target)
@@ -64,14 +57,22 @@ end
 local function UseW()
 	local npcBot = GetBot()
 	
-	local enemy = getHeroVar("Target")
-	if enemy == nil then return false end
-	
 	local gust = npcBot:GetAbilityByName(Abilities[2])
 	
 	if (gust == nil) or (not gust:IsFullyCastable()) then
 		return false
 	end
+	
+	local Enemies = npcBot:GetNearbyHeroes(gust:GetCastRange(), true, BOT_MODE_NONE)
+	
+	if Enemies == nil then return false end
+	if #Enemies >= 1 and ( gust ~= nil and gust:IsFullyCastable() ) then
+		setHeroVar("Target", Enemies[#Enemies])
+		return true
+	end
+	
+	local enemy = getHeroVar("Target")
+	if enemy == nil then return false end
 	
 	if GetUnitToUnitDistance(enemy, npcBot) < gust:GetCastRange() and (not enemy.isSilenced) then
 		npcBot:Action_UseAbilityOnEntity(gust, enemy)

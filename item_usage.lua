@@ -173,9 +173,9 @@ function UseMovementItems(location)
 		return nil
 	end
 	
-	local force = utils.HaveItem(npcBot, "item_hurricane_pike")
-	if force ~= nil and utils.IsFacingLocation(npcBot, location, 25) then
-		npcBot:Action_UseAbilityOnEntity(force, npcBot)
+	local hp = utils.HaveItem(npcBot, "item_hurricane_pike")
+	if hp ~= nil and utils.IsFacingLocation(npcBot, location, 25) then
+		npcBot:Action_UseAbilityOnEntity(hp, npcBot)
 		return nil
 	end
 	
@@ -200,10 +200,10 @@ function UseDefensiveItems(enemy, triggerDistance)
 		return nil
 	end
 	
-	local force = utils.HaveItem(npcBot, "item_hurricane_pike")
+	local hp = utils.HaveItem(npcBot, "item_hurricane_pike")
 	
-	if force ~= nil and GetUnitToUnitDistance(npcBot, enemy) < triggerDistance then
-		npcBot:Action_UseAbilityOnEntity(force, enemy)
+	if hp ~= nil and GetUnitToUnitDistance(npcBot, enemy) < triggerDistance then
+		npcBot:Action_UseAbilityOnEntity(hp, enemy)
 		return nil
 	end
 end

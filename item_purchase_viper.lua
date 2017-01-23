@@ -63,6 +63,7 @@ local ItemsToBuyAsMid = {
 }
 local ItemsToBuyAsOfflane = {
 	StartingItems = {
+		"item_ward_observer",
 		"item_stout_shield",
 		"item_flask",
 		"item_faerie_fire",

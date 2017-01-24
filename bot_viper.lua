@@ -12,7 +12,7 @@ local dt = require( GetScriptDirectory().."/decision_tree" )
 local SKILL_Q = "viper_poison_attack";
 local SKILL_W = "viper_nethertoxin";
 local SKILL_E = "viper_corrosive_skin";
-local SKILL_R = "viper_viper_strike"; 
+local SKILL_R = "viper_viper_strike";
 
 local ABILITY1 = "special_bonus_attack_damage_15"
 local ABILITY2 = "special_bonus_hp_125"
@@ -24,10 +24,10 @@ local ABILITY7 = "special_bonus_unique_viper_1"
 local ABILITY8 = "special_bonus_unique_viper_2"
 
 local ViperAbilityPriority = {
-	SKILL_Q,    SKILL_W,    SKILL_W,    SKILL_E,    SKILL_W,
+    SKILL_Q,    SKILL_W,    SKILL_W,    SKILL_E,    SKILL_W,
     SKILL_R,    SKILL_W,    SKILL_Q,    SKILL_Q,    ABILITY2,
     SKILL_Q,    SKILL_R,    SKILL_E,    SKILL_E,    ABILITY4,
-    SKILL_E,    SKILL_R,    ABILITY6, 	ABILITY8
+    SKILL_E,    SKILL_R,    ABILITY6,   ABILITY8
 };
 
 local viperActionStack = { [1] = constants.ACTION_NONE }
@@ -35,10 +35,10 @@ local viperActionStack = { [1] = constants.ACTION_NONE }
 ViperBot = dt:new()
 
 function ViperBot:new(o)
-	o = o or dt:new(o)
-	setmetatable(o, self)
-	self.__index = self
-	return o
+    o = o or dt:new(o)
+    setmetatable(o, self)
+    self.__index = self
+    return o
 end
 
 viperBot = ViperBot:new{actionStack = viperActionStack, abilityPriority = ViperAbilityPriority}
@@ -47,18 +47,16 @@ viperBot = ViperBot:new{actionStack = viperActionStack, abilityPriority = ViperA
 viperBot.Init = false
 
 function viperBot:DoHeroSpecificInit(bot)
-	self:setHeroVar("HasOrbAbility", SKILL_Q)
-	self:setHeroVar("OutOfRangeCasting", -1000.0)
+    self:setHeroVar("HasOrbAbility", SKILL_Q)
+    self:setHeroVar("OutOfRangeCasting", -1000.0)
 end
 
 function viperBot:ConsiderAbilityUse()
-	return ability_usage_viper.AbilityUsageThink()
+    return ability_usage_viper.AbilityUsageThink()
 end
 
 function Think()
     local npcBot = GetBot()
-	
-	viperBot:Think(npcBot)
-	
-	viperBot:SaveLocation(npcBot)
+
+    viperBot:Think(npcBot)
 end

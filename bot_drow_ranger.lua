@@ -14,13 +14,13 @@ local dt = require( GetScriptDirectory().."/decision_tree" )
 local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
 
 function setHeroVar(var, value)
-	local bot = GetBot()
-	gHeroVar.SetVar(bot:GetPlayerID(), var, value)
+    local bot = GetBot()
+    gHeroVar.SetVar(bot:GetPlayerID(), var, value)
 end
 
 function getHeroVar(var)
-	local bot = GetBot()
-	return gHeroVar.GetVar(bot:GetPlayerID(), var)
+    local bot = GetBot()
+    return gHeroVar.GetVar(bot:GetPlayerID(), var)
 end
 
 local DROW_RANGER_SKILL_Q = "drow_ranger_frost_arrows"
@@ -38,7 +38,7 @@ local DROW_RANGER_ABILITY7 = "special_bonus_unique_drow_ranger_2"
 local DROW_RANGER_ABILITY8 = "special_bonus_unique_drow_ranger_3"
 
 local DrowRangerAbilityPriority = {
-	DROW_RANGER_SKILL_Q,    DROW_RANGER_SKILL_E,    DROW_RANGER_SKILL_W,    DROW_RANGER_SKILL_Q,    DROW_RANGER_SKILL_Q,
+    DROW_RANGER_SKILL_Q,    DROW_RANGER_SKILL_E,    DROW_RANGER_SKILL_W,    DROW_RANGER_SKILL_Q,    DROW_RANGER_SKILL_Q,
     DROW_RANGER_SKILL_R,    DROW_RANGER_SKILL_Q,    DROW_RANGER_SKILL_E,    DROW_RANGER_SKILL_E,    DROW_RANGER_ABILITY2,
     DROW_RANGER_SKILL_W,    DROW_RANGER_SKILL_R,    DROW_RANGER_SKILL_E,    DROW_RANGER_SKILL_W,    DROW_RANGER_ABILITY3,
     DROW_RANGER_SKILL_W,    DROW_RANGER_SKILL_R,    DROW_RANGER_ABILITY5,   DROW_RANGER_ABILITY8
@@ -49,10 +49,10 @@ local drowRangerActionStack = { [1] = constants.ACTION_NONE }
 botDrow = dt:new()
 
 function botDrow:new(o)
-	o = o or dt:new(o)
-	setmetatable(o, self)
-	self.__index = self
-	return o
+    o = o or dt:new(o)
+    setmetatable(o, self)
+    self.__index = self
+    return o
 end
 
 drowRangerBot = botDrow:new{actionStack = drowRangerActionStack, abilityPriority = DrowRangerAbilityPriority}
@@ -61,103 +61,101 @@ drowRangerBot = botDrow:new{actionStack = drowRangerActionStack, abilityPriority
 drowRangerBot.Init = false
 
 function drowRangerBot:DoHeroSpecificInit(bot)
-	self:setHeroVar("HasOrbAbility", SKILL_Q)
-	self:setHeroVar("OutOfRangeCasting", -1000.0)
+    self:setHeroVar("HasOrbAbility", SKILL_Q)
+    self:setHeroVar("OutOfRangeCasting", -1000.0)
 end
 
 function drowRangerBot:ConsiderAbilityUse()
-	ability_usage_drow_ranger.AbilityUsageThink()
+    ability_usage_drow_ranger.AbilityUsageThink()
 end
 
 function Think()
     local bot = GetBot()
-	
-	drowRangerBot:Think(bot)
-	
-	--[[ FIXME: Drow Jungling is broken currently
-	if bot:GetLevel() >= 6 then
-		if not (utils.HaveItem(bot, "item_dragon_lance")) then
-			drowRangerBot:AddAction(constants.ACTION_JUNGLING)
-		else
-			drowRangerBot:RemoveAction(constants.ACTION_JUNGLING)
-			setHeroVar("ShouldPush", true)
-		end
-	end
-	--]]
-	
-	drowRangerBot:SaveLocation(bot)
+
+    drowRangerBot:Think(bot)
+
+    --[[ FIXME: Drow Jungling is broken currently
+    if bot:GetLevel() >= 6 then
+        if not (utils.HaveItem(bot, "item_dragon_lance")) then
+            drowRangerBot:AddAction(constants.ACTION_JUNGLING)
+        else
+            drowRangerBot:RemoveAction(constants.ACTION_JUNGLING)
+            setHeroVar("ShouldPush", true)
+        end
+    end
+    --]]
 end
 
 -- We over-write DoRetreat behavior for JUNGLER Drow Ranger
 function drowRangerBot:DoRetreat(bot, reason)
-	-- if we got creep damage and are a JUNGLER do special stuff
+    -- if we got creep damage and are a JUNGLER do special stuff
     local pushing = getHeroVar("ShouldPush")
-	if reason == constants.RETREAT_CREEP and 
-		(self:GetAction() ~= constants.ACTION_LANING or (pushing ~= nil and pushing ~= false)) then
-		-- if our health is lower than maximum( 15% health, 100 health )
-		if bot:GetHealth() < math.max(bot:GetMaxHealth()*0.15, 100) then
-			setHeroVar("RetreatReason", constants.RETREAT_FOUNTAIN)
-			if ( self:HasAction(constants.ACTION_RETREAT) == false ) then
-				self:AddAction(constants.ACTION_RETREAT)
-				setHeroVar("IsInLane", false)
-			end
-		end
-		-- if we are retreating - piggyback on retreat logic movement code
-		if self:GetAction() == constants.ACTION_RETREAT then
-			-- we use '.' instead of ':' and pass 'self' so it is the correct self
-			return dt.DoRetreat(self, bot, getHeroVar("RetreatReason"))
-		end
+    if reason == constants.RETREAT_CREEP and
+        (self:GetAction() ~= constants.ACTION_LANING or (pushing ~= nil and pushing ~= false)) then
+        -- if our health is lower than maximum( 15% health, 100 health )
+        if bot:GetHealth() < math.max(bot:GetMaxHealth()*0.15, 100) then
+            setHeroVar("RetreatReason", constants.RETREAT_FOUNTAIN)
+            if ( self:HasAction(constants.ACTION_RETREAT) == false ) then
+                self:AddAction(constants.ACTION_RETREAT)
+                setHeroVar("IsInLane", false)
+            end
+        end
+        -- if we are retreating - piggyback on retreat logic movement code
+        if self:GetAction() == constants.ACTION_RETREAT then
+            -- we use '.' instead of ':' and pass 'self' so it is the correct self
+            return dt.DoRetreat(self, bot, getHeroVar("RetreatReason"))
+        end
 
-		-- we are not retreating, allow decision tree logic to fall through
-		-- to the next level
-		return false
-	-- if we are not a jungler, invoke default DoRetreat behavior
-	else
-		-- we use '.' instead of ':' and pass 'self' so it is the correct self
-		return dt.DoRetreat(self, bot, reason)
-	end
+        -- we are not retreating, allow decision tree logic to fall through
+        -- to the next level
+        return false
+    -- if we are not a jungler, invoke default DoRetreat behavior
+    else
+        -- we use '.' instead of ':' and pass 'self' so it is the correct self
+        return dt.DoRetreat(self, bot, reason)
+    end
 end
 
 function drowRangerBot:GetMaxClearableCampLevel(bot)
-	if DotaTime() < 30 then
-		return constants.CAMP_EASY
-	end
+    if DotaTime() < 30 then
+        return constants.CAMP_EASY
+    end
 
-	local marksmanship = bot:GetAbilityByName("drow_ranger_marksmanship")
-	
-	if utils.HaveItem(bot, "item_dragon_lance") and marksmanship:GetLevel() >= 1 then
-		return constants.CAMP_ANCIENT
-	elseif utils.HaveItem(bot, "item_power_treads") and marksmanship:GetLevel() == 1 then
-		return constants.CAMP_HARD
-	end
+    local marksmanship = bot:GetAbilityByName("drow_ranger_marksmanship")
 
-	return constants.CAMP_MEDIUM
+    if utils.HaveItem(bot, "item_dragon_lance") and marksmanship:GetLevel() >= 1 then
+        return constants.CAMP_ANCIENT
+    elseif utils.HaveItem(bot, "item_power_treads") and marksmanship:GetLevel() == 1 then
+        return constants.CAMP_HARD
+    end
+
+    return constants.CAMP_MEDIUM
 end
 
 -- function drowRangerBot:IsReadyToGank(bot)
     -- local frostArrow = bot:GetAbilityByName("drow_ranger_frost_arrows")
-	
-	-- if utils.HaveItem(bot, "item_dragon_lance") and frostArrow:GetLevel >= 4 then
-		-- return true
-	-- end
+
+    -- if utils.HaveItem(bot, "item_dragon_lance") and frostArrow:GetLevel >= 4 then
+        -- return true
+    -- end
     -- return false -- that's all we need
 -- end
 
 function drowRangerBot:DoCleanCamp(bot, neutrals)
 
-	local frostArrow = bot:GetAbilityByName("drow_ranger_frost_arrows")
-	
-	for i, neutral in ipairs(neutrals) do
-		
-		local eDamage = bot:GetEstimatedDamageToTarget(true, neutral, bot:GetAttackSpeed(), DAMAGE_TYPE_PHYSICAL)
-		if not (eDamage > neutral:GetHealth()) then 
-			
-			if not (neutral:HasModifier("modifier_drow_ranger_frost_arrows_slow")) then -- TODO: add kiting when creep is to strong
-				bot:Action_UseAbilityOnEntity(frostArrow, neutral);
-				bot:Action_AttackUnit(neutral, true)
-			end
-				bot:Action_AttackUnit(neutral, true)
-			break
-		end
-	end
+    local frostArrow = bot:GetAbilityByName("drow_ranger_frost_arrows")
+
+    for i, neutral in ipairs(neutrals) do
+
+        local eDamage = bot:GetEstimatedDamageToTarget(true, neutral, bot:GetAttackSpeed(), DAMAGE_TYPE_PHYSICAL)
+        if not (eDamage > neutral:GetHealth()) then
+
+            if not (neutral:HasModifier("modifier_drow_ranger_frost_arrows_slow")) then -- TODO: add kiting when creep is to strong
+                bot:Action_UseAbilityOnEntity(frostArrow, neutral);
+                bot:Action_AttackUnit(neutral, true)
+            end
+                bot:Action_AttackUnit(neutral, true)
+            break
+        end
+    end
 end

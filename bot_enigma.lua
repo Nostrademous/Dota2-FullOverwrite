@@ -25,7 +25,7 @@ local ENIGMA_ABILITY7 = "special_bonus_armor_12"
 local ENIGMA_ABILITY8 = "special_bonus_unique_enigma"
 
 local EnigmaAbilityPriority = {
-	ENIGMA_SKILL_W,    ENIGMA_SKILL_Q,    ENIGMA_SKILL_W,    ENIGMA_SKILL_E,    ENIGMA_SKILL_W,
+    ENIGMA_SKILL_W,    ENIGMA_SKILL_Q,    ENIGMA_SKILL_W,    ENIGMA_SKILL_E,    ENIGMA_SKILL_W,
     ENIGMA_SKILL_R,    ENIGMA_SKILL_W,    ENIGMA_SKILL_Q,    ENIGMA_SKILL_E,    ENIGMA_ABILITY1,
     ENIGMA_SKILL_Q,    ENIGMA_SKILL_R,    ENIGMA_SKILL_E,    ENIGMA_SKILL_Q,    ENIGMA_ABILITY3,
     ENIGMA_SKILL_E,    ENIGMA_SKILL_R,    ENIGMA_ABILITY6,   ENIGMA_ABILITY7
@@ -36,10 +36,10 @@ local enigmaActionQueue = { [1] = constants.ACTION_NONE }
 enigmaBot = dt:new()
 
 function enigmaBot:new(o)
-	o = o or dt:new(o)
-	setmetatable(o, self)
-	self.__index = self
-	return o
+    o = o or dt:new(o)
+    setmetatable(o, self)
+    self.__index = self
+    return o
 end
 
 enigmaBot = enigmaBot:new{actionQueue = enigmaActionQueue, abilityPriority = EnigmaAbilityPriority}
@@ -48,13 +48,11 @@ enigmaBot = enigmaBot:new{actionQueue = enigmaActionQueue, abilityPriority = Eni
 enigmaBot.Init = false;
 
 function enigmaBot:ConsiderAbilityUse()
-	ability_usage_enigma.AbilityUsageThink()
+    ability_usage_enigma.AbilityUsageThink()
 end
 
 function Think()
     local npcBot = GetBot()
 
-	enigmaBot:Think(npcBot)
-	
-	enigmaBot:SaveLocation(npcBot)
+    enigmaBot:Think(npcBot)
 end

@@ -10,7 +10,7 @@ local dt = require( GetScriptDirectory().."/decision_tree" )
 local SKILL_Q = "antimage_mana_break";
 local SKILL_W = "antimage_blink";
 local SKILL_E = "antimage_spell_shield";
-local SKILL_R = "antimage_mana_void"; 
+local SKILL_R = "antimage_mana_void";
 
 local ABILITY1 = "special_bonus_strength_6"
 local ABILITY2 = "special_bonus_attack_damage_20"
@@ -22,10 +22,10 @@ local ABILITY7 = "special_bonus_agility_25"
 local ABILITY8 = "special_bonus_unique_antimage"
 
 local AntimageAbilityPriority = {
-	SKILL_W,    SKILL_Q,    SKILL_Q,    SKILL_E,    SKILL_Q,
+    SKILL_W,    SKILL_Q,    SKILL_Q,    SKILL_E,    SKILL_Q,
     SKILL_R,    SKILL_Q,    SKILL_W,    SKILL_W,    ABILITY2,
     SKILL_W,    SKILL_R,    SKILL_E,    SKILL_E,    ABILITY4,
-    SKILL_E,    SKILL_R,    ABILITY6, 	ABILITY8
+    SKILL_E,    SKILL_R,    ABILITY6,   ABILITY8
 };
 
 local antimageActionStack = { [1] = constants.ACTION_NONE }
@@ -33,10 +33,10 @@ local antimageActionStack = { [1] = constants.ACTION_NONE }
 AMBot = dt:new()
 
 function AMBot:new(o)
-	o = o or dt:new(o)
-	setmetatable(o, self)
-	self.__index = self
-	return o
+    o = o or dt:new(o)
+    setmetatable(o, self)
+    self.__index = self
+    return o
 end
 
 amBot = AMBot:new{actionStack = antimageActionStack, abilityPriority = AntimageAbilityPriority}
@@ -45,18 +45,16 @@ amBot = AMBot:new{actionStack = antimageActionStack, abilityPriority = AntimageA
 amBot.Init = false
 
 function amBot:ConsiderAbilityUse()
-	ability_usage_antimage.AbilityUsageThink()
+    ability_usage_antimage.AbilityUsageThink()
 end
 
 function amBot:DoHeroSpecificInit(bot)
-	self:setHeroVar("HasMovementAbility", bot:GetAbilityByName(SKILL_W))
-	self:setHeroVar("HasEscape", bot:GetAbilityByName(SKILL_W))
+    self:setHeroVar("HasMovementAbility", bot:GetAbilityByName(SKILL_W))
+    self:setHeroVar("HasEscape", bot:GetAbilityByName(SKILL_W))
 end
 
 function Think()
     local npcBot = GetBot()
 
-	amBot:Think(npcBot)
-	
-	amBot:SaveLocation(npcBot)
+    amBot:Think(npcBot)
 end

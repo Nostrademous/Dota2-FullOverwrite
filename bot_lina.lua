@@ -13,7 +13,7 @@ local dt = require( GetScriptDirectory().."/decision_tree" )
 local LINA_SKILL_Q = "lina_dragon_slave";
 local LINA_SKILL_W = "lina_light_strike_array";
 local LINA_SKILL_E = "lina_fiery_soul";
-local LINA_SKILL_R = "lina_laguna_blade"; 
+local LINA_SKILL_R = "lina_laguna_blade";
 
 local LINA_ABILITY1 = "special_bonus_mp_250"
 local LINA_ABILITY2 = "special_bonus_attack_damage_20"
@@ -25,7 +25,7 @@ local LINA_ABILITY7 = "special_bonus_unique_lina_1"
 local LINA_ABILITY8 = "special_bonus_unique_lina_2"
 
 local LinaAbilityPriority = {
-	LINA_SKILL_Q,    LINA_SKILL_E,    LINA_SKILL_Q,    LINA_SKILL_W,    LINA_SKILL_Q,
+    LINA_SKILL_Q,    LINA_SKILL_E,    LINA_SKILL_Q,    LINA_SKILL_W,    LINA_SKILL_Q,
     LINA_SKILL_R,    LINA_SKILL_Q,    LINA_SKILL_E,    LINA_SKILL_E,    LINA_ABILITY1,
     LINA_SKILL_E,    LINA_SKILL_R,    LINA_SKILL_W,    LINA_SKILL_W,    LINA_ABILITY3,
     LINA_SKILL_W,    LINA_SKILL_R,    LINA_ABILITY5,   LINA_ABILITY7
@@ -36,10 +36,10 @@ local linaActionStack = { [1] = constants.ACTION_NONE }
 LinaBot = dt:new()
 
 function LinaBot:new(o)
-	o = o or dt:new(o)
-	setmetatable(o, self)
-	self.__index = self
-	return o
+    o = o or dt:new(o)
+    setmetatable(o, self)
+    self.__index = self
+    return o
 end
 
 linaBot = LinaBot:new{actionStack = linaActionStack, abilityPriority = LinaAbilityPriority}
@@ -48,19 +48,17 @@ linaBot = LinaBot:new{actionStack = linaActionStack, abilityPriority = LinaAbili
 linaBot.Init = false
 
 function linaBot:DoHeroSpecificInit(bot)
-	self:setHeroVar("OutOfRangeCasting", -1000.0)
-	self:setHeroVar("PerformingUltCombo", false)
-	self:setHeroVar("comboTarget", nil)
+    self:setHeroVar("OutOfRangeCasting", -1000.0)
+    self:setHeroVar("PerformingUltCombo", false)
+    self:setHeroVar("comboTarget", nil)
 end
 
 function linaBot:ConsiderAbilityUse()
-	return ability_usage_lina.AbilityUsageThink()
+    return ability_usage_lina.AbilityUsageThink()
 end
 
 function Think()
     local npcBot = GetBot()
-	
-	linaBot:Think(npcBot)
-	
-	linaBot:SaveLocation(npcBot)
+
+    linaBot:Think(npcBot)
 end

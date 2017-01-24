@@ -68,12 +68,12 @@ function Think()
     local npcBot = GetBot()
 
 	bloodseekerBot:Think(npcBot)
-	
+
 	if npcBot:GetLevel() == 25 and getHeroVar("Role") ~= constants.ROLE_HARDCARRY then
 		setHeroVar("Role", constants.ROLE_HARDCARRY)
 		setHeroVar("CurLane", LANE_BOT) --FIXME: don't hardcode this
 	end
-	
+
 	bloodseekerBot:SaveLocation(npcBot)
 end
 
@@ -81,7 +81,7 @@ end
 function bloodseekerBot:DoRetreat(bot, reason)
 	-- if we got creep damage and are a JUNGLER do special stuff
     local pushing = getHeroVar("ShouldPush")
-	if reason == constants.RETREAT_CREEP and 
+	if reason == constants.RETREAT_CREEP and
 		(self:GetAction() ~= constants.ACTION_LANING or (pushing ~= nil and pushing ~= false)) then
 		-- if our health is lower than maximum( 15% health, 100 health )
 		if bot:GetHealth() < math.max(bot:GetMaxHealth()*0.15, 100) then
@@ -124,7 +124,8 @@ end
 
 function bloodseekerBot:IsReadyToGank(bot)
     local rupture = bot:GetAbilityByName("bloodseeker_rupture")
-    return rupture:IsFullyCastable() -- that's all we need
+		local thirst = bot:GetAbilityByName("bloodseeker_thirst")
+    return rupture:IsFullyCastable() or thirst:GetLevel() >= 3
 end
 
 function bloodseekerBot:DoCleanCamp(bot, neutrals)

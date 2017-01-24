@@ -24,7 +24,7 @@ local ACTION_FIGHT      = constants.ACTION_FIGHT
 local ACTION_CHANNELING = constants.ACTION_CHANNELING
 local ACTION_JUNGLING   = constants.ACTION_JUNGLING
 local ACTION_MOVING     = constants.ACTION_MOVING
-local ACTION_SECRETSHOP = constants.ACTION_SECRETSHOP
+local ACTION_SPECIALSHOP = constants.ACTION_SPECIALSHOP
 local ACTION_RUNEPICKUP = constants.ACTION_RUNEPICKUP
 local ACTION_ROSHAN     = constants.ACTION_ROSHAN
 local ACTION_DEFENDALLY = constants.ACTION_DEFENDALLY
@@ -326,7 +326,7 @@ function X:Think(bot)
         if bRet then return end
     end
 
-    if ( self:GetAction() == ACTION_SECRETSHOP ) then
+    if ( self:GetAction() == ACTION_SPECIALSHOP ) then
         return
     end
 

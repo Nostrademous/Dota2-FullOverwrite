@@ -3,7 +3,7 @@
 --- GITHUB REPO: https://github.com/Nostrademous/Dota2-FullOverwrite
 -------------------------------------------------------------------------------
 
-require( GetScriptDirectory().."/secret_shop_generic" )
+require( GetScriptDirectory().."/special_shop_generic" )
 local utils = require( GetScriptDirectory().."/utility" )
 local items = require(GetScriptDirectory().."/items" )
 local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
@@ -139,7 +139,9 @@ function X:Think(npcBot)
 		end
 
 		-- Consider selling items
-        if npcBot:DistanceFromFountain() < 100 or npcBot:DistanceFromSecretShop() < 100 or npcBot:DistanceFromSideShop() < 100 then
+        if npcBot:DistanceFromFountain() < constants.SHOP_USE_DISTANCE or
+            npcBot:DistanceFromSecretShop() < constants.SHOP_USE_DISTANCE or
+            npcBot:DistanceFromSideShop() < constants.SHOP_USE_DISTANCE then
             self:ConsiderSellingItems(npcBot)
         end
 
@@ -153,17 +155,52 @@ function X:Think(npcBot)
 			-- Enough gold -> buy, remove
 			if(npcBot:GetGold() >= GetItemCost(sNextItem)) then
 				-- Next item only available in secret shop?
-				if IsItemPurchasedFromSecretShop(sNextItem) then
-					local me = getHeroVar("Self")
+                local bInSide = IsItemPurchasedFromSideShop( sNextItem )
+                local bInSecret = IsItemPurchasedFromSecretShop( sNextItem )
+
+                if bInSide then
+                    local safeToVisitSide = special_shop_generic.GetSideShop()
+                    
+                    -- if it is not safe to visit the side shop and item is
+                    -- not available in secret shop, courier buy it
+                    if safeToVisitSide == nil then
+                        if not bInSecret then
+                            npcBot:Action_PurchaseItem(sNextItem)
+                            table.remove(self.PurchaseOrder, 1)
+                            npcBot:SetNextItemPurchaseValue(0)
+                            self.LastThink = RealTime()
+                            return
+                        end
+                    end
+                    
+                    local me = getHeroVar("Self")
 					if me:GetAction() ~= constants.ACTION_SECRETSHOP then
-						print(getHeroVar("Name"), " - ", sNextItem, " is ONLY available from Secret Shop")
 						if ( me:HasAction(constants.ACTION_SECRETSHOP) == false ) then
 							me:AddAction(constants.ACTION_SECRETSHOP)
-							print(utils.GetHeroName(npcBot), " STARTING TO HEAD TO SECRET SHOP ")
-							secret_shop_generic.OnStart()
+							utils.myPrint(" STARTING TO HEAD TO SIDE SHOP ")
+							special_shop_generic.OnStart()
 						end
 					end
-					local bDone = secret_shop_generic.Think(sNextItem)
+
+					local bDone = special_shop_generic.ThinkSideShop(sNextItem)
+					if bDone then
+						me:RemoveAction(constants.ACTION_SECRETSHOP)
+						table.remove(self.PurchaseOrder, 1 )
+						npcBot:SetNextItemPurchaseValue( 0 )
+					end
+                end
+
+				if bInSecret then
+					local me = getHeroVar("Self")
+					if me:GetAction() ~= constants.ACTION_SECRETSHOP then
+						if ( me:HasAction(constants.ACTION_SECRETSHOP) == false ) then
+							me:AddAction(constants.ACTION_SECRETSHOP)
+							utils.myPrint(" STARTING TO HEAD TO SECRET SHOP ")
+							special_shop_generic.OnStart()
+						end
+					end
+
+					local bDone = special_shop_generic.ThinkSecretShop(sNextItem)
 					if bDone then
 						me:RemoveAction(constants.ACTION_SECRETSHOP)
 						table.remove(self.PurchaseOrder, 1 )
@@ -174,9 +211,11 @@ function X:Think(npcBot)
 					table.remove(self.PurchaseOrder, 1)
 					npcBot:SetNextItemPurchaseValue(0)
 				end
+                
+                self.LastThink = RealTime()
+                return
 			end
 		end
-		self.LastThink = RealTime()
 	end
 end
 

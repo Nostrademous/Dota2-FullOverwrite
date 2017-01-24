@@ -83,7 +83,7 @@ function FindTarget(bot)
 			return false
 		end
     local target = ratings[1][2]
-	
+
 	-- Determine if we can kill the target
 	local heroAmpFactor = 0
 	for _, ally in pairs(allies) do
@@ -105,7 +105,7 @@ end
 function ApproachTarget(bot)
 	local me = getHeroVar("Self")
     local move_ticks = getHeroVar("move_ticks")
-	
+
     if move_ticks > 250 then -- time to check for targets again
         utils.myPrint("move_ticks > 250 :: abandoning gank")
 		me:RemoveAction(constants.ACTION_GANKING)
@@ -113,14 +113,14 @@ function ApproachTarget(bot)
     else
         setHeroVar("move_ticks", move_ticks + 1)
     end
-	
+
 	local target = getHeroVar("GankTarget")
-	
+
 	if me:IsReadyToGank(bot) == false then
 		me:RemoveAction(constants.ACTION_GANKING)
 		return false
 	end
-	
+
 	if target ~= nil then
 		if target:IsAlive() then
 			if target:CanBeSeen() then
@@ -172,7 +172,7 @@ function ApproachTarget(bot)
 	return false
 end
 
-function KillTarget(bot, target)	
+function KillTarget(bot, target)
 	if target ~= nil then
 		if target:IsAlive() then
 			if target:CanBeSeen() then
@@ -186,4 +186,4 @@ function KillTarget(bot, target)
 end
 
 --------
-for k,v in pairs( jungling_generic ) do _G._savedEnv[k] = v end
+for k,v in pairs( ganking_generic ) do _G._savedEnv[k] = v end

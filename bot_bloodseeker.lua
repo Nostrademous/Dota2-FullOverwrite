@@ -68,12 +68,12 @@ function Think()
     local npcBot = GetBot()
 
 	bloodseekerBot:Think(npcBot)
-	
+
 	if npcBot:GetLevel() == 25 and getHeroVar("Role") ~= constants.ROLE_HARDCARRY then
 		setHeroVar("Role", constants.ROLE_HARDCARRY)
 		setHeroVar("CurLane", LANE_BOT) --FIXME: don't hardcode this
 	end
-	
+
 	bloodseekerBot:SaveLocation(npcBot)
 end
 
@@ -84,6 +84,7 @@ function bloodseekerBot:DoRetreat(bot, reason)
 	local bloodragePct = {0.25, 0.30, 0.35, 0.40}
 	
     local pushing = getHeroVar("ShouldPush")
+
 	local bloodrage = bot:GetAbilityByName("bloodseeker_bloodrage")
 	local neutrals = bot:GetNearbyCreeps(700,true) 
 	table.sort(neutrals, function(n1, n2) return n1:GetHealth() < n2:GetHealth() end)
@@ -138,7 +139,8 @@ end
 
 function bloodseekerBot:IsReadyToGank(bot)
     local rupture = bot:GetAbilityByName("bloodseeker_rupture")
-    return rupture:IsFullyCastable() -- that's all we need
+		local thirst = bot:GetAbilityByName("bloodseeker_thirst")
+    return rupture:IsFullyCastable() or thirst:GetLevel() >= 3
 end
 
 function bloodseekerBot:DoCleanCamp(bot, neutrals)

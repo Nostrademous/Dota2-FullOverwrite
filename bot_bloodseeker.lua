@@ -73,8 +73,6 @@ function Think()
         setHeroVar("Role", constants.ROLE_HARDCARRY)
         setHeroVar("CurLane", LANE_BOT) --FIXME: don't hardcode this
     end
-
-    bloodseekerBot:SaveLocation(npcBot)
 end
 
 -- We over-write DoRetreat behavior for JUNLGER Bloodseeker
@@ -106,6 +104,8 @@ function bloodseekerBot:DoRetreat(bot, reason)
                     self:AddAction(constants.ACTION_RETREAT)
                     setHeroVar("IsInLane", false)
                 end
+            else
+                return false
             end
         end
         -- if we are retreating - piggyback on retreat logic movement code

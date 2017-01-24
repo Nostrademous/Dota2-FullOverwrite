@@ -46,8 +46,8 @@ local function UseW()
     end
 
     if #Enemies == 1 then
-        -- we use 3.0 for delay b/c cast point is 0.4 and delay is 2.6
-        npcBot:Action_UseAbilityOnLocation(ability, Enemies[1]:GetExtrapolatedLocation(3.0))
+        local delay = ability:GetSpecialValueFloat("delay")
+        npcBot:Action_UseAbilityOnLocation(ability, Enemies[1]:GetExtrapolatedLocation(ability:GetCastPoint() + delay))
     else
         local center = utils.GetCenter(Enemies)
         if center ~= nil then

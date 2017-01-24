@@ -83,17 +83,19 @@ function bloodseekerBot:DoRetreat(bot, reason)
 	
     local pushing = getHeroVar("ShouldPush")
 	local bloodrage = bot:GetAbilityByName("bloodseeker_bloodrage")
-	local target = getHeroVar("Target")
-	local estimatedDamage = bot:GetEstimatedDamageToTarget(true, target, bot:GetAttackSpeed(), DAMAGE_TYPE_PHYSICAL)
-	local actualDamage = target:GetActualDamage(estimatedDamage, DAMAGE_TYPE_PHYSICAL)
-	local bloodrageHeal = bloodragePct[bloodrage.GetLevel()] * target:GetMaxHealth()
+	local neutrals = bot:GetNearbyCreeps(700,true) 
+	table.sort(neutrals, function(n1, n2) return n1:GetHealth() < n2:GetHealth() end)
+	
+	local estimatedDamage = bot:GetEstimatedDamageToTarget(true, neutrals[1], bot:GetAttackSpeed(), DAMAGE_TYPE_PHYSICAL)
+	local actualDamage = neutrals[1]:GetActualDamage(estimatedDamage, DAMAGE_TYPE_PHYSICAL)
+	local bloodrageHeal = bloodragePct[bloodrage.GetLevel()] * neutrals[1]:GetMaxHealth()
 	local healthThreshold = math.max(bot:GetMaxHealth()*0.15, 100)
 	
 	if reason == constants.RETREAT_CREEP and 
 		(self:GetAction() ~= constants.ACTION_LANING or (pushing ~= nil and pushing ~= false)) then
 		-- if our health is lower than maximum( 15% health, 100 health )
 		if bot:GetHealth() < healthThreshold then
-			if (actualDamage < target:GetHealth()) and bot:GetHealth + bloodrageHeal < healthThreshold then
+			if (actualDamage < neutrals[1]:GetHealth()) and bot:GetHealth + bloodrageHeal < healthThreshold then
 				setHeroVar("RetreatReason", constants.RETREAT_FOUNTAIN)
 				if ( self:HasAction(constants.ACTION_RETREAT) == false ) then
 					self:AddAction(constants.ACTION_RETREAT)
@@ -154,7 +156,6 @@ function bloodseekerBot:DoCleanCamp(bot, neutrals)
 	for i, neutral in ipairs(neutrals) do
 		local eDamage = bot:GetEstimatedDamageToTarget(true, neutral, bot:GetAttackSpeed(), DAMAGE_TYPE_PHYSICAL)
 		if not (eDamage > neutral:GetHealth()) or bloodraged then -- make sure we lasthit with bloodrage on
-			setHeroVar("Target", neutral)
 			bot:Action_AttackUnit(neutral, true)
 			break
 		end

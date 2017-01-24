@@ -374,17 +374,15 @@ function X:GetItemValueNumber(item)
 end
 
 function X:GetItemsTable(output, input)
-  local input_map  -- has the same structure as input, but stores the
-                   -- indices to the corresponding output
+  local input_map
   if type(input) == 'table' then
     input_map = {}
-    -- forward DFS order
     for i = 1, #input do
 			input_map[#input_map+1] = self:GetItemsTable(output, input[i])
     end
   else
     input_map = #output + 1
-    output[input_map] = input  -- append the tensor
+    output[input_map] = input
   end
   return input_map
 end

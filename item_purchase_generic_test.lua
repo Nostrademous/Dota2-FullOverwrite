@@ -110,7 +110,7 @@ end
 function X:Think(npcBot)
 	local tDelta = RealTime() - self.LastThink
 	-- throttle think for better performance
-	if tDelta > 0.25 then
+	if tDelta > 0.1 then
 		-- If bot nothing bail
 		if npcBot == nil then return end
 
@@ -139,7 +139,7 @@ function X:Think(npcBot)
 		end
 
 		-- Consider selling items
-		-- self:ConsiderSellingItems(npcBot)
+		self:ConsiderSellingItems(npcBot)
 
 		-- Get the next item
 		local sNextItem = self.PurchaseOrder[1]
@@ -295,55 +295,105 @@ function X:UpdatePurchaseOrder()
 			-- Otherwise consider buying extension items
 			self:ConsiderBuyingExtensions(npcBot)
 		else
-			-- Put the core items in the purchase order
-			local newItem = {}
-		  items:GetItemsTable(newItem, items[self.CoreItems[1]])
-			if #newItem > 1 then
-				print("next item has #parts: "..#newItem)
-				for _,p in pairs(newItem) do
-					local insert = true
-					for _,k in pairs(self.BoughtItems) do
-						if k == p then
-							local pos = utils.PosInTable(self.BoughtItems, k)
+			-- get next starting item in parts
+			local toBuy = {}
+			items:GetItemsTable(toBuy, items[self.CoreItems[1]])
+			-- single items will always be bought
+			if #toBuy > 1 then
+				-- go through bought items
+				for _,p in pairs(self.BoughtItems) do
+					-- get parts of this bought item
+					local compare = {}
+					items:GetItemsTable(compare, items[p])
+					-- more than 1 part?
+					if #compare > 1 then
+						local remove = true
+						-- check if all parts of the bought item are in the item to buy
+						for _,k in pairs(compare) do
+							if not utils.InTable(toBuy, k) then
+								remove = false
+							end
+						end
+						-- if so remove all parts bought parts from the item to buy
+						if remove then
+							for _,k in pairs(compare) do
+								local pos = utils.PosInTable(toBuy, k)
+								table.remove(toBuy, pos)
+							end
+							-- remove the bought item also (since we are going to use it in the new item)
+							local pos = utils.PosInTable(self.BoughtItems, p)
 							table.remove(self.BoughtItems, pos)
-							insert = false
+						end
+					else
+						-- check if item was already bought
+						if utils.InTable(toBuy, p) then
+							-- if so remove it from the item to buy
+							local pos = utils.PosInTable(toBuy, p)
+							table.remove(toBuy, pos)
+							-- remove it from bought items
+							pos = utils.PosInTable(self.BoughtItems, p)
+							table.remove(self.BoughtItems, pos)
 						end
 					end
-					if insert then
-						table.insert(self.PurchaseOrder, p)
-					end
 				end
-				table.insert(self.BoughtItems, self.CoreItems[1])
-			else
-				table.insert(self.BoughtItems, self.CoreItems[1])
-				table.insert(self.PurchaseOrder, newItem[1])
 			end
+			-- put all parts that we still need to buy in purchase order
+			for _,p in pairs(toBuy) do
+				table.insert(self.PurchaseOrder, p)
+			end
+			-- insert the item to buy in bought items, remove it from starting items
+			table.insert(self.BoughtItems, self.CoreItems[1])
 			table.remove(self.CoreItems, 1)
 		end
 	else
-		-- Put the starting items in the purchase order
-		local newItem = {}
-		items:GetItemsTable(newItem, items[self.StartingItems[1]])
-		if #newItem > 1 then
-			print("next item has #parts: "..#newItem)
-			for _,p in pairs(newItem) do
-				local insert = true
-				for _,k in pairs(self.BoughtItems) do
-					if k == p then
-						local pos = utils.PosInTable(self.BoughtItems, k)
+		-- get next starting item in parts
+		local toBuy = {}
+		items:GetItemsTable(toBuy, items[self.StartingItems[1]])
+		-- single items will always be bought
+		if #toBuy > 1 then
+			-- go through bought items
+			for _,p in pairs(self.BoughtItems) do
+				-- get parts of this bought item
+				local compare = {}
+				items:GetItemsTable(compare, items[p])
+				-- more than 1 part?
+				if #compare > 1 then
+					local remove = true
+					-- check if all parts of the bought item are in the item to buy
+					for _,k in pairs(compare) do
+						if not utils.InTable(toBuy, k) then
+							remove = false
+						end
+					end
+					-- if so remove all parts bought parts from the item to buy
+					if remove then
+						for _,k in pairs(compare) do
+							local pos = utils.PosInTable(toBuy, k)
+							table.remove(toBuy, pos)
+						end
+						-- remove the bought item also (since we are going to use it in the new item)
+						local pos = utils.PosInTable(self.BoughtItems, p)
 						table.remove(self.BoughtItems, pos)
-						insert = false
+					end
+				else
+					-- check if item was already bought
+					if utils.InTable(toBuy, p) then
+						-- if so remove it from the item to buy
+						local pos = utils.PosInTable(toBuy, p)
+						table.remove(toBuy, pos)
+						-- remove it from bought items
+						pos = utils.PosInTable(self.BoughtItems, p)
+						table.remove(self.BoughtItems, pos)
 					end
 				end
-				if insert then
-					table.insert(self.PurchaseOrder, p)
-				end
 			end
-			table.insert(self.BoughtItems, self.StartingItems[1])
-		else
-			table.insert(self.BoughtItems, self.StartingItems[1])
-			table.insert(self.PurchaseOrder, newItem[1])
 		end
+		-- put all parts that we still need to buy in purchase order
+		for _,p in pairs(toBuy) do
+			table.insert(self.PurchaseOrder, p)
+		end
+		-- insert the item to buy in bought items, remove it from starting items
+		table.insert(self.BoughtItems, self.StartingItems[1])
 		table.remove(self.StartingItems, 1)
 	end
 end
@@ -356,67 +406,72 @@ function X:ConsiderSellingItems(bot)
 				as well as already bought items
 	--]]
 	local ItemsToConsiderSelling = {}
+	local DontSell = {}
 
-	if utils.NumberOfItems(bot) == 6 then
-		print(getHeroVar("Name").." - Considering selling items")
-		local items = {}
+	if utils.NumberOfItems(bot) == 6 and utils.NumberOfItemsInBackpack(bot) == 3 then
+		local inventory = {}
 		-- Store name of the items in a table
 		for i = 0,5,1 do
 			local item = bot:GetItemInSlot(i)
-			table.insert(items, item)
+			table.insert(inventory, item:GetName())
 		end
 
-		for _,p in pairs(items) do
-			local bSell = true
-			-- Check through all starting items
-			for _,k in pairs(self.StartingItems) do
-				-- Assembled item?
-				if #items[k] > 1 then
-					-- If item is part of an item we want to buy then don't sell it
-					if utils.InTable(item[k], p:GetName()) then
-						bSell = false
-					end
-				end
+		-- put all items we still want to buy (combined) and all items we bought already (combined) in a table
+		local toBuyCombined = {}
+		for _,k in pairs(self.StartingItems) do
+			local toBuySingle = {}
+			items:GetItemsTable(toBuySingle, items[k])
+			if #toBuySingle > 1 then
+				items:GetItemsTable(toBuyCombined, items[k])
 			end
-			-- Same for core items
-			for _,k in pairs(self.CoreItems) do
-				-- Assembled item?
-				if #items[k] > 1 then
-					if utils.InTable(item[k], p:GetName()) then
-						bSell = false
-					end
-				end
+		end
+		for _,k in pairs(self.CoreItems) do
+			local toBuySingle = {}
+			items:GetItemsTable(toBuySingle, items[k])
+			if #toBuySingle > 1 then
+				items:GetItemsTable(toBuyCombined, items[k])
 			end
-			-- Same for bought items (parts probably still in purchase queue or stash)
-			for _,k in pairs(self.BoughtItems) do
-				-- Assembled item?
-				if #items[k] > 1 then
-					if utils.InTable(item[k], p:GetName()) then
-						bSell = false
-					end
-				end
-			end
-			-- Do we really want to sell the item?
-			if bSell then
-				print("Considering selling "..p:GetName())
-				table.insert(ItemsToConsiderSelling, p)
+		end
+		for _,k in pairs(self.BoughtItems) do
+			local toBuySingle = {}
+			items:GetItemsTable(toBuySingle, items[k])
+			if #toBuySingle > 1 then
+				items:GetItemsTable(toBuyCombined, items[k])
 			end
 		end
 
-		local hItemToSell
+		for _,k in pairs(inventory) do
+			local toRemove = -1
+			-- check through items to buy
+			for _,p in pairs(toBuyCombined) do
+				if k == p then
+					-- if inventory item is in there save pos
+					toRemove = utils.PosInTable(toBuyCombined, p)
+				end
+			end
+			-- pos saved -> remove that item
+			if toRemove > 0 then
+				table.remove(toBuyCombined, toRemove)
+			else
+				-- otherwise we can potentially sell it
+				table.insert(ItemsToConsiderSelling, k)
+			end
+		end
+
+		local ItemToSell
 		local iItemValue = 1000000
 		-- Now check which item is least valuable to us
 		for _,p in pairs(ItemsToConsiderSelling) do
-			local iVal = items.GetItemValueNumber(p:GetName())
+			local iVal = items:GetItemValueNumber(p)
 			-- If the value of this item is lower change handle
 			if iVal < iItemValue and iVal > 0 then
-				hItemToSell = p
+				ItemToSell = p
 			end
 		end
-		print(hItemToSell:GetName().." selling")
 		-- Sell if we found an item to sell
-		if hItemToSell ~= nil then
-			bot:Action_SellItem(hItemToSell)
+		if ItemToSell ~= nil then
+			local pos = bot:FindItemSlot(ItemToSell)
+			bot:Action_SellItem(bot:GetItemInSlot(pos))
 		end
 	end
 end
@@ -436,11 +491,11 @@ function X:ConsiderBuyingExtensions()
 	DamageTime = DamageTime + enemyData.GetEnemyTeamStunDuration()
 	local SilenceCount = enemyData.GetEnemyTeamNumSilences()
 	local TrueStrikeCount = enemyData.GetEnemyTeamNumTruestrike()
-	
+
 	--print("EnemyTeam has "..DamageTime.." seconds of disable")
 
 	--print(getHeroVar("Name").." - Total # of silences: "..SilenceCount.." enemies with true strike: "..TrueStrikeCount)
-		
+
 	local DamageMagicalPure = 0
 	local DamagePhysical = 0
 	-- Get possible damage (physical/magical+pure)

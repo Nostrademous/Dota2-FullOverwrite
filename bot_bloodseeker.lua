@@ -91,7 +91,7 @@ function bloodseekerBot:DoRetreat(bot, reason)
     
     local estimatedDamage = bot:GetEstimatedDamageToTarget(true, neutrals[1], bot:GetAttackSpeed(), DAMAGE_TYPE_PHYSICAL)
     local actualDamage = neutrals[1]:GetActualDamage(estimatedDamage, DAMAGE_TYPE_PHYSICAL)
-    local bloodrageHeal = bloodragePct[bloodrage.GetLevel()] * neutrals[1]:GetMaxHealth()
+    local bloodrageHeal = bloodragePct[bloodrage:GetLevel()] * neutrals[1]:GetMaxHealth()
     local healthThreshold = math.max(bot:GetMaxHealth()*0.15, 100)
     
     if reason == constants.RETREAT_CREEP and 

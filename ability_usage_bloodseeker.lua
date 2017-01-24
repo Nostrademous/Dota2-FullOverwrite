@@ -48,14 +48,16 @@ local function UseW()
     if #Enemies == 1 then
         local delay = ability:GetSpecialValueFloat("delay_plus_castpoint_tooltip")
         npcBot:Action_UseAbilityOnLocation(ability, Enemies[1]:GetExtrapolatedLocation(delay))
+        return true
     else
         local center = utils.GetCenter(Enemies)
         if center ~= nil then
             npcBot:Action_UseAbilityOnLocation(ability, center)
+            return true
         end
     end
 
-    return true
+    return false
 end
 
 local function UseUlt()

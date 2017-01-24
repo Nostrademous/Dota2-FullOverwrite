@@ -157,26 +157,21 @@ function X:Think(npcBot)
 				-- Next item only available in secret shop?
                 local bInSide = IsItemPurchasedFromSideShop( sNextItem )
                 local bInSecret = IsItemPurchasedFromSecretShop( sNextItem )
-
-                if bInSide then
-                    local safeToVisitSide = special_shop_generic.GetSideShop()
-                    
-                    -- if it is not safe to visit the side shop and item is
-                    -- not available in secret shop, courier buy it
-                    if safeToVisitSide == nil then
-                        if not bInSecret then
-                            npcBot:Action_PurchaseItem(sNextItem)
-                            table.remove(self.PurchaseOrder, 1)
-                            npcBot:SetNextItemPurchaseValue(0)
-                            self.LastThink = RealTime()
-                            return
-                        end
+                
+                if bInSide and bInSecret then
+                    if npcBot:DistanceFromSecretShop() < npcBot:DistanceFromSideShop() or
+                        special_shop_generic.GetSideShop() == nil then
+                        bInSide = false
                     end
-                    
-                    local me = getHeroVar("Self")
-					if me:GetAction() ~= constants.ACTION_SECRETSHOP then
-						if ( me:HasAction(constants.ACTION_SECRETSHOP) == false ) then
-							me:AddAction(constants.ACTION_SECRETSHOP)
+                elseif bInSide and special_shop_generic.GetSideShop() == nil then
+                    bInSide = false
+                end
+
+                local me = getHeroVar("Self")
+                if bInSide then
+					if me:GetAction() ~= constants.ACTION_SPECIALSHOP then
+						if ( me:HasAction(constants.ACTION_SPECIALSHOP) == false ) then
+							me:AddAction(constants.ACTION_SPECIALSHOP)
 							utils.myPrint(" STARTING TO HEAD TO SIDE SHOP ")
 							special_shop_generic.OnStart()
 						end
@@ -184,17 +179,14 @@ function X:Think(npcBot)
 
 					local bDone = special_shop_generic.ThinkSideShop(sNextItem)
 					if bDone then
-						me:RemoveAction(constants.ACTION_SECRETSHOP)
+						me:RemoveAction(constants.ACTION_SPECIALSHOP)
 						table.remove(self.PurchaseOrder, 1 )
 						npcBot:SetNextItemPurchaseValue( 0 )
 					end
-                end
-
-				if bInSecret then
-					local me = getHeroVar("Self")
-					if me:GetAction() ~= constants.ACTION_SECRETSHOP then
-						if ( me:HasAction(constants.ACTION_SECRETSHOP) == false ) then
-							me:AddAction(constants.ACTION_SECRETSHOP)
+				elseif bInSecret then
+					if me:GetAction() ~= constants.ACTION_SPECIALSHOP then
+						if ( me:HasAction(constants.ACTION_SPECIALSHOP) == false ) then
+							me:AddAction(constants.ACTION_SPECIALSHOP)
 							utils.myPrint(" STARTING TO HEAD TO SECRET SHOP ")
 							special_shop_generic.OnStart()
 						end
@@ -202,11 +194,12 @@ function X:Think(npcBot)
 
 					local bDone = special_shop_generic.ThinkSecretShop(sNextItem)
 					if bDone then
-						me:RemoveAction(constants.ACTION_SECRETSHOP)
+						me:RemoveAction(constants.ACTION_SPECIALSHOP)
 						table.remove(self.PurchaseOrder, 1 )
 						npcBot:SetNextItemPurchaseValue( 0 )
 					end
 				else
+                    me:RemoveAction(constants.ACTION_SPECIALSHOP)
 					npcBot:Action_PurchaseItem(sNextItem)
 					table.remove(self.PurchaseOrder, 1)
 					npcBot:SetNextItemPurchaseValue(0)

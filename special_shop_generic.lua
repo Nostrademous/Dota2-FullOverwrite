@@ -33,7 +33,7 @@ function GetSideShop()
 
     local Enemies = npcBot:GetNearbyHeroes(1300, true, BOT_MODE_NONE)
 
-    if  npcBot:DistanceFromSideShop() > 2200 or (#Enemies > 1 and npcBot:DistanceFromSideShop() > 1100) then
+    if  npcBot:DistanceFromSideShop() > 2400 or (#Enemies > 1 and npcBot:DistanceFromSideShop() > 1500) then
         return nil
     end
 
@@ -72,48 +72,40 @@ end
 function ThinkSecretShop( NextItem )
     local npcBot = GetBot()
     if  NextItem == nil then
-        setHeroVar("IsGoingToShop", false)
         return false
     end
 
     if npcBot:IsUsingAbility() or npcBot:IsChanneling() then return false end
 
     if (not IsItemPurchasedFromSecretShop(NextItem)) or npcBot:GetGold() < GetItemCost( NextItem ) then
-        setHeroVar("IsGoingToShop", false)
         return false
     end
 
     local secLoc = GetSecretShop()
 
-    if IsItemPurchasedFromSecretShop(NextItem) then
-        if GetUnitToLocationDistance(npcBot, secLoc) < constants.SHOP_USE_DISTANCE then
-            if npcBot:GetGold() >= GetItemCost( NextItem ) then
-                npcBot:Action_PurchaseItem( NextItem )
-                setHeroVar("IsGoingToShop", false)
-                utils.InitPath()
-                return true
-            else
-                setHeroVar("IsGoingToShop", false)
-                return false
-            end
+    if GetUnitToLocationDistance(npcBot, secLoc) < constants.SHOP_USE_DISTANCE then
+        if npcBot:GetGold() >= GetItemCost( NextItem ) then
+            npcBot:Action_PurchaseItem( NextItem )
+            utils.InitPath()
+            return true
         else
-            utils.MoveSafelyToLocation(npcBot, secLoc)
             return false
         end
+    else
+        utils.MoveSafelyToLocation(npcBot, secLoc)
+        return false
     end
 end
 
 function ThinkSideShop( NextItem )
     local npcBot = GetBot()
     if  NextItem == nil then
-        setHeroVar("IsGoingToShop", false)
         return false
     end
 
     if npcBot:IsUsingAbility() or npcBot:IsChanneling() then return false end
 
-    if (not IsItemPurchasedFromSideShop(NextItem)) or (npcBot:GetGold() < GetItemCost( NextItem ) then
-        setHeroVar("IsGoingToShop", false)
+    if (not IsItemPurchasedFromSideShop(NextItem)) or npcBot:GetGold() < GetItemCost( NextItem ) then
         return false
     end
 
@@ -121,21 +113,17 @@ function ThinkSideShop( NextItem )
 
     if sideLoc == nil then return false end
 
-    if IsItemPurchasedFromSecretShop(NextItem) then
-        if GetUnitToLocationDistance(npcBot, sideLoc) < constants.SHOP_USE_DISTANCE then
-            if npcBot:GetGold() >= GetItemCost( NextItem ) then
-                npcBot:Action_PurchaseItem( NextItem )
-                setHeroVar("IsGoingToShop", false)
-                utils.InitPath()
-                return true
-            else
-                setHeroVar("IsGoingToShop", false)
-                return false
-            end
+    if GetUnitToLocationDistance(npcBot, sideLoc) < constants.SHOP_USE_DISTANCE then
+        if npcBot:GetGold() >= GetItemCost( NextItem ) then
+            npcBot:Action_PurchaseItem( NextItem )
+            utils.InitPath()
+            return true
         else
-            utils.MoveSafelyToLocation(npcBot, sideLoc)
             return false
         end
+    else
+        utils.MoveSafelyToLocation(npcBot, sideLoc)
+        return false
     end
 end
 

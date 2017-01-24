@@ -566,7 +566,7 @@ function U.MoveSafelyToLocation(npcBot, dest)
 	end
 
 	if s==nil or t==nil then
-		npcBot:Action_Chat('Something is wrong with path finding.',true);
+		U.AllChat('Something is wrong with path finding.')
 		return;
 	end
 

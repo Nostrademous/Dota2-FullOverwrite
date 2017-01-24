@@ -66,7 +66,11 @@ function Think(npcBot, loc)
 	end
 
 	item_usage.UseMovementItems(nextmove)
-	utils.MoveSafelyToLocation(npcBot, nextmove)
+    if getHeroVar("IsInLane") then
+        npcBot:Action_MoveToLocation(nextmove)
+    else
+        utils.MoveSafelyToLocation(npcBot, nextmove)
+    end
 end
 
 --------

@@ -295,7 +295,7 @@ function X:Think(bot)
     -- Give them 2.0 seconds to use it or fall through to further logic
     local oorC = self:getHeroVar("OutOfRangeCasting")
     if bot:GetCurrentActionType() == BOT_ACTION_TYPE_USE_ABILITY and ( oorc ~= nil and (oorC-GameTime()) < 2.0 ) then
-        print("CLEARING OORC ABILITY USE")
+        utils.myPrint("CLEARING OORC ABILITY USE")
         bot:Action_ClearActions()
         return
     end
@@ -818,13 +818,14 @@ function X:DoRetreat(bot, reason)
         end
 
         -- if we healed up enough, change our reason for retreating
-        if bot:DistanceFromFountain() >= 5000 and bot:GetHealth()/bot:GetMaxHealth() > 0.6 and bot:GetMana()/bot:GetMaxMana() > 0.6 then
-            --utils.myPrint("DoRetreat - Upgrading from RETREAT_FOUNTAIN to RETREAT_DANGER")
+        if bot:DistanceFromFountain() >= 5000 and (bot:GetHealth()/bot:GetMaxHealth()) > 0.6 and (bot:GetMana()/bot:GetMaxMana()) > 0.6 then
+            utils.myPrint("DoRetreat - Upgrading from RETREAT_FOUNTAIN to RETREAT_DANGER")
+            self:setHeroVar("IsRetreating", true)
             self:setHeroVar("RetreatReason", constants.RETREAT_DANGER)
             return true
         end
 
-        if bot:DistanceFromFountain() > 0 or (bot:GetHealth()/bot:GetMaxHealth() < 1.0 or bot:GetMana()/bot:GetMaxMana() < 1.0) then
+        if bot:DistanceFromFountain() > 0 or (bot:GetHealth()/bot:GetMaxHealth()) < 1.0 or (bot:GetMana()/bot:GetMaxMana()) < 1.0 then
             retreat_generic.Think(bot, utils.Fountain(GetTeam()))
             return true
         end
@@ -836,15 +837,15 @@ function X:DoRetreat(bot, reason)
             retreat_generic.OnStart(bot)
         end
 
-        if self:getHeroVar("IsRetreating") ~= nil and self:getHeroVar("IsRetreating") == true then
+        if self:getHeroVar("IsRetreating") then
             if bot:TimeSinceDamagedByAnyHero() < 3.0 or
-                (bot:DistanceFromFountain() < 5000 and bot:GetHealth()/bot:GetMaxHealth() < 1.0) or
-                (bot:DistanceFromFountain() >= 5000 and bot:GetHealth()/bot:GetMaxHealth() < 0.6) then
+                (bot:DistanceFromFountain() < 5000 and (bot:GetHealth()/bot:GetMaxHealth()) < 1.0) or
+                (bot:DistanceFromFountain() >= 5000 and (bot:GetHealth()/bot:GetMaxHealth()) < 0.6) then
                 retreat_generic.Think(bot)
                 return true
             end
         end
-        --utils.myPrint("DoRetreat - RETREAT DANGER End".." - DfF: "..bot:DistanceFromFountain()..", H: "..bot:GetHealth())
+        utils.myPrint("DoRetreat - RETREAT DANGER End".." - DfF: "..bot:DistanceFromFountain()..", H: "..bot:GetHealth())
     elseif reason == constants.RETREAT_TOWER then
         if ( self:HasAction(ACTION_RETREAT) == false ) then
             utils.myPrint("STARTING TO RETREAT b/c of tower damage")

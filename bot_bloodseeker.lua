@@ -75,7 +75,7 @@ function Think()
     end
 end
 
--- We over-write DoRetreat behavior for JUNLGER Bloodseeker
+-- We over-write DoRetreat behavior for JUNGLER Bloodseeker
 function bloodseekerBot:DoRetreat(bot, reason)
     -- if we got creep damage and are a JUNGLER do special stuff
 
@@ -94,8 +94,7 @@ function bloodseekerBot:DoRetreat(bot, reason)
     local bloodrageHeal = bloodragePct[bloodrage:GetLevel()] * neutrals[1]:GetMaxHealth()
     local healthThreshold = math.max(bot:GetMaxHealth()*0.15, 100)
 
-    if reason == constants.RETREAT_CREEP and
-        (self:GetAction() ~= constants.ACTION_LANING or (pushing ~= nil and pushing ~= false)) then
+    if reason == constants.RETREAT_CREEP and (self:GetAction() ~= constants.ACTION_LANING or pushing) then
         -- if our health is lower than maximum( 15% health, 100 health )
         if bot:GetHealth() < healthThreshold then
             if (actualDamage < neutrals[1]:GetHealth()) and (bot:GetHealth() + bloodrageHeal) < healthThreshold then
@@ -120,8 +119,9 @@ function bloodseekerBot:DoRetreat(bot, reason)
     -- if we are not a jungler, invoke default DoRetreat behavior
     else
         -- we use '.' instead of ':' and pass 'self' so it is the correct self
-        return dt.DoRetreat(self, bot, reason)
+        return dt.DoRetreat(self, bot, getHeroVar("RetreatReason"))
     end
+    return true
 end
 
 function bloodseekerBot:GetMaxClearableCampLevel(bot)

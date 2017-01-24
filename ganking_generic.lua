@@ -14,13 +14,13 @@ local utils = require( GetScriptDirectory().."/utility")
 local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
 
 function setHeroVar(var, value)
-	local bot = GetBot()
-	gHeroVar.SetVar(bot:GetPlayerID(), var, value)
+    local bot = GetBot()
+    gHeroVar.SetVar(bot:GetPlayerID(), var, value)
 end
 
 function getHeroVar(var)
-	local bot = GetBot()
-	return gHeroVar.GetVar(bot:GetPlayerID(), var)
+    local bot = GetBot()
+    return gHeroVar.GetVar(bot:GetPlayerID(), var)
 end
 ----------
 
@@ -33,8 +33,8 @@ local MinRating = 1.0
 ----------------------------------
 
 function FindTarget(bot)
-	-- TODO: don't do this every frame and for every ganking hero. Should be part of team level logic.
-	local enemies = GetUnitList(UNIT_LIST_ENEMY_HEROES) -- check all enemies
+    -- TODO: don't do this every frame and for every ganking hero. Should be part of team level logic.
+    local enemies = GetUnitList(UNIT_LIST_ENEMY_HEROES) -- check all enemies
     local allies = GetUnitList(UNIT_LIST_ALLIED_HEROES)
     local ratings = {}
     for i, e in pairs(enemies) do
@@ -74,116 +74,117 @@ function FindTarget(bot)
             ratings[#ratings+1] = {r, e}
         end
     end
-	  if #ratings == 0 then
-	      return false
-	  end
+      if #ratings == 0 then
+          return false
+      end
     table.sort(ratings, function(a, b) return a[1] > b[1] end) -- sort by rating, descending
-		local rating = ratings[1][1]
-		if rating < MinRating then -- not worth
-			return false
-		end
+        local rating = ratings[1][1]
+        if rating < MinRating then -- not worth
+            return false
+        end
     local target = ratings[1][2]
-	
-	-- Determine if we can kill the target
-	local heroAmpFactor = 0
-	for _, ally in pairs(allies) do
-		if ally:GetPlayerID() ~= bot:GetPlayerID() then
-			if GetUnitToUnitDistance(ally, target) < 1500 then
-				heroAmpFactor = heroAmpFactor + 1
-			end
-		end
-	end
-	if (bot:GetEstimatedDamageToTarget( true, target, 5.0, DAMAGE_TYPE_ALL ) * (1 + 0.5*heroAmpFactor)) > target:GetHealth() then
-		setHeroVar("GankTarget", target)
-		setHeroVar("move_ticks", 0)
-		utils.myPrint(" stalking "..utils.GetHeroName(target))
-		return true
-	end
-	return false
+
+    -- Determine if we can kill the target
+    local heroAmpFactor = 0
+    for _, ally in pairs(allies) do
+        if ally:GetPlayerID() ~= bot:GetPlayerID() then
+            if GetUnitToUnitDistance(ally, target) < 1500 then
+                heroAmpFactor = heroAmpFactor + 1
+            end
+        end
+    end
+    if (bot:GetEstimatedDamageToTarget( true, target, 5.0, DAMAGE_TYPE_ALL ) * (1 + 0.5*heroAmpFactor)) > target:GetHealth() then
+        setHeroVar("GankTarget", target)
+        setHeroVar("move_ticks", 0)
+        utils.myPrint(" stalking "..utils.GetHeroName(target))
+        return true
+    end
+    return false
 end
 
 function ApproachTarget(bot)
-	local me = getHeroVar("Self")
+    local me = getHeroVar("Self")
     local move_ticks = getHeroVar("move_ticks")
-	
+
     if move_ticks > 250 then -- time to check for targets again
         utils.myPrint("move_ticks > 250 :: abandoning gank")
-		me:RemoveAction(constants.ACTION_GANKING)
+        me:RemoveAction(constants.ACTION_GANKING)
         return false
     else
         setHeroVar("move_ticks", move_ticks + 1)
     end
-	
-	local target = getHeroVar("GankTarget")
-	
-	if me:IsReadyToGank(bot) == false then
-		me:RemoveAction(constants.ACTION_GANKING)
-		return false
-	end
-	
-	if target ~= nil then
-		if target:IsAlive() then
-			if target:CanBeSeen() then
-				if GetUnitToUnitDistance(bot, target) < 1000 then
-					return true
-				else
-					bot:Action_MoveToUnit(target) -- Let's go there
-					-- TODO: consider being sneaky
-					return false
-				end
-			else
-				if target:GetTimeSinceLastSeen() > 3.0 then
-					me:RemoveAction(constants.ACTION_GANKING)
-					return false
-				else
-					local lastLoc = target:GetLastSeenLocation()
-					if utils.GetOtherTeam() == TEAM_DIRE then
-						local prob1 = GetUnitPotentialValue(target, Vector(lastLoc[1] + 500, lastLoc[2]), 1000)
-						local prob2 = GetUnitPotentialValue(target, Vector(lastLoc[1], lastLoc[2] + 500), 1000)
-						if prob1 > 180 and prob1 > prob2 then
-							item_usage.UseMovementItems()
-							bot:Action_MoveToLocation(Vector(lastLoc[1] + 500, lastLoc[2]))
-							return false
-						elseif prob2 > 180 then
-							item_usage.UseMovementItems()
-							bot:Action_MoveToLocation(Vector(lastLoc[1], lastLoc[2] + 500))
-							return false
-						end
-					else
-						local prob1 = GetUnitPotentialValue(target, Vector(lastLoc[1] - 500, lastLoc[2]), 1000)
-						local prob2 = GetUnitPotentialValue(target, Vector(lastLoc[1], lastLoc[2] - 500), 1000)
-						if prob1 > 180 and prob1 > prob2 then
-							item_usage.UseMovementItems()
-							bot:Action_MoveToLocation(Vector(lastLoc[1] - 500, lastLoc[2]))
-							return false
-						elseif prob2 > 180 then
-							item_usage.UseMovementItems()
-							bot:Action_MoveToLocation(Vector(lastLoc[1], lastLoc[2] - 500))
-							return false
-						end
-					end
-				end
-			end
-		else
-			utils.myPrint("GankTarget is dead!!!")
-			return false
-		end
-	end
-	return false
+
+    local target = getHeroVar("GankTarget")
+
+    if me:IsReadyToGank(bot) == false then
+        me:RemoveAction(constants.ACTION_GANKING)
+        return false
+    end
+
+    if target ~= nil then
+        if target:IsAlive() then
+            if target:CanBeSeen() then
+                if GetUnitToUnitDistance(bot, target) < 1000 then
+                    return true
+                else
+                    bot:Action_MoveToUnit(target) -- Let's go there
+                    -- TODO: consider being sneaky
+                    return false
+                end
+            else
+                if target:GetTimeSinceLastSeen() > 3.0 then
+                    me:RemoveAction(constants.ACTION_GANKING)
+                    return false
+                else
+                    local lastLoc = target:GetLastSeenLocation()
+                    if utils.GetOtherTeam() == TEAM_DIRE then
+                        local prob1 = GetUnitPotentialValue(target, Vector(lastLoc[1] + 500, lastLoc[2]), 1000)
+                        local prob2 = GetUnitPotentialValue(target, Vector(lastLoc[1], lastLoc[2] + 500), 1000)
+                        if prob1 > 180 and prob1 > prob2 then
+                            item_usage.UseMovementItems()
+                            bot:Action_MoveToLocation(Vector(lastLoc[1] + 500, lastLoc[2]))
+                            return false
+                        elseif prob2 > 180 then
+                            item_usage.UseMovementItems()
+                            bot:Action_MoveToLocation(Vector(lastLoc[1], lastLoc[2] + 500))
+                            return false
+                        end
+                    else
+                        local prob1 = GetUnitPotentialValue(target, Vector(lastLoc[1] - 500, lastLoc[2]), 1000)
+                        local prob2 = GetUnitPotentialValue(target, Vector(lastLoc[1], lastLoc[2] - 500), 1000)
+                        if prob1 > 180 and prob1 > prob2 then
+                            item_usage.UseMovementItems()
+                            bot:Action_MoveToLocation(Vector(lastLoc[1] - 500, lastLoc[2]))
+                            return false
+                        elseif prob2 > 180 then
+                            item_usage.UseMovementItems()
+                            bot:Action_MoveToLocation(Vector(lastLoc[1], lastLoc[2] - 500))
+                            return false
+                        end
+                    end
+                end
+            end
+        else
+            utils.myPrint("GankTarget is dead!!!")
+            me:RemoveAction(constants.ACTION_GANKING)
+            return false
+        end
+    end
+    return false
 end
 
-function KillTarget(bot, target)	
-	if target ~= nil then
-		if target:IsAlive() then
-			if target:CanBeSeen() then
-				utils.myPrint("killing target :: ", utils.GetHeroName(target))
-				bot:Action_AttackUnit(target, false)
-				return true
-			end
-		end
-	end
-	return false
+function KillTarget(bot, target)
+    if target ~= nil then
+        if target:IsAlive() then
+            if target:CanBeSeen() then
+                utils.myPrint("killing target :: ", utils.GetHeroName(target))
+                bot:Action_AttackUnit(target, false)
+                return true
+            end
+        end
+    end
+    return false
 end
 
 --------
-for k,v in pairs( jungling_generic ) do _G._savedEnv[k] = v end
+for k,v in pairs( ganking_generic ) do _G._savedEnv[k] = v end

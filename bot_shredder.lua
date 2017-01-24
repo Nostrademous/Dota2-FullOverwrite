@@ -1,6 +1,6 @@
 -------------------------------------------------------------------------------
 --- AUTHOR: Nostrademous
---- CODE heavily borrows from Platinum_Dota2
+--- CONTRIBUTOR: Code based on work by Platinum_dota2
 --- GITHUB REPO: https://github.com/Nostrademous/Dota2-FullOverwrite
 -------------------------------------------------------------------------------
 
@@ -55,4 +55,6 @@ function Think()
     local npcBot = GetBot()
 	
 	timberBot:Think(npcBot)
+	
+	timberBot:SaveLocation(npcBot)
 end

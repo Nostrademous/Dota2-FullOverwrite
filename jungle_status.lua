@@ -1,3 +1,9 @@
+--------------------------------------------------------------------------------------------
+--- AUTHOR: Nostrademous
+--- CONTRIBUTOR: Code based on work by ironmano
+--- GITHUB REPO: https://github.com/Nostrademous/Dota2-FullOverwrite
+--------------------------------------------------------------------------------------------
+
 _G._savedEnv = getfenv()
 module( "jungle_status", package.seeall )
 

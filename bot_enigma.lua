@@ -54,5 +54,7 @@ end
 function Think()
     local npcBot = GetBot()
 
-		enigmaBot:Think(npcBot)
+	enigmaBot:Think(npcBot)
+	
+	enigmaBot:SaveLocation(npcBot)
 end

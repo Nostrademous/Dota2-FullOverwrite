@@ -1,5 +1,6 @@
 -------------------------------------------------------------------------------
 --- AUTHOR: Nostrademous
+--- CONTRIBUTOR: Code based on work by Platinum_dota2
 --- GITHUB REPO: https://github.com/Nostrademous/Dota2-FullOverwrite
 -------------------------------------------------------------------------------
 
@@ -107,35 +108,37 @@ end
 
 local function Moving(npcBot)
 	local frontier = GetLaneFrontAmount(GetTeam(), CurLane, true)
+	local enemyFrontier = GetLaneFrontAmount(utils.GetOtherTeam(), CurLane, false)
+	frontier = Min(frontier, enemyFrontier)
 	
 	local towerRange = 900.0
 	local EnemyTowers = npcBot:GetNearbyTowers(towerRange, true)
 	local noTower = true
-	if #EnemyTowers > 0 and GetUnitToLocationDistance(npcBot, EnemyTowers[1]:GetLocation()) > towerRange then
+	if #EnemyTowers > 0 and GetUnitToUnitDistance(npcBot, EnemyTowers[1]) > towerRange then
 		noTower = false
 	end
 
 	if frontier >= LanePos and (noTower or ShouldPush) then
 		local target = GetLocationAlongLane(CurLane,Min(1.0,LanePos+0.03))
 		--print( " Going Forward :: MyLoc: ", npcBot:GetLocation()[1], ",", npcBot:GetLocation()[2], " TARGET: ", target[1], ",", target[2])
-		npcBot:Action_MoveToLocation(target);
+		npcBot:Action_MoveToLocation(target)
 	else
 		local target = GetLocationAlongLane(CurLane,Min(1.0,LanePos-0.03))
-		npcBot:Action_MoveToLocation(target);
+		npcBot:Action_MoveToLocation(target)
 	end
 	
-	local EnemyCreeps = npcBot:GetNearbyCreeps(EyeRange,true);
+	local EnemyCreeps = npcBot:GetNearbyCreeps(EyeRange, true)
 	
 	local nCr = 0;
 	
 	for _,creep in pairs(EnemyCreeps) do
-		if utils.NotNilOrDead(creep) and (string.find(creep:GetUnitName(),"melee")~=nil or string.find(creep:GetUnitName(),"range")~=nil or string.find(creep:GetUnitName(),"siege")~=nil) then
-			nCr=nCr+1;
+		if utils.NotNilOrDead(creep) then -- and (string.find(creep:GetUnitName(),"melee")~=nil or string.find(creep:GetUnitName(),"range")~=nil or string.find(creep:GetUnitName(),"siege")~=nil) then
+			nCr = nCr + 1
 		end
 	end
 	
 	if nCr > 0 then
-		LaningState = LaningStates.MovingToPos;
+		LaningState = LaningStates.MovingToPos
 	end
 end
 
@@ -418,44 +421,44 @@ local function GetBackGen(npcBot)
 	local EnemyDamage = 0
 	local Enemies = npcBot:GetNearbyHeroes(EyeRange,true,BOT_MODE_NONE)
 	if Enemies==nil or #Enemies==0 then
-		return false;
+		return false
 	end
 	
-	local AllyTowers=npcBot:GetNearbyTowers(600,false);
+	local AllyTowers=npcBot:GetNearbyTowers(600,false)
 	if AllyTowers~=nil and #AllyTowers>0 and (#Enemies==nil or #Enemies<=3) then
-		return false;
+		return false
 	end
 	
 	for _,enemy in pairs(Enemies) do
 		if utils.NotNilOrDead(enemy) then
-			local damage = enemy:GetEstimatedDamageToTarget(true,npcBot,4,DAMAGE_TYPE_ALL);
-			EnemyDamage = EnemyDamage+damage;
+			local damage = enemy:GetEstimatedDamageToTarget(true,npcBot,4,DAMAGE_TYPE_ALL)
+			EnemyDamage = EnemyDamage+damage
 		end
 	end
 	
 	if EnemyDamage*0.7 > npcBot:GetHealth() then
 		setHeroVar("BackTimerGen", DotaTime())
-		return true;
+		return true
 	end
 	
 	if EnemyDamage > npcBot:GetHealth() and utils.IsAnyHeroAttackingMe(2.0) then
 		setHeroVar("BackTimerGen", DotaTime())
-		return true;
+		return true
 	end
 	
-	EnemyDamage=0;
-	local TotStun=0;
+	EnemyDamage=0
+	local TotStun=0
 	
 	for _,enemy in pairs(Enemies) do
 		if utils.NotNilOrDead(enemy) then
-			TotStun = TotStun + Min(enemy:GetStunDuration(true)*0.85 + enemy:GetSlowDuration(true)*0.5,3);
+			TotStun = TotStun + Min(enemy:GetStunDuration(true)*0.85 + enemy:GetSlowDuration(true)*0.5, 3)
 		end
 	end
 	
 	for _,enemy in pairs(Enemies) do
 		if utils.NotNilOrDead(enemy) then
-			local damage = enemy:GetEstimatedDamageToTarget(true,npcBot,TotStun,DAMAGE_TYPE_ALL);
-			EnemyDamage = EnemyDamage+damage;
+			local damage = enemy:GetEstimatedDamageToTarget(true,npcBot,TotStun,DAMAGE_TYPE_ALL)
+			EnemyDamage = EnemyDamage+damage
 		end
 	end
 	
@@ -465,33 +468,36 @@ local function GetBackGen(npcBot)
 	end
 	
 	setHeroVar("BackTimerGen", -1000)
-	return false;
+	return false
 end
 
 local function StayBack(npcBot)	
-	local LaneFront = GetLaneFrontAmount(GetTeam(), getHeroVar("CurLane"), true);
+	local LaneFront = GetLaneFrontAmount(GetTeam(), getHeroVar("CurLane"), true)
 	-- FIXME: we need to Min or Max depending on Team the LaneFrontAmount() with furthest standing tower
-	local LaneEnemyFront = 1.0 - GetLaneFrontAmount(utils.GetOtherTeam(), getHeroVar("CurLane"), false);
+	local LaneEnemyFront = GetLaneFrontAmount(utils.GetOtherTeam(), getHeroVar("CurLane"), false)
 	
-	local BackPos = GetLocationAlongLane(getHeroVar("CurLane"),Min(LaneFront-0.05,LaneEnemyFront-0.05)) + RandomVector(200);
+	local BackPos = GetLocationAlongLane(getHeroVar("CurLane"), Min(LaneFront-0.05,LaneEnemyFront-0.05)) + RandomVector(200)
+	if utils.IsMelee(npcBot) then
+		BackPos = GetLocationAlongLane(getHeroVar("CurLane"), Min(LaneFront, LaneEnemyFront)) + RandomVector(200)
+	end
 	npcBot:Action_MoveToLocation(BackPos);
 end
 
 function Think(npcBot)
-	Updates(npcBot);
+	Updates(npcBot)
 	
 	if npcBot:IsUsingAbility() or npcBot:IsChanneling() then
-		return;
+		return
 	end
 	
-	if GetBackGen(npcBot) and LaningState ~= LaningStates.MovingToLane then
-		StayBack(npcBot);
-		return;
+	if LaningState ~= LaningStates.MovingToLane and GetBackGen(npcBot) then
+		StayBack(npcBot)
+		return
 	end
 	
-	--print(utils.GetHeroName(npcBot), " LaningState: ", LaningState);
+	--print(utils.GetHeroName(npcBot), " LaningState: ", LaningState)
 	
-	States[LaningState](npcBot);
+	States[LaningState](npcBot)
 	
 	setHeroVar("LaningState", LaningState)
 end

@@ -50,10 +50,13 @@ end
 
 function amBot:DoHeroSpecificInit(bot)
 	self:setHeroVar("HasMovementAbility", bot:GetAbilityByName(SKILL_W))
+	self:setHeroVar("HasEscape", bot:GetAbilityByName(SKILL_W))
 end
 
 function Think()
     local npcBot = GetBot()
 
 	amBot:Think(npcBot)
+	
+	amBot:SaveLocation(npcBot)
 end

@@ -1,5 +1,6 @@
 -------------------------------------------------------------------------------
 --- AUTHOR: Nostrademous
+--- CONTRIBUTOR: Code based on work by Platinum_dota2
 --- GITHUB REPO: https://github.com/Nostrademous/Dota2-FullOverwrite
 -------------------------------------------------------------------------------
 

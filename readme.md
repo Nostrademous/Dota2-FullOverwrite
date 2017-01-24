@@ -10,11 +10,18 @@ This is a **WORK IN PROGRESS**. I share it in the hope that other developers wil
 find it useful and potentially contribute by requesting pull commits against 
 this code base building a better community bot framework. 
 
+**Contributors**
 The code representing this bot codebase is largely comprised of work of the 
 author and many contributors of the "Dota 2 Bot Scripting Forums" which can be 
 found here: http://dev.dota2.com/forumdisplay.php?f=497
 
-Code Layout:
+These include: lenLRX, Platinum_dota2, ironmano, Justus Mea, and many others
+that I have lost track of.
+
+Please drop me a message if you believe I have used your code and have not
+given the appropriate credit.
+
+**Code Layout:**
 ------------
 
 The design intention was to largely leverage the concept of class-based 

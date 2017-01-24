@@ -34,7 +34,7 @@ function EnemyData.UpdateEnemyInfo()
 		local name = utils.GetHeroName(enemy)
 		
 		if EnemyData[pid] == nil then
-			EnemyData[pid] = { Name = name, Time = -100, Obj = nil, Level = 1, Health = -1, Mana = -1, Location = nil, Items = {} }
+			EnemyData[pid] = { Name = name, Time = -100, Obj = nil, Level = 1, Health = -1, Mana = -1, Location = nil, Items = {}, PhysDmg = {}, MagicDmg = {}, PureDmg = {} }
 		end
 
 		local tDelta = RealTime() - EnemyData[pid].Time
@@ -60,12 +60,71 @@ function EnemyData.UpdateEnemyInfo()
 			EnemyData[pid].HasSilence = enemy:HasSilence(false) -- FIXME: does this count abilities only, or Items too?
 			EnemyData[pid].HasTruestrike = enemy:IsUnableToMiss()
 			
-			--EnemyData[pid].PhysDmg = enemy:GetEstimatedDamageToTarget(true, bot, DamageTime, DAMAGE_TYPE_PHYSICAL)
-			--EnemyData[pid].MagicDmg = enemy:GetEstimatedDamageToTarget(true, bot, DamageTime, DAMAGE_TYPE_MAGICAL)
+			local allies = GetUnitList(UNIT_LIST_ALLIED_HEROES)
+			for _, ally in pairs(allies) do
+				EnemyData[pid].PhysDmg[ally:GetPlayerID()] = enemy:GetEstimatedDamageToTarget(true, ally, 5.0, DAMAGE_TYPE_PHYSICAL)
+				EnemyData[pid].MagicDmg[ally:GetPlayerID()] = enemy:GetEstimatedDamageToTarget(true, ally, 5.0, DAMAGE_TYPE_MAGICAL)
+				EnemyData[pid].PureDmg[ally:GetPlayerID()] = enemy:GetEstimatedDamageToTarget(true, ally, 5.0, DAMAGE_TYPE_PURE)
+			end
 		end
 	end
 
 	EnemyData.Lock = false
+end
+
+function EnemyData.GetEnemyDmgs(ePID)
+	if ( EnemyData.Lock ) then return 0 end
+	EnemyData.Lock = true
+
+	local physDmg = 0
+	local magicDmg = 0
+	local pureDmg = 0
+	for k, v in pairs(EnemyData) do
+		if type(k) == "number"  and k == ePID then
+			physDmg = v.PhysDmg[GetBot():GetPlayerID()]
+			magicDmg = v.MagicDmg[GetBot():GetPlayerID()]
+			pureDmg = v.PureDmg[GetBot():GetPlayerID()]
+			break
+		end
+	end
+
+	EnemyData.Lock = false
+	
+	return physDmg, magicDmg, pureDmg
+end
+
+function EnemyData.GetEnemySlowDuration(ePID)
+	if ( EnemyData.Lock ) then return 0 end
+	EnemyData.Lock = true
+
+	local duration = 0
+	for k, v in pairs(EnemyData) do
+		if type(k) == "number"  and k == ePID then
+			duration = v.SlowDur
+			break
+		end
+	end
+
+	EnemyData.Lock = false
+	
+	return duration
+end
+
+function EnemyData.GetEnemyStunDuration(ePID)
+	if ( EnemyData.Lock ) then return 0 end
+	EnemyData.Lock = true
+
+	local duration = 0
+	for k, v in pairs(EnemyData) do
+		if type(k) == "number"  and k == ePID then
+			duration = v.StunDur
+			break
+		end
+	end
+
+	EnemyData.Lock = false
+	
+	return duration
 end
 
 function EnemyData.GetEnemyTeamSlowDuration()

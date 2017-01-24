@@ -61,4 +61,6 @@ function Think()
     local npcBot = GetBot()
 	
 	linaBot:Think(npcBot)
+	
+	linaBot:SaveLocation(npcBot)
 end

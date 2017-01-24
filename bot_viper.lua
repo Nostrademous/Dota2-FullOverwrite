@@ -44,7 +44,7 @@ end
 viperBot = ViperBot:new{actionStack = viperActionStack, abilityPriority = ViperAbilityPriority}
 --viperBot:printInfo();
 
-viperBot.Init = false;
+viperBot.Init = false
 
 function viperBot:DoHeroSpecificInit(bot)
 	self:setHeroVar("HasOrbAbility", SKILL_Q)
@@ -59,4 +59,6 @@ function Think()
     local npcBot = GetBot()
 	
 	viperBot:Think(npcBot)
+	
+	viperBot:SaveLocation(npcBot)
 end

@@ -74,6 +74,7 @@ function Think()
 	
 	drowRangerBot:Think(bot)
 	
+	--[[ FIXME: Drow Jungling is broken currently
 	if bot:GetLevel() >= 6 then
 		if not (utils.HaveItem(bot, "item_dragon_lance")) then
 			drowRangerBot:AddAction(constants.ACTION_JUNGLING)
@@ -82,6 +83,9 @@ function Think()
 			setHeroVar("ShouldPush", true)
 		end
 	end
+	--]]
+	
+	drowRangerBot:SaveLocation(bot)
 end
 
 -- We over-write DoRetreat behavior for JUNGLER Drow Ranger

@@ -705,55 +705,6 @@ function U.IsInLane()
 	return getHeroVar("IsInLane"), getHeroVar("RetreatLane")
 end
 
-function U.EnemiesNearLocation(bot, loc, dist)
-	if loc == nil then
-		return 0
-	end
-	
-	local num = 0
-	local Enemies = GetUnitList(UNIT_LIST_ENEMY_HEROES)
-	for _, enemy in pairs(Enemies) do
-		if U.NotNilOrDead(enemy) and enemy:GetLastSeenLocation() ~= nil and 
-			U.GetDistance(enemy:GetLastSeenLocation(), loc) <= dist and enemy:GetTimeSinceLastSeen() < 30 then
-			num = num + 1
-		end
-	end
-	
-	return num
-end
-
-function U.GetWardingSpot(lane)
-	-- GOOD RESOURCE: http://devilesk.com/dota2/apps/interactivemap3/?x=426&y=96&zoom=0
-
-	local laneTower1 = U.GetLaneTower(U.GetOtherTeam(), lane, 1)
-	local laneTower2 = U.GetLaneTower(U.GetOtherTeam(), lane, 2)
-	
-	if U.NotNilOrDead(laneTower1) then
-		print(U.GetHeroName(GetBot()).." - WARDING - lane tower 1 still up, placing wards accordingly")
-		if GetTeam() == TEAM_RADIANT then
-			if lane == LANE_BOT then
-				return Vector(3553, -1500)
-			elseif lane == LANE_MID then
-				return Vector(-874, 1191)
-			elseif lane == LANE_TOP then
-				return Vector(-3069, 3873)
-			end
-		else
-			if lane == LANE_TOP then
-				return Vector(-5105, 2083)
-			elseif lane == LANE_MID then
-				return Vector(-130, -1047)
-			elseif lane == LANE_BOT then
-				return Vector(4199, -4763)
-			end
-		end
-	else
-		print("WARDING: Not implemented past a tower dropping...")
-		return nil
-	end
-	return nil
-end
-
 -------------------------------------------------------------------------------
 -- Neutral Functions
 -------------------------------------------------------------------------------
@@ -911,7 +862,7 @@ end
 
 
 
--- Returns the closest building of team to a unit
+-- Returns the closest building of team >team< to a unit. uilding
 function U.GetClosestBuilding(unit, team)
     local min_dist = 99999999
     local building = ""
@@ -966,6 +917,8 @@ function U.GetCenterOfCreeps(creeps)
 end
 
 function U.CreepGC()
+    -- does it works? i don't know
+    --print("CreepGC");
     local swp_table = {}
     for handle,time_health in pairs(self["creeps"])
     do
@@ -1066,7 +1019,7 @@ function U.IsAnyHeroAttackingMe(fTime)
 end
 
 function U.IsTowerAttackingMe(fTime)
-	local fTime = fTime or 1.0
+	local fTime = fTime or 2.0
 	local npcBot = GetBot()
 
 	if npcBot:WasRecentlyDamagedByTower(fTime) then
@@ -1076,7 +1029,7 @@ function U.IsTowerAttackingMe(fTime)
 end
 
 function U.IsCreepAttackingMe(fTime)
-	local fTime = fTime or 1.0
+	local fTime = fTime or 2.0
 	local npcBot = GetBot()
 
 	if npcBot:WasRecentlyDamagedByCreep(fTime) then
@@ -1201,30 +1154,11 @@ function U.FindTarget(dist)
 	return candidate, damage, MaxScore
 end
 
-function U.EnemyHasBreakableBuff(enemy)
+function U.EnemyHasBreakableBuff(bot, enemy)
 	if enemy:HasModifier("modifier_clarity_potion") or 
 		enemy:HasModifier("modifier_flask_healing") or 
 		enemy:HasModifier("modifier_bottle_regeneration") then
 		return true
-	end
-	return false
-end
-
-function U.UseOrbEffect(npcBot, enemy)
-	local enemy = enemy or nil
-	local orb = getHeroVar("HasOrbAbility")
-	if orb ~= nil then
-		local ability = npcBot:GetAbilityByName(orb)
-		if ability ~= nil and ability:IsFullyCastable() then
-			if enemy == nil then
-				enemy, _ = U.GetWeakestHero(npcBot, ability:GetCastRange())
-			end
-			
-			if enemy ~= nil then
-				npcBot:Action_UseAbilityOnEntity(ability, enemy)
-				return true
-			end
-		end
 	end
 	return false
 end
@@ -1276,27 +1210,27 @@ end
 
 function U.HaveItem(npcBot, item_name)
     local slot = npcBot:FindItemSlot(item_name)
-	if slot ~= ITEM_SLOT_TYPE_INVALID then
-		local slot_type = npcBot:GetItemSlotType(slot)
-		if slot_type == ITEM_SLOT_TYPE_MAIN then
-			return npcBot:GetItemInSlot(slot);
-		elseif slot_type == ITEM_SLOT_TYPE_BACKPACK then
-			print("FIXME: Implement swapping BACKPACK to MAIN INVENTORY of item: ", item_name)
-			return nil
-		elseif slot_type == ITEM_SLOT_TYPE_STASH then
-			if npcBot:HasModifier("modifier_fountain_aura") then
-				if U.NumberOfItems(bot) < 6 then
-					U.MoveItemsFromStashToInventory(bot)
-					return U.HaveItem(npcBot, item_name)
-				else
-					print("FIXME: Implement swapping STASH to MAIN INVENTORY of item: ", item_name)
+		if slot >= 0 then
+			local slot_type = npcBot:GetItemSlotType(slot)
+			if slot_type == ITEM_SLOT_TYPE_MAIN then
+				return npcBot:GetItemInSlot(slot);
+			elseif slot_type == ITEM_SLOT_TYPE_BACKPACK then
+				print("FIXME: Implement swapping BACKPACK to MAIN INVENTORY of item: ", item_name)
+				return nil
+			elseif slot_type == ITEM_SLOT_TYPE_STASH then
+				if npcBot:HasModifier("modifier_fountain_aura") then
+					if U.NumberOfItems(bot) < 6 then
+						U.MoveItemsFromStashToInventory(bot)
+						return U.HaveItem(npcBot, item_name)
+					else
+						print("FIXME: Implement swapping STASH to MAIN INVENTORY of item: ", item_name)
+					end
 				end
+				return nil
+			else
+				print("ERROR: condition should not be hit: ", item_name);
 			end
-			return nil
-		else
-			print("ERROR: condition should not be hit: ", item_name);
 		end
-	end
 
     return nil
 end
@@ -1399,14 +1333,5 @@ function U.CourierThink(npcBot)
 end
 
 -------------------------------------------------------------------------------
-
-function U.myPrint(...)
-	local args = {...}
-	local msg = "[" .. U.GetHeroName(GetBot()) .. "]: "
-	for i,v in ipairs(args) do
-		msg = msg .. tostring(v)
-	end
-	print(msg)
-end
 
 return U;

@@ -80,15 +80,29 @@ end
 -- We over-write DoRetreat behavior for JUNLGER Bloodseeker
 function bloodseekerBot:DoRetreat(bot, reason)
 	-- if we got creep damage and are a JUNGLER do special stuff
+	
+	local bloodragePct = {0.25, 0.30, 0.35, 0.40}
+	
     local pushing = getHeroVar("ShouldPush")
+	local bloodrage = bot:GetAbilityByName("bloodseeker_bloodrage")
+	local neutrals = bot:GetNearbyCreeps(700,true) 
+	table.sort(neutrals, function(n1, n2) return n1:GetHealth() < n2:GetHealth() end)
+	
+	local estimatedDamage = bot:GetEstimatedDamageToTarget(true, neutrals[1], bot:GetAttackSpeed(), DAMAGE_TYPE_PHYSICAL)
+	local actualDamage = neutrals[1]:GetActualDamage(estimatedDamage, DAMAGE_TYPE_PHYSICAL)
+	local bloodrageHeal = bloodragePct[bloodrage.GetLevel()] * neutrals[1]:GetMaxHealth()
+	local healthThreshold = math.max(bot:GetMaxHealth()*0.15, 100)
+	
 	if reason == constants.RETREAT_CREEP and 
 		(self:GetAction() ~= constants.ACTION_LANING or (pushing ~= nil and pushing ~= false)) then
 		-- if our health is lower than maximum( 15% health, 100 health )
-		if bot:GetHealth() < math.max(bot:GetMaxHealth()*0.15, 100) then
-			setHeroVar("RetreatReason", constants.RETREAT_FOUNTAIN)
-			if ( self:HasAction(constants.ACTION_RETREAT) == false ) then
-				self:AddAction(constants.ACTION_RETREAT)
-				setHeroVar("IsInLane", false)
+		if bot:GetHealth() < healthThreshold then
+			if (actualDamage < neutrals[1]:GetHealth()) and bot:GetHealth + bloodrageHeal < healthThreshold then
+				setHeroVar("RetreatReason", constants.RETREAT_FOUNTAIN)
+				if ( self:HasAction(constants.ACTION_RETREAT) == false ) then
+					self:AddAction(constants.ACTION_RETREAT)
+					setHeroVar("IsInLane", false)
+				end
 			end
 		end
 		-- if we are retreating - piggyback on retreat logic movement code

@@ -139,7 +139,9 @@ function X:Think(npcBot)
 		end
 
 		-- Consider selling items
-		self:ConsiderSellingItems(npcBot)
+        if npcBot:DistanceFromFountain() < 100 or npcBot:DistanceFromSecretShop() < 100 or npcBot:DistanceFromSideShop() < 100 then
+            self:ConsiderSellingItems(npcBot)
+        end
 
 		-- Get the next item
 		local sNextItem = self.PurchaseOrder[1]
@@ -411,7 +413,7 @@ function X:ConsiderSellingItems(bot)
 	if utils.NumberOfItems(bot) == 6 and utils.NumberOfItemsInBackpack(bot) == 3 then
 		local inventory = {}
 		-- Store name of the items in a table
-		for i = 0,5,1 do
+		for i = 0,8,1 do
 			local item = bot:GetItemInSlot(i)
 			table.insert(inventory, item:GetName())
 		end

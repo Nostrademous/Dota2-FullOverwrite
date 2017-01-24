@@ -30,6 +30,9 @@ local ACTION_ROSHAN		= constants.ACTION_ROSHAN
 local ACTION_DEFENDALLY	= constants.ACTION_DEFENDALLY
 local ACTION_DEFENDLANE	= constants.ACTION_DEFENDLANE
 local ACTION_WARD		= constants.ACTION_WARD
+local ACTION_GANKING	= constants.ACTION_GANKING
+
+local gStuck = false -- for detecting getting stuck in trees or whatever
 
 local X = { currentAction = ACTION_NONE, prevAction = ACTION_NONE, actionStack = {}, abilityPriority = {} }
 
@@ -157,6 +160,9 @@ function X:DoInit(bot)
 	self:setHeroVar("Name", utils.GetHeroName(bot))
 	self:setHeroVar("LastCourierThink", -1000.0)
 	self:setHeroVar("LastLevelUpThink", -1000.0)
+	self:setHeroVar("LastStuckCheck", -1000.0)
+	self:setHeroVar("StuckCounter", 0)
+	self:setHeroVar("LastLocation", Vector(0, 0, 0))
 
 	role.GetRoles()
 	if role.RolesFilled() then
@@ -198,7 +204,7 @@ function X:Think(bot)
 		:: Leveling Up Abilities, Buying Items (in most cases), Using Courier
 	--]]
 	-- LEVEL UP ABILITIES
-	local checkLevel, newTime = utils.TimePassed(self:getHeroVar("LastLevelUpThink"), 2.0);
+	local checkLevel, newTime = utils.TimePassed(self:getHeroVar("LastLevelUpThink"), 2.0)
 	if checkLevel then
 		self:setHeroVar("LastLevelUpThink", newTime)
 		if bot:GetAbilityPoints() > 0 then
@@ -225,6 +231,11 @@ function X:Think(bot)
 		gHeroVar.SetGlobalVar("PrevEnemyDataDump", newTime)
 		--enemyData.PrintEnemyInfo()
 	end
+	
+	--SHOULD WE USE GLYPH
+	if ( self:Determine_ShouldUseGlyph(bot) ) then
+		bot:Action_UseGlyph()
+	end
 
 	--AM I ALIVE
     if( not bot:IsAlive() ) then
@@ -244,9 +255,48 @@ function X:Think(bot)
 	-- FIXME - right place?
 	self:ConsiderItemUse()
 
+	-- Check if we are stuck
+	if GetGameState() == GAME_STATE_GAME_IN_PROGRESS then
+		local curLoc = bot:GetLocation()
+		local checkLevel, newTime = utils.TimePassed(self:getHeroVar("LastStuckCheck"), 3.0)
+		if checkLevel then
+			self:setHeroVar("LastStuckCheck", newTime)
+			if utils.GetDistance(self:getHeroVar("LastLocation"),curLoc) == 0 then
+				local stuckCounter = self:getHeroVar("StuckCounter") + 1
+				self:setHeroVar("StuckCounter", stuckCounter)
+				
+				if stuckCounter >= 12 then
+					gStuck = true
+					utils.AllChat("I AM STUCK!!!")
+				end
+			else
+				self:setHeroVar("StuckCounter", 0)
+			end
+		end
+		
+		if gStuck then
+			local randomLoc = Vector(curLoc[1] + RandomFloat(-1200,1200), curLoc[2] + RandomFloat(-1200,1200))
+			if GetUnitToLocationDistance(bot, randomLoc) < 10 then
+				bot:Action_MoveToLocation(randomLoc)
+				return
+			else
+				gStuck = false
+			end
+		end
+	end
+	
 	------------------------------------------------
 	-- NOW DECISIONS THAT MODIFY MY ACTION STATES --
 	------------------------------------------------
+	
+	-- Check if our bot was trying to harass with an ability using Out of Range Casting variable
+	-- Give them 2.0 seconds to use it or fall through to further logic
+	local oorC = self:getHeroVar("OutOfRangeCasting")
+	if bot:GetCurrentActionType() == BOT_ACTION_TYPE_USE_ABILITY and ( oorc ~= nil and (oorC-GameTime()) < 2.0 ) then
+		print("CLEARING OORC ABILITY USE")
+		bot:Action_ClearActions()
+		return
+	end
 
 	if ( self:GetAction() == ACTION_RETREAT ) then
 		local bRet = self:DoRetreat(bot, self:getHeroVar("RetreatReason"))
@@ -257,15 +307,6 @@ function X:Think(bot)
 		self:setHeroVar("RetreatReason", safe)
 		local bRet = self:DoRetreat(bot, safe)
 		if bRet then return end
-	end
-
-	-- Check if our bot was trying to harass with an ability using Out of Range Casting variable
-	-- Give them 2.0 seconds to use it or fall through to further logic
-	local oorC = self:getHeroVar("OutOfRangeCasting")
-	if bot:GetCurrentActionType() == BOT_ACTION_TYPE_USE_ABILITY and ( oorc ~= nil and (oorC-GameTime()) < 2.0 ) then
-		print("CLEARING OORC ABILITY USE")
-		bot:Action_ClearActions()
-		return
 	end
 	
 	local bRet = self:ConsiderAbilityUse()
@@ -307,7 +348,7 @@ function X:Think(bot)
 		if bRet then return end
 	end
 
-	if ( self:GetAction() == ACTION_GANK or self:Determine_ShouldGank(bot) ) then
+	if ( self:GetAction() == ACTION_GANKING or self:Determine_ShouldGank(bot) ) then
 		local bRet = self:DoGank(bot)
 		if bRet then return end
 	end
@@ -370,16 +411,21 @@ function X:ConsiderBuyback(bot)
 	return false
 end
 
--- BELOW -- Pure Abstract Function - Designed for Overload
+-- Pure Abstract Function - Designed for Overload
 function X:ConsiderAbilityUse()
 	return false
 end
+-------------------------------------------------
 
 function X:ConsiderItemUse()
 	local timeInfo = item_usage.UseItems()
 	if timeInfo ~= nil then
 		print( "X:ConsiderItemUse() TimeInfo: ", timeInfo )
 	end
+end
+
+function X:Determine_ShouldUseGlyph(bot)
+	return false
 end
 
 function X:Determine_ShouldIRetreat(bot)
@@ -459,10 +505,14 @@ function X:Determine_ShouldIRetreat(bot)
 		for _,enemy in pairs(Enemies) do
 			if utils.NotNilOrDead(enemy) and enemy:GetHealth()/enemy:GetMaxHealth() > 0.4 then
 				local bEscape = self:getHeroVar("HasEscape")
-				if bEscape ~= nil and bEscape ~= false then
-					MaxStun = MaxStun + enemy:GetStunDuration(true)
-				else
-					MaxStun = MaxStun + Max(enemy:GetStunDuration(true), enemy:GetSlowDuration(true)/2.0)
+				local enemyManaRatio = enemy:GetMana()/enemy:GetMaxMana()
+				
+				if enemyManaRatio > (0.35 + enemy:GetLevel()/100.0) then
+					if bEscape ~= nil and bEscape ~= false then
+						MaxStun = MaxStun + enemy:GetStunDuration(true)
+					else
+						MaxStun = MaxStun + Max(enemy:GetStunDuration(true), enemy:GetSlowDuration(true)/1.5)
+					end
 				end
 			end
 		end
@@ -470,14 +520,19 @@ function X:Determine_ShouldIRetreat(bot)
 		local enemyDamage = 0
 		for _, enemy in pairs(Enemies) do
 			if utils.NotNilOrDead(enemy) and enemy:GetHealth()/enemy:GetMaxHealth() > 0.4 then
-				local damage = enemy:GetEstimatedDamageToTarget(true, bot, MaxStun, DAMAGE_TYPE_ALL)
-				enemyDamage = enemyDamage + damage
+				local enemyManaRatio = enemy:GetMana()/enemy:GetMaxMana()
+				local pDamage = bot:GetActualDamage(enemy:GetEstimatedDamageToTarget(true, bot, MaxStun, DAMAGE_TYPE_PHYSICAL), DAMAGE_TYPE_PHYSICAL)
+				local mDamage = bot:GetActualDamage(enemy:GetEstimatedDamageToTarget(true, bot, MaxStun, DAMAGE_TYPE_MAGICAL), DAMAGE_TYPE_MAGICAL)
+				if enemyManaRatio < ( 0.5 - enemy:GetLevel()/100.0) then
+					enemyDamage = enemyDamage + pDamage + 0.5*mDamage + 0.5*enemy:GetEstimatedDamageToTarget(true, bot, MaxStun, DAMAGE_TYPE_PURE)
+				else
+					enemyDamage = enemyDamage + pDamage + mDamage + enemy:GetEstimatedDamageToTarget(true, bot, MaxStun, DAMAGE_TYPE_PURE)
+				end
 			end
 		end
 
-		--FIXME: Once we have enemy_data working for physical and magic/pure, use that
-		if 0.6*enemyDamage > bot:GetHealth() then
-			print(utils.GetHeroName(bot).." - Retreating - could die in perfect stun overlap")
+		if enemyDamage > bot:GetHealth() then
+			utils.myPrint(" - Retreating - could die in perfect stun/slow overlap")
 			self:setHeroVar("IsRetreating", true)
 			return constants.RETREAT_DANGER
 		end
@@ -886,8 +941,7 @@ function X:DoFight(bot)
 						towerDmgToMe = towerDmgToMe + tow:GetEstimatedDamageToTarget( false, bot, 4.0, DAMAGE_TYPE_PHYSICAL )
 					end
 				end
-				local gankTarget = self:getHeroVar("GankTarget")
-				if ( myDmgToTarget > target:GetHealth() or gankTarget ~= nil) and towerDmgToMe < (bot:GetHealth() + 100) then
+				if myDmgToTarget > target:GetHealth() and towerDmgToMe < (bot:GetHealth() + 100) then
 					--print(utils.GetHeroName(bot), " - we are tower diving for the kill")
 					if target:IsAttackImmune() or (bot:GetLastAttackTime() + bot:GetSecondsPerAttack()) > GameTime() then
 						bot:Action_MoveToUnit(target)
@@ -898,7 +952,6 @@ function X:DoFight(bot)
 				else
 					self:RemoveAction(ACTION_FIGHT)
 					self:setHeroVar("Target", nil)
-					self:setHeroVar("GankTarget", nil)
 					return false
 				end
 			end
@@ -906,7 +959,6 @@ function X:DoFight(bot)
 			utils.AllChat("Suck it!")
 			self:RemoveAction(ACTION_FIGHT)
 			self:setHeroVar("Target", nil)
-			self:setHeroVar("GankTarget", nil)
 		end
 	end
 	return false
@@ -950,16 +1002,25 @@ function X:DoGank(bot)
 		self:AddAction(ACTION_GANKING)
 	end
 	
-	local bKill = ganking_generic.KillTarget(bot)
-	
-	if not bKill then
+	local gankTarget = self:getHeroVar("GankTarget")
+	local bStillGanking = true
+	if gankTarget ~= nil then
+		local bTimeToKill = ganking_generic.ApproachTarget(bot)
+		if bTimeToKill then
+			bStillGanking = ganking_generic.KillTarget(bot, gankTarget)
+		end
+	else
+		bStillGanking = false
+	end
+
+	if not bStillGanking then
 		utils.myPrint("clearing gank")
 		self:RemoveAction(ACTION_GANKING)
 		self:setHeroVar("GankTarget", nil)
 		self:setHeroVar("Target", nil)
 	end
 	
-	return true
+	return bStillGanking
 end
 
 function X:DoRoam(bot)
@@ -1055,6 +1116,12 @@ end
 
 function X:HarassLaneEnemies(bot)
 	return
+end
+
+function X:SaveLocation(bot)
+	if self.Init then
+		self:setHeroVar("LastLocation", bot:GetLocation())
+	end
 end
 
 return X;

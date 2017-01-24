@@ -102,12 +102,13 @@ function FindTarget(bot)
 	return false
 end
 
-function KillTarget(bot)
+function ApproachTarget(bot)
 	local me = getHeroVar("Self")
     local move_ticks = getHeroVar("move_ticks")
 	
-    if move_ticks > 50 then -- time to check for targets again
-        utils.myPrint("move_ticks > 50 :: abandoning gank")
+    if move_ticks > 250 then -- time to check for targets again
+        utils.myPrint("move_ticks > 250 :: abandoning gank")
+		me:RemoveAction(constants.ACTION_GANKING)
         return false
     else
         setHeroVar("move_ticks", move_ticks + 1)
@@ -116,6 +117,7 @@ function KillTarget(bot)
 	local target = getHeroVar("GankTarget")
 	
 	if me:IsReadyToGank(bot) == false then
+		me:RemoveAction(constants.ACTION_GANKING)
 		return false
 	end
 	
@@ -123,18 +125,15 @@ function KillTarget(bot)
 		if target:IsAlive() then
 			if target:CanBeSeen() then
 				if GetUnitToUnitDistance(bot, target) < 1000 then
-					me:RemoveAction(ACTION_GANKING)
-					me:AddAction(ACTION_FIGHT)
-					setHeroVar("Target", target)
-					utils.myPrint("found target :: ", utils.GetHeroName(target))
 					return true
 				else
 					bot:Action_MoveToUnit(target) -- Let's go there
 					-- TODO: consider being sneaky
-					return true
+					return false
 				end
 			else
 				if target:GetTimeSinceLastSeen() > 3.0 then
+					me:RemoveAction(constants.ACTION_GANKING)
 					return false
 				else
 					local lastLoc = target:GetLastSeenLocation()
@@ -144,11 +143,11 @@ function KillTarget(bot)
 						if prob1 > 180 and prob1 > prob2 then
 							item_usage.UseMovementItems()
 							bot:Action_MoveToLocation(Vector(lastLoc[1] + 500, lastLoc[2]))
-							return true
+							return false
 						elseif prob2 > 180 then
 							item_usage.UseMovementItems()
 							bot:Action_MoveToLocation(Vector(lastLoc[1], lastLoc[2] + 500))
-							return true
+							return false
 						end
 					else
 						local prob1 = GetUnitPotentialValue(target, Vector(lastLoc[1] - 500, lastLoc[2]), 1000)
@@ -156,11 +155,11 @@ function KillTarget(bot)
 						if prob1 > 180 and prob1 > prob2 then
 							item_usage.UseMovementItems()
 							bot:Action_MoveToLocation(Vector(lastLoc[1] - 500, lastLoc[2]))
-							return true
+							return false
 						elseif prob2 > 180 then
 							item_usage.UseMovementItems()
 							bot:Action_MoveToLocation(Vector(lastLoc[1], lastLoc[2] - 500))
-							return true
+							return false
 						end
 					end
 				end
@@ -168,6 +167,19 @@ function KillTarget(bot)
 		else
 			utils.myPrint("GankTarget is dead!!!")
 			return false
+		end
+	end
+	return false
+end
+
+function KillTarget(bot, target)	
+	if target ~= nil then
+		if target:IsAlive() then
+			if target:CanBeSeen() then
+				utils.myPrint("killing target :: ", utils.GetHeroName(target))
+				bot:Action_AttackUnit(target, false)
+				return true
+			end
 		end
 	end
 	return false

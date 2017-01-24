@@ -57,4 +57,6 @@ function Think()
     local npcBot = GetBot()
 
 	amBot:Think(npcBot)
+	
+	amBot:SaveLocation(npcBot)
 end

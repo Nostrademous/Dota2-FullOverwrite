@@ -1,5 +1,5 @@
 -------------------------------------------------------------------------------
---- AUTHOR: Keithen
+--- AUTHOR: Nostrademous
 --- GITHUB REPO: https://github.com/Nostrademous/Dota2-FullOverwrite
 -------------------------------------------------------------------------------
 

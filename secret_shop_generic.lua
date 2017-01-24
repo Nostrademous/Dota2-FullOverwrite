@@ -1,6 +1,6 @@
 -------------------------------------------------------------------------------
 --- AUTHOR: Nostrademous
---- LARGE AMOUNT OF CODE BORROWED FROM: PLATINUM_DOTA2 (Pooya J.)
+--- CONTRIBUTOR: Code based on work by Platinum_dota2
 --- GITHUB REPO: https://github.com/Nostrademous/Dota2-FullOverwrite
 -------------------------------------------------------------------------------
 

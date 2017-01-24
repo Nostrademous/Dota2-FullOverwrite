@@ -84,6 +84,8 @@ function Think()
 		end
 	end
 	--]]
+	
+	drowRangerBot:SaveLocation(bot)
 end
 
 -- We over-write DoRetreat behavior for JUNGLER Drow Ranger

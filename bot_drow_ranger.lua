@@ -73,22 +73,26 @@ function Think()
     local bot = GetBot()
 
     drowRangerBot:Think(bot)
-	local timeInMinutes = math.floor(DotaTime() / 60)
-	
-    if bot:GetLevel() >= 6 then
-        if not (utils.HaveItem(bot, "item_dragon_lance")) then
-            drowRangerBot:AddAction(constants.ACTION_JUNGLING)
-		elseif (timeInMinutes > 18 and not utils.HaveItem(bot, "item_maelstrom")) then
-            drowRangerBot:AddAction(constants.ACTION_JUNGLING)
-		elseif (timeInMinutes > 24 and not utils.HaveItem(bot, "item_hurricane_pike")) then
-            drowRangerBot:AddAction(constants.ACTION_JUNGLING)
-        else
-            drowRangerBot:RemoveAction(constants.ACTION_JUNGLING)
-            setHeroVar("ShouldPush", true)
+
+    -- if we are initialized, do the rest
+    if drowRangerBot.Init then
+        local timeInMinutes = math.floor(DotaTime() / 60)
+
+        if bot:GetLevel() >= 6 then
+            if not (utils.HaveItem(bot, "item_dragon_lance")) then
+                drowRangerBot:AddAction(constants.ACTION_JUNGLING)
+            elseif (timeInMinutes > 18 and not utils.HaveItem(bot, "item_maelstrom")) then
+                drowRangerBot:AddAction(constants.ACTION_JUNGLING)
+            elseif (timeInMinutes > 24 and not utils.HaveItem(bot, "item_hurricane_pike")) then
+                drowRangerBot:AddAction(constants.ACTION_JUNGLING)
+            else
+                drowRangerBot:RemoveAction(constants.ACTION_JUNGLING)
+                setHeroVar("ShouldPush", true)
+            end
         end
+
+        drowRangerBot:HarassLaneEnemies(bot)
     end
-	
-	drowRangerBot:HarassLaneEnemies(bot)
 end
 
 -- We over-write DoRetreat behavior for JUNGLER Drow Ranger
@@ -150,31 +154,31 @@ function drowRangerBot:DoCleanCamp(bot, neutrals)
     local frostArrow = bot:GetAbilityByName("drow_ranger_frost_arrows")
 
     for i, neutral in ipairs(neutrals) do
-		
-		local slowed =  neutral:HasModifier("modifier_drow_ranger_frost_arrows_slow")
-		
+
+        local slowed =  neutral:HasModifier("modifier_drow_ranger_frost_arrows_slow")
+
         if not (slowed) then
-			bot:Action_UseAbilityOnEntity(frostArrow, neutral);
+            bot:Action_UseAbilityOnEntity(frostArrow, neutral);
         end
-		
-		bot:Action_AttackUnit(neutral, true)
-		break
+
+        bot:Action_AttackUnit(neutral, true)
+        break
     end
 end
 
-function drowRangerBot:HarassLaneEnemies(bot)	
+function drowRangerBot:HarassLaneEnemies(bot)
 
-	local Enemies = bot:GetNearbyHeroes(800, true, BOT_MODE_NONE)
-	
+    local Enemies = bot:GetNearbyHeroes(800, true, BOT_MODE_NONE)
+
     table.sort(Enemies, function(n1, n2) return n1:GetHealth() < n2:GetHealth() end) -- sort by health
-	
-	local target = Enemies[#Enemies] -- get highest health enemy
-	
+
+    local target = Enemies[#Enemies] -- get highest health enemy
+
     if target ~= nil then
-			self:AddAction(ACTION_FIGHT)
-			self:setHeroVar("Target", target)
-	else
-            self:RemoveAction(ACTION_FIGHT)
-            self:setHeroVar("Target", nil)
-	end
+        self:AddAction(ACTION_FIGHT)
+        self:setHeroVar("Target", target)
+    else
+        self:RemoveAction(ACTION_FIGHT)
+        self:setHeroVar("Target", nil)
+    end
 end

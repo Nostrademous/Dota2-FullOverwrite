@@ -69,9 +69,12 @@ function Think()
 
     bloodseekerBot:Think(npcBot)
 
-    if npcBot:GetLevel() == 25 and getHeroVar("Role") ~= constants.ROLE_HARDCARRY then
-        setHeroVar("Role", constants.ROLE_HARDCARRY)
-        setHeroVar("CurLane", LANE_BOT) --FIXME: don't hardcode this
+    -- if we are initialized, do the rest
+    if bloodseekerBot.Init then
+        if npcBot:GetLevel() == 25 and getHeroVar("Role") ~= constants.ROLE_HARDCARRY then
+            setHeroVar("Role", constants.ROLE_HARDCARRY)
+            setHeroVar("CurLane", LANE_BOT) --FIXME: don't hardcode this
+        end
     end
 end
 
@@ -84,9 +87,9 @@ function bloodseekerBot:DoRetreat(bot, reason)
 
     local bloodrage = bot:GetAbilityByName("bloodseeker_bloodrage")
     local bloodragePct =  bloodrage:GetSpecialValueInt("health_bonus_creep_pct")/100
-	
+
     local neutrals = bot:GetNearbyCreeps(700,true)
-    
+
     if #neutrals == 0 then return false end
     table.sort(neutrals, function(n1, n2) return n1:GetHealth() < n2:GetHealth() end)
 

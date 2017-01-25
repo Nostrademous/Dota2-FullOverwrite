@@ -402,10 +402,16 @@ function U.GetDistance(s, t)
     return math.sqrt((s[1]-t[1])*(s[1]-t[1]) + (s[2]-t[2])*(s[2]-t[2]));
 end
 
-function U.VectorTowards(s,t,d)
-    local f=t-s;
-    f=f / U.GetDistance(f,Vector(0,0));
-    return s+(f*d);
+function U.VectorTowards(start, towards, distance)
+    local facing = towards - start
+    local direction = facing / U.GetDistance(facing, Vector(0,0)) --normalized
+    return start + (direction * distance)
+end
+
+function U.VectorAway(start, towards, distance)
+    local facing = start - towards
+    local direction = facing / U.GetDistance(facing, Vector(0,0)) --normalized
+    return start + (direction * distance)
 end
 
 -------------------------------------------------------------------------------

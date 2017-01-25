@@ -79,11 +79,12 @@ end
 function bloodseekerBot:DoRetreat(bot, reason)
     -- if we got creep damage and are a JUNGLER do special stuff
 
-    local bloodragePct = {0.25, 0.30, 0.35, 0.40}
 
     local pushing = getHeroVar("ShouldPush")
 
     local bloodrage = bot:GetAbilityByName("bloodseeker_bloodrage")
+    local bloodragePct =  bloodrage:GetSpecialValueInt("health_bonus_creep_pct")/100
+	
     local neutrals = bot:GetNearbyCreeps(700,true)
     
     if #neutrals == 0 then return false end
@@ -91,7 +92,7 @@ function bloodseekerBot:DoRetreat(bot, reason)
 
     local estimatedDamage = bot:GetEstimatedDamageToTarget(true, neutrals[1], bot:GetAttackSpeed(), DAMAGE_TYPE_PHYSICAL)
     local actualDamage = neutrals[1]:GetActualDamage(estimatedDamage, DAMAGE_TYPE_PHYSICAL)
-    local bloodrageHeal = bloodragePct[bloodrage:GetLevel()] * neutrals[1]:GetMaxHealth()
+    local bloodrageHeal = bloodragePct * neutrals[1]:GetMaxHealth()
     local healthThreshold = math.max(bot:GetMaxHealth()*0.15, 100)
 
     if reason == constants.RETREAT_CREEP and (self:GetAction() ~= constants.ACTION_LANING or pushing) then

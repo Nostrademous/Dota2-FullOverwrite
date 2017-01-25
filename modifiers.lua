@@ -38,7 +38,7 @@ M.DoTModifiers={
 	"modifier_warlock_shadow_word"
 }
 
-function U.HasActiveDOTDebuff(bot)
+function M.HasActiveDOTDebuff(bot)
 	for dot = 1, #M.DoTModifiers do
 		if bot:HasModifier(M.DoTModifiers[dot]) then
 			return true
@@ -49,4 +49,4 @@ end
 
 -------------------------------------------------------------------------------
 
-return U;
+return M;

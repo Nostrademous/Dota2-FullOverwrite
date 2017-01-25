@@ -64,7 +64,7 @@ local listHC = {
 	"npc_dota_hero_weaver",
 	--"npc_dota_hero_windrunner",
 };
-	
+
 local listMID = {
 --comments by "ByBurton":	I define Mid as Semicarries. Heroes that need exp and some gold early on, that can easily win lanes 1 vs 1 through skill spamming or harrassing - position 2; always in mid.
 --Have skills that scale bad in early and good into lategame - mostly physical dmg.
@@ -117,7 +117,7 @@ local listMID = {
 	"npc_dota_hero_windrunner",
 	"npc_dota_hero_zuus",
 };
-	
+
 local listOFF = {
 --comments by "ByBurton":	I define Offlaner as Semicarries too, but a bit less gold focused. They need mostly exp early on, and they play defensiv / use defensive skills to survive their lane 1 vs 2-3 - position 3;
 --always solo or with another support; in offlane aka hardlane. Have abilities that scale good in midgame.
@@ -210,7 +210,7 @@ local listJUNGLER = {
 	"npc_dota_hero_lifestealer",
 	--"npc_dota_hero_lycan",
 };
-	
+
 local listSEMISUPPORT = {
 --comments by "ByBurton":	I define semi supports as supports who need a little money. they usually do not buy the wards and smokes. Usually have supporting abilities. They help in ganks, and buy other utility items. Require some more
 --gold / exp than full supports - Position 4 - usually helping the offlaner or in a trilane with the safelane carry.
@@ -230,7 +230,7 @@ local listSEMISUPPORT = {
 	"npc_dota_hero_jakiro",
 	"npc_dota_hero_leshrac",			--not sure here
 	"npc_dota_hero_lich",
-	--"npc_dota_hero_lina",	-- not really a good support
+	"npc_dota_hero_lina",	-- not really a good support
 	"npc_dota_hero_lion",
 	"npc_dota_hero_ogre_magi",
 	"npc_dota_hero_omniknight",
@@ -285,7 +285,7 @@ local listHARDSUPPORT = {
 	"npc_dota_hero_winter_wyvern",
 	"npc_dota_hero_wisp",
 };
-	
+
 ----------------------------------------------------------------------------------------------------
 
 local function contains(table, value)
@@ -402,14 +402,14 @@ local best = nil
 local function fillRoles(rMatrix)
 	obj = everyObjectAssigned(rMatrix)
 
-	if obj ~= 0 then	
+	if obj ~= 0 then
 		local slot = GetTeamMember( GetTeam(), obj )
 		validRoles = findRole(slot:GetUnitName())
 		for k,v in pairs (validRoles) do
 			if #v > 0 then
 				new = utils.deepcopy(rMatrix)
 				table.insert(new[k], slot:GetUnitName())
-				
+
 				new = fillRoles(new)
 				if everyObjectAssigned(new) == 0 and best == nil then
 					best = utils.deepcopy(new)
@@ -423,7 +423,7 @@ local function fillRoles(rMatrix)
 				end
 			end
 		end
-		
+
 	end
 	return rMatrix
 end
@@ -457,14 +457,14 @@ function GetRoles()
 	if ( not RolesFilled() ) then
 		SetRoles()
 	end
-	
+
 	return roles;
 end
 
 function GetLaneAndRole(team, role_indx)
 	local r = GetRoles()
 	local rl = roles[role_indx]
-	
+
 	if rl == ROLE_MID then
 		return LANE_MID, rl
 	elseif rl == ROLE_OFFLANE then

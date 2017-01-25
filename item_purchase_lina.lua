@@ -1,106 +1,141 @@
 -------------------------------------------------------------------------------
---- AUTHOR: Nostrademous
+--- AUTHOR: Nostrademous, dralois
 --- GITHUB REPO: https://github.com/Nostrademous/Dota2-FullOverwrite
 -------------------------------------------------------------------------------
 
-require( GetScriptDirectory().."/generic_item_purchase" )
+local item_purchase = require( GetScriptDirectory().."/item_purchase_generic_test" )
 
-local tableItemsToBuyAsSupport = { 
-	"item_tango",
-	"item_tango",
-	"item_clarity",
-	"item_clarity",
-	"item_branches",
-	"item_branches",
-	"item_magic_stick",
-	"item_circlet",
-	"item_boots",
-	"item_energy_booster",
-	"item_staff_of_wizardry",
-	"item_ring_of_regen",
-	"item_recipe_force_staff",
-	"item_point_booster",
-	"item_staff_of_wizardry",
-	"item_ogre_axe",
-	"item_blade_of_alacrity",
-	"item_mystic_staff",
-	"item_ultimate_orb",
-	"item_void_stone",
-	"item_staff_of_wizardry",
-	"item_wind_lace",
-	"item_void_stone",
-	"item_recipe_cyclone",
-	"item_cyclone",
+----------------------------------------------------------------------------------------------------
+
+local ItemsToBuyAsHardCarry = {
+	StartingItems = {
+		"item_null_talisman",
+		"item_faerie_fire",
+		"item_branches",
+		"item_bottle"
+	},
+	UtilityItems = {
+		"item_flask"
+	},
+	CoreItems = {
+		"item_phase_boots",
+		"item_cyclone",
+		"item_blink",
+		"item_aether_lens",
+		"item_ultimate_scepter"
+	},
+	ExtensionItems = {
+		{
+		},
+		{
+		}
+	}
+}
+local ItemsToBuyAsMid = {
+	StartingItems = {
+		"item_null_talisman",
+		"item_faerie_fire",
+		"item_branches",
+		"item_bottle"
+	},
+	UtilityItems = {
+		"item_flask"
+	},
+	CoreItems = {
+		"item_phase_boots",
+		"item_cyclone",
+		"item_blink",
+		"item_aether_lens",
+		"item_ultimate_scepter"
+	},
+	ExtensionItems = {
+		{
+		},
+		{
+		}
+	}
+}
+local ItemsToBuyAsOfflane = {}
+local ItemsToBuyAsSupport = {
+	StartingItems = {
+		"item_tango",
+		"item_tango",
+		"item_clarity",
+		"item_clarity",
+		"item_branches",
+		"item_branches"
+	},
+	UtilityItems = {
+		"item_flask"
+	},
+	CoreItems = {
+		"item_magic_wand",
+		"item_arcane_boots",
+		"item_cyclone",
+		"item_force_staff",
+		"item_ultimate_scepter",
+		"item_sheepstick"
+	},
+	ExtensionItems = {
+		{
+		},
+		{
+		}
+	}
+}
+local ItemsToBuyAsJungler = {}
+local ItemsToBuyAsRoamer = {}
+
+ToBuy = item_purchase:new()
+
+-- create a 2nd layer of isolation so this bot has it's own instance not shared with other bots
+function ToBuy:new(o)
+	o = o or item_purchase:new(o)
+	setmetatable(o, self)
+	self.__index = self
+	return o
+end
+
+-- we need these so if multiple bots inherit from the generic class they don't get mixed with each other
+local myPurchaseOrder = {}
+local myBoughtItems = {}
+local myStartingItems = {}
+local myUtilityItems = {}
+local myCoreItems = {}
+local myExtensionItems = {
+	OffensiveItems = {},
+	DefensiveItems = {}
 }
 
-local tableItemsToBuyAsMid = { 
-	"item_circlet",
-	"item_mantle",
-	"item_recipe_null_talisman",
-	"item_faerie_fire",
-	"item_branches",
-	"item_bottle",
-	"item_boots",
-	"item_wind_lace",
-	"item_blades_of_attack",
-	"item_blades_of_attack",
-	"item_staff_of_wizardry",
-	"item_void_stone",
-	"item_recipe_cyclone",
-	"item_cyclone",
-	"item_blink",
-	"item_energy_booster",
-	"item_ring_of_health",
-	"item_recipe_aether_lens",
-	"item_aether_lens",
-	"item_point_booster",
-	"item_ogre_axe",
-	"item_staff_of_wizardry",
-	"item_blade_of_alacrity",
-	"item_ultimate_orb",
-	"item_ultimate_orb",
-}
-			
-local tableItemsToBuyAsHardCarry = { 
-	"item_circlet",
-	"item_mantle",
-	"item_recipe_null_talisman",
-	"item_faerie_fire",
-	"item_branches",
-	"item_boots",
-	"item_blades_of_attack",
-	"item_blades_of_attack",
-	"item_wind_lace",
-	"item_staff_of_wizardry",
-	"item_void_stone",
-	"item_recipe_cyclone",
-	"item_cyclone",
-	"item_blink",
-	"item_energy_booster",
-	"item_ring_of_health",
-	"item_recipe_aether_lens",
-	"item_aether_lens",
-	"item_point_booster",
-	"item_ogre_axe",
-	"item_staff_of_wizardry",
-	"item_blade_of_alacrity",
-	"item_ultimate_orb",
-	"item_ultimate_orb",
-}
+local init = false
 
-local tableItemsToBuyAsOfflane = {
-}
+linaBuy = ToBuy:new()
+-- set our members to our localized values so we don't fall through to parent's class members
+linaBuy.PurchaseOrder = myPurchaseOrder
+linaBuy.BoughtItems = myBoughtItems
+linaBuy.StartingItems = myStartingItems
+linaBuy.UtilityItems = myUtilityItems
+linaBuy.CoreItems = myCoreItems
+linaBuy.ExtensionItems = myExtensionItems
 
-local tableItemsToBuyAsJungler = {
-}
-
-local tableItemsToBuyAsRoamer = {
-}
+linaBuy.ItemsToBuyAsHardCarry = ItemsToBuyAsHardCarry
+linaBuy.ItemsToBuyAsMid = ItemsToBuyAsMid
+linaBuy.ItemsToBuyAsOfflane = ItemsToBuyAsOfflane
+linaBuy.ItemsToBuyAsSupport = ItemsToBuyAsSupport
+linaBuy.ItemsToBuyAsJungler = ItemsToBuyAsJungler
+linaBuy.ItemsToBuyAsRoamer = ItemsToBuyAsRoamer
 
 ----------------------------------------------------------------------------------------------------
 
 function ItemPurchaseThink()
-	generic_item_purchase.ItemPurchaseThink(tableItemsToBuyAsMid, tableItemsToBuyAsHardCarry, tableItemsToBuyAsOfflane, tableItemsToBuyAsSupport, tableItemsToBuyAsJungler, tableItemsToBuyAsRoamer)
+	local npcBot = GetBot()
+
+	if not init then
+			-- init the tables
+			init = linaBuy:InitTable()
+	end
+
+	linaBuy:Think(npcBot)
 end
 
 ----------------------------------------------------------------------------------------------------

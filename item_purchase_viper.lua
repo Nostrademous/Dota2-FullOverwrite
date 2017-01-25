@@ -3,10 +3,6 @@
 --- GITHUB REPO: https://github.com/Nostrademous/Dota2-FullOverwrite
 -------------------------------------------------------------------------------
 
---[[
-require( GetScriptDirectory().."/generic_item_purchase" )
---]]
-
 local item_purchase = require( GetScriptDirectory().."/item_purchase_generic_test" )
 
 ----------------------------------------------------------------------------------------------------
@@ -15,7 +11,7 @@ local ItemsToBuyAsHardCarry = {
 	StartingItems = {
 		"item_stout_shield",
 		"item_flask",
-		"item_faerie_fire",
+		"item_faerie_fire"
 	},
 	UtilityItems = {
 		"item_flask"
@@ -40,7 +36,7 @@ local ItemsToBuyAsMid = {
 	StartingItems = {
 		"item_stout_shield",
 		"item_flask",
-		"item_faerie_fire",
+		"item_faerie_fire"
 	},
 	UtilityItems = {
 		"item_flask"
@@ -66,7 +62,7 @@ local ItemsToBuyAsOfflane = {
 		"item_ward_observer",
 		"item_stout_shield",
 		"item_flask",
-		"item_faerie_fire",
+		"item_faerie_fire"
 	},
 	UtilityItems = {
 		"item_flask"
@@ -80,10 +76,13 @@ local ItemsToBuyAsOfflane = {
 	ExtensionItems = {
 		{
 			"item_ultimate_scepter",
+			"item_butterfly",
 			"item_assault"
 		},
 		{
-			"item_heart"
+			"item_pipe",
+			"item_heart",
+			"item_manta"
 		}
 	}
 }

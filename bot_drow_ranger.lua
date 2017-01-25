@@ -163,6 +163,7 @@ function drowRangerBot:DoCleanCamp(bot, neutrals)
 end
 
 function drowRangerBot:HarassLaneEnemies(bot)	
+
 	local Enemies = bot:GetNearbyHeroes(800, true, BOT_MODE_NONE)
 	
     table.sort(Enemies, function(n1, n2) return n1:GetHealth() < n2:GetHealth() end) -- sort by health

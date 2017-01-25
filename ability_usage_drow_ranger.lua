@@ -34,8 +34,16 @@ local function UseQ()
     if (frostArrow == nil) or (not frostArrow:IsFullyCastable()) then
         return false
     end
+
+    local Enemies = npcBot:GetNearbyHeroes(frostArrow:GetCastRange() + 100, true, BOT_MODE_NONE)
+	table.sort(Enemies, function(n1, n2) return n1:GetHealth() < n2:GetHealth() end) -- sort by health
 	
-	local target = getHeroVar("Target")
+	if #Enemies == 1 then
+		setHeroVar("Target", Enemies[#Enemies])
+		return false
+	end
+	
+	local target = getHeroVar("Target") -- get highest health enemy
 	
     if target ~= nil and GetUnitToUnitDistance(npcBot, target) < frostArrow:GetCastRange() then
         npcBot:Action_UseAbilityOnEntity(frostArrow, target)

@@ -263,7 +263,7 @@ end
 function X:Init()
 	local bInit = getHeroVar("ItemPurchaseInitialized")
 	if bInit == nil then
-		print(getHeroVar("Name"), " - Initializing Item Purchase class - Role: ", getHeroVar("Role"))
+		utils.myPrint(" Initializing Item Purchase class - Role: ", getHeroVar("Role"))
 		setHeroVar("ItemPurchaseInitialized", true)
 	end
 end
@@ -539,9 +539,9 @@ function X:ConsiderBuyingExtensions()
 		end
 	end
 
-	--print("Enemy has "..DamageTime.." seconds of disable")
-	--print("Total # of silences: "..SilenceCount.." ,enemies with true strike: "..TrueStrikeCount)
-	--print("Enemy deals "..DamageMagicalPure.." magical and pure damage and "..DamagePhysical.." physical damage ("..DamageTime..")")
+	--utils.myPrint("Enemy has ",DamageTime," seconds of disable")
+	--utils.myPrint("Total # of silences: ",SilenceCount," ,enemies with true strike: ",TrueStrikeCount)
+	--utils.myPrint("Enemy deals ",DamageMagicalPure," magical and pure damage and ",DamagePhysical," physical damage (",DamageTime,")")
 
 	--[[
 		The damage numbers should be calculated, also the disable time and the silence counter should work
@@ -573,39 +573,39 @@ function X:ConsiderBuyingExtensions()
 	-- Remove magic immunty if not needed
 	if DamageMagicalPure > DamagePhysical then
 		if utils.InTable(self.ExtensionItems.DefensiveItems, "item_hood_of_defiance") or utils.InTable(self.ExtensionItems.DefensiveItems, "item_pipe") then
-			--print(getHeroVar("Name").." - Considering magic damage reduction")
+			--utils.myPrint(" Considering magic damage reduction")
 		elseif utils.InTable(self.ExtensionItems.DefensiveItems, "item_black_king_bar") then
 			if retreatAbility and SilenceCount > 1 then
-				--print(getHeroVar("Name").." - Considering buying bkb")
+				--utils.myPrint(" Considering buying bkb")
 			elseif SilenceCount > 2 or DamageTime > 8 then
-				--print(getHeroVar("Name").." - Considering buying bkb")
+				--utils.myPrint(" Considering buying bkb")
 			else
 				local ItemIndex = utils.PosInTable(self.ExtensionItems.DefensiveItems, "item_black_king_bar")
 				table.remove(self.ExtensionItems.DefensiveItems, ItemIndex)
-				--print(getHeroVar("Name").." - Removing bkb")
+				--utils.myPrint(" Removing bkb")
 			end
 		end
 	elseif utils.InTable(self.ExtensionItems.DefensiveItems, "item_black_king_bar") then
 		if retreatAbility and SilenceCount > 1 then
 			if utils.InTable(self.ExtensionItems.DefensiveItems, "item_manta") then
-				--print(getHeroVar("Name").." - Considering buying manta")
+				--utils.myPrint(" Considering buying manta")
 			elseif utils.InTable(self.ExtensionItems.DefensiveItems, "item_cyclone") then
-				--print(getHeroVar("Name").." - Considering buying euls")
+				--utils.myPrint(" Considering buying euls")
 			else
-				--print(getHeroVar("Name").." - Considering buying bkb")
+				--utils.myPrint(" Considering buying bkb")
 			end
 		elseif SilenceCount > 2 then
 			if DamageTime > 12 then
-				--print(getHeroVar("Name").." - Considering buying bkb")
+				--utils.myPrint(" Considering buying bkb")
 			elseif utils.InTable(self.ExtensionItems.DefensiveItems, "item_manta") then
-				--print(getHeroVar("Name").." - Considering buying manta")
+				--utils.myPrint(" Considering buying manta")
 			elseif utils.InTable(self.ExtensionItems.DefensiveItems, "item_cyclone") then
-				--print(getHeroVar("Name").." - Considering buying euls")
+				--utils.myPrint(" Considering buying euls")
 			end
 		else
 			local ItemIndex = utils.PosInTable(self.ExtensionItems.DefensiveItems, "item_black_king_bar")
 			table.remove(self.ExtensionItems.DefensiveItems, ItemIndex)
-			--print(getHeroVar("Name").." - Removing bkb")
+			--utils.myPrint(" Removing bkb")
 		end
 	else
 		-- ToDo: Check if enemy has retreat abilities and consider therefore buying stun/silence

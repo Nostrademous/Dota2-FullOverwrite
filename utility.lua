@@ -414,6 +414,11 @@ function U.VectorAway(start, towards, distance)
     return start + (direction * distance)
 end
 
+function U.Round(num, numDecimalPlaces)
+  local mult = 10^(numDecimalPlaces or 0)
+  return math.floor(num * mult + 0.5) / mult
+end
+
 -------------------------------------------------------------------------------
 -- General Hero Functions
 -------------------------------------------------------------------------------
@@ -1334,11 +1339,15 @@ end
 
 function U.myPrint(...)
     local args = {...}
-    local msg = tostring(GameTime()).." [" .. U.GetHeroName(GetBot()) .. "]: "
+    local botname = U.GetHeroName(GetBot())
+    local msg = tostring(U.Round(GameTime(), 3)).." [" .. botname .. "]: "
     for i,v in ipairs(args) do
         msg = msg .. tostring(v)
     end
-    print(msg)
+    --uncomment to only see messages by bots mentioned underneath
+    --if botname == "lina" or botname == "viper" then
+      print(msg)
+    --end
 end
 
 return U;

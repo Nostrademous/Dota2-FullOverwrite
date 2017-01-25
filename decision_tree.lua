@@ -11,6 +11,7 @@ require( GetScriptDirectory().."/retreat_generic" )
 require( GetScriptDirectory().."/ganking_generic" )
 require( GetScriptDirectory().."/item_usage" )
 require( GetScriptDirectory().."/jungle_status" )
+require( GetScriptDirectory().."/fighting" )
 
 local utils = require( GetScriptDirectory().."/utility" )
 local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
@@ -560,7 +561,7 @@ function X:Determine_ShouldIFighting(bot)
         local bFriendFighting = false
         for _, friend in pairs(Allies) do
             local friendID = friend:GetPlayerID()
-            if self.pID ~= friendID and gHeroVar.HasID(friendID) and GetUnitToUnitDistance(bot, friend) <= 2500 then
+            if self.pID ~= friendID and gHeroVar.HasID(friendID) and GetUnitToUnitDistance(bot, friend) <= 3800 then
                 --print("Me: ", self.pID, ", Friend: ", friendID, ", Dist: ", GetUnitToUnitDistance(bot, friend))
                 local friendsTarget = gHeroVar.GetVar(friendID, "Target")
                 if friendsTarget ~= nil then
@@ -597,10 +598,10 @@ function X:Determine_ShouldIFighting(bot)
         self:setHeroVar("HelpingFriend", nil)
     end
 
-    local weakestHero, myDamage, score = utils.FindTarget(1200)
+    local weakestHero, score = fighting.FindTarget(1200)
 
     if utils.NotNilOrDead(weakestHero) then
-        local bFight = myDamage > weakestHero:GetHealth() and score > 1
+        local bFight = score > 1
 
         if bFight then
             if self:HasAction(ACTION_FIGHT) == false then
@@ -774,21 +775,34 @@ function X:Determine_ShouldGetRune(bot)
 end
 
 function X:Determine_ShouldWard(bot)
-    if utils.HaveItem(bot, "item_ward_observer") then
-        local alliedMapWards = GetUnitList(UNIT_LIST_ALLIED_WARDS)
-        if #alliedMapWards < 2 then --FIXME: don't hardcode.. you get more wards then you can use this way
-            local wardLoc = utils.GetWardingSpot(self:getHeroVar("CurLane"))
-            if wardLoc ~= nil and utils.EnemiesNearLocation(bot, wardLoc, 2000) < 2 then
-                self:setHeroVar("WardLocation", wardLoc)
-                utils.InitPath()
-                if self:HasAction(ACTION_WARD) == false then
-                    print(utils.GetHeroName(bot), " - Going to place Wards")
-                    self:AddAction(ACTION_WARD)
+    local wardPlacedTimer = self:getHeroVar("WardPlacedTimer")
+    
+    local bCheck = true
+    local newTime = GameTime()
+    if wardPlacedTimer ~= nil then
+        bCheck, newTime = utils.TimePassed(wardPlacedTimer, 0.5)
+    end
+    
+    if bCheck then
+        self:setHeroVar("WardPlacedTimer", newTime)
+        local ward = item_usage.HaveWard("item_ward_observer")
+        if ward then
+            local alliedMapWards = GetUnitList(UNIT_LIST_ALLIED_WARDS)
+            if #alliedMapWards < 2 then --FIXME: don't hardcode.. you get more wards then you can use this way
+                local wardLoc = utils.GetWardingSpot(self:getHeroVar("CurLane"))
+                if wardLoc ~= nil and utils.EnemiesNearLocation(bot, wardLoc, 2000) < 2 then
+                    self:setHeroVar("WardLocation", wardLoc)
+                    utils.InitPath()
+                    if self:HasAction(ACTION_WARD) == false then
+                        utils.myPrint("Going to place an Observer Ward")
+                        self:AddAction(ACTION_WARD)
+                    end
+                    return true
                 end
-                return true
             end
         end
     end
+    
     return false
 end
 
@@ -1064,14 +1078,14 @@ function X:DoWard(bot, wardType)
     local dest = self:getHeroVar("WardLocation")
     if dest ~= nil then
         local dist = GetUnitToLocationDistance(bot, dest)
-        -- Observer/Sentry Cast Range is 500
-        if dist <= 500 then
-            local ward = utils.HaveItem(bot, wardType)
-            if ward ~= nil then
+        if dist <= constants.WARD_CAST_DISTANCE then
+            local ward = item_usage.HaveWard(wardType)
+            if ward then
                 bot:Action_UseAbilityOnLocation(ward, dest)
                 U.InitPath()
                 self:RemoveAction(ACTION_WARD)
                 self:setHeroVar("WardLocation", nil)
+                self:setHeroVar("WardPlacedTimer", GameTime())
                 return true
             end
         else

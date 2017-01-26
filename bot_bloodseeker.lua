@@ -5,7 +5,7 @@
 
 require( GetScriptDirectory().."/constants" )
 require( GetScriptDirectory().."/item_purchase_bloodseeker" )
-require ( GetScriptDirectory().."/ability_usage_bloodseeker" )
+require( GetScriptDirectory().."/ability_usage_bloodseeker" )
 require( GetScriptDirectory().."/jungling_generic" )
 require( GetScriptDirectory().."/constants" )
 
@@ -81,20 +81,24 @@ end
 -- We over-write DoRetreat behavior for JUNGLER Bloodseeker
 function bloodseekerBot:DoRetreat(bot, reason)
     -- if we got creep damage and are a JUNGLER do special stuff
-
-
     local pushing = getHeroVar("ShouldPush")
 
     local bloodrage = bot:GetAbilityByName("bloodseeker_bloodrage")
     local bloodragePct =  bloodrage:GetSpecialValueInt("health_bonus_creep_pct")/100
 
     local neutrals = bot:GetNearbyCreeps(700,true)
-
-    if #neutrals == 0 then return false end
+    if #neutrals == 0 then
+        -- if we are retreating - piggyback on retreat logic movement code
+        if self:GetAction() == constants.ACTION_RETREAT then
+            -- we use '.' instead of ':' and pass 'self' so it is the correct self
+            return dt.DoRetreat(self, bot, getHeroVar("RetreatReason"))
+        end
+        return false
+    end
     table.sort(neutrals, function(n1, n2) return n1:GetHealth() < n2:GetHealth() end)
 
-    local estimatedDamage = bot:GetEstimatedDamageToTarget(true, neutrals[1], bot:GetAttackSpeed(), DAMAGE_TYPE_PHYSICAL)
-    local actualDamage = neutrals[1]:GetActualDamage(estimatedDamage, DAMAGE_TYPE_PHYSICAL)
+    local estimatedDamage = bot:GetEstimatedDamageToTarget(true, neutrals[1], bot:GetSecondsPerAttack(), DAMAGE_TYPE_PHYSICAL)
+    --local actualDamage = neutrals[1]:GetActualDamage(estimatedDamage, DAMAGE_TYPE_PHYSICAL)
     local bloodrageHeal = bloodragePct * neutrals[1]:GetMaxHealth()
     local healthThreshold = math.max(bot:GetMaxHealth()*0.15, 100)
 
@@ -105,11 +109,10 @@ function bloodseekerBot:DoRetreat(bot, reason)
 		
 			for i, neutral in ipairs(neutrals) do
 				local estimatedNCDamage =  neutral:GetEstimatedDamageToTarget(true, bot, neutral:GetAttackSpeed(), DAMAGE_TYPE_PHYSICAL)
-				local actualNCDamage = bot:GetActualDamage(estimatedNCDamage)
-				totalCreepDamage = (totalCreepDamage + actualNCDamage) 
+				totalCreepDamage = (totalCreepDamage + estimatedNCDamage) 
 			end
 			
-            if (actualDamage < neutrals[1]:GetHealth()) and (bot:GetHealth() + bloodrageHeal) < healthThreshold 
+            if (estimatedDamage < neutrals[1]:GetHealth()) and (bot:GetHealth() + bloodrageHeal) < healthThreshold 
 			and (bot:GetHealth() < totalCreepDamage) then
                 setHeroVar("RetreatReason", constants.RETREAT_FOUNTAIN)
                 if ( self:HasAction(constants.ACTION_RETREAT) == false ) then

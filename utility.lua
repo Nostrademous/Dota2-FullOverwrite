@@ -1380,21 +1380,43 @@ function U.CourierThink(npcBot)
 
     if not checkLevel then return end
     setHeroVar("LastCourierThink", newTime)
-
-    --print(U.GetHeroName(npcBot), " SV: ", npcBot:GetStashValue(), ", CV: ", npcBot:GetCourierValue(), ", HII: ", U.HasImportantItem())
+    
+    --[[
+    U.myPrint(COURIER_ACTION_RETURN)
+    U.myPrint(COURIER_ACTION_SECRET_SHOP)
+    U.myPrint(COURIER_ACTION_STASH_ITEMS)
+    U.myPrint(COURIER_ACTION_TRANSFER_ITEMS)
+    U.myPrint(COURIER_ACTION_BURST)
+    U.myPrint(COURIER_ACTION_TAKE_AND_TRANSFER_ITEMS)
+    --]]
 
     local courier = GetCourier(0)
+    --[[
     if GetCourierState(courier) ~= COURIER_STATE_IDLE and GetCourierState(courier) ~= COURIER_STATE_AT_BASE and GetCourierState(courier) ~= COURIER_STATE_DEAD then
-        npcBot:Action_Courier(GetCourier(0), COURIER_ACTION_BURST + 1)
-        --npcBot:Action_Courier(GetCourier(0), COURIER_ACTION_BURST) --FIXME when Valve fixes code
+        U.myPrint("BURST")
+        npcBot:Action_Courier(GetCourier(0), COURIER_ACTION_BURST+1)
     end
-
+    --]]
+    
     if npcBot:IsAlive() and (npcBot:GetStashValue() > 500 or npcBot:GetCourierValue() > 0 or U.HasImportantItem()) and IsCourierAvailable() then
-        --print("got item");
-        --npcBot:Action_Courier(courier, COURIER_ACTION_TAKE_AND_TRANSFER_ITEMS)
-        npcBot:Action_Courier(courier, 6)
+        npcBot:Action_Courier(courier, 6) --COURIER_ACTION_TAKE_AND_TRANSFER_ITEMS+1)
         return
     end
+    
+    --[[
+    if GetCourierState(courier) ~= COURIER_STATE_DEAD and GetCourierState(courier) ~= COURIER_STATE_DELIVERING_ITEMS and
+        GetCourierState(courier) ~= COURIER_STATE_MOVING and GetCourierState(courier) ~= COURIER_STATE_AT_BASE then
+        U.myPrint("RETURN")
+        npcBot:Action_Courier(courier, COURIER_ACTION_RETURN+1)
+        return
+    end
+    
+    if GetCourierState(courier) ~= COURIER_STATE_DEAD and GetCourierState(courier) == COURIER_STATE_AT_BASE and
+        (not npcBot:IsAlive()) and npcBot:GetCourierValue() > 0 then
+        U.myPrint("STASH")
+        npcBot:Action_Courier(courier, COURIER_ACTION_STASH_ITEMS+1)
+    end
+    --]]
 end
 
 -------------------------------------------------------------------------------

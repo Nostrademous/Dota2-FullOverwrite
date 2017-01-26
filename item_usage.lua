@@ -6,8 +6,9 @@
 _G._savedEnv = getfenv()
 module( "item_usage", package.seeall )
 
+require( GetScriptDirectory().."/modifiers" )
+
 local utils = require( GetScriptDirectory().."/utility" )
-local modifiers = require( GetScriptDirectory().."/modifiers" )
 local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
 
 function setHeroVar(var, value)
@@ -27,7 +28,7 @@ function UseRegenItems()
     if npcBot:IsChanneling() or npcBot:IsUsingAbility() then
         return nil
     end
-
+    
     local Enemies = npcBot:GetNearbyHeroes(850, true, BOT_MODE_NONE)
 
     local bottle = utils.HaveItem(npcBot, "item_bottle")
@@ -180,17 +181,10 @@ function UseMovementItems(location)
         return nil
     end
 
-    local sb = utils.HaveItem(npcBot, "item_invis_sword")
-    if sb ~= nil and sb:IsFullyCastable() then
-        npcBot:Action_UseAbility(sb)
-        return nil
-    end
+    UseSilverEdge()
+    
+    UseShadowBlade()
 
-    local se = utils.HaveItem(npcBot, "item_silver_edge")
-    if se ~= nil and se:IsFullyCastable() then
-        npcBot:Action_UseAbility(se)
-        return nil
-    end
 end
 
 function UseDefensiveItems(enemy, triggerDistance)
@@ -217,7 +211,7 @@ function UseBuffItems()
     
     local tok = utils.HaveItem(npcBot, "item_tome_of_knowledge")
     if tok ~= nil then
-        npcBot:Action_UseAbilityOnEntity(tok, npcBot)
+        npcBot:Action_UseAbility(tok)
         return nil
     end
 end
@@ -297,6 +291,24 @@ end
 -- INDIVIDUAL ITEM USE FUNCTIONS
 -------------------------------------------------------------------------------
 
+function UseShadowBlade()
+    local bot = GetBot()
+    local sb = utils.HaveItem(bot, "item_invis_sword")
+    if sb ~= nil and sb:IsFullyCastable() then
+        bot:Action_UseAbility(sb)
+        return nil
+    end
+end
+
+function UseSilverEdge()
+    local bot = GetBot()
+    local se = utils.HaveItem(bot, "item_silver_edge")
+    if se ~= nil and se:IsFullyCastable() then
+        bot:Action_UseAbility(se)
+        return nil
+    end
+end
+
 -- will return a handle to the ward or nil if we don't have it, checks both
 -- individual ward types and the combined ward dispenser item and switches
 -- it's state to the selection we want prior to returning
@@ -358,4 +370,4 @@ function swapBackpackIntoInventory()
     end
 end
 
-for k,v in pairs( item_usage ) do   _G._savedEnv[k] = v end
+for k,v in pairs( item_usage ) do _G._savedEnv[k] = v end

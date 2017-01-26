@@ -74,7 +74,7 @@ function FindTarget(dist)
 
 			local allyList = GetUnitList(UNIT_LIST_ALLIED_HEROES)
             for _, ally in pairs(allyList) do
-                local timeToLocation = GetUnitToUnitDistance(enemy, ally)/ally:GetBaseMovementSpeed()
+                local timeToLocation = GetUnitToUnitDistance(enemy, ally)/ally:GetCurrentMovementSpeed()
 				if utils.NotNilOrDead(Ally) and timeToLocation < fightLength then
 					local dmgTime = fightLength - timeToLocation
                     goodHealthPool = goodHealthPool + ally:GetHealth()
@@ -91,7 +91,7 @@ function FindTarget(dist)
 	end
     
     if candidate ~= nil then
-        utils.myPrint("Best Fight is against: "..utils.GetHeroName(candidate), " :: Score: ", bestScore)
+        --utils.myPrint("Best Fight is against: "..utils.GetHeroName(candidate), " :: Score: ", bestScore)
         enemyData.GetEnemyDmgs(candidate:GetPlayerID(), 2.0)
     end
 

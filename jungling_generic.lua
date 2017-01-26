@@ -158,10 +158,13 @@ local function CleanCamp(bot)
 		setHeroVar("waituntil", utils.NextNeutralSpawn())
 		return
 	end
-	local neutrals = bot:GetNearbyCreeps(EyeRange,true);
+	local neutrals = bot:GetNearbyCreeps(EyeRange,true)
 	if #neutrals == 0 then -- we did it
 		local camp, _ = utils.NearestNeutralCamp(bot, jungle_status.GetJungle(GetTeam())) -- we might not have killed the `currentCamp`
-		jungle_status.JungleCampClear(GetTeam(), camp[constants.VECTOR])
+        -- we could have been killing lane creeps, don't mistaken for neutral
+        if GetUnitToLocationDistance(bot, camp[constants.VECTOR]) <= 200 then
+            jungle_status.JungleCampClear(GetTeam(), camp[constants.VECTOR])
+        end
 		utils.myPrint("finds camp")
 		setHeroVar("JunglingState", JunglingStates.FindCamp)
 	else
@@ -194,9 +197,12 @@ local States = {
 ----------------------------------
 
 function Think(npcBot)
-	if getHeroVar("Self"):getPrevAction() ~= ACTION_JUNGLING then
+    --[[
+    local me = getHeroVar("Self")
+	if me:getPrevAction() ~= ACTION_JUNGLING then
 		OnResume(npcBot)
 	end
+    --]]
 
 	States[getHeroVar("JunglingState")](npcBot)
 end

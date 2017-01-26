@@ -27,7 +27,7 @@ end
 
 local HealthFactor = 1
 local UnitPosFactor = 1
-local DistanceFactor = 0.1
+local DistanceFactor = 0.2
 local HeroCountFactor = 0.3
 local MinRating = 1.0
 
@@ -43,7 +43,7 @@ function FindTarget(bot)
             local r = 0
             r = r + HealthFactor * (1 - e:GetHealth()/e:GetMaxHealth())
             -- time to get there in 10s units
-            r = r - DistanceFactor * GetUnitToUnitDistance(bot, e) / 300 / 10 -- TODO: get move speed
+            r = r - DistanceFactor * GetUnitToUnitDistance(bot, e) / bot:GetCurrentMovementSpeed() / 10
             r = r + UnitPosFactor * (1 - global_game_state.GetPositionBetweenBuildings(e, GetTeam()))
             local hero_count = 0
             for _, enemy in pairs(enemies) do
@@ -128,12 +128,17 @@ function ApproachTarget(bot)
                 if GetUnitToUnitDistance(bot, target) < 1000 then
                     return true
                 else
+                    if GetUnitToUnitDistance(bot, target) < 1400 then
+                        if bot:GetMana() > 300 then
+                            item_usage.UseSilverEdge()
+                            item_usage.UseShadowBlade()
+                        end
+                    end
                     bot:Action_MoveToUnit(target) -- Let's go there
-                    -- TODO: consider being sneaky
                     return false
                 end
             else
-                if target:GetTimeSinceLastSeen() > 3.0 then
+                if target:GetTimeSinceLastSeen() > 5.0 then
                     me:RemoveAction(constants.ACTION_GANKING)
                     return false
                 else

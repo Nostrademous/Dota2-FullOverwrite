@@ -208,6 +208,20 @@ function UseDefensiveItems(enemy, triggerDistance)
     end
 end
 
+function UseBuffItems()
+    local npcBot = GetBot()
+
+    if npcBot:IsChanneling() or npcBot:IsUsingAbility() then
+        return nil
+    end
+    
+    local tok = utils.HaveItem(npcBot, "item_tome_of_knowledge")
+    if tok ~= nil
+        npcBot:Action_UseAbilityOnEntity(tok, npcBot)
+        return nil
+    end
+end
+
 function UseTP()
     local npcBot = GetBot()
 
@@ -257,6 +271,7 @@ function UseItems()
         return nil
     end
 
+    UseBuffItems()
     UseRegenItems()
     UseTeamItems()
     UseTP()

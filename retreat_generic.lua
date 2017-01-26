@@ -26,7 +26,7 @@ function OnStart(npcBot)
 end
 
 local function Updates(npcBot)
-	setHeroVar("RetreatPos", utils.PositionAlongLane(npcBot, getHeroVar("CurLane")))
+	setHeroVar("RetreatPos", utils.PositionAlongLane(npcBot, getHeroVar("RetreatLane")))
 end
 
 function Think(npcBot, loc)

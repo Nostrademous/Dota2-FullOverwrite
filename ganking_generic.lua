@@ -26,7 +26,7 @@ end
 
 local HealthFactor = 1
 local UnitPosFactor = 1
-local DistanceFactor = 0.1
+local DistanceFactor = 0.2
 local HeroCountFactor = 0.3
 local MinRating = 1.0
 
@@ -42,7 +42,7 @@ function FindTarget(bot)
             local r = 0
             r = r + HealthFactor * (1 - e:GetHealth()/e:GetMaxHealth())
             -- time to get there in 10s units
-            r = r - DistanceFactor * GetUnitToUnitDistance(bot, e) / 300 / 10 -- TODO: get move speed
+            r = r - DistanceFactor * GetUnitToUnitDistance(bot, e) / bot:GetCurrentMovementSpeed() / 10
             r = r + UnitPosFactor * (1 - utils.GetPositionBetweenBuildings(e, GetTeam()))
             local hero_count = 0
             for _, enemy in pairs(enemies) do

@@ -32,12 +32,12 @@ end
 function Think(npcBot, loc)
 	Updates(npcBot)
 	
-	local nextmove = GetLocationAlongLane(getHeroVar("CurLane"), 0.0)
+	local nextmove = GetLocationAlongLane(getHeroVar("RetreatLane"), 0.0)
 	if loc ~= nil then
 		nextmove = loc
 	else
 		if getHeroVar("IsInLane") then
-			nextmove = GetLocationAlongLane(getHeroVar("CurLane"), Max(getHeroVar("RetreatPos")-0.03, 0.0))
+			nextmove = GetLocationAlongLane(getHeroVar("RetreatLane"), Max(getHeroVar("RetreatPos")-0.03, 0.0))
 		else
 			nextmove = utils.Fountain(GetTeam())
 		end
@@ -50,16 +50,16 @@ function Think(npcBot, loc)
 		if (utils.GetHeroName(npcBot) == "antimage" or utils.GetHeroName(npcBot) == "queen_of_pain") then
 			value = retreatAbility:GetSpecialValueInt("blink_range")
 			-- below I test how far in units is a single 0.01 move in terms of GetLocationAlongLane()
-			local scale = utils.GetDistance(GetLocationAlongLane(getHeroVar("CurLane"), 0.5), GetLocationAlongLane(getHeroVar("CurLane"), 0.49))
+			local scale = utils.GetDistance(GetLocationAlongLane(getHeroVar("RetreatLane"), 0.5), GetLocationAlongLane(getHeroVar("RetreatLane"), 0.49))
 			value = ((value - 15) / scale)*0.01 -- we subtract 15 to give ourselves a little rounding wiggle room
-			nextmove = GetLocationAlongLane(getHeroVar("CurLane"), Max(getHeroVar("RetreatPos")-value, 0.0))
+			nextmove = GetLocationAlongLane(getHeroVar("RetreatLane"), Max(getHeroVar("RetreatPos")-value, 0.0))
 			npcBot:Action_UseAbilityOnLocation(retreatAbility, nextmove)
 		elseif utils.GetHeroName(npcBot) == "riki" then
 			value = retreatAbility:GetSpecialValueInt("tooltip_range")
 			-- below I test how far in units is a single 0.01 move in terms of GetLocationAlongLane()
-			local scale = utils.GetDistance(GetLocationAlongLane(getHeroVar("CurLane"), 0.5), GetLocationAlongLane(getHeroVar("CurLane"), 0.49))
+			local scale = utils.GetDistance(GetLocationAlongLane(getHeroVar("RetreatLane"), 0.5), GetLocationAlongLane(getHeroVar("RetreatLane"), 0.49))
 			value = ((value - 15) / scale)*0.01 -- we subtract 15 to give ourselves a little rounding wiggle room
-			nextmove = GetLocationAlongLane(getHeroVar("CurLane"), Max(getHeroVar("RetreatPos")-value, 0.0))
+			nextmove = GetLocationAlongLane(getHeroVar("RetreatLane"), Max(getHeroVar("RetreatPos")-value, 0.0))
 			--FIXME: UseAbilityOnEntity() not Location() npcBot:Action_UseAbilityOnLocation(retreatAbility, nextmove)
 		end
 		

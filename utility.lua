@@ -415,8 +415,143 @@ function U.VectorAway(start, towards, distance)
 end
 
 function U.Round(num, numDecimalPlaces)
-  local mult = 10^(numDecimalPlaces or 0)
-  return math.floor(num * mult + 0.5) / mult
+    local mult = 10^(numDecimalPlaces or 0)
+    return math.floor(num * mult + 0.5) / mult
+end
+
+-- CONTRIBUTOR: Function below was coded by Platinum_dota2
+function U.IsFacingLocation(hero, loc, delta)
+    local facing = hero:GetFacing()
+    local moveVect = loc - hero:GetLocation()
+
+    moveVect = moveVect / (U.GetDistance(Vector(0,0), moveVect))
+
+    local moveAngle = math.atan2(moveVect.y, moveVect.x)/math.pi * 180
+
+    if moveAngle < 0 then
+        moveAngle = 360 + moveAngle
+    end
+    facing = (facing + 360) % 360
+
+    if (math.abs(moveAngle - facing) < delta or
+        math.abs(moveAngle + 360 - facing) < delta or
+        math.abs(moveAngle - 360 - facing) < delta) then
+        return true
+    end
+    return false
+end
+
+-- CONTRIBUTOR: Function below was coded by Platinum_dota2
+function U.AreTreesBetweenMeAndLoc(loc, lineOfSightThickness)
+    local npcBot = GetBot()
+
+    local trees = npcBot:GetNearbyTrees(GetUnitToLocationDistance(npcBot, loc))
+
+    --check if there are trees between us and location with line-of-sight thickness
+    for _, tree in ipairs(trees) do
+        local x = GetTreeLocation(tree)
+        local y = npcBot:GetLocation()
+        local z = loc
+
+        if x ~= y then
+            local a = 1
+            local b = 1
+            local c = 0
+
+            if x.x - y.x == 0 then
+                b = 0
+                c = -x.x
+            else
+                a =- (x.y - y.y)/(x.x - y.x)
+                c =- (x.y + x.x*a)
+            end
+
+            local d = math.abs((a*z.x + b*z.y + c)/math.sqrt(a*a + b*b))
+            if d <= lineOfSightThickness and
+                GetUnitToLocationDistance(npcBot, loc) > (U.GetDistance(x,loc) + 50) then
+                return true
+            end
+        end
+    end
+    return false
+end
+
+-- CONTRIBUTOR: Function below was based off above function by Platinum_dota2
+function U.AreEnemyCreepsBetweenMeAndLoc(loc, lineOfSightThickness)
+    local npcBot = GetBot()
+
+    local eCreeps = npcBot:GetNearbyCreeps(GetUnitToLocationDistance(npcBot, loc), true)
+
+    --check if there are enemy creeps between us and location with line-of-sight thickness
+    for _, eCreep in ipairs(eCreeps) do
+        local x = eCreep:GetLocation()
+        local y = npcBot:GetLocation()
+        local z = loc
+
+        if x ~= y then
+            local a = 1
+            local b = 1
+            local c = 0
+
+            if x.x - y.x == 0 then
+                b = 0
+                c = -x.x
+            else
+                a =- (x.y - y.y)/(x.x - y.x)
+                c =- (x.y + x.x*a)
+            end
+
+            local d = math.abs((a*z.x + b*z.y + c)/math.sqrt(a*a + b*b))
+            if d <= lineOfSightThickness and
+                GetUnitToLocationDistance(npcBot, loc) > (U.GetDistance(x,loc) + 50) then
+                return true
+            end
+        end
+    end
+    return false
+end
+
+-- CONTRIBUTOR: Function below was based off above function by Platinum_dota2
+function U.AreFriendlyCreepsBetweenMeAndLoc(loc, lineOfSightThickness)
+    local npcBot = GetBot()
+
+    local fCreeps = npcBot:GetNearbyCreeps(GetUnitToLocationDistance(npcBot, loc), false)
+
+    --check if there are enemy creeps between us and location with line-of-sight thickness
+    for _, fCreep in ipairs(fCreeps) do
+        local x = fCreep:GetLocation()
+        local y = npcBot:GetLocation()
+        local z = loc
+
+        if x ~= y then
+            local a = 1
+            local b = 1
+            local c = 0
+
+            if x.x - y.x == 0 then
+                b = 0
+                c = -x.x
+            else
+                a =- (x.y - y.y)/(x.x - y.x)
+                c =- (x.y + x.x*a)
+            end
+
+            local d = math.abs((a*z.x + b*z.y + c)/math.sqrt(a*a + b*b))
+            if d <= lineOfSightThickness and
+                GetUnitToLocationDistance(npcBot, loc) > (U.GetDistance(x,loc) + 50) then
+                return true
+            end
+        end
+    end
+    return false
+end
+
+-- CONTRIBUTOR: Function below was based off above function by Platinum_dota2
+function U.AreCreepsBetweenMeAndLoc(loc, lineOfSightThickness)
+    if not U.AreEnemyCreepsBetweenMeAndLoc(loc, lineOfSightThickness) then
+        return U.AreFriendlyCreepsBetweenMeAndLoc(loc, lineOfSightThickness)
+    end
+    return false
 end
 
 -------------------------------------------------------------------------------
@@ -529,6 +664,7 @@ function U.PositionAlongLane(npcBot, lane)
     return bestPos;
 end
 
+-- CONTRIBUTOR: Function below was coded by Platinum_dota2
 function U.MoveSafelyToLocation(npcBot, dest)
     if getHeroVar("NextHop")==nil or #getHeroVar("NextHop")==0 or getHeroVar("PathfindingWasInitiated")==nil or (not getHeroVar("PathfindingWasInitiated")) then
         U.InitPathFinding(npcBot);
@@ -612,26 +748,6 @@ function U.MoveSafelyToLocation(npcBot, dest)
     npcBot:Action_MoveToLocation(safeSpots[newT]);
 end
 
-function U.IsFacingLocation(hero, loc, delta)
-
-    local face=hero:GetFacing();
-    local move = loc - hero:GetLocation();
-
-    move = move / (U.GetDistance(Vector(0,0),move));
-
-    local moveAngle=math.atan2(move.y,move.x)/math.pi * 180;
-
-    if moveAngle<0 then
-        moveAngle=360+moveAngle;
-    end
-    local face=(face+360)%360;
-
-    if (math.abs(moveAngle-face)<delta or math.abs(moveAngle+360-face)<delta or math.abs(moveAngle-360-face)<delta) then
-        return true;
-    end
-    return false;
-end
-
 function U.InitPathFinding(npcBot)
 
     -- keeps the path for my pathfinding
@@ -699,7 +815,7 @@ function U.IsInLane()
     setHeroVar("RetreatLane", getHeroVar("CurLane"))
     setHeroVar("RetreatPos", getHeroVar("LanePos"))
 
-    for i=1,3,1 do
+    for i = 1, 3, 1 do
         local thisl = U.PositionAlongLane(npcBot, U.Lanes[i])
         local thisdis = U.GetDistance(GetLocationAlongLane(U.Lanes[i], thisl), npcBot:GetLocation())
         if thisdis < mindis then

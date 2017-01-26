@@ -105,7 +105,7 @@ function bloodseekerBot:DoRetreat(bot, reason)
 		
 			for i, neutral in ipairs(neutrals) do
 				local estimatedNCDamage =  neutral:GetEstimatedDamageToTarget(true, bot, neutral:GetAttackSpeed(), DAMAGE_TYPE_PHYSICAL)
-				local actualNCDamage = bot:GetActualDamage(estimatedNCDamage)
+				local actualNCDamage = bot:GetActualDamage(estimatedNCDamage, DAMAGE_TYPE_PHYSICAL)
 				totalCreepDamage = (totalCreepDamage + actualNCDamage) 
 			end
 			

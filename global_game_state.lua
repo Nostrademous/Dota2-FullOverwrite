@@ -26,12 +26,6 @@ function GetPositionBetweenBuildings(unit, team)
     local enemy_building = GetClosestBuilding(unit, utils.GetOppositeTeamTo(team))
     local d_enemy = GetUnitToLocationDistance(unit, enemy_building)
 
-    if DotaTime() % 2 > 1 then
-        unit:Action_Ping(allied_building[1], allied_building[2], false)
-    else
-        unit:Action_Ping(enemy_building[1], enemy_building[2], false)
-    end
-
     return d_allied / (d_allied + d_enemy)
 end
 

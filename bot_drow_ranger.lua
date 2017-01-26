@@ -171,15 +171,15 @@ function drowRangerBot:HarassLaneEnemies(bot)
     local frostArrow = bot:GetAbilityByName(SKILL_Q)
 
     if target ~= nil and GetUnitToUnitDistance(bot, target) < frostArrow:GetCastRange() then
-		local slowed =  neutral:HasModifier("modifier_drow_ranger_frost_arrows_slow")
+        local slowed =  target:HasModifier("modifier_drow_ranger_frost_arrows_slow")
 
-		if (not slowed) and (not target:IsRooted()) or (not target:IsStunned())
-			and bot:GetMana() < math.max(bot:GetMaxMana()*0.40, 180) then
-			bot:Action_UseAbilityOnEntity(frostArrow, target);
-		end
+        if (not slowed) and (not target:IsRooted()) or (not target:IsStunned())
+            and bot:GetMana() < math.max(bot:GetMaxMana()*0.40, 180) then
+            bot:Action_UseAbilityOnEntity(frostArrow, target);
+        end
 
         bot:Action_AttackUnit(target, false)
-		
-		--utils.AllChat("Get out of my lane "..utils.GetHeroName(target).."!")
+
+        --utils.AllChat("Get out of my lane "..utils.GetHeroName(target).."!")
     end
 end

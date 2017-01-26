@@ -551,7 +551,7 @@ function U.AreCreepsBetweenMeAndLoc(loc, lineOfSightThickness)
     if not U.AreEnemyCreepsBetweenMeAndLoc(loc, lineOfSightThickness) then
         return U.AreFriendlyCreepsBetweenMeAndLoc(loc, lineOfSightThickness)
     end
-    return false
+    return true
 end
 
 -------------------------------------------------------------------------------

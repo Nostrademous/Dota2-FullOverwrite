@@ -431,7 +431,8 @@ end
 function U.IsCore()
     if getHeroVar("Role") == constants.ROLE_HARDCARRY
         or getHeroVar("Role") == constants.ROLE_MID
-        or getHeroVar("Role") == constants.ROLE_OFFLANE then
+        or getHeroVar("Role") == constants.ROLE_OFFLANE
+        or getHeroVar("Role") == constants.ROLE_JUNGLER then
             return true;
     end
 
@@ -822,16 +823,18 @@ function U.NextNeutralSpawn()
 end
 
 function U.NearestNeutralCamp( hUnit, tCamps )
-    local closestDistance = 1000000;
-    local closestCamp;
+    local closestDistance = 1000000
+    local closestCamp = nil
+    local secondClosestCamp = nil
     for k,v in ipairs(tCamps) do
         if v ~= nil and GetUnitToLocationDistance( hUnit, v[constants.VECTOR] ) < closestDistance then
             closestDistance = GetUnitToLocationDistance( hUnit, v[constants.VECTOR] )
+            if closestCamp ~= nil then secondClosestCamp = closestCamp end
             closestCamp = v
             --print(closestCamp..":"..closestDistance)
         end
     end
-    return closestCamp
+    return closestCamp, secondClosestCamp
 end
 
 -------------------------------------------------------------------------------

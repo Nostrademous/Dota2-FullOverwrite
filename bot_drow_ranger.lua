@@ -77,7 +77,8 @@ function Think()
     if drowRangerBot.Init then
         local timeInMinutes = math.floor(DotaTime() / 60)
 
-        if bot:GetLevel() >= 6 then
+        -- we should not jungle if we are mid... we can't give up a free lane to jungle
+        if bot:GetLevel() >= 6  and getHeroVar("Role") ~= constants.ROLE_MID then
             if not (utils.HaveItem(bot, "item_dragon_lance")) then
                 if drowRangerBot:HasAction(constants.ACTION_JUNGLING) == false then
                     drowRangerBot:AddAction(constants.ACTION_JUNGLING)

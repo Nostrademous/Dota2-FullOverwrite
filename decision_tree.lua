@@ -79,29 +79,22 @@ end
 -------------------------------------------------------------------------------
 
 function X:PrintActionTransition(name)
-    self:setCurrentAction(self:GetAction());
-
-    --[[
-    if self:getPrevAction() == ACTION_FIGHT then
-        self:RemoveAction(ACTION_FIGHT)
-        self:setHeroVar("Target", nil)
-    end
-    --]]
+    self:setCurrentAction(self:GetAction())
 
     if ( self:getCurrentAction() ~= self:getPrevAction() ) then
-        print("["..name.."] Action Transition: "..self:getPrevAction().." --> "..self:getCurrentAction());
-        self:setPrevAction(self:getCurrentAction());
+        utils.myPrint("Action Transition: "..self:getPrevAction().." --> "..self:getCurrentAction())
+        self:setPrevAction(self:getCurrentAction())
     end
 end
 
 function X:AddAction(action)
-    if action == ACTION_NONE then return end;
+    if action == ACTION_NONE then return end
 
-    local k = self:HasAction(action);
+    local k = self:HasAction(action)
     if k then
-        table.remove(self:getActionStack(), k);
+        table.remove(self:getActionStack(), k)
     end
-    table.insert(self:getActionStack(), 1, action);
+    table.insert(self:getActionStack(), 1, action)
 end
 
 function X:HasAction(action)
@@ -117,22 +110,22 @@ function X:RemoveAction(action)
 
     if action == ACTION_NONE then return end;
 
-    local k = self:HasAction(action);
+    local k = self:HasAction(action)
     if k then
-        table.remove(self:getActionStack(), k);
+        table.remove(self:getActionStack(), k)
     end
 
     local a = self:GetAction()
     --print("Next Action".. a)
 
-    self:setCurrentAction(a);
+    self:setCurrentAction(a)
 end
 
 function X:GetAction()
     if #self:getActionStack() == 0 then
-        return ACTION_NONE;
+        return ACTION_NONE
     end
-    return self:getActionStack()[1];
+    return self:getActionStack()[1]
 end
 
 function X:setHeroVar(var, value)
@@ -609,13 +602,13 @@ function X:Determine_ShouldIFighting(bot)
 
         if bFight then
             if self:HasAction(ACTION_FIGHT) == false then
-                print(utils.GetHeroName(bot), " - Fighting ", utils.GetHeroName(weakestHero))
+                utils.myPrint(" - Fighting ", utils.GetHeroName(weakestHero))
                 self:AddAction(ACTION_FIGHT)
                 self:setHeroVar("Target", weakestHero)
             end
 
             if weakestHero ~= getHeroVar("Target") then
-                print(utils.GetHeroName(bot), " - Fight Change - Fighting ", utils.GetHeroName(weakestHero))
+                utils.myPrint(" - Fight Change - Fighting ", utils.GetHeroName(weakestHero))
                 self:setHeroVar("Target", weakestHero)
             end
         end
@@ -627,7 +620,7 @@ function X:Determine_ShouldIFighting(bot)
     if weakestHero ~= nil then
         if (not utils.NotNilOrDead(weakestHero)) then
             if (not weakestHero:CanBeSeen()) and weakestHero:GetTimeSinceLastSeen() > 3.0 then
-                print(utils.GetHeroName(bot), " - Stopping my fight... lost sight of hero")
+                utils.myPrint(" - Stopping my fight... lost sight of hero")
                 self:RemoveAction(ACTION_FIGHT)
                 self:setHeroVar("Target", nil)
                 return false
@@ -662,7 +655,7 @@ function X:Determine_ShouldIFighting(bot)
         end
 
         if (GameTime() - bot:GetLastAttackTime()) > 5.0 and weakestHero:GetCurrentMovementSpeed() >= bot:GetCurrentMovementSpeed() then
-            print(utils.GetHeroName(bot), " - Stopping my fight... done chasing")
+            utils.myPrint(" - Stopping my fight... done chasing")
             self:RemoveAction(ACTION_FIGHT)
             self:setHeroVar("Target", nil)
             return false
@@ -753,7 +746,7 @@ end
 function X:Determine_ShouldTeamRoshan(bot)
     if (false) then -- FIXME: Implement
         if self:HasAction(ACTION_ROSHAN) == false then
-            print(utils.GetHeroName(bot), " - Going to Fight Roshan")
+            utils.myPrint(" - Going to Fight Roshan")
             self:AddAction(ACTION_ROSHAN)
         end
     end
@@ -767,7 +760,7 @@ function X:Determine_ShouldGetRune(bot)
         local loc = GetRuneSpawnLocation(r)
         if utils.GetDistance(bot:GetLocation(), loc) < 1000 and GetRuneStatus(r) == RUNE_STATUS_AVAILABLE then
             if self:HasAction(ACTION_RUNEPICKUP) == false then
-                print(utils.GetHeroName(bot), " STARTING TO GET RUNE ")
+                utils.myPrint(" STARTING TO GET RUNE ")
                 self:AddAction(ACTION_RUNEPICKUP)
                 setHeroVar("RuneTarget", r)
             end
@@ -1019,7 +1012,7 @@ end
 
 function X:DoGank(bot)
     if ( self:HasAction(ACTION_GANKING) == false ) then
-        print(utils.GetHeroName(bot), " STARTING TO GANK ")
+        utils.myPrint(" STARTING TO GANK ")
         self:AddAction(ACTION_GANKING)
     end
 
@@ -1050,7 +1043,7 @@ end
 
 function X:DoJungle(bot)
     if ( self:HasAction(ACTION_JUNGLING) == false ) then
-        print(utils.GetHeroName(bot), " STARTING TO JUNGLE ")
+        utils.myPrint(" STARTING TO JUNGLE ")
         self:AddAction(ACTION_JUNGLING)
         jungling_generic.OnStart(bot)
     end
@@ -1097,7 +1090,7 @@ function X:DoWard(bot, wardType)
             return true
         end
     else
-        print(utils.GetHeroName(bot), "ERROR - BAD WARD LOC")
+        utils.myPrint("ERROR - BAD WARD LOC")
     end
 
     return false
@@ -1105,7 +1098,7 @@ end
 
 function X:DoLane(bot)
     if ( self:HasAction(ACTION_LANING) == false ) then
-        print(utils.GetHeroName(bot), " STARTING TO LANE ")
+        utils.myPrint(" STARTING TO LANE ")
         self:AddAction(ACTION_LANING)
         laning_generic.OnStart(bot)
     end

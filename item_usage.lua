@@ -216,7 +216,7 @@ function UseBuffItems()
     end
     
     local tok = utils.HaveItem(npcBot, "item_tome_of_knowledge")
-    if tok ~= nil
+    if tok ~= nil then
         npcBot:Action_UseAbilityOnEntity(tok, npcBot)
         return nil
     end

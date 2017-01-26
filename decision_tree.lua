@@ -228,7 +228,7 @@ function X:Think(bot)
 
     --SHOULD WE USE GLYPH
     if ( self:Determine_ShouldUseGlyph(bot) ) then
-        bot:Action_UseGlyph()
+        bot:Action_Glyph()
     end
 
     --AM I ALIVE
@@ -521,7 +521,7 @@ function X:Determine_ShouldIRetreat(bot)
         for _, enemy in pairs(Enemies) do
             if utils.NotNilOrDead(enemy) and enemy:GetHealth()/enemy:GetMaxHealth() > 0.4 then
                 local enemyManaRatio = enemy:GetMana()/enemy:GetMaxMana()
-                local pDamage = bot:GetActualDamage(enemy:GetEstimatedDamageToTarget(true, bot, MaxStun, DAMAGE_TYPE_PHYSICAL), DAMAGE_TYPE_PHYSICAL)
+                local pDamage = enemy:GetEstimatedDamageToTarget(true, bot, MaxStun, DAMAGE_TYPE_PHYSICAL)
                 local mDamage = bot:GetActualDamage(enemy:GetEstimatedDamageToTarget(true, bot, MaxStun, DAMAGE_TYPE_MAGICAL), DAMAGE_TYPE_MAGICAL)
                 if enemyManaRatio < ( 0.5 - enemy:GetLevel()/100.0) then
                     enemyDamage = enemyDamage + pDamage + 0.5*mDamage + 0.5*enemy:GetEstimatedDamageToTarget(true, bot, MaxStun, DAMAGE_TYPE_PURE)
@@ -856,7 +856,7 @@ function X:DoRetreat(bot, reason)
                 return true
             end
         end
-        utils.myPrint("DoRetreat - RETREAT DANGER End".." - DfF: "..bot:DistanceFromFountain()..", H: "..bot:GetHealth())
+        --utils.myPrint("DoRetreat - RETREAT DANGER End".." - DfF: "..bot:DistanceFromFountain()..", H: "..bot:GetHealth())
     elseif reason == constants.RETREAT_TOWER then
         if ( self:HasAction(ACTION_RETREAT) == false ) then
             utils.myPrint("STARTING TO RETREAT b/c of tower damage")
@@ -986,23 +986,58 @@ function X:DoPushLane(bot)
     self:setHeroVar("ShouldPush", true)
 
     local Towers = bot:GetNearbyTowers(750, true)
-    if Towers==nil or #Towers==0 then
-        return false
-    end
-
-    local tower=Towers[1]
-    if tower == nil or (not tower:IsAlive()) then
-        return false
-    end
-
-    if tower ~= nil then
-        if GetUnitToUnitDistance(tower, bot) < bot:GetAttackRange() then
-            bot:Action_AttackUnit(tower, false)
-        else
-            bot:Action_MoveToLocation(tower:GetLocation())
+    local Shrines = bot:GetNearbyShrines(750, true)
+    local Barracks = bot:GetNearbyBarracks(750, true)
+    local Ancient = GetAncient(utils.GetOtherTeam())
+    
+    if #Towers == 0 and #Shrines == 0 and #Barracks == 0 then
+        if utils.NotNilOrDead(Ancient) and GetUnitToLocationDistance(bot, Ancient:GetLocation()) < bot:GetAttackRange() and
+            (not Ancient:IsAttackImmune()) then
+            bot:Action_AttackUnit(Ancient, true)
+            return true
         end
-        return true
+        return false
     end
+
+    if #Towers > 0 then
+        for _, tower in ipairs(Towers) do
+            if utils.NotNilOrDead(tower) and (not tower:IsAttackImmune()) then
+                if GetUnitToUnitDistance(tower, bot) < bot:GetAttackRange() then
+                    bot:Action_AttackUnit(tower, true)
+                else
+                    bot:Action_MoveToUnit(tower)
+                end
+                return true
+            end
+        end
+    end
+    
+    if #Barracks > 0 then
+        for _, barrack in ipairs(Barracks) do
+            if utils.NotNilOrDead(barrack) and (not barrack:IsAttackImmune()) then
+                if GetUnitToUnitDistance(barrack, bot) < bot:GetAttackRange() then
+                    bot:Action_AttackUnit(barrack, true)
+                else
+                    bot:Action_MoveToUnit(barrack)
+                end
+                return true
+            end
+        end
+    end
+    
+    if #Shrines > 0 then
+        for _, shrine in ipairs(Shrines) do
+            if utils.NotNilOrDead(shrine) and (not shrine:IsAttackImmune()) then
+                if GetUnitToUnitDistance(shrine, bot) < bot:GetAttackRange() then
+                    bot:Action_AttackUnit(shrine, true)
+                else
+                    bot:Action_MoveToUnit(shrine)
+                end
+                return true
+            end
+        end
+    end
+    
     return false
 end
 

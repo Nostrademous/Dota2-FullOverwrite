@@ -36,15 +36,15 @@ local function UseQ()
     end
 
     local Enemies = npcBot:GetNearbyHeroes(frostArrow:GetCastRange() + 100, true, BOT_MODE_NONE)
-	table.sort(Enemies, function(n1, n2) return n1:GetHealth() < n2:GetHealth() end) -- sort by health
-	
-	if #Enemies == 1 then
-		setHeroVar("Target", Enemies[#Enemies])
-		return false
-	end
-	
-	local target = getHeroVar("Target") -- get highest health enemy
-	
+    table.sort(Enemies, function(n1, n2) return n1:GetHealth() < n2:GetHealth() end) -- sort by health
+
+    if #Enemies == 1 then
+        setHeroVar("Target", Enemies[#Enemies])
+        return false
+    end
+
+    local target = getHeroVar("Target") -- get highest health enemy
+
     if target ~= nil and GetUnitToUnitDistance(npcBot, target) < frostArrow:GetCastRange() and (not target:IsRooted()) or (not target:IsStunned()) then
         npcBot:Action_UseAbilityOnEntity(frostArrow, target)
         return true
@@ -104,28 +104,26 @@ local function UseE()
     if (trueshot == nil) or (not trueshot:IsFullyCastable()) then
         return false
     end
-	-- TODO: use GetAttackTarget() to check if drow is attacking a tower before using trueshot not sure which is better
-	local towersNearby = npcBot:GetNearbyTowers(npcBot:GetAttackRange(), true) 
-	
-	if towersNearby == nil then return false end
-	
-	local alliedCreeps = npcBot:GetNearbyCreeps(900, false)
-	
-	for i, creeps in ipairs(alliedCreeps) do
-	
+    -- TODO: use GetAttackTarget() to check if drow is attacking a tower before using trueshot not sure which is better
+    local towersNearby = npcBot:GetNearbyTowers(npcBot:GetAttackRange(), true)
+
+    if towersNearby == nil then return false end
+
+    local alliedCreeps = npcBot:GetNearbyCreeps(900, false)
+
+    for i, creeps in ipairs(alliedCreeps) do
+
         if (utils.IsMelee(creeps)) then
             table.remove(alliedCreeps, 1 )
         end
-		
+
     end
-	
-	if (towersNearby ~= nil and #alliedCreeps > 2)
-	{
-		npcBot:Action_UseAbility(trueshot)
-		return true
-	}
-	end
-	
+
+    if (towersNearby ~= nil and #alliedCreeps > 2) then
+        npcBot:Action_UseAbility(trueshot)
+        return true
+    end
+
     return false
 end
 
@@ -135,8 +133,8 @@ function AbilityUsageThink()
     local npcBot = GetBot()
 
     if npcBot:IsChanneling() or npcBot:IsUsingAbility() then return false end
-	
-	if UseE() then return true end
+
+    if UseE() then return true end
 
     if getHeroVar("Target") == nil then return false end
 

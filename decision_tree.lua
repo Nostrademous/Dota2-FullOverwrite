@@ -11,6 +11,7 @@ require( GetScriptDirectory().."/retreat_generic" )
 require( GetScriptDirectory().."/ganking_generic" )
 require( GetScriptDirectory().."/item_usage" )
 require( GetScriptDirectory().."/jungle_status" )
+require( GetScriptDirectory().."/buildings_status" )
 require( GetScriptDirectory().."/fighting" )
 
 local utils = require( GetScriptDirectory().."/utility" )
@@ -192,6 +193,7 @@ function X:Think(bot)
 
     -- check if jungle respawn timer was hit to repopulate our table
     jungle_status.checkSpawnTimer()
+    buildings_status.Update()
 
     --[[
         FIRST DECISIONS THAT DON'T AFFECT THE MY ACTION STATES

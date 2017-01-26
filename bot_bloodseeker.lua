@@ -101,7 +101,16 @@ function bloodseekerBot:DoRetreat(bot, reason)
     if reason == constants.RETREAT_CREEP and (self:GetAction() ~= constants.ACTION_LANING or pushing) then
         -- if our health is lower than maximum( 15% health, 100 health )
         if bot:GetHealth() < healthThreshold then
-            if (actualDamage < neutrals[1]:GetHealth()) and (bot:GetHealth() + bloodrageHeal) < healthThreshold then
+			local totalCreepDamage = 0;
+		
+			for i, neutral in ipairs(neutrals) do
+				local estimatedNCDamage =  neutral:GetEstimatedDamageToTarget(true, bot, neutral:GetAttackSpeed(), DAMAGE_TYPE_PHYSICAL)
+				local actualNCDamage = bot:GetActualDamage(estimatedNCDamage)
+				totalCreepDamage = (totalCreepDamage + actualNCDamage) 
+			end
+			
+            if (actualDamage < neutrals[1]:GetHealth()) and (bot:GetHealth() + bloodrageHeal) < healthThreshold 
+			and (bot:GetHealth() < totalCreepDamage) then
                 setHeroVar("RetreatReason", constants.RETREAT_FOUNTAIN)
                 if ( self:HasAction(constants.ACTION_RETREAT) == false ) then
                     self:AddAction(constants.ACTION_RETREAT)

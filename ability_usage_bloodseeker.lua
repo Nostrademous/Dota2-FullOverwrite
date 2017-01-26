@@ -10,13 +10,11 @@ local utils = require( GetScriptDirectory().."/utility" )
 local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
 
 function setHeroVar(var, value)
-    local bot = bot or GetBot()
-    gHeroVar.SetVar(bot:GetPlayerID(), var, value)
+    gHeroVar.SetVar(GetBot():GetPlayerID(), var, value)
 end
 
 function getHeroVar(var)
-    local bot = bot or GetBot()
-    return gHeroVar.GetVar(bot:GetPlayerID(), var)
+    return gHeroVar.GetVar(GetBot():GetPlayerID(), var)
 end
 
 local Abilities ={
@@ -29,7 +27,7 @@ local Abilities ={
 local function UseW()
     local npcBot = GetBot()
     local ability = npcBot:GetAbilityByName(Abilities[2])
-    if ability == nil or not ability:IsFullyCastable() then return false end
+    if ability == nil or (not ability:IsFullyCastable()) then return false end
 
     local ult = npcBot:GetAbilityByName(Abilities[4])
 
@@ -64,10 +62,16 @@ local function UseUlt()
     -- TODO: don't use it if we can kill the enemy by rightclicking / have teammates around
     local npcBot = GetBot()
     local ability = npcBot:GetAbilityByName(Abilities[4])
-    if ability == nil or not ability:IsFullyCastable() then return false end
+    if ability == nil or (not ability:IsFullyCastable()) then return false end
 
     local enemy = getHeroVar("Target")
     if enemy == nil then return false end
+    
+    local enemyTowers = npcBot:GetNearbyTowers(1200, true)
+    local enemyHeroes = npcBot:GetNearbyHeroes(1200, true, BOT_MODE_NONE)
+    if #enemyHeroes == 0 and #enemyTowers == 0 and (enemy:GetHealth()/enemy:GetMaxHealth()) < 0.2 then
+        return false
+    end
 
     if GetUnitToUnitDistance(enemy, npcBot) < (ability:GetCastRange() - 100) then
         npcBot:Action_UseAbilityOnEntity(ability, enemy)
@@ -80,14 +84,16 @@ end
 local function UseQ()
     local npcBot = GetBot()
     local ability = npcBot:GetAbilityByName(Abilities[1])
-    if ability == nil or not ability:IsFullyCastable() then return false end
+    if ability == nil or (not ability:IsFullyCastable()) then return false end
 
     local enemy = getHeroVar("Target")
     if enemy ~= nil and GetUnitToUnitDistance(enemy, npcBot) < (ability:GetCastRange() - 100) then
         npcBot:Action_UseAbilityOnEntity(ability, enemy)
         return true
     end
-
+    
+    if npcBot:HasModifier("modifier_bloodseeker_bloodrage") then return false end
+    
     npcBot:Action_UseAbilityOnEntity(ability, npcBot)
     return true
 end
@@ -102,6 +108,8 @@ function AbilityUsageThink()
     if getHeroVar("Target") == nil then return false end
 
     if UseQ() or UseUlt() or UseW() then return true end
+    
+    npcBot:Action_AttackUnit(getHeroVar("Target"), false)
 end
 
 for k,v in pairs( ability_usage_bloodseeker ) do _G._savedEnv[k] = v end

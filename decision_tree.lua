@@ -605,7 +605,7 @@ function X:Determine_ShouldIFighting(bot)
     local weakestHero, score = fighting.FindTarget(1200)
 
     if utils.NotNilOrDead(weakestHero) then
-        local bFight = score > 1
+        local bFight = (score > 1) or weakestHero:HasModifier("modifier_bloodseeker_rupture")
 
         if bFight then
             if self:HasAction(ACTION_FIGHT) == false then

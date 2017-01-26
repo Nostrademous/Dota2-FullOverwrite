@@ -177,6 +177,7 @@ function KillTarget(bot, target)
     if target ~= nil then
         if target:IsAlive() then
             if target:CanBeSeen() then
+                setHeroVar("Target", target)
                 utils.myPrint("killing target :: ", utils.GetHeroName(target))
                 bot:Action_AttackUnit(target, false)
                 return true

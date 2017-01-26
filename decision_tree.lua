@@ -277,13 +277,17 @@ function X:Think(bot)
         end
 
         if gStuck then
-            local randomLoc = Vector(curLoc[1] + RandomFloat(-1200,1200), curLoc[2] + RandomFloat(-1200,1200))
-            utils.myPrint("Moving To Random Loc: <"..randomLoc[1]..", "..randomLoc[2]..">")
-            if GetUnitToLocationDistance(bot, randomLoc) < 10 then
-                bot:Action_MoveToLocation(randomLoc)
-                return
+            local fixLoc = self:getHeroVar("StuckLoc")
+            if fixLoc == nil then
+                self:setHeroVar("StuckLoc", utils.Fountain())
             else
-                gStuck = false
+                if GetUnitToLocationDistance(bot, fixLoc) < 10 then
+                    utils.MoveSafelyToLocation(fixLoc)
+                    return
+                else
+                    gStuck = false
+                    self:setHeroVar("StuckLoc", nil)
+                end
             end
         end
     end
@@ -776,13 +780,13 @@ end
 
 function X:Determine_ShouldWard(bot)
     local wardPlacedTimer = self:getHeroVar("WardPlacedTimer")
-    
+
     local bCheck = true
     local newTime = GameTime()
     if wardPlacedTimer ~= nil then
         bCheck, newTime = utils.TimePassed(wardPlacedTimer, 0.5)
     end
-    
+
     if bCheck then
         self:setHeroVar("WardPlacedTimer", newTime)
         local ward = item_usage.HaveWard("item_ward_observer")
@@ -802,7 +806,7 @@ function X:Determine_ShouldWard(bot)
             end
         end
     end
-    
+
     return false
 end
 

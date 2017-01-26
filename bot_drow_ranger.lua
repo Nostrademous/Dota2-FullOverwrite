@@ -79,9 +79,15 @@ function Think()
 
         if bot:GetLevel() >= 6 then
             if not (utils.HaveItem(bot, "item_dragon_lance")) then
-                drowRangerBot:AddAction(constants.ACTION_JUNGLING)
+                if drowRangerBot:HasAction(constants.ACTION_JUNGLING) == false then
+                    drowRangerBot:AddAction(constants.ACTION_JUNGLING)
+                    jungling_generic.OnStart(bot)
+                end
             elseif (timeInMinutes > 18 and not utils.HaveItem(bot, "item_maelstrom")) then
-                drowRangerBot:AddAction(constants.ACTION_JUNGLING)
+                if drowRangerBot:HasAction(constants.ACTION_JUNGLING) == false then
+                    drowRangerBot:AddAction(constants.ACTION_JUNGLING)
+                    jungling_generic.OnStart(bot)
+                end
             else
                 drowRangerBot:RemoveAction(constants.ACTION_JUNGLING)
                 setHeroVar("ShouldPush", true)

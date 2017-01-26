@@ -34,10 +34,6 @@ local LastTiltTime=0.0;
 local DamageThreshold=1.0;
 local MoveThreshold=1.0;
 
-local BackTimerGen=-1000;
-
-local IsCore = nil;
-
 local JunglingStates={
 	FindCamp=0,
 	MoveToCamp=1,
@@ -46,11 +42,8 @@ local JunglingStates={
 	CleanCamp=4
 }
 
-local JunglingState=JunglingStates.FindCamp;
-
-
 function OnStart(npcBot)
-	JunglingState=JunglingStates.FindCamp;
+	setHeroVar("JunglingState", JunglingStates.FindCamp)
 	setHeroVar("move_ticks", 0)
 	-- TODO: if there are camps, consider tp'ing to the jungle
 
@@ -60,8 +53,8 @@ function OnStart(npcBot)
 end
 
 function OnResume(bot)
-	print("resume jungling")
-	JunglingState=JunglingStates.FindCamp -- reset state
+	utils.myPrint("resume jungling")
+	setHeroVar("JunglingState", JunglingStates.FindCamp) -- reset state
 end
 
 ----------------------------------
@@ -75,24 +68,39 @@ local function FindCamp(bot)
 		jungle = utils.deepcopy(utils.tableNeutralCamps[GetTeam()])
 		jungle = FindCampsByMaxDifficulty(jungle, maxcamplvl)
 	end
-	local camp = utils.NearestNeutralCamp(bot, jungle)
+	local camp, camp2 = utils.NearestNeutralCamp(bot, jungle)
+    
+    if camp2 ~= nil then
+        local listAllies = GetUnitList(UNIT_LIST_ALLIED_HEROES)
+        for _, ally in pairs(listAllies) do
+            local allyID = ally:GetPlayerID()
+            if allyID ~= bot:GetPlayerID() then
+                local allyCamp = gHeroVar.GetVar(allyID, "currentCamp")
+                if not (allyCamp == nil or allyCamp ~= camp) then
+                    utils.myPrint(utils.GetHeroName(ally), "took nearest camp, going to another")
+                    camp = camp2
+                end
+            end
+        end
+    end
+    
 	if getHeroVar("currentCamp") == nil or camp[constants.VECTOR] ~= getHeroVar("currentCamp")[constants.VECTOR] then
 		print(utils.GetHeroName(bot), "moves to camp")
 	end
 	setHeroVar("currentCamp", camp)
 	setHeroVar("move_ticks", 0)
-	JunglingState = JunglingStates.MoveToCamp
+	setHeroVar("JunglingState", JunglingStates.MoveToCamp)
 end
 
 local function MoveToCamp(bot)
 	if getHeroVar("currentCamp") == nil then
-		JunglingState = JunglingStates.FindCamp
+		setHeroVar("JunglingState", JunglingStates.FindCamp)
 		return
 	end
 	if GetUnitToLocationDistance(bot, getHeroVar("currentCamp")[constants.VECTOR]) > 200 then
 		local ticks = getHeroVar("move_ticks")
 		if ticks > 50 then -- don't do this every frame
-			JunglingState = JunglingStates.FindCamp -- crossing the jungle takes a lot of time. Check for camps that may have spawned
+			setHeroVar("JunglingState", JunglingStates.FindCamp) -- crossing the jungle takes a lot of time. Check for camps that may have spawned
 			return
 		else
 			setHeroVar("move_ticks", ticks + 1)
@@ -106,17 +114,17 @@ local function MoveToCamp(bot)
 		jungle = FindCampsByMaxDifficulty(jungle, getHeroVar("Self"):GetMaxClearableCampLevel(bot))
 		if #jungle == 0 then -- jungle is empty
 			setHeroVar("waituntil", utils.NextNeutralSpawn())
-			print(utils.GetHeroName(bot), "waits for spawn")
-			JunglingState = JunglingStates.WaitForSpawn
+			utils.myPrint("waits for spawn")
+			setHeroVar("JunglingState", JunglingStates.WaitForSpawn)
 		else
-			print("No creeps here :(") -- one of   dumb me, dumb teammates, blocked by enemy, farmed by enemy
+			utils.myPrint("No creeps here :(") -- one of   dumb me, dumb teammates, blocked by enemy, farmed by enemy
 			jungle_status.JungleCampClear(GetTeam(), getHeroVar("currentCamp")[constants.VECTOR])
-			print(utils.GetHeroName(bot), "finds camp")
-			JunglingState = JunglingStates.FindCamp
+			utils.myPrint("finds camp")
+			setHeroVar("JunglingState", JunglingStates.FindCamp)
 		end
 	else
-		print(utils.GetHeroName(bot), "KILLS")
-		JunglingState = JunglingStates.CleanCamp
+		--print(utils.GetHeroName(bot), "KILLS")
+		setHeroVar("JunglingState", JunglingStates.CleanCamp)
 	end
 end
 
@@ -125,7 +133,7 @@ local function WaitForSpawn(bot)
 		bot:Action_MoveToLocation(getHeroVar("currentCamp")[constants.STACK_VECTOR]) -- TODO: use a vector that is closer to the camp
 		return
 	end
-	JunglingState = JunglingStates.MoveToCamp
+	setHeroVar("JunglingState", JunglingStates.MoveToCamp)
 end
 
 local function Stack(bot)
@@ -133,7 +141,7 @@ local function Stack(bot)
 		bot:Action_MoveToLocation(getHeroVar("currentCamp")[constants.STACK_VECTOR])
 		return
 	end
-	JunglingState = JunglingStates.FindCamp
+	setHeroVar("JunglingState", JunglingStates.FindCamp)
 end
 
 local function CleanCamp(bot)
@@ -141,20 +149,21 @@ local function CleanCamp(bot)
 	-- TODO: don't attack enemy creeps, unless they attack us / make sure we stay in jungle
 	-- TODO: instead of stacking, could we just kill them and move ou of the camp?
 	-- TODO: make sure we can actually kill the camp.
+    
 	local dtime = DotaTime() % 120
 	local stacktime = getHeroVar("currentCamp")[constants.STACK_TIME]
 	if dtime >= stacktime and dtime <= stacktime + 1 then
-		JunglingState = JunglingStates.Stack
-		print(utils.GetHeroName(bot), "stacks")
+		setHeroVar("JunglingState", JunglingStates.Stack)
+		utils.myPrint("stacks")
 		setHeroVar("waituntil", utils.NextNeutralSpawn())
 		return
 	end
 	local neutrals = bot:GetNearbyCreeps(EyeRange,true);
 	if #neutrals == 0 then -- we did it
-		local camp = utils.NearestNeutralCamp(bot, jungle_status.GetJungle(GetTeam())) -- we might not have killed the `currentCamp`
+		local camp, _ = utils.NearestNeutralCamp(bot, jungle_status.GetJungle(GetTeam())) -- we might not have killed the `currentCamp`
 		jungle_status.JungleCampClear(GetTeam(), camp[constants.VECTOR])
-		print(utils.GetHeroName(bot), "finds camp")
-		JunglingState = JunglingStates.FindCamp
+		utils.myPrint("finds camp")
+		setHeroVar("JunglingState", JunglingStates.FindCamp)
 	else
 		getHeroVar("Self"):DoCleanCamp(bot, neutrals)
 	end
@@ -184,23 +193,12 @@ local States = {
 
 ----------------------------------
 
-local function Updates(npcBot)
-	if getHeroVar("JunglingState") ~= nil then
-		JunglingState = getHeroVar("JunglingState");
-	end
-end
-
-
 function Think(npcBot)
-	Updates(npcBot);
-
 	if getHeroVar("Self"):getPrevAction() ~= ACTION_JUNGLING then
 		OnResume(npcBot)
 	end
 
-	States[JunglingState](npcBot);
-
-	setHeroVar("JunglingState", JunglingState);
+	States[getHeroVar("JunglingState")](npcBot)
 end
 
 

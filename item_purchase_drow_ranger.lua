@@ -3,140 +3,119 @@
 --- GITHUB REPO: https://github.com/Nostrademous/Dota2-FullOverwrite
 -------------------------------------------------------------------------------
 
-require( GetScriptDirectory().."/generic_item_purchase" )
-
-local tableItemsToBuyAsJungler = {
-	"item_slippers",
-	"item_circlet",
-	"item_tango",
-	"item_branches",
-	"item_branches",
-	"item_recipe_wraith_band",
-	"item_boots",
-	"item_ring_of_protection",
-	"item_sobi_mask", -- completes Ring of Aquila
-	"item_gloves",
-	"item_boots_of_elves",
-	"item_recipe_power_treads", -- completes Power Treads
-	"item_boots_of_elves",
-	"item_boots_of_elves",
-	"item_lifesteal",  -- get lifesteal
-	"item_ogre_axe", -- completes Dragon Lance
-	"item_gloves",
-	"item_mithril_hammer",
-	"item_recipe_maelstrom", -- completes Maelstrom
-	"item_ring_of_regen",
-	"item_staff_of_wizardry",
-	"item_recipe_force_staff",
-	"item_recipe_hurricane_pike", -- completes Hurricane Pike
-	"item_blade_of_alacrity",
-	"item_boots_of_elves",
-	"item_recipe_yasha", -- completes Yasha
-	"item_ogre_axe",
-	"item_belt_of_strength",
-	"item_recipe_sange", -- completes Sange & Yasha
-	"item_hyperstone",
-	"item_recipe_mjollnir", -- commpletes Mjollnir
-	"item_eagle",
-	"item_talisman_of_evasion",
-	"item_quarterstaff", -- completes Butterfly
-	"item_reaver",
-	"item_mithril_hammer" -- completes Satanic
-};
+local item_purchase = require( GetScriptDirectory().."/item_purchase_generic_test" )
 
 ----------------------------------------------------------------------------------------------------
 
-local tableItemsToBuyAsRoamer = {
+local ItemsToBuyAsHardCarry = {StartingItems = {
+        "item_slippers",
+        "item_circlet",
+        "item_tango",
+        "item_branches",
+        "item_branches",
+		"item_faerie_fire"
+	},
+	UtilityItems = {
+	},
+	CoreItems = {
+        "item_ring_of_aquila",
+		"item_power_treads_agi",
+		"item_dragon_lance",
+		"item_maelstrom",
+		"item_aghs_scepter",
+		"item_mjollnir"
+	},
+	ExtensionItems = {
+		OffensiveItems = {
+			"item_butterfly",
+			"item_monkey_king_bar"
+		},
+		DefensiveItems = {
+			"item_hurricane_pike",
+			"item_black_king_bar"
+		}
+	}}
+local ItemsToBuyAsMid = {StartingItems = {
+        "item_wraith_band",
+        "item_tango"
+	},
+	UtilityItems = {
+	},
+	CoreItems = {
+        "item_ring_of_aquila",
+		"item_power_treads_agi",
+		"item_yasha",
+		"item_dragon_lance",
+        "item_manta",
+		"item_maelstrom",
+		"item_mjollnir"
+	},
+	ExtensionItems = {
+		OffensiveItems = {
+			"item_butterfly",
+			"item_monkey_king_bar"
+		},
+		DefensiveItems = {
+			"item_hurricane_pike",
+			"item_black_king_bar"
+		}
+	}}
+local ItemsToBuyAsOfflane = {}
+local ItemsToBuyAsSupport = {}
+local ItemsToBuyAsJungler = {}
+
+local ItemsToBuyAsRoamer = {}
+
+ToBuy = item_purchase:new()
+
+-- create a 2nd layer of isolation so this bot has it's own instance not shared with other bots
+function ToBuy:new(o)
+    o = o or item_purchase:new(o)
+    setmetatable(o, self)
+    self.__index = self
+    return o
+end
+
+-- we need these so if multiple bots inherit from the generic class they don't get mixed with each other
+local myPurchaseOrder = {}
+local myBoughtItems = {}
+local myStartingItems = {}
+local myUtilityItems = {}
+local myCoreItems = {}
+local myExtensionItems = {
+    OffensiveItems = {},
+    DefensiveItems = {}
 }
 
-local tableItemsToBuyAsHardCarry = {
-	"item_slippers",
-	"item_circlet",
-	"item_tango",
-	"item_branches",
-	"item_branches",
-	"item_recipe_wraith_band",
-	"item_boots",
-	"item_ring_of_protection",
-	"item_sobi_mask", -- completes Ring of Aquila
-	"item_gloves",
-	"item_boots_of_elves",
-	"item_recipe_power_treads", -- completes Power Treads
-	"item_boots_of_elves",
-	"item_boots_of_elves",
-	"item_ogre_axe", -- completes Dragon Lance
-	"item_gloves",
-	"item_mithril_hammer",
-	"item_recipe_maelstrom", -- completes Maelstrom
-	"item_ring_of_regen",
-	"item_staff_of_wizardry",
-	"item_recipe_force_staff",
-	"item_recipe_hurricane_pike", -- completes Hurrican Pike
-	"item_point_booster",
-	"item_blade_of_alacrity",
-	"item_ogre_axe",
-	"item_staff_of_wizardry",  -- completes Aghanim's Scepter
-	"item_hyperstone",
-	"item_recipe_mjollnir", -- commpletes Mjollnir
-	"item_eagle",
-	"item_talisman_of_evasion",
-	"item_quarterstaff", -- completes Butterfly
-	"item_broadsword",
-	"item_blades_of_attack",
-	"item_recipe_lesser_crit", -- completes Crystalys
-	"item_demon_edge",
-	"item_recipe_greater_crit" -- completes Daedalus
-}
+local init = false
 
-local tableItemsToBuyAsOfflane = {
-}
+drBuy = ToBuy:new()
+-- set our members to our localized values so we don't fall through to parent's class members
+drBuy.PurchaseOrder = myPurchaseOrder
+drBuy.BoughtItems = myBoughtItems
+drBuy.StartingItems = myStartingItems
+drBuy.UtilityItems = myUtilityItems
+drBuy.CoreItems = myCoreItems
+drBuy.ExtensionItems = myExtensionItems
 
-local tableItemsToBuyAsMid = {
-	"item_slippers",
-	"item_circlet",
-	"item_tango",
-	"item_branches",
-	"item_branches",
-	"item_recipe_wraith_band",
-	"item_boots",
-	"item_ring_of_protection",
-	"item_sobi_mask", -- completes Ring of Aquila
-	"item_gloves",
-	"item_boots_of_elves",
-	"item_recipe_power_treads", -- completes Power Treads
-	"item_boots_of_elves",
-	"item_boots_of_elves",
-	"item_ogre_axe", -- completes Dragon Lance
-	"item_gloves",
-	"item_mithril_hammer",
-	"item_recipe_maelstrom", -- completes Maelstrom
-	"item_ring_of_regen",
-	"item_staff_of_wizardry",
-	"item_recipe_force_staff",
-	"item_recipe_hurricane_pike", -- completes Hurrican Pike
-	"item_point_booster",
-	"item_blade_of_alacrity",
-	"item_ogre_axe",
-	"item_staff_of_wizardry",  -- completes Aghanim's Scepter
-	"item_hyperstone",
-	"item_recipe_mjollnir", -- commpletes Mjollnir
-	"item_eagle",
-	"item_talisman_of_evasion",
-	"item_quarterstaff", -- completes Butterfly
-	"item_broadsword",
-	"item_blades_of_attack",
-	"item_recipe_lesser_crit", -- completes Crystalys
-	"item_demon_edge",
-	"item_recipe_greater_crit" -- completes Daedalus
-}
-
-local tableItemsToBuyAsSupport = {
-}
+drBuy.ItemsToBuyAsHardCarry = ItemsToBuyAsHardCarry
+drBuy.ItemsToBuyAsMid = ItemsToBuyAsMid
+drBuy.ItemsToBuyAsOfflane = ItemsToBuyAsOfflane
+drBuy.ItemsToBuyAsSupport = ItemsToBuyAsSupport
+drBuy.ItemsToBuyAsJungler = ItemsToBuyAsJungler
+drBuy.ItemsToBuyAsRoamer = ItemsToBuyAsRoamer
 
 ----------------------------------------------------------------------------------------------------
 
 function ItemPurchaseThink()
-	generic_item_purchase.ItemPurchaseThink(tableItemsToBuyAsMid, tableItemsToBuyAsHardCarry, tableItemsToBuyAsOfflane, tableItemsToBuyAsSupport, tableItemsToBuyAsJungler, tableItemsToBuyAsRoamer)
+    local npcBot = GetBot()
+
+    if not init then
+            -- init the tables
+            init = drBuy:InitTable()
+    end
+
+    drBuy:Think(npcBot)
 end
 
 ----------------------------------------------------------------------------------------------------

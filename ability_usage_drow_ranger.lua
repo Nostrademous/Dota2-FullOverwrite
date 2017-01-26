@@ -45,14 +45,14 @@ local function UseQ()
 	
 	local target = getHeroVar("Target") -- get highest health enemy
 	
-    if target ~= nil and GetUnitToUnitDistance(npcBot, target) < frostArrow:GetCastRange() then
+    if target ~= nil and GetUnitToUnitDistance(npcBot, target) < frostArrow:GetCastRange() and (not target:IsRooted()) or (not target:IsStunned()) then
         npcBot:Action_UseAbilityOnEntity(frostArrow, target)
         return true
     end
 
     if (npcBot:GetMana()/npcBot:GetMaxMana()) > 0.5 and #Enemies > 0 and #Enemies < 3 and (getHeroVar("OutOfRangeCasting") + frostArrow:GetCastPoint()) < GameTime() then
         local weakestHero, weakestHeroHealth = utils.GetWeakestHero(npcBot, frostArrow:GetCastRange() + 100)
-        if weakestHero ~= nil then
+        if weakestHero ~= nil and (not weakestHero:IsRooted()) or (not weakestHero:IsStunned()) then
             npcBot:Action_UseAbilityOnEntity(frostArrow, weakestHero)
             setHeroVar("OutOfRangeCasting", GameTime())
             return true
@@ -96,12 +96,47 @@ local function UseW()
     return false
 end
 
+local function UseE()
+    local npcBot = GetBot()
+
+    local trueshot = npcBot:GetAbilityByName(Abilities[3])
+
+    if (trueshot == nil) or (not trueshot:IsFullyCastable()) then
+        return false
+    end
+	-- TODO: use GetAttackTarget() to check if drow is attacking a tower before using trueshot not sure which is better
+	local towersNearby = npcBot:GetNearbyTowers(npcBot:GetAttackRange(), true) 
+	
+	if towersNearby == nil then return false end
+	
+	local alliedCreeps = npcBot:GetNearbyCreeps(900, false)
+	
+	for i, creeps in ipairs(alliedCreeps) do
+	
+        if (utils.IsMelee(creeps)) then
+            table.remove(alliedCreeps, 1 )
+        end
+		
+    end
+	
+	if (towersNearby ~= nil and #alliedCreeps > 2)
+	{
+		npcBot:Action_UseAbility(trueshot)
+		return true
+	}
+	end
+	
+    return false
+end
+
 function AbilityUsageThink()
     if ( GetGameState() ~= GAME_STATE_GAME_IN_PROGRESS and GetGameState() ~= GAME_STATE_PRE_GAME ) then return false end
 
     local npcBot = GetBot()
 
     if npcBot:IsChanneling() or npcBot:IsUsingAbility() then return false end
+	
+	if UseE() then return true end
 
     if getHeroVar("Target") == nil then return false end
 

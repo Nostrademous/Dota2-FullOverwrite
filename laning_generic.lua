@@ -145,21 +145,21 @@ end
 local function MovingToPos(npcBot)	
 	local EnemyCreeps = npcBot:GetNearbyCreeps(EyeRange,true);
 	
-	local cpos = GetLaneFrontLocation(utils.GetOtherTeam(),CurLane,0.0);
-	local bpos = GetLocationAlongLane(CurLane,LanePos-0.02);
+	local cpos = GetLocationAlongLane(CurLane, GetLaneFrontAmount(utils.GetOtherTeam(),CurLane, false))
+	local bpos = GetLocationAlongLane(CurLane, LanePos-0.02)
 	
-	local dest = utils.VectorTowards(cpos, bpos, 500);
+	local dest = utils.VectorTowards(cpos, bpos, 500)
 	if utils.IsMelee(npcBot) then
-		dest = utils.VectorTowards(cpos, bpos, 750);
+		dest = utils.VectorTowards(cpos, bpos, 1000)
 	end
 	
-	local rndtilt = RandomVector(150);
+	local rndtilt = RandomVector(150)
 	
-	dest = dest+rndtilt;
+	dest = dest + rndtilt
 	
-	npcBot:Action_MoveToLocation(dest);
+	npcBot:Action_MoveToLocation(dest)
 	
-	LaningState = LaningStates.CSing;
+	LaningState = LaningStates.CSing
 end
 
 local function GetReadyForCS(npcBot)

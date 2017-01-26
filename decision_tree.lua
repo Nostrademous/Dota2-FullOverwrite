@@ -429,15 +429,9 @@ function X:Determine_ShouldUseGlyph(bot)
 end
 
 function X:Determine_ShouldIRetreat(bot)
-    if bot:GetHealth()/bot:GetMaxHealth() > 0.9 and bot:GetMana()/bot:GetMaxMana() > 0.9 then
+    if bot:GetHealth()/bot:GetMaxHealth() > 0.9 and bot:GetMana()/bot:GetMaxMana() > 0.5 then
         if utils.IsTowerAttackingMe() then
             return constants.RETREAT_TOWER
-        end
-        if utils.IsCreepAttackingMe() then
-            local pushing = self:getHeroVar("ShouldPush")
-            if self:getHeroVar("Target") == nil or pushing == nil or pushing == false then
-                return constants.RETREAT_CREEP
-            end
         end
         return nil
     end
@@ -552,32 +546,28 @@ function X:Determine_ShouldIRetreat(bot)
 end
 
 function X:Determine_ShouldIFighting(bot)
-    local myTarget = self:getHeroVar("Target")
-    if myTarget == nil then
-        local Allies = GetUnitList(UNIT_LIST_ALLIED_HEROES)
-        local bFriendFighting = false
-        for _, friend in pairs(Allies) do
-            local friendID = friend:GetPlayerID()
-            if self.pID ~= friendID and gHeroVar.HasID(friendID) and GetUnitToUnitDistance(bot, friend) <= 3800 then
-                --print("Me: ", self.pID, ", Friend: ", friendID, ", Dist: ", GetUnitToUnitDistance(bot, friend))
-                local friendsTarget = gHeroVar.GetVar(friendID, "Target")
-                if friendsTarget ~= nil then
-                    bFriendFighting = true
-                    --print(self:getHeroVar("Name").." helping out my Buddy "..utils.GetHeroName(friend).." get a kill on "..utils.GetHeroName(friendsTarget))
-                    if GetUnitToUnitDistance(bot, friendsTarget) < 1000 then
-                        self:setHeroVar("Target", friendsTarget)
-                        self:setHeroVar("HelpingFriend", friend:GetPlayerID())
-                        if self:HasAction(ACTION_FIGHT) == false then
-                            self:AddAction(ACTION_FIGHT)
-                        end
-                    else
-                        bot:Action_MoveToUnit(friendsTarget)
+    local friendsTarget = nil
+
+    local Allies = GetUnitList(UNIT_LIST_ALLIED_HEROES)
+    local bFriendFighting = false
+    for _, friend in pairs(Allies) do
+        local friendID = friend:GetPlayerID()
+        if self.pID ~= friendID and gHeroVar.HasID(friendID) and GetUnitToUnitDistance(bot, friend) <= 3800 then
+            --print("Me: ", self.pID, ", Friend: ", friendID, ", Dist: ", GetUnitToUnitDistance(bot, friend))
+            local friendsTarget = gHeroVar.GetVar(friendID, "Target")
+            if friendsTarget ~= nil then
+                bFriendFighting = true
+                --print(self:getHeroVar("Name").." helping out my Buddy "..utils.GetHeroName(friend).." get a kill on "..utils.GetHeroName(friendsTarget))
+                if GetUnitToUnitDistance(bot, friendsTarget) < 1000 then
+                    self:setHeroVar("HelpingFriend", friend:GetPlayerID())
+                    if self:HasAction(ACTION_FIGHT) == false then
+                        self:AddAction(ACTION_FIGHT)
                     end
-                    return true
+                else
+                    bot:Action_MoveToUnit(friendsTarget)
                 end
             end
         end
-        if not bFriendFighting then self:setHeroVar("HelpingFriend", nil) end
     end
 
     myTarget = self:getHeroVar("Target")
@@ -585,7 +575,6 @@ function X:Determine_ShouldIFighting(bot)
         self:RemoveAction(ACTION_FIGHT)
         self:setHeroVar("Target", nil)
         self:setHeroVar("GankTarget", nil)
-        return false
     end
 
     local myFriend = self:getHeroVar("HelpingFriend")
@@ -611,12 +600,12 @@ function X:Determine_ShouldIFighting(bot)
                 utils.myPrint(" - Fight Change - Fighting ", utils.GetHeroName(weakestHero))
                 self:setHeroVar("Target", weakestHero)
             end
+            
+            return true
         end
-
-        return bFight
     end
 
-    weakestHero = getHeroVar("Target")
+    weakestHero = getHeroVar("Target") or friendsTarget
     if weakestHero ~= nil then
         if (not utils.NotNilOrDead(weakestHero)) then
             if (not weakestHero:CanBeSeen()) and weakestHero:GetTimeSinceLastSeen() > 3.0 then
@@ -625,6 +614,7 @@ function X:Determine_ShouldIFighting(bot)
                 self:setHeroVar("Target", nil)
                 return false
             else
+                self:setHeroVar("Target", weakestHero)
                 local lastLoc = weakestHero:GetLastSeenLocation()
                 if utils.GetOtherTeam() == TEAM_DIRE then
                     local prob1 = GetUnitPotentialValue(weakestHero, Vector(lastLoc[1] + 500, lastLoc[2]), 1000)
@@ -758,7 +748,7 @@ function X:Determine_ShouldGetRune(bot)
 
     for _,r in pairs(constants.RuneSpots) do
         local loc = GetRuneSpawnLocation(r)
-        if utils.GetDistance(bot:GetLocation(), loc) < 1000 and GetRuneStatus(r) == RUNE_STATUS_AVAILABLE then
+        if utils.GetDistance(bot:GetLocation(), loc) < 1200 and GetRuneStatus(r) == RUNE_STATUS_AVAILABLE then
             if self:HasAction(ACTION_RUNEPICKUP) == false then
                 utils.myPrint(" STARTING TO GET RUNE ")
                 self:AddAction(ACTION_RUNEPICKUP)
@@ -944,7 +934,7 @@ function X:DoFight(bot)
                     item_usage.UseMovementItems()
                     bot:Action_MoveToUnit(target)
                 else
-                    bot:Action_AttackUnit(target, false)
+                    bot:Action_AttackUnit(target, true)
                 end
                 return true
             else
@@ -960,7 +950,7 @@ function X:DoFight(bot)
                     if target:IsAttackImmune() or (bot:GetLastAttackTime() + bot:GetSecondsPerAttack()) > GameTime() then
                         bot:Action_MoveToUnit(target)
                     else
-                        bot:Action_AttackUnit(target, false)
+                        bot:Action_AttackUnit(target, true)
                     end
                     return true
                 else

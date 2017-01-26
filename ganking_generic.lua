@@ -127,12 +127,17 @@ function ApproachTarget(bot)
                 if GetUnitToUnitDistance(bot, target) < 1000 then
                     return true
                 else
+                    if GetUnitToUnitDistance(bot, target) < 1400 then
+                        if bot:GetMana() > 300 then
+                            item_usage.UseSilverEdge()
+                            item_usage.UseShadowBlade()
+                        end
+                    end
                     bot:Action_MoveToUnit(target) -- Let's go there
-                    -- TODO: consider being sneaky
                     return false
                 end
             else
-                if target:GetTimeSinceLastSeen() > 3.0 then
+                if target:GetTimeSinceLastSeen() > 5.0 then
                     me:RemoveAction(constants.ACTION_GANKING)
                     return false
                 else

@@ -6,6 +6,8 @@
 _G._savedEnv = getfenv()
 module( "ability_usage_bloodseeker", package.seeall )
 
+require( GetScriptDirectory().."/fight_simul" )
+
 local utils = require( GetScriptDirectory().."/utility" )
 local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
 
@@ -67,9 +69,17 @@ local function UseUlt()
     local enemy = getHeroVar("Target")
     if enemy == nil then return false end
     
+    --[[
     local enemyTowers = npcBot:GetNearbyTowers(1200, true)
     local enemyHeroes = npcBot:GetNearbyHeroes(1200, true, BOT_MODE_NONE)
     if #enemyHeroes == 0 and #enemyTowers == 0 and (enemy:GetHealth()/enemy:GetMaxHealth()) < 0.2 then
+        return false
+    end
+    --]]
+    local timeToKillRightClicking = fight_simul.estimateTimeToKill(npcBot, enemy)
+    utils.myPrint("Estimating Time To Kill with Right Clicks: ", timeToKillRightClicking)
+    if timeToKillRightClicking < 3.0 then
+        utils.myPrint("Not Using Ult")
         return false
     end
 
@@ -108,8 +118,6 @@ function AbilityUsageThink()
     if getHeroVar("Target") == nil then return false end
 
     if UseQ() or UseUlt() or UseW() then return true end
-    
-    npcBot:Action_AttackUnit(getHeroVar("Target"), false)
 end
 
 for k,v in pairs( ability_usage_bloodseeker ) do _G._savedEnv[k] = v end

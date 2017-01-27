@@ -1123,7 +1123,7 @@ function U.IsHeroAttackingMe(hero, fTime)
     local fTime = fTime or 2.0
     local npcBot = GetBot()
 
-    if npcBot:WasRecentlyDamagedByAnyHero(hero, fTime) then
+    if npcBot:WasRecentlyDamagedByHero(hero, fTime) then
         return true
     end
     return false

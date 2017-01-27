@@ -13,10 +13,10 @@ require( GetScriptDirectory().."/item_usage" )
 require( GetScriptDirectory().."/jungle_status" )
 require( GetScriptDirectory().."/buildings_status" )
 require( GetScriptDirectory().."/fighting" )
+require( GetScriptDirectory().."/global_game_state" )
 
 local utils = require( GetScriptDirectory().."/utility" )
 local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
-
 local enemyData = require( GetScriptDirectory().."/enemy_data" )
 
 local ACTION_NONE       = constants.ACTION_NONE
@@ -212,13 +212,8 @@ function X:Think(bot)
     self:setCurrentAction(self:GetAction())
     self:PrintActionTransition(utils.GetHeroName(bot))
 
-    ---[[
     -- UPDATE GLOBAL INFO --
-    checkLevel, newTime = utils.TimePassed(gHeroVar.GetGlobalVar("PrevEnemyUpdateTime"), 5.0)
-    if checkLevel then
-        gHeroVar.SetGlobalVar("PrevEnemyUpdateTime", newTime)
-        enemyData.UpdateEnemyInfo()
-    end
+    enemyData.UpdateEnemyInfo()
 
     -- DEBUG ENEMY DUMP
     -- Dump enemy info every 15 seconds
@@ -228,6 +223,9 @@ function X:Think(bot)
         --enemyData.PrintEnemyInfo()
     end
 
+    --USE COURIER AS NECESSARY
+    utils.CourierThink(bot)
+    
     --SHOULD WE USE GLYPH
     if ( self:Determine_ShouldUseGlyph(bot) ) then
         bot:Action_Glyph()
@@ -246,8 +244,6 @@ function X:Think(bot)
         if bRet then return end
     end
 
-    --FIXME: Is this the right place to do this???
-    utils.CourierThink(bot)
     -- FIXME - right place?
     self:ConsiderItemUse()
 
@@ -290,15 +286,6 @@ function X:Think(bot)
     ------------------------------------------------
     -- NOW DECISIONS THAT MODIFY MY ACTION STATES --
     ------------------------------------------------
-
-    -- Check if our bot was trying to harass with an ability using Out of Range Casting variable
-    -- Give them 2.0 seconds to use it or fall through to further logic
-    local oorC = self:getHeroVar("OutOfRangeCasting")
-    if bot:GetCurrentActionType() == BOT_ACTION_TYPE_USE_ABILITY and ( oorc ~= nil and (oorC-GameTime()) < 2.0 ) then
-        utils.myPrint("CLEARING OORC ABILITY USE")
-        bot:Action_ClearActions()
-        return
-    end
 
     if ( self:GetAction() == ACTION_RETREAT ) then
         local bRet = self:DoRetreat(bot, self:getHeroVar("RetreatReason"))
@@ -583,16 +570,15 @@ function X:Determine_ShouldIFighting(bot)
         end
     end
 
-    myTarget = self:getHeroVar("Target")
+    local myTarget = self:getHeroVar("Target")
     if myTarget and ( not myTarget:IsAlive() ) then
         self:RemoveAction(ACTION_FIGHT)
         self:setHeroVar("Target", nil)
         self:setHeroVar("GankTarget", nil)
     end
 
-    local myFriend = self:getHeroVar("HelpingFriend")
-    if myFriend and gHeroVar.GetVar(myFriend, "Target") == nil or 
-        (not gHeroVar.GetVar(myFriend, "Target"):IsAlive()) then
+    local friendID = self:getHeroVar("HelpingFriend")
+    if friendID and gHeroVar.GetVar(friendID, "Target") == nil then
         self:RemoveAction(ACTION_FIGHT)
         self:setHeroVar("Target", nil)
         self:setHeroVar("HelpingFriend", nil)
@@ -720,6 +706,7 @@ function X:Determine_ShouldIPushLane(bot)
 end
 
 function X:Determine_ShouldIDefendLane(bot)
+    if global_game_state.DetectEnemyPushMid() then return true end
     return false
 end
 
@@ -774,30 +761,21 @@ function X:Determine_ShouldGetRune(bot)
 end
 
 function X:Determine_ShouldWard(bot)
-    local wardPlacedTimer = self:getHeroVar("WardPlacedTimer")
 
-    local bCheck = true
-    local newTime = GameTime()
-    if wardPlacedTimer ~= nil then
-        bCheck, newTime = utils.TimePassed(wardPlacedTimer, 0.5)
-    end
-
-    if bCheck then
-        self:setHeroVar("WardPlacedTimer", newTime)
-        local ward = item_usage.HaveWard("item_ward_observer")
-        if ward then
-            local alliedMapWards = GetUnitList(UNIT_LIST_ALLIED_WARDS)
-            if #alliedMapWards < 2 then --FIXME: don't hardcode.. you get more wards then you can use this way
-                local wardLoc = utils.GetWardingSpot(self:getHeroVar("CurLane"))
-                if wardLoc ~= nil and utils.EnemiesNearLocation(bot, wardLoc, 2000) < 2 then
-                    self:setHeroVar("WardLocation", wardLoc)
-                    utils.InitPath()
-                    if self:HasAction(ACTION_WARD) == false then
-                        utils.myPrint("Going to place an Observer Ward")
-                        self:AddAction(ACTION_WARD)
-                    end
-                    return true
+    self:setHeroVar("WardPlacedTimer", newTime)
+    local ward = item_usage.HaveWard("item_ward_observer")
+    if ward then
+        local alliedMapWards = GetUnitList(UNIT_LIST_ALLIED_WARDS)
+        if #alliedMapWards < 2 then --FIXME: don't hardcode.. you get more wards then you can use this way
+            local wardLoc = utils.GetWardingSpot(self:getHeroVar("CurLane"))
+            if wardLoc ~= nil and utils.EnemiesNearLocation(bot, wardLoc, 2000) < 2 then
+                self:setHeroVar("WardLocation", wardLoc)
+                utils.InitPath()
+                if self:HasAction(ACTION_WARD) == false then
+                    utils.myPrint("Going to place an Observer Ward")
+                    self:AddAction(ACTION_WARD)
                 end
+                return true
             end
         end
     end
@@ -1044,7 +1022,8 @@ function X:DoPushLane(bot)
 end
 
 function X:DoDefendLane(bot)
-    return true
+    utils.myPrint("Need to defend Mid!")
+    return false
 end
 
 function X:DoGank(bot)

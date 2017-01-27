@@ -10,6 +10,22 @@ module( "fighting", package.seeall )
 -------------------------------------------------------------------------------
 
 local utils = require( GetScriptDirectory().."/utility" )
+local enemyData = require( GetScriptDirectory().."/enemy_data" )
+
+function GlobalFindTarget(heroToEnemyDist)
+
+    enemyData.UpdateEnemyInfo()
+    for k, enemy in pairs(enemyData) do
+        if type(k) == "number" then
+        end
+    end
+    
+
+    local listAllies = GetUnitList(UNIT_LIST_ALLIED_HEROES)
+    for _, ally in ipairs(listAllies) do
+    end
+    
+end
 
 function FindTarget(dist)
 	local npcBot = GetBot()
@@ -53,17 +69,30 @@ function FindTarget(dist)
     local badHealthPool = 0
     local goodDmg = 0
     local badDmg = 0
-    local fightLength = 5.0
+    local goodFightLength = 5.0
+    local badfightLength = 5.0
     
     local lvl = npcBot:GetLevel()
 	for _, enemy in pairs(Enemies) do
 		if utils.NotNilOrDead(enemy) and GetUnitToLocationDistance(enemy, utils.Fountain(utils.GetOtherTeam())) > 1350 then
-
+            
+            -- first check for stun duration
             for k, enemy2 in pairs(enemyData) do
 				if type(k) == "number" and enemy2.Health > 50 then
                     local distance = GetUnitToLocationDistance(enemy, enemy2.Location)
 					if distance < 1200 then
-                        local dmgTime = fightLength - distance/522
+                        if enemy2.Obj ~= nil then
+                            badfightLength = badfightLength + enemy2.Obj:GetStunDuration(true)
+                        end
+					end
+				end
+			end
+            
+            for k, enemy2 in pairs(enemyData) do
+				if type(k) == "number" and enemy2.Health > 50 then
+                    local distance = GetUnitToLocationDistance(enemy, enemy2.Location)
+					if distance < 1200 then
+                        local dmgTime = badfightLength - distance/522
 						badHealthPool = badHealthPool + enemy2.Health
                         if enemy2.Obj ~= nil then
                             badDmg = badDmg + enemy2.Obj:GetEstimatedDamageToTarget(true, npcBot, dmgTime, DAMAGE_TYPE_ALL)
@@ -72,11 +101,20 @@ function FindTarget(dist)
 				end
 			end
 
+            -- get our stun duration
+            local allyList = GetUnitList(UNIT_LIST_ALLIED_HEROES)
+            for _, ally in pairs(allyList) do
+                local timeToLocation = GetUnitToUnitDistance(enemy, ally)/ally:GetCurrentMovementSpeed()
+				if utils.NotNilOrDead(Ally) and timeToLocation < goodFightLength then
+					goodFightLength = goodFightLength + ally:GetStunDuration(true)
+				end
+			end
+            
 			local allyList = GetUnitList(UNIT_LIST_ALLIED_HEROES)
             for _, ally in pairs(allyList) do
                 local timeToLocation = GetUnitToUnitDistance(enemy, ally)/ally:GetCurrentMovementSpeed()
-				if utils.NotNilOrDead(Ally) and timeToLocation < fightLength then
-					local dmgTime = fightLength - timeToLocation
+				if utils.NotNilOrDead(Ally) and timeToLocation < goodFightLength then
+					local dmgTime = goodFightLength - timeToLocation
                     goodHealthPool = goodHealthPool + ally:GetHealth()
                     goodDmg = goodDmg + ally:GetEstimatedDamageToTarget(true, enemy, dmgTime, DAMAGE_TYPE_ALL)
 				end

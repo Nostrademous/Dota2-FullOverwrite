@@ -9,6 +9,7 @@ module( "ganking_generic", package.seeall )
 ----------
 require( GetScriptDirectory().."/constants" )
 require( GetScriptDirectory().. "/item_usage" )
+require( GetScriptDirectory().. "/global_game_state" )
 
 local utils = require( GetScriptDirectory().."/utility")
 local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
@@ -43,7 +44,7 @@ function FindTarget(bot)
             r = r + HealthFactor * (1 - e:GetHealth()/e:GetMaxHealth())
             -- time to get there in 10s units
             r = r - DistanceFactor * GetUnitToUnitDistance(bot, e) / bot:GetCurrentMovementSpeed() / 10
-            r = r + UnitPosFactor * (1 - utils.GetPositionBetweenBuildings(e, GetTeam()))
+            r = r + UnitPosFactor * (1 - global_game_state.GetPositionBetweenBuildings(e, GetTeam()))
             local hero_count = 0
             for _, enemy in pairs(enemies) do
                 if enemy:CanBeSeen() and utils.GetHeroName(enemy) ~= utils.GetHeroName(e) then
@@ -65,8 +66,8 @@ function FindTarget(bot)
                   print(utils.GetHeroName(e), HealthFactor * (1 - e:GetHealth()/e:GetMaxHealth()))
                   print(utils.GetHeroName(e), GetUnitToUnitDistance(bot, e) / 300 / 10)
                   print(utils.GetHeroName(e), DistanceFactor * GetUnitToUnitDistance(bot, e) / 300 / 10)
-                  print(utils.GetHeroName(e), 1 - utils.GetPositionBetweenBuildings(e, GetTeam()))
-                  print(utils.GetHeroName(e), UnitPosFactor * (1 - utils.GetPositionBetweenBuildings(e, GetTeam())))
+                  print(utils.GetHeroName(e), 1 - global_game_state.GetPositionBetweenBuildings(e, GetTeam()))
+                  print(utils.GetHeroName(e), UnitPosFactor * (1 - global_game_state.GetPositionBetweenBuildings(e, GetTeam())))
                   print(utils.GetHeroName(e), hero_count)
                   print(utils.GetHeroName(e), HeroCountFactor * hero_count)
                   print(utils.GetHeroName(e), r)

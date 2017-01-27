@@ -388,6 +388,10 @@ function U.Round(num, numDecimalPlaces)
     return math.floor(num * mult + 0.5) / mult
 end
 
+function U.GetHeightDiff(loc1, loc2)
+    return (loc1[2] - loc2[2])
+end
+
 -- CONTRIBUTOR: Function below was coded by Platinum_dota2
 function U.IsFacingLocation(hero, loc, delta)
     local facing = hero:GetFacing()

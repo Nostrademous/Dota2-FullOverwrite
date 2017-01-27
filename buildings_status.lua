@@ -184,19 +184,20 @@ function printBuildings()
     end
 end
 
--- check tower dependencies (glyph doen't matter)
+-- check tower dependencies (glyph doesn't matter)
 function GetVulnerableBuildingIDs(team)
     ids = {}
+    -- TODO: use a method that isn't depending on exact order in tableBuildings
     for j = 0,6,3 do -- for all lanes
-        for i = 0,2,1 do -- towers from t1 to t3
-            if GetTowerHealth(team, i+j) > 0 then
+        for i = 1,3,1 do -- towers from t1 to t3
+            if GetHealth(team, i+j) > 0 then
                 ids[#ids+1] = i+j
                 break
             end
         end
     end
     -- TODO: check shrines (outside base)
-    -- TODO: check rax (melee and range should be handled independently)
+    -- TODO: check rax
     -- TODO: check t4s
     -- TODO: check throne
     return ids

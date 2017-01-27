@@ -11,6 +11,8 @@ local EnemyData = {}
 
 EnemyData.Lock = false
 
+EnemyData.LastUpdate = -1000.0
+
 -------------------------------------------------------------------------------
 -- FUNCTIONS - implement rudimentary atomic operation insurance
 -------------------------------------------------------------------------------
@@ -18,63 +20,65 @@ local function EnemyEntryValidAndAlive(entry)
     return entry.obj ~= nil and entry.last_seen ~= -1000.0 and entry.obj:GetHealth() ~= -1
 end
 
-function EnemyData.UpdateEnemyInfo()
+function EnemyData.UpdateEnemyInfo(timeFreq)
     if ( GetGameState() ~= GAME_STATE_GAME_IN_PROGRESS and GetGameState() ~= GAME_STATE_PRE_GAME ) then return end
+    local timeFreq = timeFreq or 0.5
 
-    if ( EnemyData.Lock ) then return end
+    local bUpdate, newTime = utils.TimePassed(EnemyData.LastUpdate, timeFreq)
+    if bUpdate then
+        if ( EnemyData.Lock ) then return end
+        EnemyData.Lock = true
 
-    EnemyData.Lock = true
+        local enemies = GetUnitList(UNIT_LIST_ENEMY_HEROES)
+        for _, enemy in pairs(enemies) do
+            local pid = enemy:GetPlayerID()
+            local name = utils.GetHeroName(enemy)
 
-    local enemies = GetUnitList(UNIT_LIST_ENEMY_HEROES)
+            if EnemyData[pid] == nil then
+                EnemyData[pid] = { Name = name, Time = -100, Obj = nil, Level = 1, Health = -1, Mana = -1, Location = nil, Items = {},
+                                    PhysDmg2 = {}, MagicDmg2 = {}, PureDmg2 = {}, AllDmg2 = {},
+                                    PhysDmg10 = {}, MagicDmg10 = {}, PureDmg10 = {}, AllDmg10 = {}
+                                 }
+            end
 
-    if #enemies == 0 then return end
+            local tDelta = RealTime() - EnemyData[pid].Time
+            -- throttle our update to once every 1 second for each enemy
+            if tDelta >= 1.0 and enemy:GetHealth() ~= -1 then
+                EnemyData[pid].Time = RealTime()
+                EnemyData[pid].Obj = enemy
+                EnemyData[pid].Level = enemy:GetLevel()
+                EnemyData[pid].Health = enemy:GetHealth()
+                EnemyData[pid].MaxHealth = enemy:GetMaxHealth()
+                EnemyData[pid].Mana = enemy:GetMana()
+                EnemyData[pid].MaxMana = enemy:GetMaxMana()
+                EnemyData[pid].Location = utils.deepcopy(enemy:GetLocation())
+                for i = 0, 5, 1 do
+                    local item = enemy:GetItemInSlot(i)
+                    if item ~= nil then
+                        EnemyData[pid].Items[i] = item:GetName()
+                    end
+                end
 
-    for _, enemy in pairs(enemies) do
-        local pid = enemy:GetPlayerID()
-        local name = utils.GetHeroName(enemy)
+                EnemyData[pid].SlowDur = enemy:GetSlowDuration(false) -- FIXME: does this count abilities only, or Items too?
+                EnemyData[pid].StunDur = enemy:GetStunDuration(false) -- FIXME: does this count abilities only, or Items too?
+                EnemyData[pid].HasSilence = enemy:HasSilence(false) -- FIXME: does this count abilities only, or Items too?
+                EnemyData[pid].HasTruestrike = enemy:IsUnableToMiss()
 
-        if EnemyData[pid] == nil then
-            EnemyData[pid] = { Name = name, Time = -100, Obj = nil, Level = 1, Health = -1, Mana = -1, Location = nil, Items = {},
-                                PhysDmg2 = {}, MagicDmg2 = {}, PureDmg2 = {}, AllDmg2 = {},
-                                PhysDmg10 = {}, MagicDmg10 = {}, PureDmg10 = {}, AllDmg10 = {}
-                             }
-        end
-
-        local tDelta = RealTime() - EnemyData[pid].Time
-        -- throttle our update to once every 1 second for each enemy
-        if tDelta >= 1.0 and enemy:GetHealth() ~= -1 then
-            EnemyData[pid].Time = RealTime()
-            EnemyData[pid].Obj = enemy
-            EnemyData[pid].Level = enemy:GetLevel()
-            EnemyData[pid].Health = enemy:GetHealth()
-            EnemyData[pid].MaxHealth = enemy:GetMaxHealth()
-            EnemyData[pid].Mana = enemy:GetMana()
-            EnemyData[pid].MaxMana = enemy:GetMaxMana()
-            EnemyData[pid].Location = utils.deepcopy(enemy:GetLocation())
-            for i = 0, 5, 1 do
-                local item = enemy:GetItemInSlot(i)
-                if item ~= nil then
-                    EnemyData[pid].Items[i] = item:GetName()
+                local allies = GetUnitList(UNIT_LIST_ALLIED_HEROES)
+                for _, ally in pairs(allies) do
+                    EnemyData[pid].PhysDmg2[ally:GetPlayerID()] = enemy:GetEstimatedDamageToTarget(true, ally, 2.0, DAMAGE_TYPE_PHYSICAL)
+                    EnemyData[pid].MagicDmg2[ally:GetPlayerID()] = enemy:GetEstimatedDamageToTarget(true, ally, 2.0, DAMAGE_TYPE_MAGICAL)
+                    EnemyData[pid].PureDmg2[ally:GetPlayerID()] = enemy:GetEstimatedDamageToTarget(true, ally, 2.0, DAMAGE_TYPE_PURE)
+                    EnemyData[pid].AllDmg2[ally:GetPlayerID()] = enemy:GetEstimatedDamageToTarget(true, ally, 2.0, DAMAGE_TYPE_ALL)
+                    EnemyData[pid].PhysDmg10[ally:GetPlayerID()] = enemy:GetEstimatedDamageToTarget(true, ally, 10.0, DAMAGE_TYPE_PHYSICAL)
+                    EnemyData[pid].MagicDmg10[ally:GetPlayerID()] = enemy:GetEstimatedDamageToTarget(true, ally, 10.0, DAMAGE_TYPE_MAGICAL)
+                    EnemyData[pid].PureDmg10[ally:GetPlayerID()] = enemy:GetEstimatedDamageToTarget(true, ally, 10.0, DAMAGE_TYPE_PURE)
+                    EnemyData[pid].AllDmg10[ally:GetPlayerID()] = enemy:GetEstimatedDamageToTarget(true, ally, 10.0, DAMAGE_TYPE_ALL)
                 end
             end
-
-            EnemyData[pid].SlowDur = enemy:GetSlowDuration(false) -- FIXME: does this count abilities only, or Items too?
-            EnemyData[pid].StunDur = enemy:GetStunDuration(false) -- FIXME: does this count abilities only, or Items too?
-            EnemyData[pid].HasSilence = enemy:HasSilence(false) -- FIXME: does this count abilities only, or Items too?
-            EnemyData[pid].HasTruestrike = enemy:IsUnableToMiss()
-
-            local allies = GetUnitList(UNIT_LIST_ALLIED_HEROES)
-            for _, ally in pairs(allies) do
-                EnemyData[pid].PhysDmg2[ally:GetPlayerID()] = enemy:GetEstimatedDamageToTarget(true, ally, 2.0, DAMAGE_TYPE_PHYSICAL)
-                EnemyData[pid].MagicDmg2[ally:GetPlayerID()] = enemy:GetEstimatedDamageToTarget(true, ally, 2.0, DAMAGE_TYPE_MAGICAL)
-                EnemyData[pid].PureDmg2[ally:GetPlayerID()] = enemy:GetEstimatedDamageToTarget(true, ally, 2.0, DAMAGE_TYPE_PURE)
-                EnemyData[pid].AllDmg2[ally:GetPlayerID()] = enemy:GetEstimatedDamageToTarget(true, ally, 2.0, DAMAGE_TYPE_ALL)
-                EnemyData[pid].PhysDmg10[ally:GetPlayerID()] = enemy:GetEstimatedDamageToTarget(true, ally, 10.0, DAMAGE_TYPE_PHYSICAL)
-                EnemyData[pid].MagicDmg10[ally:GetPlayerID()] = enemy:GetEstimatedDamageToTarget(true, ally, 10.0, DAMAGE_TYPE_MAGICAL)
-                EnemyData[pid].PureDmg10[ally:GetPlayerID()] = enemy:GetEstimatedDamageToTarget(true, ally, 10.0, DAMAGE_TYPE_PURE)
-                EnemyData[pid].AllDmg10[ally:GetPlayerID()] = enemy:GetEstimatedDamageToTarget(true, ally, 10.0, DAMAGE_TYPE_ALL)
-            end
         end
+        -- update our timer
+        EnemyData.LastUpdate = newTime
     end
 
     EnemyData.Lock = false

@@ -418,54 +418,23 @@ local function GetBackGen(npcBot)
 		return true
 	end
 	
-	local EnemyDamage = 0
-	local Enemies = npcBot:GetNearbyHeroes(EyeRange,true,BOT_MODE_NONE)
-	if Enemies==nil or #Enemies==0 then
+	local Enemies = npcBot:GetNearbyHeroes(EyeRange, true, BOT_MODE_NONE)
+    local Allies = npcBot:GetNearbyHeroes(EyeRange, false, BOT_MODE_NONE)
+	if #Enemies == 0 then
 		return false
 	end
 	
-	local AllyTowers=npcBot:GetNearbyTowers(600,false)
-	if AllyTowers~=nil and #AllyTowers>0 and (#Enemies==nil or #Enemies<=3) then
+	local AllyTowers = npcBot:GetNearbyTowers(600, false)
+	if #AllyTowers > 0 and (#Enemies - #Allies) < 2 then
 		return false
 	end
-	
-	for _,enemy in pairs(Enemies) do
-		if utils.NotNilOrDead(enemy) then
-			local damage = enemy:GetEstimatedDamageToTarget(true,npcBot,4,DAMAGE_TYPE_ALL)
-			EnemyDamage = EnemyDamage+damage
-		end
-	end
-	
-	if EnemyDamage*0.7 > npcBot:GetHealth() then
-		setHeroVar("BackTimerGen", DotaTime())
-		return true
-	end
-	
-	if EnemyDamage > npcBot:GetHealth() and utils.IsAnyHeroAttackingMe(2.0) then
-		setHeroVar("BackTimerGen", DotaTime())
-		return true
-	end
-	
-	EnemyDamage=0
-	local TotStun=0
-	
-	for _,enemy in pairs(Enemies) do
-		if utils.NotNilOrDead(enemy) then
-			TotStun = TotStun + Min(enemy:GetStunDuration(true)*0.85 + enemy:GetSlowDuration(true)*0.5, 3)
-		end
-	end
-	
-	for _,enemy in pairs(Enemies) do
-		if utils.NotNilOrDead(enemy) then
-			local damage = enemy:GetEstimatedDamageToTarget(true,npcBot,TotStun,DAMAGE_TYPE_ALL)
-			EnemyDamage = EnemyDamage+damage
-		end
-	end
-	
-	if EnemyDamage > npcBot:GetHealth() then
-		setHeroVar("BackTimerGen", DotaTime())
-		return true;
-	end
+  
+    --[[
+    if utils.IsMelee(npcBot) and utils.IsAnyHeroAttackingMe(1.0) then
+        setHeroVar("BackTimerGen", DotaTime())
+        return true
+    end
+    --]]
 	
 	setHeroVar("BackTimerGen", -1000)
 	return false
@@ -478,9 +447,9 @@ local function StayBack(npcBot)
 	
 	local BackPos = GetLocationAlongLane(getHeroVar("CurLane"), Min(LaneFront-0.05,LaneEnemyFront-0.05)) + RandomVector(200)
 	if utils.IsMelee(npcBot) then
-		BackPos = GetLocationAlongLane(getHeroVar("CurLane"), Min(LaneFront, LaneEnemyFront)) + RandomVector(200)
+		BackPos = GetLocationAlongLane(getHeroVar("CurLane"), Min(LaneFront, LaneEnemyFront+0.03)) + RandomVector(200)
 	end
-	npcBot:Action_MoveToLocation(BackPos);
+	npcBot:Action_MoveToLocation(BackPos)
 end
 
 function Think(npcBot)

@@ -984,7 +984,7 @@ function X:DoPushLane(bot)
     
     if #Towers == 0 and #Shrines == 0 and #Barracks == 0 then
         if utils.NotNilOrDead(Ancient) and GetUnitToLocationDistance(bot, Ancient:GetLocation()) < bot:GetAttackRange() and
-            (not Ancient:IsAttackImmune()) then
+            (not Ancient:HasModifier("modifier_fountain_glyph")) then
             bot:Action_AttackUnit(Ancient, true)
             return true
         end
@@ -993,7 +993,7 @@ function X:DoPushLane(bot)
 
     if #Towers > 0 then
         for _, tower in ipairs(Towers) do
-            if utils.NotNilOrDead(tower) and (not tower:IsAttackImmune()) then
+            if utils.NotNilOrDead(tower) and (not tower:HasModifier("modifier_fountain_glyph")) then
                 if GetUnitToUnitDistance(tower, bot) < bot:GetAttackRange() then
                     bot:Action_AttackUnit(tower, true)
                 else
@@ -1006,7 +1006,7 @@ function X:DoPushLane(bot)
     
     if #Barracks > 0 then
         for _, barrack in ipairs(Barracks) do
-            if utils.NotNilOrDead(barrack) and (not barrack:IsAttackImmune()) then
+            if utils.NotNilOrDead(barrack) and (not barrack:HasModifier("modifier_fountain_glyph")) then
                 if GetUnitToUnitDistance(barrack, bot) < bot:GetAttackRange() then
                     bot:Action_AttackUnit(barrack, true)
                 else
@@ -1019,7 +1019,7 @@ function X:DoPushLane(bot)
     
     if #Shrines > 0 then
         for _, shrine in ipairs(Shrines) do
-            if utils.NotNilOrDead(shrine) and (not shrine:IsAttackImmune()) then
+            if utils.NotNilOrDead(shrine) and (not shrine:HasModifier("modifier_fountain_glyph")) then
                 if GetUnitToUnitDistance(shrine, bot) < bot:GetAttackRange() then
                     bot:Action_AttackUnit(shrine, true)
                 else

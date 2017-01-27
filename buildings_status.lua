@@ -184,4 +184,22 @@ function printBuildings()
     end
 end
 
+-- check tower dependencies (glyph doen't matter)
+function GetVulnerableBuildingIDs(team)
+    ids = {}
+    for j = 0,6,3 do -- for all lanes
+        for i = 0,2,1 do -- towers from t1 to t3
+            if GetTowerHealth(team, i+j) > 0 then
+                ids[#ids+1] = i+j
+                break
+            end
+        end
+    end
+    -- TODO: check shrines (outside base)
+    -- TODO: check rax (melee and range should be handled independently)
+    -- TODO: check t4s
+    -- TODO: check throne
+    return ids
+end
+
 for k,v in pairs( buildings_status ) do _G._savedEnv[k] = v end

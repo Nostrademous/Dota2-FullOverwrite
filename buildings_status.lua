@@ -1,118 +1,173 @@
 _G._savedEnv = getfenv()
 module( "buildings_status", package.seeall )
 
-require(GetScriptDirectory() .. "/constants")
-local utils = require(GetScriptDirectory() .. "/utility")
+ TYPE_TOWER = "tower"
+ TYPE_MELEE = "melee"
+ TYPE_RANGED = "ranged"
+ TYPE_SHRINE = "shrine"
+ TYPE_ANCIENT = "ancient"
 
-local tableBuildings = {
-    [constants.TEAM_RADIANT] = {
-        {["vector"]=utils.Locations["RTT1"], ["LastSeenHealth"]=1300, ["ApiID"]=0},
-        {["vector"]=utils.Locations["RTT2"], ["LastSeenHealth"]=1600, ["ApiID"]=1},
-        {["vector"]=utils.Locations["RTT3"], ["LastSeenHealth"]=1600, ["ApiID"]=2},
-        {["vector"]=utils.Locations["RMT1"], ["LastSeenHealth"]=1300, ["ApiID"]=3},
-        {["vector"]=utils.Locations["RMT2"], ["LastSeenHealth"]=1600, ["ApiID"]=4},
-        {["vector"]=utils.Locations["RMT3"], ["LastSeenHealth"]=1600, ["ApiID"]=5},
-        {["vector"]=utils.Locations["RBT1"], ["LastSeenHealth"]=1300, ["ApiID"]=6},
-        {["vector"]=utils.Locations["RBT2"], ["LastSeenHealth"]=1600, ["ApiID"]=7},
-        {["vector"]=utils.Locations["RBT3"], ["LastSeenHealth"]=1600, ["ApiID"]=8},
-        {["vector"]=utils.Locations["RadiantBase"], ["LastSeenHealth"]=4250, ["ApiID"]=-1},
-        {["vector"]=utils.Locations["RadiantTopShrine"], ["LastSeenHealth"]=1500, ["ApiID"]=-1},
-        {["vector"]=utils.Locations["RadiantBotShrine"], ["LastSeenHealth"]=1500, ["ApiID"]=-1},
-    },
-    [constants.TEAM_DIRE] = {
-        {["vector"]=utils.Locations["DTT1"], ["LastSeenHealth"]=1300, ["ApiID"]=0},
-        {["vector"]=utils.Locations["DTT2"], ["LastSeenHealth"]=1600, ["ApiID"]=1},
-        {["vector"]=utils.Locations["DTT3"], ["LastSeenHealth"]=1600, ["ApiID"]=2},
-        {["vector"]=utils.Locations["DMT1"], ["LastSeenHealth"]=1300, ["ApiID"]=3},
-        {["vector"]=utils.Locations["DMT2"], ["LastSeenHealth"]=1600, ["ApiID"]=4},
-        {["vector"]=utils.Locations["DMT3"], ["LastSeenHealth"]=1600, ["ApiID"]=5},
-        {["vector"]=utils.Locations["DBT1"], ["LastSeenHealth"]=1300, ["ApiID"]=6},
-        {["vector"]=utils.Locations["DBT2"], ["LastSeenHealth"]=1600, ["ApiID"]=7},
-        {["vector"]=utils.Locations["DBT3"], ["LastSeenHealth"]=1600, ["ApiID"]=8},
-        {["vector"]=utils.Locations["DireBase"], ["LastSeenHealth"]=4250, ["ApiID"]=-1},
-        {["vector"]=utils.Locations["DireTopShrine"], ["LastSeenHealth"]=1500, ["ApiID"]=-1},
-        {["vector"]=utils.Locations["DireBotShrine"], ["LastSeenHealth"]=1500, ["ApiID"]=-1},
-    }
+local buildings = {
+    {["ApiID"]=TOWER_TOP_1, ["Type"]=TYPE_TOWER},
+    {["ApiID"]=TOWER_TOP_2, ["Type"]=TYPE_TOWER},
+    {["ApiID"]=TOWER_TOP_3, ["Type"]=TYPE_TOWER},
+    {["ApiID"]=TOWER_MID_1, ["Type"]=TYPE_TOWER},
+    {["ApiID"]=TOWER_MID_2, ["Type"]=TYPE_TOWER},
+    {["ApiID"]=TOWER_MID_3, ["Type"]=TYPE_TOWER},
+    {["ApiID"]=TOWER_BOT_1, ["Type"]=TYPE_TOWER},
+    {["ApiID"]=TOWER_BOT_2, ["Type"]=TYPE_TOWER},
+    {["ApiID"]=TOWER_BOT_3, ["Type"]=TYPE_TOWER},
+    {["ApiID"]=TOWER_BASE_1, ["Type"]=TYPE_TOWER},
+    {["ApiID"]=TOWER_BASE_2, ["Type"]=TYPE_TOWER},
+    {["ApiID"]=BARRACKS_TOP_MELEE, ["Type"]=TYPE_MELEE},
+    {["ApiID"]=BARRACKS_TOP_RANGED, ["Type"]=TYPE_RANGED},
+    {["ApiID"]=BARRACKS_MID_MELEE, ["Type"]=TYPE_MELEE},
+    {["ApiID"]=BARRACKS_MID_RANGED, ["Type"]=TYPE_RANGED},
+    {["ApiID"]=BARRACKS_BOT_MELEE, ["Type"]=TYPE_MELEE},
+    {["ApiID"]=BARRACKS_BOT_RANGED, ["Type"]=TYPE_RANGED},
+    {["ApiID"]=0, ["Type"]=TYPE_ANCIENT},
+    {["ApiID"]=SHRINE_JUNGLE_1, ["Type"]=TYPE_SHRINE},
+    {["ApiID"]=SHRINE_JUNGLE_2, ["Type"]=TYPE_SHRINE},
+    {["ApiID"]=SHRINE_BASE_1, ["Type"]=TYPE_SHRINE},
+    {["ApiID"]=SHRINE_BASE_2, ["Type"]=TYPE_SHRINE},
+    {["ApiID"]=SHRINE_BASE_3, ["Type"]=TYPE_SHRINE},
+    {["ApiID"]=SHRINE_BASE_4, ["Type"]=TYPE_SHRINE},
+    {["ApiID"]=SHRINE_BASE_5, ["Type"]=TYPE_SHRINE}
 }
+
+local tableBuildings = {}
+
+local towers = {}
+local barracks = {}
+local shrines = {}
 
 local lastUpdate = -9999
 
+-- fill the empty tables
+local function Initialize()
+    tableBuildings[TEAM_RADIANT] = {}
+    tableBuildings[TEAM_DIRE] = {}
+    local team = GetTeam()
+    for i, building in ipairs(buildings) do
+        local building_radiant = {}
+        local building_dire = {}
+        tableBuildings[TEAM_RADIANT][i] = building_radiant
+        tableBuildings[TEAM_DIRE][i] = building_dire
+        local health = 0
+        local pos_radiant = nil
+        local pos_dire = nil
+        if building.Type == TYPE_TOWER then
+            health = GetTower(team, building.ApiID):GetMaxHealth()
+            pos_radiant = GetTower(TEAM_RADIANT, building.ApiID):GetLocation()
+            pos_dire = GetTower(TEAM_DIRE, building.ApiID):GetLocation()
+            towers[#towers+1] = i
+        elseif building.Type == TYPE_MELEE then
+            health = GetBarracks(team, building.ApiID):GetMaxHealth()
+            pos_radiant = GetBarracks(TEAM_RADIANT, building.ApiID):GetLocation()
+            pos_dire = GetBarracks(TEAM_DIRE, building.ApiID):GetLocation()
+            barracks[#barracks+1] = i
+        elseif building.Type == TYPE_RANGED then
+            health = GetBarracks(team, building.ApiID):GetMaxHealth()
+            pos_radiant = GetBarracks(TEAM_RADIANT, building.ApiID):GetLocation()
+            pos_dire = GetBarracks(TEAM_DIRE, building.ApiID):GetLocation()
+            barracks[#barracks+1] = i
+        elseif building.Type == TYPE_SHRINE then
+            health = GetShrine(team, building.ApiID):GetMaxHealth()
+            pos_radiant = GetShrine(TEAM_RADIANT, building.ApiID):GetLocation()
+            pos_dire = GetShrine(TEAM_DIRE, building.ApiID):GetLocation()
+            shrines[#shrines+1] = i
+        elseif building.Type == TYPE_ANCIENT then
+            health = GetAncient(team):GetMaxHealth()
+            pos_radiant = GetAncient(TEAM_RADIANT):GetLocation()
+            pos_dire = GetAncient(TEAM_DIRE):GetLocation()
+        end
+        building_radiant.ApiID = building.ApiID
+        building_radiant.Type = building.Type
+        building_radiant.MaxHealth = health
+        building_radiant.LastSeenHealth = health
+        building_radiant.Vector = pos_radiant
+        building_dire.ApiID = building.ApiID
+        building_dire.Type = building.Type
+        building_dire.MaxHealth = health
+        building_dire.LastSeenHealth = health
+        building_dire.Vector = pos_dire
+    end
+end
+
 function Update(forceUpdate)
+    if lastUpdate < -1000 then
+        Initialize()
+    end
     if DotaTime() - lastUpdate < 0.5 then
         if forceUpdate == nil or forceUpdate == False then return end
     end
     lastUpdate = DotaTime()
-    for _, building in pairs(tableBuildings[TEAM_RADIANT]) do
-        if building.ApiID ~= -1 then
-            local tower = GetTower(TEAM_RADIANT, building.ApiID)
-            if tower == nil then
-                building.LastSeenHealth = -1
-            else
-                local health = tower:GetHealth()
-                if health > -1 then
-                    building.LastSeenHealth = health
-                end
-            end
-        end
+    for i, _ in ipairs(tableBuildings[TEAM_RADIANT]) do
+        GetHealth(TEAM_RADIANT, i, False)
     end
-    for _, building in pairs(tableBuildings[TEAM_DIRE]) do
-        if building.ApiID ~= -1 then
-            local tower = GetTower(TEAM_DIRE, building.ApiID)
-            if tower == nil then
-                building.LastSeenHealth = -1
-            else
-                local health = tower:GetHealth()
-                if health > -1 then
-                    building.LastSeenHealth = health
-                end
-            end
-        end
+    for i, _ in ipairs(tableBuildings[TEAM_DIRE]) do
+        GetHealth(TEAM_DIRE, i, False)
     end
 end
 
-function GetTowerHealth(team, tower_id, cacheOnly)
+function GetHealth(team, id, cacheOnly)
     if cacheOnly == nil then cacheOnly = True end
-    local seen = tableBuildings[team][tower_id].LastSeenHealth
+    local seen = tableBuildings[team][id].LastSeenHealth
     if cacheOnly then return seen end
     if seen <= 0 then return -1 end
-    if tableBuildings[team][tower_id].ApiID == -1 then return seen end
-    local tower = GetTower(team, tableBuildings[team][tower_id].ApiID)
-    if tower == nil then
-        tableBuildings[team][tower_id].LastSeenHealth = -1
+    local building = GetHandle(team, id)
+    if building == nil then
+        tableBuildings[team][id].LastSeenHealth = -1
         return -1
     end
-    local health = tower:GetHealth()
+    local health = building:GetHealth()
     if health > -1 then
-        tableBuildings[team][tower_id].LastSeenHealth = health
+        tableBuildings[team][id].LastSeenHealth = health
         return health
     else
         return seen
     end
 end
 
-function GetTowerLocation(team, tower_id)
-    return tableBuildings[team][tower_id].vector
+function GetLocation(team, id)
+    local result = tableBuildings[team][id].Vector
+    return result
 end
 
-function GetTowerUnit(team, tower_id)
-    return GetTower(team, tableBuildings[team][tower_id].ApiID)
+function GetHandle(team, id)
+    local building = tableBuildings[team][id]
+    if building.Type == TYPE_TOWER then
+        return GetTower(team, building.ApiID)
+    elseif building.Type == TYPE_MELEE then
+        return GetBarracks(team, building.ApiID)
+    elseif building.Type == TYPE_RANGED then
+        return GetBarracks(team, building.ApiID)
+    elseif building.Type == TYPE_SHRINE then
+        return GetShrine(team, building.ApiID)
+    elseif building.Type == TYPE_ANCIENT then
+        return GetAncient(team)
+    end
 end
 
-function GetStandingTowerIDs(team)
+function GetStandingBuildingIDs(team)
     ids = {}
-    for i, building in pairs(tableBuildings[team]) do
-        if GetTowerHealth(team, i) > -1 then
+    for i, _ in ipairs(tableBuildings[team]) do
+        if GetHealth(team, i) > -1 then
             ids[#ids+1] = i
         end
     end
     return ids
 end
 
+function GetType(team, id)
+    return tableBuildings[team][id].Type
+end
+
 function GetDestroyableTowers(team)
     ids = {}
-    for i, building in pairs(tableBuildings[team]) do
-        if GetTowerHealth(team, i) > -1 and (not building:IsInvulnerable()) then
-            ids[#ids+1] = i
+    for _, id in pairs(towers) do
+        if GetHealth(team, id) > -1 and (not GetHandle(team, id):IsInvulnerable()) then
+            ids[#ids+1] = id
         end
     end
     return ids
@@ -127,6 +182,25 @@ function printBuildings()
     for i, building in pairs(tableBuildings[TEAM_DIRE]) do
         print(i, building.LastSeenHealth)
     end
+end
+
+-- check tower dependencies (glyph doesn't matter)
+function GetVulnerableBuildingIDs(team)
+    ids = {}
+    -- TODO: use a method that isn't depending on exact order in tableBuildings
+    for j = 0,6,3 do -- for all lanes
+        for i = 1,3,1 do -- towers from t1 to t3
+            if GetHealth(team, i+j) > 0 then
+                ids[#ids+1] = i+j
+                break
+            end
+        end
+    end
+    -- TODO: check shrines (outside base)
+    -- TODO: check rax
+    -- TODO: check t4s
+    -- TODO: check throne
+    return ids
 end
 
 for k,v in pairs( buildings_status ) do _G._savedEnv[k] = v end

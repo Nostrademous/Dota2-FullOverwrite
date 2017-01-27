@@ -108,6 +108,16 @@ function GetStandingTowerIDs(team)
     return ids
 end
 
+function GetDestroyableTowers(team)
+    ids = {}
+    for i, building in pairs(tableBuildings[team]) do
+        if GetTowerHealth(team, i) > -1 and (not building:IsInvulnerable()) then
+            ids[#ids+1] = i
+        end
+	end
+    return ids
+end
+
 function printBuildings()
     print("Buildings Radiant")
     for i, building in pairs(tableBuildings[TEAM_RADIANT]) do

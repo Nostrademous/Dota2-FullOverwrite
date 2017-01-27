@@ -427,6 +427,17 @@ function X:ConsiderItemUse()
 end
 
 function X:Determine_ShouldUseGlyph(bot)
+    local vulnerableTowers = buildings_status.GetDestroyableTowers(GetTeam())
+	for i, building_id in pairs(vulnerableTowers) do
+	    local tower = buildings_status.GetTowerUnit(GetTeam(), building_id)
+		local nearbyEnemyCreepCount = tower:GetNearbyCreeps(tower:getAttackRange(), true)
+		local nearbyHeroCount = tower:GetNearbyHeroes(tower:getAttackRange(), true, BOT_MODE_NONE);
+		
+		if tower:GetHealth()/tower:GetMaxHealth() < math.max(tower:GetMaxHealth()*0.15, 150) and tower:TimeSinceDamagedByAnyHero() < 3
+		and tower:TimeSinceDamagedByCreep() < 3 and nearbyEnemyCreepCount >= 2 and nearbyHeroCount >= 1 then
+		    return true
+		end
+    end
     return false
 end
 

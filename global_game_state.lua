@@ -19,7 +19,7 @@ function GetClosestBuilding(unit, team)
     return building
 end
 
--- Get the position between buildings (0 = sittings on teams tower, 1 = sitting on enemy's tower)
+-- Get the position between buildings (0 = sitting on teams tower, 1 = sitting on enemy's tower)
 function GetPositionBetweenBuildings(unit, team)
     local allied_building = GetClosestBuilding(unit, team)
     local d_allied = GetUnitToLocationDistance(unit, allied_building)

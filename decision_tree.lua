@@ -17,7 +17,7 @@ require( GetScriptDirectory().."/fighting" )
 local utils = require( GetScriptDirectory().."/utility" )
 local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
 
-enemyData = require( GetScriptDirectory().."/enemy_data" )
+local enemyData = require( GetScriptDirectory().."/enemy_data" )
 
 local ACTION_NONE       = constants.ACTION_NONE
 local ACTION_LANING     = constants.ACTION_LANING
@@ -591,7 +591,8 @@ function X:Determine_ShouldIFighting(bot)
     end
 
     local myFriend = self:getHeroVar("HelpingFriend")
-    if myFriend and gHeroVar.GetVar(myFriend, "Target") == nil then
+    if myFriend and gHeroVar.GetVar(myFriend, "Target") == nil or 
+        (not gHeroVar.GetVar(myFriend, "Target"):IsAlive()) then
         self:RemoveAction(ACTION_FIGHT)
         self:setHeroVar("Target", nil)
         self:setHeroVar("HelpingFriend", nil)
@@ -609,7 +610,7 @@ function X:Determine_ShouldIFighting(bot)
                 self:setHeroVar("Target", weakestHero)
             end
 
-            if weakestHero ~= getHeroVar("Target") then
+            if utils.GetHeroName(weakestHero) ~= utils.GetHeroName(getHeroVar("Target")) then
                 utils.myPrint(" - Fight Change - Fighting ", utils.GetHeroName(weakestHero))
                 self:setHeroVar("Target", weakestHero)
             end
@@ -619,40 +620,38 @@ function X:Determine_ShouldIFighting(bot)
     end
 
     weakestHero = getHeroVar("Target") or friendsTarget
-    if weakestHero ~= nil then
-        if (not utils.NotNilOrDead(weakestHero)) then
-            if (not weakestHero:CanBeSeen()) and weakestHero:GetTimeSinceLastSeen() > 3.0 then
-                utils.myPrint(" - Stopping my fight... lost sight of hero")
-                self:RemoveAction(ACTION_FIGHT)
-                self:setHeroVar("Target", nil)
-                return false
+    if weakestHero ~= nil and weakestHero:IsAlive() then
+        if (not weakestHero:CanBeSeen()) and weakestHero:GetTimeSinceLastSeen() > 3.0 then
+            utils.myPrint(" - Stopping my fight... lost sight of hero")
+            self:RemoveAction(ACTION_FIGHT)
+            self:setHeroVar("Target", nil)
+            return false
+        else
+            self:setHeroVar("Target", weakestHero)
+            local lastLoc = weakestHero:GetLastSeenLocation()
+            if utils.GetOtherTeam() == TEAM_DIRE then
+                local prob1 = GetUnitPotentialValue(weakestHero, Vector(lastLoc[1] + 500, lastLoc[2]), 1000)
+                local prob2 = GetUnitPotentialValue(weakestHero, Vector(lastLoc[1], lastLoc[2] + 500), 1000)
+                if prob1 > 180 and prob1 > prob2 then
+                    item_usage.UseMovementItems()
+                    bot:Action_MoveToLocation(Vector(lastLoc[1] + 500, lastLoc[2]))
+                    return true
+                elseif prob2 > 180 then
+                    item_usage.UseMovementItems()
+                    bot:Action_MoveToLocation(Vector(lastLoc[1], lastLoc[2] + 500))
+                    return true
+                end
             else
-                self:setHeroVar("Target", weakestHero)
-                local lastLoc = weakestHero:GetLastSeenLocation()
-                if utils.GetOtherTeam() == TEAM_DIRE then
-                    local prob1 = GetUnitPotentialValue(weakestHero, Vector(lastLoc[1] + 500, lastLoc[2]), 1000)
-                    local prob2 = GetUnitPotentialValue(weakestHero, Vector(lastLoc[1], lastLoc[2] + 500), 1000)
-                    if prob1 > 180 and prob1 > prob2 then
-                        item_usage.UseMovementItems()
-                        bot:Action_MoveToLocation(Vector(lastLoc[1] + 500, lastLoc[2]))
-                        return true
-                    elseif prob2 > 180 then
-                        item_usage.UseMovementItems()
-                        bot:Action_MoveToLocation(Vector(lastLoc[1], lastLoc[2] + 500))
-                        return true
-                    end
-                else
-                    local prob1 = GetUnitPotentialValue(weakestHero, Vector(lastLoc[1] - 500, lastLoc[2]), 1000)
-                    local prob2 = GetUnitPotentialValue(weakestHero, Vector(lastLoc[1], lastLoc[2] - 500), 1000)
-                    if prob1 > 180 and prob1 > prob2 then
-                        item_usage.UseMovementItems()
-                        bot:Action_MoveToLocation(Vector(lastLoc[1] - 500, lastLoc[2]))
-                        return true
-                    elseif prob2 > 180 then
-                        item_usage.UseMovementItems()
-                        bot:Action_MoveToLocation(Vector(lastLoc[1], lastLoc[2] - 500))
-                        return true
-                    end
+                local prob1 = GetUnitPotentialValue(weakestHero, Vector(lastLoc[1] - 500, lastLoc[2]), 1000)
+                local prob2 = GetUnitPotentialValue(weakestHero, Vector(lastLoc[1], lastLoc[2] - 500), 1000)
+                if prob1 > 180 and prob1 > prob2 then
+                    item_usage.UseMovementItems()
+                    bot:Action_MoveToLocation(Vector(lastLoc[1] - 500, lastLoc[2]))
+                    return true
+                elseif prob2 > 180 then
+                    item_usage.UseMovementItems()
+                    bot:Action_MoveToLocation(Vector(lastLoc[1], lastLoc[2] - 500))
+                    return true
                 end
             end
         end

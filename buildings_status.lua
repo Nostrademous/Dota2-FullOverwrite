@@ -114,7 +114,7 @@ function GetDestroyableTowers(team)
         if GetTowerHealth(team, i) > -1 and (not building:IsInvulnerable()) then
             ids[#ids+1] = i
         end
-	end
+    end
     return ids
 end
 

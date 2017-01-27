@@ -47,7 +47,8 @@ function DetectEnemyPushMid()
     elseif utils.InTable(listRemainingBuildings, BARRACKS_MID_RANGED) then building = BARRACKS_MID_RANGED
     elseif utils.InTable(listRemainingBuildings, TOWER_BASE_1) then building = TOWER_BASE_1
     elseif utils.InTable(listRemainingBuildings, TOWER_BASE_2) then building = TOWER_BASE_2
-    else building = 0 end
+    else building = 0 
+    end
     
     local num = 0
     for k, enemy in pairs(enemyData) do
@@ -65,6 +66,85 @@ function DetectEnemyPushMid()
     end
     
     return num >= 3
+end
+
+function DetectEnemyPushTop()
+    enemyData.UpdateEnemyInfo(1.0)
+    
+    local building
+    local listRemainingBuildings = GetVulnerableBuildingIDs(GetTeam())
+    if utils.InTable(listRemainingBuildings, TOWER_TOP_1) then building = TOWER_TOP_1
+    elseif utils.InTable(listRemainingBuildings, TOWER_TOP_2) then building = TOWER_TOP_2
+    elseif utils.InTable(listRemainingBuildings, TOWER_TOP_3) then building = TOWER_TOP_3
+    elseif utils.InTable(listRemainingBuildings, BARRACKS_TOP_MELEE) then building = BARRACKS_TOP_MELEE
+    elseif utils.InTable(listRemainingBuildings, BARRACKS_TOP_RANGED) then building = BARRACKS_TOP_RANGED
+    elseif utils.InTable(listRemainingBuildings, TOWER_BASE_1) then building = TOWER_BASE_1
+    elseif utils.InTable(listRemainingBuildings, TOWER_BASE_2) then building = TOWER_BASE_2
+    else building = 0 
+    end
+    
+    local num = 0
+    for k, enemy in pairs(enemyData) do
+        if type(k) == "number" and enemy.Location ~= nil then
+            if building > 0 then
+                if nearBuilding(enemy.Location, GetLocation(GetTeam(), building)) then
+                    num = num + 1
+                end
+            else
+                if nearBuilding(enemy.Location, GetAncient(GetTeam()):GetLocation()) then
+                    num = num + 1
+                end
+            end
+        end
+    end
+    
+    return num >= 3
+end
+
+function DetectEnemyPushBot()
+    enemyData.UpdateEnemyInfo(1.0)
+    
+    local building
+    local listRemainingBuildings = GetVulnerableBuildingIDs(GetTeam())
+    if utils.InTable(listRemainingBuildings, TOWER_BOT_1) then building = TOWER_BOT_1
+    elseif utils.InTable(listRemainingBuildings, TOWER_BOT_2) then building = TOWER_BOT_2
+    elseif utils.InTable(listRemainingBuildings, TOWER_BOT_3) then building = TOWER_BOT_3
+    elseif utils.InTable(listRemainingBuildings, BARRACKS_BOT_MELEE) then building = BARRACKS_BOT_MELEE
+    elseif utils.InTable(listRemainingBuildings, BARRACKS_BOT_RANGED) then building = BARRACKS_BOT_RANGED
+    elseif utils.InTable(listRemainingBuildings, TOWER_BASE_1) then building = TOWER_BASE_1
+    elseif utils.InTable(listRemainingBuildings, TOWER_BASE_2) then building = TOWER_BASE_2
+    else building = 0 
+    end
+    
+    local num = 0
+    for k, enemy in pairs(enemyData) do
+        if type(k) == "number" and enemy.Location ~= nil then
+            if building > 0 then
+                if nearBuilding(enemy.Location, GetLocation(GetTeam(), building)) then
+                    num = num + 1
+                end
+            else
+                if nearBuilding(enemy.Location, GetAncient(GetTeam()):GetLocation()) then
+                    num = num + 1
+                end
+            end
+        end
+    end
+    
+    return num >= 3
+end
+
+local lastPushCheck = -1000.0
+function DetectEnemyPush()
+    local bUpdate, newTime = utils.TimePassed(lastPushCheck, 0.5)
+    if bUpdate then
+        if DetectEnemyPushMid() then return LANE_MID
+        elseif DetectEnemyPushTop() then return LANE_TOP
+        elseif DetectEnemyPushBot() then return LANE_BOT
+        end
+        lastPushCheck = newTime
+    end
+    return nil
 end
     
 

@@ -417,11 +417,11 @@ function X:Determine_ShouldUseGlyph(bot)
     local vulnerableTowers = buildings_status.GetDestroyableTowers(GetTeam())
     for i, building_id in pairs(vulnerableTowers) do
 	    local tower = buildings_status.GetHandle(GetTeam(), building_id)
-	    local nearbyEnemyCreepCount = tower:GetNearbyCreeps(tower:GetAttackRange(), true)
-	    local nearbyHeroCount = tower:GetNearbyHeroes(tower:GetAttackRange(), true, BOT_MODE_NONE);
+	    local listEnemyCreep = tower:GetNearbyCreeps(tower:GetAttackRange(), true)
+	    local listHeroCount = tower:GetNearbyHeroes(tower:GetAttackRange(), true, BOT_MODE_NONE);
 
 	    if tower:GetHealth() < math.max(tower:GetMaxHealth()*0.15, 150) and tower:TimeSinceDamagedByAnyHero() < 3
-	    and tower:TimeSinceDamagedByCreep() < 3 and nearbyEnemyCreepCount >= 2 and nearbyHeroCount >= 1 then
+            and tower:TimeSinceDamagedByCreep() < 3 and #listEnemyCreep >= 2 and #listHeroCount >= 1 then
 		    return true
 	    end
     end
@@ -706,7 +706,10 @@ function X:Determine_ShouldIPushLane(bot)
 end
 
 function X:Determine_ShouldIDefendLane(bot)
-    if global_game_state.DetectEnemyPushMid() then return true end
+    local pushedLane = global_game_state.DetectEnemyPush()
+    if pushedLane then 
+        return true
+    end
     return false
 end
 
@@ -761,21 +764,28 @@ function X:Determine_ShouldGetRune(bot)
 end
 
 function X:Determine_ShouldWard(bot)
-
-    self:setHeroVar("WardPlacedTimer", newTime)
-    local ward = item_usage.HaveWard("item_ward_observer")
-    if ward then
-        local alliedMapWards = GetUnitList(UNIT_LIST_ALLIED_WARDS)
-        if #alliedMapWards < 2 then --FIXME: don't hardcode.. you get more wards then you can use this way
-            local wardLoc = utils.GetWardingSpot(self:getHeroVar("CurLane"))
-            if wardLoc ~= nil and utils.EnemiesNearLocation(bot, wardLoc, 2000) < 2 then
-                self:setHeroVar("WardLocation", wardLoc)
-                utils.InitPath()
-                if self:HasAction(ACTION_WARD) == false then
-                    utils.myPrint("Going to place an Observer Ward")
-                    self:AddAction(ACTION_WARD)
+    local wardPlacedTimer = self:getHeroVar("WardPlacedTimer")
+    local bCheck = true
+    local newTime = GameTime()
+    if wardPlacedTimer ~= nil then
+        bCheck, newTime = utils.TimePassed(wardPlacedTimer, 0.5)
+    end
+    if bCheck then
+        self:setHeroVar("WardPlacedTimer", newTime)
+        local ward = item_usage.HaveWard("item_ward_observer")
+        if ward then
+            local alliedMapWards = GetUnitList(UNIT_LIST_ALLIED_WARDS)
+            if #alliedMapWards < 2 then --FIXME: don't hardcode.. you get more wards then you can use this way
+                local wardLoc = utils.GetWardingSpot(self:getHeroVar("CurLane"))
+                if wardLoc ~= nil and utils.EnemiesNearLocation(bot, wardLoc, 2000) < 2 then
+                    self:setHeroVar("WardLocation", wardLoc)
+                    utils.InitPath()
+                    if self:HasAction(ACTION_WARD) == false then
+                        utils.myPrint("Going to place an Observer Ward")
+                        self:AddAction(ACTION_WARD)
+                    end
+                    return true
                 end
-                return true
             end
         end
     end

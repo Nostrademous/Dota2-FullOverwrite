@@ -3,6 +3,7 @@ module( "global_game_state", package.seeall )
 
 require( GetScriptDirectory().."/buildings_status" )
 local utils = require( GetScriptDirectory().."/utility" )
+local enemyData = require( GetScriptDirectory().."/enemy_data" )
 
 -- Returns the closest building of team to a unit
 function GetClosestBuilding(unit, team)
@@ -29,5 +30,42 @@ function GetPositionBetweenBuildings(unit, team)
     return d_allied / (d_allied + d_enemy)
 end
 
+function nearBuilding(unitLoc, building)
+    return utils.GetDistance(unitLoc, building) <= 500
+end
+
+-- Detect if a tower is being pushed
+function DetectEnemyPushMid()
+    enemyData.UpdateEnemyInfo(1.0)
+    
+    local building
+    local listRemainingBuildings = GetVulnerableBuildingIDs(GetTeam())
+    if utils.InTable(listRemainingBuildings, TOWER_MID_1) then building = TOWER_MID_1
+    elseif utils.InTable(listRemainingBuildings, TOWER_MID_2) then building = TOWER_MID_2
+    elseif utils.InTable(listRemainingBuildings, TOWER_MID_3) then building = TOWER_MID_3
+    elseif utils.InTable(listRemainingBuildings, BARRACKS_MID_MELEE) then building = BARRACKS_MID_MELEE
+    elseif utils.InTable(listRemainingBuildings, BARRACKS_MID_RANGED) then building = BARRACKS_MID_RANGED
+    elseif utils.InTable(listRemainingBuildings, TOWER_BASE_1) then building = TOWER_BASE_1
+    elseif utils.InTable(listRemainingBuildings, TOWER_BASE_2) then building = TOWER_BASE_2
+    else building = 0 end
+    
+    local num = 0
+    for k, enemy in pairs(enemyData) do
+        if type(k) == "number" and enemy.Location ~= nil then
+            if building > 0 then
+                if nearBuilding(enemy.Location, GetLocation(GetTeam(), building)) then
+                    num = num + 1
+                end
+            else
+                if nearBuilding(enemy.Location, GetAncient(GetTeam()):GetLocation()) then
+                    num = num + 1
+                end
+            end
+        end
+    end
+    
+    return num >= 3
+end
+    
 
 for k,v in pairs( global_game_state ) do _G._savedEnv[k] = v end

@@ -92,7 +92,7 @@ function UseRegenItems()
         if faerie ~= nil then
             if (npcBot:GetHealth()/npcBot:GetMaxHealth()) < 0.15 and (utils.IsTowerAttackingMe(2.0) or utils.IsAnyHeroAttackingMe(1.0)) then
                 npcBot:Action_UseAbility(faerie)
-                return nil;
+                return nil
             end
         end
 
@@ -209,11 +209,7 @@ function UseBuffItems()
         return nil
     end
     
-    local tok = utils.HaveItem(npcBot, "item_tome_of_knowledge")
-    if tok ~= nil then
-        npcBot:Action_UseAbility(tok)
-        return nil
-    end
+    UseTomeOfKnowledge()
 end
 
 function UseTP()
@@ -305,6 +301,15 @@ function UseSilverEdge()
     local se = utils.HaveItem(bot, "item_silver_edge")
     if se ~= nil and se:IsFullyCastable() then
         bot:Action_UseAbility(se)
+        return nil
+    end
+end
+
+function UseTomeOfKnowledge()
+    local bot = GetBot()
+    local tok = utils.HaveItem(bot, "item_tome_of_knowledge")
+    if tok ~= nil then
+        bot:Action_UseAbility(tok)
         return nil
     end
 end

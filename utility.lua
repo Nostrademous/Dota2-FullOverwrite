@@ -1396,31 +1396,26 @@ function U.CourierThink(npcBot)
 
     local courier = GetCourier(0)
     --[[
-    if GetCourierState(courier) ~= COURIER_STATE_IDLE and GetCourierState(courier) ~= COURIER_STATE_AT_BASE and GetCourierState(courier) ~= COURIER_STATE_DEAD then
-        U.myPrint("BURST")
-        npcBot:Action_Courier(GetCourier(0), COURIER_ACTION_BURST+1)
+    if GetCourierState(courier) ~= COURIER_STATE_IDLE and GetCourierState(courier) ~= COURIER_STATE_DEAD then
+        npcBot:Action_Courier(GetCourier(0), COURIER_ACTION_BURST)
     end
     --]]
     
     if npcBot:IsAlive() and (npcBot:GetStashValue() > 500 or npcBot:GetCourierValue() > 0 or U.HasImportantItem()) and IsCourierAvailable() then
-        npcBot:Action_Courier(courier, 6) --COURIER_ACTION_TAKE_AND_TRANSFER_ITEMS+1)
+        npcBot:Action_Courier(courier, COURIER_ACTION_TAKE_AND_TRANSFER_ITEMS)
         return
     end
     
-    --[[
     if GetCourierState(courier) ~= COURIER_STATE_DEAD and GetCourierState(courier) ~= COURIER_STATE_DELIVERING_ITEMS and
-        GetCourierState(courier) ~= COURIER_STATE_MOVING and GetCourierState(courier) ~= COURIER_STATE_AT_BASE then
-        U.myPrint("RETURN")
-        npcBot:Action_Courier(courier, COURIER_ACTION_RETURN+1)
+        GetCourierState(courier) ~= COURIER_STATE_MOVING and GetCourierState(courier) ~= COURIER_STATE_IDLE then
+        npcBot:Action_Courier(courier, COURIER_ACTION_RETURN)
         return
     end
     
     if GetCourierState(courier) ~= COURIER_STATE_DEAD and GetCourierState(courier) == COURIER_STATE_AT_BASE and
         (not npcBot:IsAlive()) and npcBot:GetCourierValue() > 0 then
-        U.myPrint("STASH")
-        npcBot:Action_Courier(courier, COURIER_ACTION_STASH_ITEMS+1)
+        npcBot:Action_Courier(courier, COURIER_ACTION_RETURN_STASH_ITEMS)
     end
-    --]]
 end
 
 -------------------------------------------------------------------------------

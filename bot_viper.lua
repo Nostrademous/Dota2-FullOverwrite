@@ -48,7 +48,6 @@ viperBot.Init = false
 
 function viperBot:DoHeroSpecificInit(bot)
     self:setHeroVar("HasOrbAbility", SKILL_Q)
-    self:setHeroVar("OutOfRangeCasting", -1000.0)
 end
 
 function viperBot:ConsiderAbilityUse()

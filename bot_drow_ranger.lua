@@ -61,7 +61,6 @@ drowRangerBot.Init = false
 
 function drowRangerBot:DoHeroSpecificInit(bot)
     self:setHeroVar("HasOrbAbility", SKILL_Q)
-    self:setHeroVar("OutOfRangeCasting", -1000.0)
 end
 
 function drowRangerBot:ConsiderAbilityUse()

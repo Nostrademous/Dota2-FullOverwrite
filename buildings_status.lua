@@ -99,19 +99,19 @@ function Update(forceUpdate)
         Initialize()
     end
     if DotaTime() - lastUpdate < 0.5 then
-        if forceUpdate == nil or forceUpdate == False then return end
+        if (not forceUpdate) then return end
     end
     lastUpdate = DotaTime()
     for i, _ in ipairs(tableBuildings[TEAM_RADIANT]) do
-        GetHealth(TEAM_RADIANT, i, False)
+        GetHealth(TEAM_RADIANT, i, false)
     end
     for i, _ in ipairs(tableBuildings[TEAM_DIRE]) do
-        GetHealth(TEAM_DIRE, i, False)
+        GetHealth(TEAM_DIRE, i, false)
     end
 end
 
 function GetHealth(team, id, cacheOnly)
-    if cacheOnly == nil then cacheOnly = True end
+    cacheOnly = cacheOnly or true
     local seen = tableBuildings[team][id].LastSeenHealth
     if cacheOnly then return seen end
     if seen <= 0 then return -1 end

@@ -22,14 +22,22 @@ local skills = {
     }
 }
 
-function sortAbilitiesByDamage(skills, duration)
+function sortAbilitiesByDamage(skills, target)
     local abilities = {}
     for k,v in ipairs(skills) do
         table.insert(abilities, bot:GetAbilityByName())
     end
     
     for k,v in ipairs(abilities) do
-        
+        if v:IsPassive() then
+            print(v:GetName().." is Passive")
+            v.actualDmg = 0
+        else
+            local abilityDmg = v:GetAbilityDamage()
+            local dmgType = v:GetDamageType()
+            print(v:GetName().." dmg: "..abilityDmg.. ", Type: "..dmgType)
+            v.actualDmg = target:GetActualDamage(abilityDmg, dmgType)
+        end
     end
 end
 

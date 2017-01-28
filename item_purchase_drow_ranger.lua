@@ -9,7 +9,7 @@ local item_purchase = require( GetScriptDirectory().."/item_purchase_generic_tes
 
 local ItemsToBuyAsHardCarry = {StartingItems = {
         "item_slippers",
-        "item_circlet",
+        "item_flask",
         "item_tango",
         "item_branches",
         "item_branches",

@@ -1166,21 +1166,22 @@ function U.IsCreepAttackingMe(fTime)
 end
 
 -- returns a VECTOR() with location being the center point of provided hero array
-function U.GetCenter(Heroes)
-    if Heroes==nil or #Heroes==0 then
-        return nil;
+function U.GetCenter(Heroes, delay)
+    local delay = delay or 0
+    if Heroes == nil or #Heroes == 0 then
+        return nil
     end
 
-    local sum=Vector(0.0,0.0);
-    local hn=0.0;
+    local sum = Vector(0.0, 0.0)
+    local hn = 0.0
 
     for _,hero in pairs(Heroes) do
-        if hero~=nil and hero:IsAlive() then
-            sum=sum+hero:GetLocation();
-            hn=hn+1;
+        if hero ~= nil and hero:IsAlive() then
+            sum = sum + hero:GetExtrapolatedLocation(delay)
+            hn = hn + 1
         end
     end
-    return sum/hn;
+    return sum/hn
 end
 
 -- takes a "RANGE", returns hero handle and health value of that hero

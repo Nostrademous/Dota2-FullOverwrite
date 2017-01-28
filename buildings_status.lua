@@ -166,7 +166,7 @@ end
 function GetDestroyableTowers(team)
     ids = {}
     for _, id in pairs(towers) do
-        if GetHealth(team, id) > -1 and (not GetHandle(team, id):IsInvulnerable()) then
+        if GetHealth(team, id) > -1 and GetHandle(team, id) ~= nil and (not GetHandle(team, id):IsInvulnerable()) then
             ids[#ids+1] = id
         end
     end

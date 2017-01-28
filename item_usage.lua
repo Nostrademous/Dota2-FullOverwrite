@@ -102,6 +102,7 @@ function UseRegenItems()
                 local tree = utils.GetNearestTree(npcBot)
                 if tree ~= nil then
                     npcBot:Action_UseAbilityOnTree(tango_shared, tree)
+                    return true
                 end
             end
         end
@@ -112,6 +113,7 @@ function UseRegenItems()
                 local tree = utils.GetNearestTree(npcBot)
                 if tree ~= nil then
                     npcBot:Action_UseAbilityOnTree(tango, tree)
+                    return true
                 end
             end
         end
@@ -262,9 +264,14 @@ function UseItems()
     end
 
     UseBuffItems()
-    UseRegenItems()
+    
+    local bRet = UseRegenItems()
+    if bRet then return true end
+    
     UseTeamItems()
+    
     UseTP()
+    
 
     local courier = utils.IsItemAvailable("item_courier")
     if courier ~= nil then

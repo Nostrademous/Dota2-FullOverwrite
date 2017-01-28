@@ -74,7 +74,7 @@ local function FindCamp(bot)
         local listAllies = GetUnitList(UNIT_LIST_ALLIED_HEROES)
         for _, ally in pairs(listAllies) do
             local allyID = ally:GetPlayerID()
-            if allyID ~= bot:GetPlayerID() then
+            if allyID ~= bot:GetPlayerID() and gHeroVar.HasID(allyId) then
                 local allyCamp = gHeroVar.GetVar(allyID, "currentCamp")
                 if not (allyCamp == nil or allyCamp ~= camp) then
                     utils.myPrint(utils.GetHeroName(ally), "took nearest camp, going to another")

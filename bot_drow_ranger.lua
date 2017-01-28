@@ -176,6 +176,7 @@ function drowRangerBot:HarassLaneEnemies(bot)
     local target = Enemies[#Enemies] -- get highest health enemy
     local frostArrow = bot:GetAbilityByName(SKILL_Q)
     
+	if self:GetAction() == constants.ACTION_RETREAT then return end
 	if target == nil then return end
 	
 	if(frostArrow ~= nil) and (frostArrow:IsFullyCastable()) then

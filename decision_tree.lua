@@ -332,8 +332,9 @@ function X:Think(bot)
         if bRet then return end
     end
 
-    if ( self:Determine_ShouldIDefendLane(bot) ) then
-        local bRet = self:DoDefendLane(bot)
+    local lane = self:Determine_ShouldIDefendLane(bot)
+    if ( lane ) then
+        local bRet = self:DoDefendLane(bot, lane)
         if bRet then return end
     end
 
@@ -418,10 +419,11 @@ function X:Determine_ShouldUseGlyph(bot)
     for i, building_id in pairs(vulnerableTowers) do
 	    local tower = buildings_status.GetHandle(GetTeam(), building_id)
 	    local listEnemyCreep = tower:GetNearbyCreeps(tower:GetAttackRange(), true)
-	    local listHeroCount = tower:GetNearbyHeroes(tower:GetAttackRange(), true, BOT_MODE_NONE);
+	    local listHeroCount = tower:GetNearbyHeroes(tower:GetAttackRange(), true, BOT_MODE_NONE)
 
 	    if tower:GetHealth() < math.max(tower:GetMaxHealth()*0.15, 150) and tower:TimeSinceDamagedByAnyHero() < 3
-            and tower:TimeSinceDamagedByCreep() < 3 and #listEnemyCreep >= 2 and #listHeroCount >= 1 then
+            and tower:TimeSinceDamagedByCreep() < 3 and (listEnemyCreep and #listEnemyCreep >= 2) 
+            and (listHeroCount and #listHeroCount >= 1) then
 		    return true
 	    end
     end
@@ -706,11 +708,7 @@ function X:Determine_ShouldIPushLane(bot)
 end
 
 function X:Determine_ShouldIDefendLane(bot)
-    local pushedLane = global_game_state.DetectEnemyPush()
-    if pushedLane then 
-        return true
-    end
-    return false
+    return global_game_state.DetectEnemyPush()
 end
 
 function X:Determine_ShouldGank(bot)
@@ -755,6 +753,7 @@ function X:Determine_ShouldGetRune(bot)
                 utils.myPrint(" STARTING TO GET RUNE ")
                 self:AddAction(ACTION_RUNEPICKUP)
                 setHeroVar("RuneTarget", r)
+                setHeroVar("RuneLoc", loc)
             end
         end
     end
@@ -1031,8 +1030,8 @@ function X:DoPushLane(bot)
     return false
 end
 
-function X:DoDefendLane(bot)
-    utils.myPrint("Need to defend Mid!")
+function X:DoDefendLane(bot, lane)
+    utils.myPrint("Need to defend lane: ", lane)
     return false
 end
 
@@ -1086,13 +1085,27 @@ function X:DoRoshan(bot)
 end
 
 function X:DoGetRune(bot)
-    local rt = getHeroVar("RuneTarget")
-    if rt ~= nil and GetRuneStatus(rt) ~= RUNE_STATUS_MISSING then
-        bot:Action_PickUpRune(getHeroVar("RuneTarget"))
-        return true
+    local runeLoc = self:getHeroVar("RuneLoc")
+    if runeLoc == nil then
+        self:setHeroVar("RuneTarget", nil)
+        self:setHeroVar("RuneLoc", nil)
+        self:RemoveAction(ACTION_RUNEPICKUP)
+        return false
     end
-    self:setHeroVar("RuneTarget", nil)
-    self:RemoveAction(ACTION_RUNEPICKUP)
+    local dist = utils.GetDistance(bot:GetLocation(), runeLoc)
+    if dist > 500 then
+        bot:Action_MoveToLocation(runeLoc)
+        return true
+    else
+        local rt = self:getHeroVar("RuneTarget")
+        if rt ~= nil and GetRuneStatus(rt) ~= RUNE_STATUS_MISSING then
+            bot:Action_PickUpRune(self:getHeroVar("RuneTarget"))
+            return true
+        end
+        self:setHeroVar("RuneTarget", nil)
+        self:setHeroVar("RuneLoc", nil)
+        self:RemoveAction(ACTION_RUNEPICKUP)
+    end
     return false
 end
 

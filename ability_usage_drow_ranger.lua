@@ -78,15 +78,16 @@ local function UseW()
     local enemy = getHeroVar("Target")
     if enemy == nil then return false end
 
-    if #Enemies == 1 then
-        local wave_speed = gust:GetSpecialValueFloat("wave_speed")
-        local delay = gust:GetCastPoint() + GetUnitToUnitDistance(npcBot, Enemies[1])/wave_speed
+    local wave_speed = gust:GetSpecialValueFloat("wave_speed")
+    local delay = gust:GetCastPoint() + GetUnitToUnitDistance(npcBot, Enemies[1])/wave_speed
+    
+    if #Enemies == 1 then    
         if (not enemy:IsSilenced()) or (not enemy:IsRooted()) or (not enemy:IsStunned()) and (not enemy:IsMagicImmune()) and GetUnitToUnitDistance(npcBot, Enemies[1]) < 350 then
             npcBot:Action_UseAbilityOnLocation(gust, Enemies[1]:GetExtrapolatedLocation(delay))
             return true
         end
     else
-        local center = utils.GetCenter(Enemies)
+        local center = utils.GetCenter(Enemies, delay)
         if center ~= nil then
             npcBot:Action_UseAbilityOnLocation(gust, center)
             return true

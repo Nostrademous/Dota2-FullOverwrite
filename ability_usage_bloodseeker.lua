@@ -44,13 +44,13 @@ local function UseW()
     if target ~= nil and GetUnitToUnitDistance(npcBot, target) > 1500 then
         return false
     end
-
+    
+    local delay = ability:GetSpecialValueFloat("delay_plus_castpoint_tooltip")
     if #Enemies == 1 then
-        local delay = ability:GetSpecialValueFloat("delay_plus_castpoint_tooltip")
         npcBot:Action_UseAbilityOnLocation(ability, Enemies[1]:GetExtrapolatedLocation(delay))
         return true
     else
-        local center = utils.GetCenter(Enemies)
+        local center = utils.GetCenter(Enemies, delay)
         if center ~= nil then
             npcBot:Action_UseAbilityOnLocation(ability, center)
             return true

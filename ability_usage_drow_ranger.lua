@@ -119,7 +119,7 @@ local function UseE()
 
     end
 
-    if (towersNearby ~= nil and #alliedCreeps > 5) then
+    if (towersNearby ~= nil and #alliedCreeps > 3) then
         npcBot:Action_UseAbility(trueshot)
         return true
     end

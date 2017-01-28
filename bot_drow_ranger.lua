@@ -176,15 +176,23 @@ function drowRangerBot:HarassLaneEnemies(bot)
     local target = Enemies[#Enemies] -- get highest health enemy
     local frostArrow = bot:GetAbilityByName(SKILL_Q)
     
+	if target == nil then return end
+	
 	if(frostArrow ~= nil) and (frostArrow:IsFullyCastable()) then
-        if target ~= nil and GetUnitToUnitDistance(bot, target) < frostArrow:GetCastRange() and self:GetAction() ~= constants.ACTION_RETREAT then
-            local slowed =  target:HasModifier("modifier_drow_ranger_frost_arrows_slow")
-
-            if (not slowed) and (not target:IsRooted()) or (not target:IsStunned()) and (not target:IsMagicImmune())
+        if GetUnitToUnitDistance(bot, target) < frostArrow:GetCastRange() and self:GetAction() ~= constants.ACTION_RETREAT then
+            if (not target:IsRooted()) or (not target:IsStunned()) and (not target:IsMagicImmune())
                 and bot:GetMana() < math.max(bot:GetMaxMana()*0.40, 180) then
                 bot:Action_UseAbilityOnEntity(frostArrow, target)
             end
             bot:Action_AttackUnit(target, false)
         end
     end
+	
+    if target:GetHealth() < math.max(target:GetMaxHealth()*0.50, 400) then   
+        self:AddAction(ACTION_FIGHT)
+        self:setHeroVar("Target", target)
+    else
+	    self:RemoveAction(ACTION_FIGHT)
+		self:setHeroVar("Target", nil)
+	end
 end

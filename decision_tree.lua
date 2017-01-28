@@ -245,8 +245,9 @@ function X:Think(bot)
     end
 
     -- FIXME - right place?
-    self:ConsiderItemUse()
-
+    local bRet = self:ConsiderItemUse()
+    if bRet then return end
+    
     -- Check if we are stuck
     if GetGameState() == GAME_STATE_GAME_IN_PROGRESS then
         local curLoc = bot:GetLocation()
@@ -408,10 +409,8 @@ end
 -------------------------------------------------
 
 function X:ConsiderItemUse()
-    local timeInfo = item_usage.UseItems()
-    if timeInfo ~= nil then
-        print( "X:ConsiderItemUse() TimeInfo: ", timeInfo )
-    end
+    local bRet = item_usage.UseItems()
+    return bRet
 end
 
 function X:Determine_ShouldUseGlyph(bot)

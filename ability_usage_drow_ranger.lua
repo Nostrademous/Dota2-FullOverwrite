@@ -52,7 +52,7 @@ local function UseQ()
 
     if (npcBot:GetMana()/npcBot:GetMaxMana()) > 0.5 and #Enemies > 0 and #Enemies < 3 and (getHeroVar("OutOfRangeCasting") + frostArrow:GetCastPoint()) < GameTime() then
         local weakestHero, weakestHeroHealth = utils.GetWeakestHero(npcBot, frostArrow:GetCastRange() + 100)
-        if weakestHero ~= nil and (not weakestHero:IsRooted()) or (not weakestHero:IsStunned()) and (not target:IsMagicImmune()) and (not target:IsRooted()) then
+        if weakestHero ~= nil and (not weakestHero:IsRooted()) or (not weakestHero:IsStunned()) and (not weakestHero:IsMagicImmune()) then
             npcBot:Action_UseAbilityOnEntity(frostArrow, weakestHero)
             setHeroVar("OutOfRangeCasting", GameTime())
             return true

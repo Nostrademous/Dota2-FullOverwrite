@@ -183,7 +183,7 @@ function X:DoHeroSpecificInit(bot)
 end
 
 function X:Think(bot)
-    if ( GetGameState() == GAME_STATE_TEAM_SHOWCASE ) then
+    if ( GetGameState() == GAME_STATE_PRE_GAME ) then
         if not self.Init then
             self:DoInit(bot)
         end
@@ -1093,7 +1093,10 @@ function X:DoGetRune(bot)
         return false
     end
     local dist = utils.GetDistance(bot:GetLocation(), runeLoc)
-    if dist > 500 then
+    local timeInMinutes = math.floor(DotaTime() / 60)
+    local seconds = DotaTime() % 60
+	
+    if dist > 500 and timeInMinutes % 2 == 1 and seconds > 54 and self:getHeroVar("Role") ~= ROLE_HARDCARRY then 
         bot:Action_MoveToLocation(runeLoc)
         return true
     else

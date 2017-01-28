@@ -1107,10 +1107,12 @@ function U.GetWeakestCreep(creeps)
     for _,creep in pairs(creeps) do
         U.UpdateCreepHealth(creep)
         if creep:IsAlive() then
-            if creep:GetHealth()<LowestHealth then
-                LowestHealth=creep:GetHealth();
-                WeakestCreep=creep;
-            end
+            if creep:GetHealth() ~= creep:GetMaxHealth() then
+                if creep:GetHealth()<LowestHealth then
+                    LowestHealth=creep:GetHealth();
+                    WeakestCreep=creep;
+                end
+			end
         end
     end
 
@@ -1415,6 +1417,16 @@ function U.CourierThink(npcBot)
     if GetCourierState(courier) ~= COURIER_STATE_DEAD and GetCourierState(courier) == COURIER_STATE_AT_BASE and
         (not npcBot:IsAlive()) and npcBot:GetCourierValue() > 0 then
         npcBot:Action_Courier(courier, COURIER_ACTION_RETURN_STASH_ITEMS)
+    end
+end
+
+function U.GetNearestTree(npcBot)
+	local trees = npcBot:GetNearbyTrees(1200)
+	
+	for _, tree in ipairs(trees) do
+        if GetUnitToLocationDistance(npcBot, GetTreeLocation(tree)) < 700 then
+            return tree
+        end
     end
 end
 

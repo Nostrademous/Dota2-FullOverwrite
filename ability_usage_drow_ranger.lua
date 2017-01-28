@@ -45,14 +45,14 @@ local function UseQ()
 
     local target = getHeroVar("Target") -- get highest health enemy
 
-    if target ~= nil and GetUnitToUnitDistance(npcBot, target) < frostArrow:GetCastRange() and (not target:IsRooted()) or (not target:IsStunned()) then
+    if target ~= nil and GetUnitToUnitDistance(npcBot, target) < frostArrow:GetCastRange() and (not target:IsRooted()) or (not target:IsStunned()) and (not target:IsMagicImmune())then
         npcBot:Action_UseAbilityOnEntity(frostArrow, target)
         return true
     end
 
     if (npcBot:GetMana()/npcBot:GetMaxMana()) > 0.5 and #Enemies > 0 and #Enemies < 3 and (getHeroVar("OutOfRangeCasting") + frostArrow:GetCastPoint()) < GameTime() then
         local weakestHero, weakestHeroHealth = utils.GetWeakestHero(npcBot, frostArrow:GetCastRange() + 100)
-        if weakestHero ~= nil and (not weakestHero:IsRooted()) or (not weakestHero:IsStunned()) then
+        if weakestHero ~= nil and (not weakestHero:IsRooted()) or (not weakestHero:IsStunned()) and (not target:IsMagicImmune()) and (not target:IsRooted()) then
             npcBot:Action_UseAbilityOnEntity(frostArrow, weakestHero)
             setHeroVar("OutOfRangeCasting", GameTime())
             return true
@@ -81,7 +81,7 @@ local function UseW()
     if #Enemies == 1 then
         local wave_speed = gust:GetSpecialValueFloat("wave_speed")
         local delay = gust:GetCastPoint() + GetUnitToUnitDistance(npcBot, Enemies[1])/wave_speed
-        if (not enemy:IsSilenced()) or (not enemy:IsRooted()) or (not enemy:IsStunned()) and GetUnitToUnitDistance(npcBot, Enemies[1]) < 350 then
+        if (not enemy:IsSilenced()) or (not enemy:IsRooted()) or (not enemy:IsStunned()) and (not enemy:IsMagicImmune()) and GetUnitToUnitDistance(npcBot, Enemies[1]) < 350 then
             npcBot:Action_UseAbilityOnLocation(gust, Enemies[1]:GetExtrapolatedLocation(delay))
             return true
         end
@@ -100,7 +100,7 @@ local function UseE()
     local npcBot = GetBot()
 
     local trueshot = npcBot:GetAbilityByName(Abilities[3])
-
+	
     if (trueshot == nil) or (not trueshot:IsFullyCastable()) then
         return false
     end
@@ -119,7 +119,7 @@ local function UseE()
 
     end
 
-    if (towersNearby ~= nil and #alliedCreeps > 2) then
+    if (towersNearby ~= nil and #alliedCreeps > 3) then
         npcBot:Action_UseAbility(trueshot)
         return true
     end

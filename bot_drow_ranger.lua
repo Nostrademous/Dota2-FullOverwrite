@@ -180,7 +180,7 @@ function drowRangerBot:HarassLaneEnemies(bot)
         if target ~= nil and GetUnitToUnitDistance(bot, target) < frostArrow:GetCastRange() and self:GetAction() ~= constants.ACTION_RETREAT then
             local slowed =  target:HasModifier("modifier_drow_ranger_frost_arrows_slow")
 
-            if (not slowed) and (not target:IsRooted()) or (not target:IsStunned()) or (not target:IsMagicImmune())
+            if (not slowed) and (not target:IsRooted()) or (not target:IsStunned()) and (not target:IsMagicImmune())
                 and bot:GetMana() < math.max(bot:GetMaxMana()*0.40, 180) then
                 bot:Action_UseAbilityOnEntity(frostArrow, target)
             end

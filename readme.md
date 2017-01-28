@@ -101,16 +101,24 @@ Current Files:
 	melee. Need to improve and change logic based on utility.lua->IsMelee() 
 	in the future.
 	
-* **retreat_generic.lua** - draft implementation of retreating when taking damage 
-	from tower, creeps, or heroes/overall. There are BUGS in here with logic 
-	as I see bots say they are RETREATING but sometimes they just stand in place.
+* **retreat_generic.lua** - implementation of retreating when taking damage 
+	from tower, creeps, or heroes/overall. Calculations regarding maximum damage
+    bot could take when under a perfectly overlapping stun/slow combo from enemy
+    is accounted for. Logic for proper "retreat" path is we are being flanked
+    is still missing.
 	
+* **jungling_generic.lua** - implementation for jungling is in. Bot will rotate 
+    across all camps on team's side of river based on what difficulty level he can
+    handle as defined by code conditoins at the time. Support for up to two 
+    simultaneous junglers is in. "Retreat" code for "creep damage reasons" is 
+    over-written when jungling.
+
 * **item_usage.lua** - this implements basic and generic use of items. It is very 
 	limited for now to use of clarity, salve, bottle, TPs, arcane boots (not 
 	efficiently -> doesn't care about allies being in range). Needs to be 
 	largely implemented still.
 
-* **generic_item_purchase.lua** - this is a generic class for all hero-specific 
+* **generic_item_purchase_test.lua** - this is a generic class for all hero-specific 
 	item purchase files (e.g., item_purchase_lina.lua) that actually does all 
 	the work of buying the item when appropriate. It is named as such to not 
 	interfere with "item_purchase_generic.lua" which if exists in the bots/ 
@@ -136,14 +144,12 @@ TODOs/FIXMEs:
 -------------
 
 Lots, we need :
-- fighting logic
-- rune logic
-- ward logic
-- tower attack logic 
+- **advanced** fighting logic
 - ally defend logic
 - tower defend logic
 - bot 5-man assembly logic
 - roshan logic, etc.
-- item_purchasing for heroes and lots more heroes.
+- **dynamic** item purchasing for heroes 
+- implement lots more heroes
 
 Some FIXMEs are commented in code - I add them as a tag to get back to with ideas.

@@ -3,10 +3,6 @@
 --- GITHUB REPO: https://github.com/Nostrademous/Dota2-FullOverwrite
 -------------------------------------------------------------------------------
 
---[[
-require( GetScriptDirectory().."/generic_item_purchase" )
---]]
-
 local item_purchase = require( GetScriptDirectory().."/item_purchase_generic_test" )
 
 ----------------------------------------------------------------------------------------------------

@@ -587,23 +587,15 @@ function U.LevelUp(bot, AbilityPriority)
     local ability = bot:GetAbilityByName(AbilityPriority[1])
 
     if ( ability == nil ) then
-        print( getHeroVar("Name") .. " FAILED AT Leveling " .. AbilityPriority[1] )
+        U.myPrint(" FAILED AT Leveling " .. AbilityPriority[1] )
         table.remove( AbilityPriority, 1 )
         return
     end
 
     if ( ability:CanAbilityBeUpgraded() and ability:GetLevel() < ability:GetMaxLevel() ) then
         bot:Action_LevelAbility(AbilityPriority[1])
-        print( getHeroVar("Name") .. " Leveling " .. ability:GetName() )
+        U.myPrint( " Leveling " .. ability:GetName() )
         table.remove( AbilityPriority, 1 )
-
-        local aName = ability:GetName()
-        local start, finish = string.find(aName, "respawn_reduction_")
-        if finish ~= nil then
-            local num = string.sub(aName, finish+1, string.len(aName))
-            num = tonumber(num)
-            setHeroVar("RespawnAdjustment", num)
-        end
     end
 end
 

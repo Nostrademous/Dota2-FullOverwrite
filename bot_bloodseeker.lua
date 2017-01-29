@@ -39,8 +39,8 @@ local BLOODSEEKER_ABILITY8 = "special_bonus_lifesteal_30"
 
 local BloodseekerAbilityPriority = {
     BLOODSEEKER_SKILL_Q,    BLOODSEEKER_SKILL_E,    BLOODSEEKER_SKILL_Q,    BLOODSEEKER_SKILL_E,    BLOODSEEKER_SKILL_Q,
-    BLOODSEEKER_SKILL_R,    BLOODSEEKER_SKILL_W,    BLOODSEEKER_SKILL_E,    BLOODSEEKER_SKILL_W,    BLOODSEEKER_ABILITY2,
-    BLOODSEEKER_SKILL_Q,    BLOODSEEKER_SKILL_R,    BLOODSEEKER_SKILL_W,    BLOODSEEKER_SKILL_W,    BLOODSEEKER_ABILITY3,
+    BLOODSEEKER_SKILL_R,    BLOODSEEKER_SKILL_W,    BLOODSEEKER_SKILL_E,    BLOODSEEKER_SKILL_Q,    BLOODSEEKER_ABILITY2,
+    BLOODSEEKER_SKILL_W,    BLOODSEEKER_SKILL_R,    BLOODSEEKER_SKILL_W,    BLOODSEEKER_SKILL_W,    BLOODSEEKER_ABILITY3,
     BLOODSEEKER_SKILL_E,    BLOODSEEKER_SKILL_R,    BLOODSEEKER_ABILITY5,   BLOODSEEKER_ABILITY8
 };
 
@@ -83,7 +83,7 @@ function bloodseekerBot:DoRetreat(bot, reason)
     -- if we got creep damage and are a JUNGLER do special stuff
     local pushing = getHeroVar("ShouldPush")
 
-    local bloodrage = bot:GetAbilityByName("bloodseeker_bloodrage")
+    local bloodrage = bot:GetAbilityByName(BLOODSEEKER_SKILL_Q)
     local bloodragePct =  bloodrage:GetSpecialValueInt("health_bonus_creep_pct")/100
 
     local neutrals = bot:GetNearbyCreeps(700,true)
@@ -105,15 +105,15 @@ function bloodseekerBot:DoRetreat(bot, reason)
     if reason == constants.RETREAT_CREEP and (self:GetAction() ~= constants.ACTION_LANING or pushing) then
         -- if our health is lower than maximum( 15% health, 100 health )
         if bot:GetHealth() < healthThreshold then
-			local totalCreepDamage = 0;
-		
-			for i, neutral in ipairs(neutrals) do
-				local estimatedNCDamage =  neutral:GetEstimatedDamageToTarget(true, bot, neutral:GetAttackSpeed(), DAMAGE_TYPE_PHYSICAL)
-				totalCreepDamage = (totalCreepDamage + estimatedNCDamage) 
-			end
-			
-            if (estimatedDamage < neutrals[1]:GetHealth()) and (bot:GetHealth() + bloodrageHeal) < healthThreshold 
-			and (bot:GetHealth() < totalCreepDamage) then
+            local totalCreepDamage = 0;
+
+            for i, neutral in ipairs(neutrals) do
+                local estimatedNCDamage =  neutral:GetEstimatedDamageToTarget(true, bot, neutral:GetAttackSpeed(), DAMAGE_TYPE_PHYSICAL)
+                totalCreepDamage = (totalCreepDamage + estimatedNCDamage)
+            end
+
+            if (estimatedDamage < neutrals[1]:GetHealth()) and (bot:GetHealth() + bloodrageHeal) < healthThreshold
+            and (bot:GetHealth() < totalCreepDamage) then
                 setHeroVar("RetreatReason", constants.RETREAT_FOUNTAIN)
                 if ( self:HasAction(constants.ACTION_RETREAT) == false ) then
                     self:AddAction(constants.ACTION_RETREAT)
@@ -145,7 +145,7 @@ function bloodseekerBot:GetMaxClearableCampLevel(bot)
         return constants.CAMP_EASY
     end
 
-    local bloodrage = bot:GetAbilityByName("bloodseeker_bloodrage")
+    local bloodrage = bot:GetAbilityByName(BLOODSEEKER_SKILL_Q)
     if bloodrage:GetLevel() >= 4 then
         return constants.CAMP_ANCIENT
     elseif utils.HaveItem(bot, "item_iron_talon") and bloodrage:GetLevel() >= 2 then
@@ -156,14 +156,14 @@ function bloodseekerBot:GetMaxClearableCampLevel(bot)
 end
 
 function bloodseekerBot:IsReadyToGank(bot)
-    local rupture = bot:GetAbilityByName("bloodseeker_rupture")
-        local thirst = bot:GetAbilityByName("bloodseeker_thirst")
-    return rupture:IsFullyCastable() or thirst:GetLevel() >= 3
+    local rupture = bot:GetAbilityByName(BLOODSEEKER_SKILL_R)
+    local thirst = bot:GetAbilityByName(BLOODSEEKER_SKILL_E)
+    return rupture:IsFullyCastable() or thirst:GetLevel() >= 2
 end
 
 function bloodseekerBot:DoCleanCamp(bot, neutrals)
     local bloodraged =  bot:HasModifier("modifier_bloodseeker_bloodrage")
-    local bloodrage = bot:GetAbilityByName("bloodseeker_bloodrage")
+    local bloodrage = bot:GetAbilityByName(BLOODSEEKER_SKILL_Q)
     if not bloodraged and bloodrage:IsCooldownReady() then -- bloodrage all the time
         bot:Action_UseAbilityOnEntity(bloodrage, bot)
     end

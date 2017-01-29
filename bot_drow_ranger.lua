@@ -113,11 +113,11 @@ function drowRangerBot:GetMaxClearableCampLevel(bot)
         return constants.CAMP_EASY
     end
 
-    local marksmanship = bot:GetAbilityByName("drow_ranger_marksmanship")
+    local marksmanship = bot:GetAbilityByName(SKILL_R)
 
     if utils.HaveItem(bot, "item_dragon_lance") and marksmanship:GetLevel() >= 1 then
         return constants.CAMP_ANCIENT
-    elseif utils.HaveItem(bot, "item_power_treads") and marksmanship:GetLevel() == 1 then
+    elseif utils.HaveItem(bot, "item_power_treads") and marksmanship:GetLevel() >= 1 then
         return constants.CAMP_HARD
     end
 
@@ -134,7 +134,7 @@ end
 -- end
 
 function drowRangerBot:DoCleanCamp(bot, neutrals)
-    local frostArrow = bot:GetAbilityByName("drow_ranger_frost_arrows")
+    local frostArrow = bot:GetAbilityByName(SKILL_Q)
 
     for i, neutral in ipairs(neutrals) do
 

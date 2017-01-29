@@ -247,6 +247,7 @@ local function CSing(npcBot)
 
 	local AllyCreeps = npcBot:GetNearbyCreeps(EyeRange,false);
 	local EnemyCreeps = npcBot:GetNearbyCreeps(EyeRange,true);
+	local EnemyTowers = npcBot:GetNearbyTowers(EyeRange,true);
 	
 	if (AllyCreeps==nil) or (#AllyCreeps==0) then
 		LaningState = LaningStates.GettingBack;
@@ -332,7 +333,7 @@ local function CSing(npcBot)
 			approachScalar = 2.5
 		end
 		
-		if (not ShouldPush) and WeakestCreepHealth < damage*approachScalar and GetUnitToUnitDistance(npcBot,WeakestCreep) > AttackRange then
+		if (not ShouldPush) and WeakestCreepHealth < damage*approachScalar and GetUnitToUnitDistance(npcBot,WeakestCreep) > AttackRange and EnemyTowers == nil then
 			local dest = utils.VectorTowards(WeakestCreep:GetLocation(),GetLocationAlongLane(CurLane,LanePos-0.03), AttackRange-20)
 			npcBot:Action_MoveToLocation(dest)
 			return

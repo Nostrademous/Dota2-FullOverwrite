@@ -97,7 +97,7 @@ function UseRegenItems()
         end
 
         local tango_shared = utils.HaveItem(npcBot, "item_tango_single");
-        if tango_shared ~= nil  and tango_shared:IsFullyCastable() then
+        if tango_shared ~= nil  and tango_shared:IsFullyCastable() and (not getHeroVar("IsRetreating")) then
             if (npcBot:GetMaxHealth()-npcBot:GetHealth()) > 200 and not npcBot:HasModifier("modifier_tango_heal") then
                 local tree = utils.GetNearestTree(npcBot)
                 if tree ~= nil then
@@ -108,7 +108,7 @@ function UseRegenItems()
         end
 
         local tango = utils.HaveItem(npcBot, "item_tango");
-        if tango ~= nil and tango:IsFullyCastable() then
+        if tango ~= nil and tango:IsFullyCastable() and (not getHeroVar("IsRetreating")) then
             if (npcBot:GetMaxHealth()-npcBot:GetHealth()) > 200 and not npcBot:HasModifier("modifier_tango_heal") then
                 local tree = utils.GetNearestTree(npcBot)
                 if tree ~= nil then

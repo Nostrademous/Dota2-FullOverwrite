@@ -74,26 +74,7 @@ function Think()
 
     -- if we are initialized, do the rest
     if drowRangerBot.Init then
-        local timeInMinutes = math.floor(DotaTime() / 60)
-
-        -- we should not jungle if we are mid... we can't give up a free lane to jungle
-        if bot:GetLevel() >= 6 and (getHeroVar("Role") ~= constants.ROLE_MID or getHeroVar("Role") ~= constants.ROLE_HARDCARRY) then
-            if not (utils.HaveItem(bot, "item_dragon_lance")) then
-                if drowRangerBot:HasAction(constants.ACTION_JUNGLING) == false then
-                    drowRangerBot:AddAction(constants.ACTION_JUNGLING)
-                    jungling_generic.OnStart(bot)
-                end
-            elseif (timeInMinutes > 18 and not utils.HaveItem(bot, "item_maelstrom")) then
-                if drowRangerBot:HasAction(constants.ACTION_JUNGLING) == false then
-                    drowRangerBot:AddAction(constants.ACTION_JUNGLING)
-                    jungling_generic.OnStart(bot)
-                end
-            else
-                drowRangerBot:RemoveAction(constants.ACTION_JUNGLING)
-                setHeroVar("ShouldPush", true)
-            end
-        end
-
+        drowRangerBot:Determine_ShouldJungle(bot)
         drowRangerBot:HarassLaneEnemies(bot)
     end
 end
@@ -162,24 +143,45 @@ function drowRangerBot:DoCleanCamp(bot, neutrals)
         if not (slowed) then
             bot:Action_UseAbilityOnEntity(frostArrow, neutral);
         end
-		
+
         bot:Action_AttackUnit(neutral, true)
         break
     end
 end
 
+function drowRangerBot:Determine_ShouldJungle(bot)
+        local timeInMinutes = math.floor(DotaTime() / 60)
+        -- we should not jungle if we are mid... we can't give up a free lane to jungle
+        if bot:GetLevel() >= 6  and getHeroVar("Role") ~= constants.ROLE_MID then
+            local jungleMultiplier = (timeInMinutes /120) + 0.50
+            local goJungle = bot:GetNextItemPurchaseValue() - bot:GetGold() < math.max(bot:GetNextItemPurchaseValue() - bot:GetNextItemPurchaseValue() * jungleMultiplier, 300)
+            if (goJungle and bot:GetNextItemPurchaseValue() > 590 and  getHeroVar("ShouldPush") ~= true) then
+                if drowRangerBot:HasAction(constants.ACTION_JUNGLING) == false then
+                    drowRangerBot:AddAction(constants.ACTION_JUNGLING)
+                    jungling_generic.OnStart(bot)
+                end
+            else
+                drowRangerBot:RemoveAction(constants.ACTION_JUNGLING)
+            end
+        end
+end
+
 function drowRangerBot:HarassLaneEnemies(bot)
-    local Enemies = bot:GetNearbyHeroes(bot:GetAttackRange(), true, BOT_MODE_NONE)
+    local enemies = bot:GetNearbyHeroes(1200, true, BOT_MODE_NONE)
+    local target = nil
 
-    table.sort(Enemies, function(n1, n2) return n1:GetHealth() < n2:GetHealth() end) -- sort by health
+    if enemies == nil then return end
 
-    local target = Enemies[#Enemies] -- get highest health enemy
+    for _,enemy in pairs(enemies) do
+        if target == nil then target = enemy end
+        if GetUnitToUnitDistance(bot, enemy) < GetUnitToUnitDistance(bot, target) then target = enemy end -- get nearest enemy
+    end
+
+    if self:GetAction() == constants.ACTION_RETREAT then return end
+    if target == nil then return end
+
     local frostArrow = bot:GetAbilityByName(SKILL_Q)
-    
-	if self:GetAction() == constants.ACTION_RETREAT then return end
-	if target == nil then return end
-	
-	if(frostArrow ~= nil) and (frostArrow:IsFullyCastable()) then
+    if(frostArrow ~= nil) and (frostArrow:IsFullyCastable()) then
         if GetUnitToUnitDistance(bot, target) < frostArrow:GetCastRange() and self:GetAction() ~= constants.ACTION_RETREAT then
             if (not target:IsRooted()) or (not target:IsStunned()) and (not target:IsMagicImmune())
                 and bot:GetMana() < math.max(bot:GetMaxMana()*0.40, 180) then
@@ -188,12 +190,12 @@ function drowRangerBot:HarassLaneEnemies(bot)
             bot:Action_AttackUnit(target, false)
         end
     end
-	
-    if target:GetHealth() < math.max(target:GetMaxHealth()*0.50, 400) then   
+
+    if target:GetHealth() < math.min(target:GetMaxHealth()*0.50, 400) then
         self:AddAction(ACTION_FIGHT)
         self:setHeroVar("Target", target)
     else
-	    self:RemoveAction(ACTION_FIGHT)
-		self:setHeroVar("Target", nil)
-	end
+        self:RemoveAction(ACTION_FIGHT)
+        self:setHeroVar("Target", nil)
+    end
 end

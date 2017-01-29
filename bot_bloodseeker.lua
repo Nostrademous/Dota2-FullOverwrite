@@ -177,6 +177,10 @@ function bloodseekerBot:DoCleanCamp(bot, neutrals)
     end
     for i, neutral in ipairs(neutrals) do
         local eDamage = bot:GetEstimatedDamageToTarget(true, neutral, bot:GetAttackSpeed(), DAMAGE_TYPE_PHYSICAL)
+        -- kill the Ghost first as they slow down our DPS tremendously by being around
+        if string.find(neutral:GetUnitName(), "npc_dota_neutral_ghost") ~= nil and eDamage < neutral:GetHealth() then
+            bot:Action_AttackUnit(neutral, true)
+        end
         if not (eDamage > neutral:GetHealth()) or bloodraged then -- make sure we lasthit with bloodrage on
             bot:Action_AttackUnit(neutral, true)
             break

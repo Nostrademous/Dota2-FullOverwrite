@@ -244,6 +244,8 @@ function X:Think(bot)
         if bRet then return end
     end
 
+    if bot:IsUsingAbility() then return end
+    
     -- FIXME - right place?
     local bRet = self:ConsiderItemUse()
     if bRet then return end

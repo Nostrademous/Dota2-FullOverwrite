@@ -22,8 +22,10 @@ local ItemsToBuyAsHardCarry = {StartingItems = {
 		"item_power_treads_agi",
 		"item_dragon_lance",
 		"item_maelstrom",
-		"item_aghs_scepter",
-		"item_mjollnir"
+		"item_ultimate_scepter",
+		"item_mjollnir",
+		"item_lesser_crit",
+		"item_greater_crit"
 	},
 	ExtensionItems = {
 		OffensiveItems = {
@@ -57,7 +59,8 @@ local ItemsToBuyAsMid = {StartingItems = {
 		},
 		DefensiveItems = {
 			"item_hurricane_pike",
-			"item_black_king_bar"
+			"item_black_king_bar",
+		    "item_ultimate_scepter"
 		}
 	}}
 local ItemsToBuyAsOfflane = {}

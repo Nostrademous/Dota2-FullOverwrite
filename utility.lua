@@ -1107,11 +1107,9 @@ function U.GetWeakestCreep(creeps)
     for _,creep in pairs(creeps) do
         U.UpdateCreepHealth(creep)
         if creep:IsAlive() then
-            if creep:GetHealth() ~= creep:GetMaxHealth() then
-                if creep:GetHealth()<LowestHealth then
-                    LowestHealth=creep:GetHealth();
-                    WeakestCreep=creep;
-                end
+            if creep:GetHealth()<LowestHealth then
+                LowestHealth=creep:GetHealth();
+                WeakestCreep=creep;
 			end
         end
     end

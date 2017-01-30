@@ -214,7 +214,8 @@ function UseBuffItems()
     UseTomeOfKnowledge()
 end
 
-function UseTP()
+function UseTP(lane)
+    local lane = lane or getHeroVar("CurLane")
     local npcBot = GetBot()
 
     if npcBot:IsChanneling() or npcBot:IsUsingAbility() then
@@ -235,7 +236,7 @@ function UseTP()
         end
     end
 
-    local dest = GetLocationAlongLane(getHeroVar("CurLane"), 0.5) -- 0.5 is basically 1/2 way down our lane
+    local dest = GetLocationAlongLane(lane, 0.5) -- 0.5 is basically 1/2 way down our lane
     if tp == nil and GetUnitToLocationDistance(npcBot, dest) > 3000 and
         GetUnitToLocationDistance(npcBot, utils.Fountain(GetTeam())) < 200 and utils.NumberOfItems(npcBot) < 6 and
         npcBot:GetGold() > 50 then

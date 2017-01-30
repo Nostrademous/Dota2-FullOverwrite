@@ -36,25 +36,24 @@ local function UseQ()
     end
 
     local Enemies = npcBot:GetNearbyHeroes(frostArrow:GetCastRange(), true, BOT_MODE_NONE)
-    table.sort(Enemies, function(n1, n2) return n1:GetHealth() < n2:GetHealth() end) -- sort by health
+
+    if #Enemies == 0 or getHeroVar("Target") == nil then return false end
 
     if #Enemies == 1 then
-        setHeroVar("Target", Enemies[#Enemies])
+        setHeroVar("Target", Enemies[1])
         return false
     end
 
-    local target = getHeroVar("Target") -- get highest health enemy
-
-    if target ~= nil and GetUnitToUnitDistance(npcBot, target) < frostArrow:GetCastRange() and (not target:IsRooted()) or (not target:IsStunned()) and (not target:IsMagicImmune())then
+    local target = getHeroVar("Target") 
+    if target ~= nil and GetUnitToUnitDistance(npcBot, target) < frostArrow:GetCastRange() and (not target:IsRooted()) or (not target:IsStunned()) and (not target:IsMagicImmune()) then
         npcBot:Action_UseAbilityOnEntity(frostArrow, target)
         return true
     end
 
-    if (npcBot:GetMana()/npcBot:GetMaxMana()) > 0.5 and #Enemies > 0 and #Enemies < 3 and (getHeroVar("OutOfRangeCasting") + frostArrow:GetCastPoint()) < GameTime() then
+    if (npcBot:GetMana()/npcBot:GetMaxMana()) > 0.5 and #Enemies > 0 and #Enemies < 3 then
         local weakestHero, weakestHeroHealth = utils.GetWeakestHero(npcBot, frostArrow:GetCastRange() + 100)
         if weakestHero ~= nil and (not weakestHero:IsRooted()) or (not weakestHero:IsStunned()) and (not weakestHero:IsMagicImmune()) then
             npcBot:Action_UseAbilityOnEntity(frostArrow, weakestHero)
-            setHeroVar("OutOfRangeCasting", GameTime())
             return true
         end
     end
@@ -75,14 +74,26 @@ local function UseW()
 
     if #Enemies == 0 then return false end
 
-    local enemy = getHeroVar("Target")
-    if enemy == nil then return false end
-
     local wave_speed = gust:GetSpecialValueFloat("wave_speed")
     local delay = gust:GetCastPoint() + GetUnitToUnitDistance(npcBot, Enemies[1])/wave_speed
+    
+    --Use Gust as a Defensive skill to fend off chasing enemies
+    if getHeroVar("IsRetreating") and (npcBot:GetHealth()/npcBot:GetMaxHealth()) < 0.5 then
+        for _, enemy in pairs( Enemies ) do
+	        if utisl.IsHeroAttackingMe(enemy, 2.0) then
+                if gust:GetCastRange() > GetUnitToUnitDistance(npcBot, enemy) and (not enemy:IsMagicImmune()) then
+                    local gustDelay = gust:GetCastPoint() + GetUnitToUnitDistance(npcBot, enemy)/wave_speed
+                    npcBot:Action_UseAbilityOnLocation(gust, enemy:GetExtrapolatedLocation(gustDelay))
+				    return true
+                end
+            end
+        end
+    end
 
     if #Enemies == 1 then
-        if (not enemy:IsSilenced()) or (not enemy:IsRooted()) or (not enemy:IsStunned()) and (not enemy:IsMagicImmune()) and GetUnitToUnitDistance(npcBot, Enemies[1]) < 350 then
+        local enemyHasStun = Enemies[1]:GetStunDuration(true) > 0
+        if (not Enemies[1]:IsSilenced()) or (not Enemies[1]:IsRooted()) or (not Enemies[1]:IsStunned()) and (not Enemies[1]:IsMagicImmune()) 
+		or Enemies[1]:IsChanneling() and (GetUnitToUnitDistance(npcBot, Enemies[1]) < 350 or enemyHasStun) then
             npcBot:Action_UseAbilityOnLocation(gust, Enemies[1]:GetExtrapolatedLocation(delay))
             return true
         end
@@ -113,11 +124,9 @@ local function UseE()
     local alliedCreeps = npcBot:GetNearbyCreeps(900, false)
 
     for i, creeps in ipairs(alliedCreeps) do
-
         if (utils.IsMelee(creeps)) then
             table.remove(alliedCreeps, 1 )
         end
-
     end
 
     if (towersNearby ~= nil and #alliedCreeps > 3) then
@@ -136,8 +145,6 @@ function AbilityUsageThink()
     if npcBot:IsChanneling() or npcBot:IsUsingAbility() then return false end
 
     if UseE() then return true end
-
-    if getHeroVar("Target") == nil then return false end
 
     if UseW() or UseQ() then return true end
 end

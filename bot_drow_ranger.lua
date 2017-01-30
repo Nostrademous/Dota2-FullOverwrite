@@ -167,6 +167,8 @@ function drowRangerBot:Determine_ShouldJungle(bot)
 end
 
 function drowRangerBot:HarassLaneEnemies(bot)
+    if self:GetAction() == constants.ACTION_RETREAT then return end
+    
     local enemies = bot:GetNearbyHeroes(1200, true, BOT_MODE_NONE)
     local target = nil
 
@@ -177,7 +179,6 @@ function drowRangerBot:HarassLaneEnemies(bot)
         if GetUnitToUnitDistance(bot, enemy) < GetUnitToUnitDistance(bot, target) then target = enemy end -- get nearest enemy
     end
 
-    if self:GetAction() == constants.ACTION_RETREAT then return end
     if target == nil then return end
 
     local frostArrow = bot:GetAbilityByName(SKILL_Q)
@@ -187,10 +188,13 @@ function drowRangerBot:HarassLaneEnemies(bot)
                 and bot:GetMana() < math.max(bot:GetMaxMana()*0.40, 180) then
                 bot:Action_UseAbilityOnEntity(frostArrow, target)
             end
-            bot:Action_AttackUnit(target, false)
+            if not utils.IsCore() then
+                bot:Action_AttackUnit(target, false)
+            end
         end
     end
 
+    --[[
     if target:GetHealth() < math.min(target:GetMaxHealth()*0.50, 400) then
         self:AddAction(ACTION_FIGHT)
         self:setHeroVar("Target", target)
@@ -198,4 +202,5 @@ function drowRangerBot:HarassLaneEnemies(bot)
         self:RemoveAction(ACTION_FIGHT)
         self:setHeroVar("Target", nil)
     end
+    --]]
 end

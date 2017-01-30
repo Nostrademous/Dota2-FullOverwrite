@@ -65,7 +65,7 @@ function DetectEnemyPushMid()
         end
     end
     
-    return num >= 3
+    return num >= 3, building
 end
 
 function DetectEnemyPushTop()
@@ -98,7 +98,7 @@ function DetectEnemyPushTop()
         end
     end
     
-    return num >= 3
+    return num >= 3, building
 end
 
 function DetectEnemyPushBot()
@@ -131,20 +131,23 @@ function DetectEnemyPushBot()
         end
     end
     
-    return num >= 3
+    return num, building
 end
 
 local lastPushCheck = -1000.0
 function DetectEnemyPush()
     local bUpdate, newTime = utils.TimePassed(lastPushCheck, 0.5)
     if bUpdate then
-        if DetectEnemyPushMid() then return LANE_MID
-        elseif DetectEnemyPushTop() then return LANE_TOP
-        elseif DetectEnemyPushBot() then return LANE_BOT
+        local numMid, midBuilding = DetectEnemyPushMid()
+        local numTop, topBuilding = DetectEnemyPushTop()
+        local numBot, botBuildign = DetectEnemyPushBot()
+        if numMid >= 3 then return LANE_MID, midBuilding, numMid
+        elseif numTop >= 3 then return LANE_TOP, topBuilding, numTop
+        elseif numBot >= 3 then return LANE_BOT, botBuilding, numBot
         end
         lastPushCheck = newTime
     end
-    return nil
+    return nil, nil, nil
 end
     
 

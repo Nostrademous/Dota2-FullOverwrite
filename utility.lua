@@ -1344,6 +1344,11 @@ function U.GetTeleportationAbility(npcBot)
             return ability
         end
     end
+    
+    local tp = U.HaveItem(npcBot, "item_tpscroll")
+    if tp ~= nil and tp:IsFullyCastable() then
+        return tp
+    end
 end
 
 function U.IsItemAvailable(item_name)

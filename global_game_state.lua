@@ -65,7 +65,7 @@ function DetectEnemyPushMid()
         end
     end
     
-    return num >= 3, building
+    return num, building
 end
 
 function DetectEnemyPushTop()
@@ -98,7 +98,7 @@ function DetectEnemyPushTop()
         end
     end
     
-    return num >= 3, building
+    return num, building
 end
 
 function DetectEnemyPushBot()

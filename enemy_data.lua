@@ -35,7 +35,7 @@ function EnemyData.UpdateEnemyInfo(timeFreq)
             local name = utils.GetHeroName(enemy)
 
             if EnemyData[pid] == nil then
-                EnemyData[pid] = { Name = name, Time = -100, Obj = nil, Level = 1, Health = -1, Mana = -1, Location = nil, Items = {},
+                EnemyData[pid] = { Name = name, Time = -100, Obj = nil, Level = 1, Health = -1, MaxHealth = -1, Mana = -1, Location = nil, Items = {},
                                     PhysDmg2 = {}, MagicDmg2 = {}, PureDmg2 = {}, AllDmg2 = {},
                                     PhysDmg10 = {}, MagicDmg10 = {}, PureDmg10 = {}, AllDmg10 = {}
                                  }
@@ -51,6 +51,7 @@ function EnemyData.UpdateEnemyInfo(timeFreq)
                 EnemyData[pid].MaxHealth = enemy:GetMaxHealth()
                 EnemyData[pid].Mana = enemy:GetMana()
                 EnemyData[pid].MaxMana = enemy:GetMaxMana()
+                EnemyData[pid].MoveSpeed = enemy:GetCurrentMovementSpeed()
                 EnemyData[pid].Location = utils.deepcopy(enemy:GetLocation())
                 for i = 0, 5, 1 do
                     local item = enemy:GetItemInSlot(i)

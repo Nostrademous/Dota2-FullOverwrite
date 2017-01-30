@@ -38,12 +38,12 @@ function FindTarget(dist)
 
 	if Enemies == nil or #Enemies == 0 then
 		setHeroVar("Target", nil)
-		return nil, 0.0, 0.0
+		return nil, 0.0
 	end
 
-	local Towers = npcBot:GetNearbyTowers(1100, true)
-	local AlliedTowers = npcBot:GetNearbyTowers(950, false)
-	local AlliedCreeps = npcBot:GetNearbyCreeps(1000, false)
+	local Towers = npcBot:GetNearbyTowers(750, true)
+	local AlliedTowers = npcBot:GetNearbyTowers(750, false)
+	local AlliedCreeps = npcBot:GetNearbyCreeps(700, false)
 	local EnemyCreeps = npcBot:GetNearbyCreeps(700 ,true)
 	local nEc = 0
 	local nAc = 0
@@ -69,30 +69,32 @@ function FindTarget(dist)
     local badHealthPool = 0
     local goodDmg = 0
     local badDmg = 0
-    local goodFightLength = 5.0
-    local badfightLength = 5.0
+    local goodFightLength = 10.0
+    local badfightLength = 10.0
+    
     
     local lvl = npcBot:GetLevel()
 	for _, enemy in pairs(Enemies) do
-		if utils.NotNilOrDead(enemy) and GetUnitToLocationDistance(enemy, utils.Fountain(utils.GetOtherTeam())) > 1350 then
+		if utils.NotNilOrDead(enemy) and GetUnitToLocationDistance(enemy, utils.Fountain(utils.GetOtherTeam())) > 1350 
+            and enemy:GetTimeSinceLastSeen() < 3.0 then
             
             -- first check for stun duration
             for k, enemy2 in pairs(enemyData) do
-				if type(k) == "number" and enemy2.Health > 50 then
+				if type(k) == "number" and enemy2.Health > 0 and (enemy2.Health/enemy2.MaxHealth) > 0.1 then
                     local distance = GetUnitToLocationDistance(enemy, enemy2.Location)
 					if distance < 1200 then
                         if enemy2.Obj ~= nil then
-                            badfightLength = badfightLength + enemy2.Obj:GetStunDuration(true)
+                            badfightLength = badfightLength + enemy2.StunDur + 0.5*enemy2.SlowDur
                         end
 					end
 				end
 			end
             
             for k, enemy2 in pairs(enemyData) do
-				if type(k) == "number" and enemy2.Health > 50 then
+				if type(k) == "number" and enemy2.Health > 0 and (enemy2.Health/enemy2.MaxHealth) > 0.1 then
                     local distance = GetUnitToLocationDistance(enemy, enemy2.Location)
 					if distance < 1200 then
-                        local dmgTime = badfightLength - distance/522
+                        local dmgTime = badfightLength - distance/enemy2.MoveSpeed
 						badHealthPool = badHealthPool + enemy2.Health
                         if enemy2.Obj ~= nil then
                             badDmg = badDmg + enemy2.Obj:GetEstimatedDamageToTarget(true, npcBot, dmgTime, DAMAGE_TYPE_ALL)
@@ -106,7 +108,7 @@ function FindTarget(dist)
             for _, ally in pairs(allyList) do
                 local timeToLocation = GetUnitToUnitDistance(enemy, ally)/ally:GetCurrentMovementSpeed()
 				if utils.NotNilOrDead(Ally) and timeToLocation < goodFightLength then
-					goodFightLength = goodFightLength + ally:GetStunDuration(true)
+					goodFightLength = goodFightLength + ally:GetStunDuration(true) + 0.5*ally:GetSlowDuration(true)
 				end
 			end
             
@@ -128,10 +130,12 @@ function FindTarget(dist)
 		end
 	end
     
+    --[[
     if candidate ~= nil then
         --utils.myPrint("Best Fight is against: "..utils.GetHeroName(candidate), " :: Score: ", bestScore)
         enemyData.GetEnemyDmgs(candidate:GetPlayerID(), 2.0)
     end
+    --]]
 
 	return candidate, bestScore
 end

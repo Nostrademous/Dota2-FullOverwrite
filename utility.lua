@@ -1156,8 +1156,7 @@ function U.IsCreepAttackingMe(fTime)
 end
 
 -- returns a VECTOR() with location being the center point of provided hero array
-function U.GetCenter(Heroes, delay)
-    local delay = delay or 0
+function U.GetCenter(Heroes)
     if Heroes == nil or #Heroes == 0 then
         return nil
     end
@@ -1167,7 +1166,7 @@ function U.GetCenter(Heroes, delay)
 
     for _,hero in pairs(Heroes) do
         if hero ~= nil and hero:IsAlive() then
-            sum = sum + hero:GetExtrapolatedLocation(delay)
+            sum = sum + hero:GetLocation()
             hn = hn + 1
         end
     end
@@ -1336,6 +1335,15 @@ function U.HaveTeleportation(npcBot)
         return true
     end
     return false
+end
+
+function U.GetTeleportationAbility(npcBot)
+    if U.GetHeroName(npcBot) == "furion" then
+        local ability = npcBot:GetAbilityByName("furion_teleportation")
+        if ability ~= nil and ability:IsFullyCastable() then
+            return ability
+        end
+    end
 end
 
 function U.IsItemAvailable(item_name)

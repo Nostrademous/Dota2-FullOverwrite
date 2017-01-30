@@ -50,7 +50,7 @@ local function UseW()
         npcBot:Action_UseAbilityOnLocation(ability, Enemies[1]:GetExtrapolatedLocation(delay))
         return true
     else
-        local center = utils.GetCenter(Enemies, delay)
+        local center = utils.GetCenter(Enemies)
         if center ~= nil then
             npcBot:Action_UseAbilityOnLocation(ability, center)
             return true

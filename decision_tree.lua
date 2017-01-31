@@ -163,6 +163,7 @@ function X:DoInit(bot)
     self:setHeroVar("LastStuckCheck", -1000.0)
     self:setHeroVar("StuckCounter", 0)
     self:setHeroVar("LastLocation", Vector(0, 0, 0))
+    self:setHeroVar("LaneChangeTimer", -1000.0)
 
     role.GetRoles()
     if role.RolesFilled() then
@@ -337,11 +338,6 @@ function X:Think(bot)
         if bRet then return end
     end
 
-    if ( self:Determine_ShouldIPushLane(bot) ) then
-        local bRet = self:DoPushLane(bot)
-        if bRet then return end
-    end
-
     local lane, building, numEnemies = self:Determine_ShouldIDefendLane(bot)
     if ( lane ) then
         local bRet = self:DoDefendLane(bot, lane, building, numEnemies)
@@ -365,6 +361,16 @@ function X:Think(bot)
 
     if ( self:GetAction() == ACTION_WARD or self:Determine_ShouldWard(bot) ) then
         local bRet = self:DoWard(bot)
+        if bRet then return end
+    end
+    
+    if ( self:Determine_ShouldIChangeLane(bot) ) then
+        local bRet = self:DoChangeLane(bot)
+        if bRet then return end
+    end
+    
+    if ( self:Determine_ShouldIPushLane(bot) ) then
+        local bRet = self:DoPushLane(bot)
         if bRet then return end
     end
 
@@ -737,6 +743,19 @@ function X:Determine_ShouldRoam(bot)
     return false
 end
 
+function X:Determine_ShouldIChangeLane(bot)
+    -- don't change lanes for first 6 minutes
+    if DotaTime() < 60*6 then return false end
+    
+    local LaneChangeTimer = self:getHeroVar("LaneChangeTimer")
+    local bCheck, newTime = utils.TimePassed(LaneChangeTimer, 3.0)
+    if bCheck then
+        self:setHeroVar("LaneChangeTimer", newTime)
+        return true
+    end
+    return false
+end
+
 function X:Determine_ShouldJungle(bot)
     local bRoleJungler = self:getHeroVar("Role") == ROLE_JUNGLER
     --FIXME: Implement other reasons when/why we would want to jungle
@@ -1100,6 +1119,71 @@ function X:DoRoshan(bot)
     --FIXME: Implement Roshan fight and clear action stack when he dead
     self:RemoveAction(ACTION_ROSHAN)
     return true
+end
+
+function X:DoChangeLane(bot)
+    local dTowers = buildings_status.GetDestroyableTowers(GetTeam())
+    local nLane = {}
+    
+    for i=1, #dTowers, 1 do
+        -- check Tier 1 towers
+        if dTowers[i] == TOWER_TOP_1 then table.insert(nLane, LANE_TOP)
+        elseif dTowers[i] == TOWER_MID_1 then table.insert(nLane, LANE_MID)
+        elseif dTowers[i] == TOWER_BOT_1 then table.insert(nLane, LANE_BOT)
+        end
+        -- if we have found a standing Tier 1 tower, end
+        if #nLane > 0 then break end
+        
+        -- check Tier 2 towers
+        if dTowers[i] == TOWER_TOP_2 then table.insert(nLane, LANE_TOP)
+        elseif dTowers[i] == TOWER_MID_2 then table.insert(nLane, LANE_MID)
+        elseif dTowers[i] == TOWER_BOT_2 then table.insert(nLane, LANE_BOT)
+        end
+        -- if we have found a standing Tier 2 tower, end
+        if #nLane > 0 then break end
+        
+        -- check Tier 3 towers
+        if dTowers[i] == TOWER_TOP_3 or dTowers[i] == BARRACKS_TOP_MELEE or dTowers[i] == BARRACKS_TOP_RANGED then table.insert(nLane, LANE_TOP)
+        elseif dTowers[i] == TOWER_MID_3 or dTowers[i] == BARRACKS_MID_MELEE or dTowers[i] == BARRACKS_MID_RANGED then table.insert(nLane, LANE_MID)
+        elseif dTowers[i] == TOWER_BOT_3 or dTowers[i] == BARRACKS_BOT_MELEE or dTowers[i] == BARRACKS_BOT_RANGED then table.insert(nLane, LANE_BOT)
+        end
+        -- if we have found a standing Tier 3 tower, end
+        if #nLane > 0 then break end
+    end
+    
+    if utils.InTable(nLane, self:getHeroVar("CurLane")) then
+        if GetTeam() == TEAM_RADIANT then
+            if #nLane >= 3 then
+                if self:getHeroVar("Role") == constants.ROLE_MID then self:setHeroVar("CurLane", LANE_MID)
+                elseif self:getHeroVar("Role") == constants.ROLE_OFFLANE then self:setHeroVar("CurLane", LANE_MID)
+                else
+                    self:setHeroVar("CurLane", LANE_BOT)
+                end
+            end
+        else
+            if #nLane >= 3 then
+                if self:getHeroVar("Role") == constants.ROLE_MID then self:setHeroVar("CurLane", LANE_MID)
+                elseif self:getHeroVar("Role") == constants.ROLE_OFFLANE then self:setHeroVar("CurLane", LANE_BOT)
+                else
+                    self:setHeroVar("CurLane", LANE_TOP)
+                end
+            end
+        end
+        utils.myPrint("Lanes are evenly pushed, going back to my lane")
+        return false
+    end
+    
+    if #nLane > 1 then
+        local newLane = nLane[randomInt(1, #nLane)]
+        utils.myPrint("Randomly switching to lane: ", newLane)
+        self:setHeroVar("CurLane", newLane)
+    elseif #nLane == 1 then
+        utils.myPrint("Switching to lane: ", nLane[1])
+        self:setHeroVar("CurLane", nLane[1])
+    else
+        self:setHeroVar("CurLane", LANE_MID)
+    end
+    return false
 end
 
 function X:DoGetRune(bot)

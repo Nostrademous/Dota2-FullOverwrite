@@ -744,7 +744,17 @@ function X:Determine_ShouldJungle(bot)
 end
 
 function X:Determine_ShouldTeamRoshan(bot)
-    if (false) then -- FIXME: Implement
+    local enemies = GetUnitList(UNIT_LIST_ENEMY_HEROES)
+
+    for _, enemy in pairs(enemies) do
+        if not enemy:IsAlive() then
+            table.remove(enemies, 1)
+        end
+    end
+
+	local isRoshanAlive = DotaTime() - GetRoshanKillTime() > 660 -- max 11 minutes respawn time of roshan
+
+    if (#enemies < 3 and (GetRoshanKillTime == 0 or isRoshanAlive)) then -- FIXME: Implement
         if self:HasAction(ACTION_ROSHAN) == false then
             utils.myPrint(" - Going to Fight Roshan")
             self:AddAction(ACTION_ROSHAN)

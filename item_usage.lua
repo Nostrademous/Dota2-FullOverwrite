@@ -89,7 +89,7 @@ function UseRegenItems()
         end
 		
 		local urn = utils.HaveItem(npcBot, "item_urn_of_shadows")
-        if urn ~= and urn:GetCurrentCharges() > 0 then
+        if urn ~= nil and urn:GetCurrentCharges() > 0 then
 		    if (Enemies == nil or #Enemies == 0) then
                 if (npcBot:GetMaxHealth()-npcBot:GetHealth()) > 400 and not npcBot:HasModifier("modifier_item_urn_heal") and not modifiers.HasActiveDOTDebuff(npcBot)  then
                     npcBot:Action_UseAbilityOnEntity(urn, npcBot)
@@ -172,15 +172,15 @@ function UseRegenItemsOnAlly()
         end
 
         if Enemies == nil or #Enemies == 0 then
-            if ((targetAlly:GetMaxHealth()-targetAlly:GetHealth()) >= 100 and (targetAlly:GetMaxMana()-targetAlly:GetMana()) >= 60) or
-                (targetAlly:GetHealth() < 300 or targetAlly:GetMana() < 200) then
-                npcBot:Action_UseAbilityOnEntity(bottle, targetAlly)
+            if ((bottleTargetAlly:GetMaxHealth()-bottleTargetAlly:GetHealth()) >= 100 and (bottleTargetAlly:GetMaxMana()-bottleTargetAlly:GetMana()) >= 60) or
+                (bottleTargetAlly:GetHealth() < 300 or bottleTargetAlly:GetMana() < 200) then
+                npcBot:Action_UseAbilityOnEntity(bottle, bottleTargetAlly)
                 return nil
             end
         end
     end
 
-    if not targetAlly:HasModifier("modifier_fountain_aura_buff") then
+    if (lowestManaAlly and (not lowestManaAlly:HasModifier("modifier_fountain_aura_buff")))  then
 
         local clarity = utils.HaveItem(npcBot, "item_clarity")
         if clarity ~= nil and (not utils.HaveItem(lowestManaAlly, "item_clarity")) then
@@ -191,7 +191,9 @@ function UseRegenItemsOnAlly()
                 end
             end
         end
+    end
 
+    if (lowestHealthAlly and (not lowestHealthAlly:HasModifier("modifier_fountain_aura_buff")))  then
         local flask = utils.HaveItem(npcBot, "item_flask");
         if flask ~= nil and (not utils.HaveItem(lowestHealthAlly, "item_flask")) then
             if (Enemies == nil or #Enemies == 0) then
@@ -214,7 +216,7 @@ function UseRegenItemsOnAlly()
         end
 		
         local urn = utils.HaveItem(npcBot, "item_urn_of_shadows")
-        if urn ~= and urn:GetCurrentCharges() > 0 then
+        if urn ~= nil and urn:GetCurrentCharges() > 0 then
 		    if (Enemies == nil or #Enemies == 0) then
                 if (lowestHealthAlly:GetMaxHealth()-lowestHealthAlly:GetHealth()) > 400 and not lowestHealthAlly:HasModifier("modifier_item_urn_heal") and not modifiers.HasActiveDOTDebuff(lowestHealthAlly)  then
                     npcBot:Action_UseAbilityOnEntity(urn, lowestHealthAlly)

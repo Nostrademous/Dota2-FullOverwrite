@@ -87,6 +87,16 @@ function UseRegenItems()
                 end
             end
         end
+		
+		local urn = utils.HaveItem(npcBot, "item_urn_of_shadows")
+        if urn ~= and urn:GetCurrentCharges() > 0 then
+		    if (Enemies == nil or #Enemies == 0) then
+                if (npcBot:GetMaxHealth()-npcBot:GetHealth()) > 400 and not npcBot:HasModifier("modifier_item_urn_heal") and not modifiers.HasActiveDOTDebuff(npcBot)  then
+                    npcBot:Action_UseAbilityOnEntity(urn, npcBot)
+                    return nil
+                end
+            end
+        end
 
         local faerie = utils.HaveItem(npcBot, "item_faerie_fire");
         if faerie ~= nil then
@@ -114,6 +124,101 @@ function UseRegenItems()
                 if tree ~= nil then
                     npcBot:Action_UseAbilityOnTree(tango, tree)
                     return true
+                end
+            end
+        end
+    end
+
+    return nil
+end
+
+function UseRegenItemsOnAlly()
+    local npcBot = GetBot()
+
+    if npcBot:IsChanneling() or npcBot:IsUsingAbility() then
+        return nil
+    end
+    
+    local Enemies = npcBot:GetNearbyHeroes(850, true, BOT_MODE_NONE)
+	local Allies = npcBot:GetNearbyHeroes(850, false,  BOT_MODE_NONE)
+	
+	local lowestHealthAlly = nil
+	local lowestManaAlly = nil
+	local bottleTargetAlly = nil
+    for _,ally in pairs(Allies) do
+        if lowestHealthAlly == nil then lowestHealthAlly = ally end
+        if lowestManaAlly == nil then lowestManaAlly = ally end
+        if bottleTargetAlly == nil then bottleTargetAlly = ally end
+		
+        local allyHealthPct = ally:GetHealth()/ally:GetMaxHealth()
+        local allyManaPct = ally:GetMana()/ally:GetMaxMana()
+		
+        local targetHealthPct = lowestHealthAlly:GetHealth()/lowestHealthAlly:GetMaxHealth()
+        local targetManaPct = lowestManaAlly:GetMana()/lowestManaAlly:GetMaxMana()
+		
+        if allyHealthPct < targetHealthPct then lowestHealthAlly = ally end -- get lowest health ally
+        if allyManaPct < targetManaPct then lowestManaAlly = ally end -- get lowest mana ally
+        if allyManaPct < targetManaPct and allyHealthPct < targetHealthPct then bottleTargetAlly = ally end -- get lowest mana and lowest health ally
+    end
+
+    local bottle = utils.HaveItem(npcBot, "item_bottle")
+    if bottle ~= nil and bottle:GetCurrentCharges() > 0 and not bottleTargetAlly:HasModifier("modifier_bottle_regeneration") 
+        and not bottleTargetAlly:HasModifier("modifier_clarity_potion") and not bottleTargetAlly:HasModifier("modifier_flask_healing")
+        and (not utils.HaveItem(bottleTargetAlly, "item_bottle"))   then
+
+        if (not (bottleTargetAlly:GetHealth() == bottleTargetAlly:GetMaxHealth() and bottleTargetAlly:GetMaxMana() == bottleTargetAlly:GetMana())) and bottleTargetAlly:HasModifier("modifier_fountain_aura_buff") then
+            npcBot:Action_UseAbilityOnEntity(bottle, bottleTargetAlly)
+            return nil
+        end
+
+        if Enemies == nil or #Enemies == 0 then
+            if ((targetAlly:GetMaxHealth()-targetAlly:GetHealth()) >= 100 and (targetAlly:GetMaxMana()-targetAlly:GetMana()) >= 60) or
+                (targetAlly:GetHealth() < 300 or targetAlly:GetMana() < 200) then
+                npcBot:Action_UseAbilityOnEntity(bottle, targetAlly)
+                return nil
+            end
+        end
+    end
+
+    if not targetAlly:HasModifier("modifier_fountain_aura_buff") then
+
+        local clarity = utils.HaveItem(npcBot, "item_clarity")
+        if clarity ~= nil and (not utils.HaveItem(lowestManaAlly, "item_clarity")) then
+            if (Enemies == nil or #Enemies == 0) then
+                if (lowestManaAlly:GetMaxMana()-lowestManaAlly:GetMana()) > 200 and not lowestManaAlly:HasModifier("modifier_clarity_potion") and not modifiers.HasActiveDOTDebuff(lowestManaAlly)  then
+                    npcBot:Action_UseAbilityOnEntity(clarity, lowestManaAlly)
+                    return nil
+                end
+            end
+        end
+
+        local flask = utils.HaveItem(npcBot, "item_flask");
+        if flask ~= nil and (not utils.HaveItem(lowestHealthAlly, "item_flask")) then
+            if (Enemies == nil or #Enemies == 0) then
+                if (lowestHealthAlly:GetMaxHealth()-lowestHealthAlly:GetHealth()) > 400 and not lowestHealthAlly:HasModifier("modifier_flask_healing") and not modifiers.HasActiveDOTDebuff(lowestHealthAlly)  then
+                    npcBot:Action_UseAbilityOnEntity(flask, lowestHealthAlly)
+                    return nil
+                end
+            end
+        end
+		
+		local tango = utils.HaveItem(npcBot, "item_tango");
+        if tango ~= nil and tango:IsFullyCastable() and (not getHeroVar("IsRetreating")) and (not (utils.HaveItem(lowestHealthAlly, "item_tango") or utils.HaveItem(lowestHealthAlly, "item_tango_single")) )then
+            if (lowestHealthAlly:GetMaxHealth()-lowestHealthAlly:GetHealth()) > 200 and not lowestHealthAlly:HasModifier("modifier_tango_heal") then
+                local tree = utils.GetNearestTree(npcBot)
+                if tree ~= nil then
+                    npcBot:Action_UseAbilityOnEntity(tango, lowestHealthAlly)
+                    return true
+                end
+            end
+        end
+		
+        local urn = utils.HaveItem(npcBot, "item_urn_of_shadows")
+        if urn ~= and urn:GetCurrentCharges() > 0 then
+		    if (Enemies == nil or #Enemies == 0) then
+                if (lowestHealthAlly:GetMaxHealth()-lowestHealthAlly:GetHealth()) > 400 and not lowestHealthAlly:HasModifier("modifier_item_urn_heal") and not modifiers.HasActiveDOTDebuff(lowestHealthAlly)  then
+                    npcBot:Action_UseAbilityOnEntity(urn, lowestHealthAlly)
+                    return nil
                 end
             end
         end
@@ -268,6 +373,9 @@ function UseItems()
     
     local bRet = UseRegenItems()
     if bRet then return true end
+	
+    local bRetOnAlly = UseRegenItemsOnAlly()
+	if bRetOnAlly then return true end
     
     UseTeamItems()
     

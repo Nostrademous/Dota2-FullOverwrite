@@ -44,7 +44,7 @@ local function UseQ()
         return false
     end
 
-    local target = getHeroVar("Target") 
+    local target = getHeroVar("Target")
     if target ~= nil and GetUnitToUnitDistance(npcBot, target) < frostArrow:GetCastRange() and (not target:IsRooted()) or (not target:IsStunned()) and (not target:IsMagicImmune()) then
         npcBot:Action_UseAbilityOnEntity(frostArrow, target)
         return true
@@ -76,28 +76,38 @@ local function UseW()
 
     local wave_speed = gust:GetSpecialValueFloat("wave_speed")
     local delay = gust:GetCastPoint() + GetUnitToUnitDistance(npcBot, Enemies[1])/wave_speed
-    
-    --Use Gust as a Defensive skill to fend off chasing enemies
-    if getHeroVar("IsRetreating") and (npcBot:GetHealth()/npcBot:GetMaxHealth()) < 0.5 then
-        for _, enemy in pairs( Enemies ) do
-	        if utisl.IsHeroAttackingMe(enemy, 2.0) then
-                if gust:GetCastRange() > GetUnitToUnitDistance(npcBot, enemy) and (not enemy:IsMagicImmune()) then
-                    local gustDelay = gust:GetCastPoint() + GetUnitToUnitDistance(npcBot, enemy)/wave_speed
-                    npcBot:Action_UseAbilityOnLocation(gust, enemy:GetExtrapolatedLocation(gustDelay))
-				    return true
-                end
-            end
-        end
-    end
 
     if #Enemies == 1 then
         local enemyHasStun = Enemies[1]:GetStunDuration(true) > 0
-        if (not Enemies[1]:IsSilenced()) or (not Enemies[1]:IsRooted()) or (not Enemies[1]:IsStunned()) and (not Enemies[1]:IsMagicImmune()) 
-		or Enemies[1]:IsChanneling() and (GetUnitToUnitDistance(npcBot, Enemies[1]) < 350 or enemyHasStun) then
+        if (not Enemies[1]:IsSilenced()) or (not Enemies[1]:IsRooted()) or (not Enemies[1]:IsStunned()) and (not Enemies[1]:IsMagicImmune())
+        or Enemies[1]:IsChanneling() and (GetUnitToUnitDistance(npcBot, Enemies[1]) < 350 or enemyHasStun) then
             npcBot:Action_UseAbilityOnLocation(gust, Enemies[1]:GetExtrapolatedLocation(delay))
             return true
         end
     else
+        for _, enemy in pairs( Enemies ) do
+            if enemy:IsChanneling() then
+                if gust:GetCastRange() > GetUnitToUnitDistance(npcBot, enemy) and (not enemy:IsMagicImmune()) then
+                    local gustDelay = gust:GetCastPoint() + GetUnitToUnitDistance(npcBot, enemy)/wave_speed
+                    npcBot:Action_UseAbilityOnLocation(gust, enemy:GetExtrapolatedLocation(gustDelay))
+                    return true
+                end
+            end
+        end
+
+        --Use Gust as a Defensive skill to fend off chasing enemies
+        if getHeroVar("IsRetreating") and (npcBot:GetHealth()/npcBot:GetMaxHealth()) < 0.5 then
+            for _, enemy in pairs( Enemies ) do
+                if utils.IsHeroAttackingMe(enemy, 2.0) then
+                    if gust:GetCastRange() > GetUnitToUnitDistance(npcBot, enemy) and (not enemy:IsMagicImmune()) then
+                        local gustDelay = gust:GetCastPoint() + GetUnitToUnitDistance(npcBot, enemy)/wave_speed
+                        npcBot:Action_UseAbilityOnLocation(gust, enemy:GetExtrapolatedLocation(gustDelay))
+                        return true
+                    end
+                end
+            end
+        end
+
         local center = utils.GetCenter(Enemies)
         if center ~= nil then
             npcBot:Action_UseAbilityOnLocation(gust, center)

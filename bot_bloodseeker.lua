@@ -106,7 +106,7 @@ function bloodseekerBot:DoRetreat(bot, reason)
     if reason == constants.RETREAT_CREEP and (self:GetAction() ~= constants.ACTION_LANING or pushing) then
         -- if our health is lower than maximum( 15% health, 100 health )
         if bot:GetHealth() < healthThreshold then
-            local totalCreepDamage = 0;
+            local totalCreepDamage = 0
 
             for i, neutral in ipairs(neutrals) do
                 local estimatedNCDamage =  neutral:GetEstimatedDamageToTarget(true, bot, neutral:GetAttackSpeed(), DAMAGE_TYPE_PHYSICAL)

@@ -936,17 +936,21 @@ function X:DoRetreat(bot, reason)
             --set the target to go back
             local bInLane, cLane = utils.IsInLane()
             if bInLane then
+                utils.myPrint("Creep Retreat - InLane")
                 self:setHeroVar("TargetOfRunAwayFromCreepOrTower", GetLocationAlongLane(cLane, Max(utils.PositionAlongLane(bot, cLane)-0.04, 0.0)))
             elseif ( GetTeam() == TEAM_RADIANT ) then
+                utils.myPrint("Creep Retreat - Not InLane - Radiant")
                 self:setHeroVar("TargetOfRunAwayFromCreepOrTower", Vector(mypos[1] - 300, mypos[2] - 300))
             else
+                utils.myPrint("Creep Retreat - Not InLane - Dire")
                 self:setHeroVar("TargetOfRunAwayFromCreepOrTower", Vector(mypos[1] + 300, mypos[2] + 300))
             end
         end
 
         local rLoc = self:getHeroVar("TargetOfRunAwayFromCreepOrTower")
+        utils.myPrint("Creep Retreat - Destination - <",rLoc[1],", ",rLoc[2],">")
         local d = GetUnitToLocationDistance(bot, rLoc)
-        if d > 50 and utils.IsCreepAttackingMe(3.0) then
+        if d > 50 and utils.IsCreepAttackingMe(2.0) then
             bot:Action_MoveToLocation(rLoc)
             return true
         end
@@ -1131,41 +1135,12 @@ function X:DoRoshan(bot)
     return true
 end
 
-function X:DoChangeLane(bot)
-    local dTowers = buildings_status.GetDestroyableTowers(GetTeam())
-    local nLane = {}
-    
-    for i=1, #dTowers, 1 do
-        -- check Tier 1 towers
-        if dTowers[i] == TOWER_TOP_1 then table.insert(nLane, LANE_TOP)
-        elseif dTowers[i] == TOWER_MID_1 then table.insert(nLane, LANE_MID)
-        elseif dTowers[i] == TOWER_BOT_1 then table.insert(nLane, LANE_BOT)
-        end
-        -- if we have found a standing Tier 1 tower, end
-        if #nLane > 0 then break end
-        
-        -- check Tier 2 towers
-        if dTowers[i] == TOWER_TOP_2 then table.insert(nLane, LANE_TOP)
-        elseif dTowers[i] == TOWER_MID_2 then table.insert(nLane, LANE_MID)
-        elseif dTowers[i] == TOWER_BOT_2 then table.insert(nLane, LANE_BOT)
-        end
-        -- if we have found a standing Tier 2 tower, end
-        if #nLane > 0 then break end
-        
-        -- check Tier 3 towers
-        if dTowers[i] == TOWER_TOP_3 or dTowers[i] == BARRACKS_TOP_MELEE or dTowers[i] == BARRACKS_TOP_RANGED then table.insert(nLane, LANE_TOP)
-        elseif dTowers[i] == TOWER_MID_3 or dTowers[i] == BARRACKS_MID_MELEE or dTowers[i] == BARRACKS_MID_RANGED then table.insert(nLane, LANE_MID)
-        elseif dTowers[i] == TOWER_BOT_3 or dTowers[i] == BARRACKS_BOT_MELEE or dTowers[i] == BARRACKS_BOT_RANGED then table.insert(nLane, LANE_BOT)
-        end
-        -- if we have found a standing Tier 3 tower, end
-        if #nLane > 0 then break end
-    end
-    
+function X:AnalyzeLanes(nLane)
     if utils.InTable(nLane, self:getHeroVar("CurLane")) then
         if GetTeam() == TEAM_RADIANT then
             if #nLane >= 3 then
                 if self:getHeroVar("Role") == constants.ROLE_MID then self:setHeroVar("CurLane", LANE_MID)
-                elseif self:getHeroVar("Role") == constants.ROLE_OFFLANE then self:setHeroVar("CurLane", LANE_MID)
+                elseif self:getHeroVar("Role") == constants.ROLE_OFFLANE then self:setHeroVar("CurLane", LANE_TOP)
                 else
                     self:setHeroVar("CurLane", LANE_BOT)
                 end
@@ -1179,7 +1154,7 @@ function X:DoChangeLane(bot)
                 end
             end
         end
-        utils.myPrint("Lanes are evenly pushed, going back to my lane")
+        utils.myPrint("Lanes are evenly pushed, going back to my lane: ", self:getHeroVar("CurLane"))
         return false
     end
     
@@ -1191,8 +1166,43 @@ function X:DoChangeLane(bot)
         utils.myPrint("Switching to lane: ", nLane[1])
         self:setHeroVar("CurLane", nLane[1])
     else
+        utils.myPrint("Switching to lane: ", LANE_MID)
         self:setHeroVar("CurLane", LANE_MID)
     end
+    return false
+end
+
+function X:DoChangeLane(bot)
+    local dTowers = buildings_status.GetDestroyableTowers(GetTeam())
+    local nLane = {}
+    
+    -- check Tier 1 towers
+    if utils.InTable(dTowers, 1) then table.insert(nLane, LANE_TOP) end
+    if utils.InTable(dTowers, 4) then table.insert(nLane, LANE_MID) end
+    if utils.InTable(dTowers, 7) then table.insert(nLane, LANE_BOT) end
+    -- if we have found a standing Tier 1 tower, end
+    if #nLane > 0 then
+        return self:AnalyzeLanes(nLane)
+    end
+        
+    -- check Tier 2 towers
+    if utils.InTable(dTowers, 2) then table.insert(nLane, LANE_TOP) end
+    if utils.InTable(dTowers, 5) then table.insert(nLane, LANE_MID) end
+    if utils.InTable(dTowers, 8) then table.insert(nLane, LANE_BOT) end
+    -- if we have found a standing Tier 2 tower, end
+    if #nLane > 0 then
+        return self:AnalyzeLanes(nLane)
+    end
+    
+    -- check Tier 3 towers & buildings
+    if utils.InTable(dTowers, 3) or utils.InTable(dTowers, 12) or utils.InTable(dTowers, 13) then table.insert(nLane, LANE_TOP) end
+    if utils.InTable(dTowers, 6) or utils.InTable(dTowers, 14) or utils.InTable(dTowers, 15) then table.insert(nLane, LANE_MID) end
+    if utils.InTable(dTowers, 9) or utils.InTable(dTowers, 16) or utils.InTable(dTowers, 17) then table.insert(nLane, LANE_BOT) end
+    -- if we have found a standing Tier 3 tower, end
+    if #nLane > 0 then
+        return self:AnalyzeLanes(nLane)
+    end
+    
     return false
 end
 

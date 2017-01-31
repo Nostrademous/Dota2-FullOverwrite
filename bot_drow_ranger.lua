@@ -83,9 +83,10 @@ end
 function drowRangerBot:DoRetreat(bot, reason)
     -- if we got creep damage and are a JUNGLER do special stuff
     local pushing = getHeroVar("ShouldPush")
+	local healthThreshold = math.max(bot:GetMaxHealth()*0.15, 100)
     if reason == constants.RETREAT_CREEP and (self:GetAction() ~= constants.ACTION_LANING or pushing) then
         -- if our health is lower than maximum( 15% health, 100 health )
-        if bot:GetHealth() < math.max(bot:GetMaxHealth()*0.15, 100) then
+        if bot:GetHealth() < healthThreshold then
             setHeroVar("RetreatReason", constants.RETREAT_FOUNTAIN)
             if ( self:HasAction(constants.ACTION_RETREAT) == false ) then
                 self:AddAction(constants.ACTION_RETREAT)
@@ -104,7 +105,7 @@ function drowRangerBot:DoRetreat(bot, reason)
     -- if we are not a jungler, invoke default DoRetreat behavior
     else
         -- we use '.' instead of ':' and pass 'self' so it is the correct self
-        return dt.DoRetreat(self, bot, reason)
+        return dt.DoRetreat(self, bot, getHeroVar("RetreatReason"))
     end
 end
 

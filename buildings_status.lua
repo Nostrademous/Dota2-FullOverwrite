@@ -8,17 +8,17 @@ module( "buildings_status", package.seeall )
  TYPE_ANCIENT = "ancient"
 
 local buildings = {
-    {["ApiID"]=TOWER_TOP_1, ["Type"]=TYPE_TOWER},
+    {["ApiID"]=TOWER_TOP_1, ["Type"]=TYPE_TOWER}, -- 1
     {["ApiID"]=TOWER_TOP_2, ["Type"]=TYPE_TOWER},
     {["ApiID"]=TOWER_TOP_3, ["Type"]=TYPE_TOWER},
-    {["ApiID"]=TOWER_MID_1, ["Type"]=TYPE_TOWER},
+    {["ApiID"]=TOWER_MID_1, ["Type"]=TYPE_TOWER}, -- 4
     {["ApiID"]=TOWER_MID_2, ["Type"]=TYPE_TOWER},
     {["ApiID"]=TOWER_MID_3, ["Type"]=TYPE_TOWER},
-    {["ApiID"]=TOWER_BOT_1, ["Type"]=TYPE_TOWER},
+    {["ApiID"]=TOWER_BOT_1, ["Type"]=TYPE_TOWER}, -- 7
     {["ApiID"]=TOWER_BOT_2, ["Type"]=TYPE_TOWER},
     {["ApiID"]=TOWER_BOT_3, ["Type"]=TYPE_TOWER},
-    {["ApiID"]=TOWER_BASE_1, ["Type"]=TYPE_TOWER},
-    {["ApiID"]=TOWER_BASE_2, ["Type"]=TYPE_TOWER},
+    {["ApiID"]=TOWER_BASE_1, ["Type"]=TYPE_TOWER}, -- 10
+    {["ApiID"]=TOWER_BASE_2, ["Type"]=TYPE_TOWER}, -- 11
     {["ApiID"]=BARRACKS_TOP_MELEE, ["Type"]=TYPE_MELEE},
     {["ApiID"]=BARRACKS_TOP_RANGED, ["Type"]=TYPE_RANGED},
     {["ApiID"]=BARRACKS_MID_MELEE, ["Type"]=TYPE_MELEE},
@@ -150,7 +150,7 @@ function GetHandle(team, id)
 end
 
 function GetStandingBuildingIDs(team)
-    ids = {}
+    local ids = {}
     for i, _ in ipairs(tableBuildings[team]) do
         if GetHealth(team, i) > -1 then
             ids[#ids+1] = i
@@ -164,7 +164,7 @@ function GetType(team, id)
 end
 
 function GetDestroyableTowers(team)
-    ids = {}
+    local ids = {}
     for _, id in pairs(towers) do
         if GetHealth(team, id) > -1 and GetHandle(team, id) ~= nil and (not GetHandle(team, id):IsInvulnerable()) then
             ids[#ids+1] = id
@@ -186,7 +186,7 @@ end
 
 -- check tower dependencies (glyph doesn't matter)
 function GetVulnerableBuildingIDs(team)
-    ids = {}
+    local ids = {}
     -- TODO: use a method that isn't depending on exact order in tableBuildings
     for j = 0,6,3 do -- for all lanes
         for i = 1,3,1 do -- towers from t1 to t3

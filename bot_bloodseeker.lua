@@ -72,7 +72,7 @@ function Think()
     -- if we are initialized, do the rest
     if bloodseekerBot.Init then
         if npcBot:GetLevel() >= 20 and getHeroVar("Role") ~= constants.ROLE_HARDCARRY then
-            self:RemoveAction(constants.ACTION_JUNGLING)
+            bloodseekerBot:RemoveAction(constants.ACTION_JUNGLING)
             setHeroVar("Role", constants.ROLE_HARDCARRY)
             setHeroVar("CurLane", LANE_BOT) --FIXME: don't hardcode this
         end

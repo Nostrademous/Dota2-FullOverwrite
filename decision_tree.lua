@@ -1159,7 +1159,7 @@ function X:AnalyzeLanes(nLane)
     end
     
     if #nLane > 1 then
-        local newLane = nLane[randomInt(1, #nLane)]
+        local newLane = nLane[RandomInt(1, #nLane)]
         utils.myPrint("Randomly switching to lane: ", newLane)
         self:setHeroVar("CurLane", newLane)
     elseif #nLane == 1 then

@@ -751,6 +751,7 @@ function X:Determine_ShouldTeamRoshan(bot)
             table.remove(enemies, 1)
         end
     end
+
 	local isRoshanAlive = DotaTime() - GetRoshanKillTime() > 660 -- max 11 minutes respawn time of roshan
 
     if (#enemies < 3 and (GetRoshanKillTime == 0 or isRoshanAlive)) then -- FIXME: Implement

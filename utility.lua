@@ -218,7 +218,9 @@ U.RadiantSafeSpots={
     Vector(-4283,-6091),
     Vector(-2441,-6056),
     Vector(5722,-2602),
-    Vector(4595,-1540)
+    Vector(4595,-1540),
+    Vector(617, -2390),
+    Vector(-122, -6300)
 }
 
 U.DireSafeSpots={
@@ -246,7 +248,9 @@ U.DireSafeSpots={
     Vector(3219,2916),
     Vector(4070,5821),
     Vector(2036,5637),
-    Vector(-3715,2246)
+    Vector(-3715,2246),
+    Vector(-113, 2565),
+    Vector(43, 6036)
 }
 
 -------------------------------------------------------------------------------
@@ -1165,7 +1169,7 @@ function U.GetCenter(Heroes)
     local hn = 0.0
 
     for _,hero in pairs(Heroes) do
-        if hero ~= nil and hero:IsAlive() then
+        if hero ~= nil and hero:IsAlive() and hero:CanBeSeen() then
             sum = sum + hero:GetLocation()
             hn = hn + 1
         end

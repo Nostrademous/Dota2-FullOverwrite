@@ -68,8 +68,10 @@ function Think(npcBot, loc)
 
     item_usage.UseMovementItems(nextmove)
     if getHeroVar("IsInLane") then
+        --utils.myPrint("generic retreat - in Lane")
         npcBot:Action_MoveToLocation(nextmove)
     else
+        --utils.myPrint("generic retreat - not in Lane")
         utils.MoveSafelyToLocation(npcBot, nextmove)
     end
 end

@@ -147,12 +147,13 @@ function GetHandle(team, id)
     elseif building.Type == TYPE_ANCIENT then
         return GetAncient(team)
     end
+    return nil
 end
 
 function GetStandingBuildingIDs(team)
     local ids = {}
     for i, _ in ipairs(tableBuildings[team]) do
-        if GetHealth(team, i) > -1 then
+        if GetHealth(team, i) > 0 then
             ids[#ids+1] = i
         end
     end
@@ -166,7 +167,7 @@ end
 function GetDestroyableTowers(team)
     local ids = {}
     for _, id in pairs(towers) do
-        if GetHealth(team, id) > -1 and GetHandle(team, id) ~= nil and (not GetHandle(team, id):IsInvulnerable()) then
+        if GetHealth(team, id) > 0 and GetHandle(team, id) ~= nil and (not GetHandle(team, id):IsInvulnerable()) then
             ids[#ids+1] = id
         end
     end

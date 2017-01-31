@@ -149,6 +149,16 @@ function DetectEnemyPush()
     end
     return nil, nil, nil
 end
-    
+
+local lastBuildingUpdate = -1000.0
+local vulnEnemyBuildings = nil
+function GetLatestVulnerableEnemyBuildings()
+    local bUpdate, newTime = utils.TimePassed(lastBuildingUpdate, 3.0)
+    if bUpdate then
+        vulnEnemyBuildings = buildings_status.GetDestroyableTowers(utils.GetOtherTeam())
+        lastBuildingUpdate = newTime
+    end
+    return vulnEnemyBuildings
+end    
 
 for k,v in pairs( global_game_state ) do _G._savedEnv[k] = v end

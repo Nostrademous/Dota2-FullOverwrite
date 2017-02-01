@@ -636,14 +636,14 @@ end
 -- CONTRIBUTOR: Function below was coded by Platinum_dota2
 function U.MoveSafelyToLocation(npcBot, dest)
     if getHeroVar("NextHop")==nil or #getHeroVar("NextHop")==0 or getHeroVar("PathfindingWasInitiated")==nil or (not getHeroVar("PathfindingWasInitiated")) then
-        U.InitPathFinding(npcBot);
-        print(U.GetHeroName(npcBot), " Path finding has been initiated");
+        U.InitPathFinding(npcBot)
+        U.myPrint("Path finding has been initiated")
     end
 
     local safeSpots = nil
     local safeDist = 2000
     if dest==nil then
-        print("PathFinding: No destination was specified")
+        U.myPrint("PathFinding: No destination was specified")
         return
     end
 
@@ -737,7 +737,7 @@ function U.InitPathFinding(npcBot)
     local dist={}
     local NextHop={}
 
-    print("Inits are done");
+    U.myPrint("Inits are done")
     for u,uv in pairs(safeSpots) do
         local q=true;
         dist[u]={};
@@ -752,7 +752,7 @@ function U.InitPathFinding(npcBot)
             NextHop[u][v]=v;
         end
         if q then
-            print("There is an isolated vertex in safespots");
+            U.myPrint("There is an isolated vertex in safespots")
         end
     end
 
@@ -827,7 +827,7 @@ function U.GetWardingSpot(lane)
     local laneTower2 = U.GetLaneTower(U.GetOtherTeam(), lane, 2)
 
     if U.NotNilOrDead(laneTower1) then
-        print(U.GetHeroName(GetBot()).." - WARDING - lane tower 1 still up, placing wards accordingly")
+        U.myPrint(" - WARDING - lane tower 1 still up, placing wards accordingly")
         if GetTeam() == TEAM_RADIANT then
             if lane == LANE_BOT then
                 return Vector(3553, -1500)
@@ -846,7 +846,7 @@ function U.GetWardingSpot(lane)
             end
         end
     else
-        print("WARDING: Not implemented past a tower dropping...")
+        U.myPrint("WARDING: Not implemented past a tower dropping...")
         return nil
     end
     return nil
@@ -902,7 +902,7 @@ function U.NextNeutralSpawn()
         return 30
     else
         t = math.ceil((DotaTime() - 60) / 120) * 120 + 60
-        print("Next spawn time is", t)
+        U.myPrint("Next spawn time is ", t)
         return t
     end
 end
@@ -1281,7 +1281,7 @@ function U.HaveItem(npcBot, item_name)
         if slot_type == ITEM_SLOT_TYPE_MAIN then
             return npcBot:GetItemInSlot(slot);
         elseif slot_type == ITEM_SLOT_TYPE_BACKPACK then
-            print("FIXME: Implement swapping BACKPACK to MAIN INVENTORY of item: ", item_name)
+            U.myPrint("FIXME: Implement swapping BACKPACK to MAIN INVENTORY of item: ", item_name)
             return nil
         elseif slot_type == ITEM_SLOT_TYPE_STASH then
             if npcBot:HasModifier("modifier_fountain_aura") then
@@ -1289,12 +1289,12 @@ function U.HaveItem(npcBot, item_name)
                     U.MoveItemsFromStashToInventory(bot)
                     return U.HaveItem(npcBot, item_name)
                 else
-                    print("FIXME: Implement swapping STASH to MAIN INVENTORY of item: ", item_name)
+                    U.myPrint("FIXME: Implement swapping STASH to MAIN INVENTORY of item: ", item_name)
                 end
             end
             return nil
         else
-            print("ERROR: condition should not be hit: ", item_name);
+            U.myPrint("ERROR: condition should not be hit: ", item_name)
         end
     end
 

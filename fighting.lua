@@ -72,20 +72,49 @@ function FindTarget(dist)
     local goodFightLength = 10.0
     local badfightLength = 10.0
     
+    local deadBaddies = {}
     
     local lvl = npcBot:GetLevel()
 	for _, enemy in pairs(Enemies) do
 		if utils.NotNilOrDead(enemy) and GetUnitToLocationDistance(enemy, utils.Fountain(utils.GetOtherTeam())) > 1350 
-            and enemy:GetTimeSinceLastSeen() < 3.0 then
+            and enemy:GetTimeSinceLastSeen() < 1.0 then
+            
+            -- get our stun/slow duration
+            local sd = npcBot:GetStunDuration(true) + 0.5*npcBot:GetSlowDuration(true)
+            
+            -- get stun/slow duration of allies that can reach us during my stun/slow duration
+            local allyList = GetUnitList(UNIT_LIST_ALLIED_HEROES)
+            local goodStunDuration = sd
+            for _, ally in pairs(allyList) do
+                if ally:GetPlayerID() ~= npcBot:GetPlayerID() then -- remove ourselves from consideration
+                    local timeToLocation = GetUnitToUnitDistance(enemy, ally)/ally:GetCurrentMovementSpeed()
+                    if utils.NotNilOrDead(Ally) and timeToLocation <= sd then
+                        goodStunDuration = goodStunDuration + ally:GetStunDuration(true) + 0.5*ally:GetSlowDuration(true)
+                    end
+                end
+			end
+            
+            local boomDmg = 0
+            for _, ally in pairs(allyList) do
+                local timeToLocation = GetUnitToUnitDistance(enemy, ally)/ally:GetCurrentMovementSpeed()
+                if timeToLocation < goodStunDuration then
+                    boomDmg = boomDmg + ally:GetEstimatedDamageToTarget(true, enemy, goodStunDuration - timeToLocation, DAMAGE_TYPE_ALL)
+                end
+            end
+            if boomDmg >= enemy:GetHealth()+50 then
+                utils.myPrint("I/We can smoke this target: ", utils.GetHeroName(enemy))
+                table.insert(deadBaddies, enemy)
+                break -- no need to do rest of math
+            end
+            
+            -- OTHERWISE: we need to do some math about the upcoming team fight
             
             -- first check for stun duration
             for k, enemy2 in pairs(enemyData) do
 				if type(k) == "number" and enemy2.Health > 0 and (enemy2.Health/enemy2.MaxHealth) > 0.1 then
                     local distance = GetUnitToLocationDistance(enemy, enemy2.Location)
 					if distance < 1200 then
-                        if enemy2.Obj ~= nil then
-                            badfightLength = badfightLength + enemy2.StunDur + 0.5*enemy2.SlowDur
-                        end
+                        badfightLength = badfightLength + enemy2.StunDur + 0.5*enemy2.SlowDur
 					end
 				end
 			end
@@ -136,6 +165,14 @@ function FindTarget(dist)
         enemyData.GetEnemyDmgs(candidate:GetPlayerID(), 2.0)
     end
     --]]
+    
+    if #deadBaddies == 1 then
+        return deadBaddies[1], 100.0
+    elseif #deadBaddies > 1 then
+        -- kill the one with the most health
+        table.sort(deadBaddies, function(n1, n2) return n1:GetHealth() > n2:GetHealth() end)
+        return deadBaddies[1], 100.0
+    end
 
 	return candidate, bestScore
 end

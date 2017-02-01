@@ -179,7 +179,7 @@ function X:DoInit(bot)
             end
         end
     end
-    print( self:getHeroVar("Name"), " initialized - Lane: ", self:getHeroVar("CurLane"), ", Role: ", self:getHeroVar("Role") )
+    utils.myPrint(" initialized - Lane: ", self:getHeroVar("CurLane"), ", Role: ", self:getHeroVar("Role"))
 
     self:DoHeroSpecificInit(bot)
 end
@@ -562,7 +562,20 @@ function X:Determine_ShouldIRetreat(bot)
 end
 
 function X:Determine_ShouldIFighting(bot)
+    -- try to find a taret
+    local eyeRange = 1200
+    local weakestHero, score = fighting.FindTarget(eyeRange)
+    
+    -- get my possible existing target
     local myTarget = self:getHeroVar("Target")
+    
+    -- if I found a new best target, but I have a target already, and they are not the same
+    if weakestHero ~= nil and myTarget ~= nil and myTarget ~= weakestHero then
+        if score > 50.0 or (score > 2.0 and (GetUnitToUnitDistance(bot, weakestHero) < GetUnitToUnitDistance(bot, myTarget)*1.5 or weakestHero:GetStunDuration(true) >= 1.0)) then
+            myTarget = weakestHero
+        end
+    end
+    
     if myTarget then
         if not myTarget:IsAlive() then
             utils.AllChat("You dead buddy!")
@@ -576,7 +589,7 @@ function X:Determine_ShouldIFighting(bot)
             for _, friend in pairs(Allies) do
                 local friendID = friend:GetPlayerID()
                 if gHeroVar.HasID(friendID) and myTarget == gHeroVar.GetVar(friendID, "Target") then 
-                    if (GameTime() - friend:GetLastAttackTime()) > 5.0 and myTarget:GetCurrentMovementSpeed() >= friend:GetCurrentMovementSpeed() then
+                    if (GameTime() - friend:GetLastAttackTime()) < 5.0 and myTarget:GetCurrentMovementSpeed() < friend:GetCurrentMovementSpeed() then
                         nFriend = nFriend + 1
                     end
                 end
@@ -599,13 +612,22 @@ function X:Determine_ShouldIFighting(bot)
     
     -- if I have a target, set by me or by team fighting function
     if myTarget ~= nil and myTarget:IsAlive() then
-        if (not myTarget:CanBeSeen()) and myTarget:GetTimeSinceLastSeen() > 3.0 then
+        if (not myTarget:CanBeSeen()) and myTarget:GetTimeSinceLastSeen() > 5.0 then
             utils.myPrint(" - Stopping my fight... lost sight of hero")
             self:RemoveAction(ACTION_FIGHT)
             self:setHeroVar("Target", nil)
             return false
         else
             self:setHeroVar("Target", myTarget)
+            local Allies = GetUnitList(UNIT_LIST_ALLIED_HEROES)
+            for _, friend in pairs(Allies) do
+                local friendID = friend:GetPlayerID()
+                if self.pID ~= friendID and gHeroVar.HasID(friendID) and GetUnitToUnitDistance(myTarget, friend)/friend:GetCurrentMovementSpeed() <= 5.0 then
+                    utils.myPrint("getting help from ", utils.GetHeroName(friend), " in fighting: ", utils.GetHeroName(myTarget))
+                    gHeroVar.SetVar(friendID, "Target", myTarget)
+                end
+            end
+            
             local lastLoc = myTarget:GetLastSeenLocation()
             if utils.GetOtherTeam() == TEAM_DIRE then
                 local prob1 = GetUnitPotentialValue(myTarget, Vector(lastLoc[1] + 500, lastLoc[2]), 1000)
@@ -635,10 +657,7 @@ function X:Determine_ShouldIFighting(bot)
         end
     end
 
-    -- try to find a taret
-    local eyeRange = 1200
-    local weakestHero, score = fighting.FindTarget(eyeRange)
-
+    -- otherwise use the weakest hero
     if utils.NotNilOrDead(weakestHero) then
         local bFight = (score > 1) or weakestHero:HasModifier("modifier_bloodseeker_rupture")
 
@@ -936,7 +955,7 @@ function X:DoRetreat(bot, reason)
             --set the target to go back
             local bInLane, cLane = utils.IsInLane()
             if bInLane then
-                utils.myPrint("Creep Retreat - InLane")
+                utils.myPrint("Creep Retreat - InLane: ", cLane)
                 self:setHeroVar("TargetOfRunAwayFromCreepOrTower", GetLocationAlongLane(cLane, Max(utils.PositionAlongLane(bot, cLane)-0.04, 0.0)))
             elseif ( GetTeam() == TEAM_RADIANT ) then
                 utils.myPrint("Creep Retreat - Not InLane - Radiant")
@@ -948,7 +967,7 @@ function X:DoRetreat(bot, reason)
         end
 
         local rLoc = self:getHeroVar("TargetOfRunAwayFromCreepOrTower")
-        utils.myPrint("Creep Retreat - Destination - <",rLoc[1],", ",rLoc[2],">")
+        --utils.myPrint("Creep Retreat - Destination - <",rLoc[1],", ",rLoc[2],">")
         local d = GetUnitToLocationDistance(bot, rLoc)
         if d > 50 and utils.IsCreepAttackingMe(2.0) then
             bot:Action_MoveToLocation(rLoc)
@@ -1137,6 +1156,7 @@ end
 
 function X:AnalyzeLanes(nLane)
     if utils.InTable(nLane, self:getHeroVar("CurLane")) then
+        --[[
         if GetTeam() == TEAM_RADIANT then
             if #nLane >= 3 then
                 if self:getHeroVar("Role") == constants.ROLE_MID then self:setHeroVar("CurLane", LANE_MID)
@@ -1155,6 +1175,7 @@ function X:AnalyzeLanes(nLane)
             end
         end
         utils.myPrint("Lanes are evenly pushed, going back to my lane: ", self:getHeroVar("CurLane"))
+        --]]
         return false
     end
     
@@ -1173,31 +1194,31 @@ function X:AnalyzeLanes(nLane)
 end
 
 function X:DoChangeLane(bot)
-    local dTowers = buildings_status.GetDestroyableTowers(GetTeam())
+    local listBuildings = global_game_state.GetLatestVulnerableEnemyBuildings()
     local nLane = {}
     
     -- check Tier 1 towers
-    if utils.InTable(dTowers, 1) then table.insert(nLane, LANE_TOP) end
-    if utils.InTable(dTowers, 4) then table.insert(nLane, LANE_MID) end
-    if utils.InTable(dTowers, 7) then table.insert(nLane, LANE_BOT) end
+    if utils.InTable(listBuildings, 1) then table.insert(nLane, LANE_TOP) end
+    if utils.InTable(listBuildings, 4) then table.insert(nLane, LANE_MID) end
+    if utils.InTable(listBuildings, 7) then table.insert(nLane, LANE_BOT) end
     -- if we have found a standing Tier 1 tower, end
     if #nLane > 0 then
         return self:AnalyzeLanes(nLane)
     end
         
     -- check Tier 2 towers
-    if utils.InTable(dTowers, 2) then table.insert(nLane, LANE_TOP) end
-    if utils.InTable(dTowers, 5) then table.insert(nLane, LANE_MID) end
-    if utils.InTable(dTowers, 8) then table.insert(nLane, LANE_BOT) end
+    if utils.InTable(listBuildings, 2) then table.insert(nLane, LANE_TOP) end
+    if utils.InTable(listBuildings, 5) then table.insert(nLane, LANE_MID) end
+    if utils.InTable(listBuildings, 8) then table.insert(nLane, LANE_BOT) end
     -- if we have found a standing Tier 2 tower, end
     if #nLane > 0 then
         return self:AnalyzeLanes(nLane)
     end
     
     -- check Tier 3 towers & buildings
-    if utils.InTable(dTowers, 3) or utils.InTable(dTowers, 12) or utils.InTable(dTowers, 13) then table.insert(nLane, LANE_TOP) end
-    if utils.InTable(dTowers, 6) or utils.InTable(dTowers, 14) or utils.InTable(dTowers, 15) then table.insert(nLane, LANE_MID) end
-    if utils.InTable(dTowers, 9) or utils.InTable(dTowers, 16) or utils.InTable(dTowers, 17) then table.insert(nLane, LANE_BOT) end
+    if utils.InTable(listBuildings, 3) or utils.InTable(listBuildings, 12) or utils.InTable(listBuildings, 13) then table.insert(nLane, LANE_TOP) end
+    if utils.InTable(listBuildings, 6) or utils.InTable(listBuildings, 14) or utils.InTable(listBuildings, 15) then table.insert(nLane, LANE_MID) end
+    if utils.InTable(listBuildings, 9) or utils.InTable(listBuildings, 16) or utils.InTable(listBuildings, 17) then table.insert(nLane, LANE_BOT) end
     -- if we have found a standing Tier 3 tower, end
     if #nLane > 0 then
         return self:AnalyzeLanes(nLane)

@@ -34,12 +34,12 @@ function considerAbility(ability, hTarget)
     local channelTime = ability:GetChannelTime()
     if not ability:IsPassive() and ability:IsFullyCastable() and (not channelTime > 0) then
         local actualOneTimeCastDmg = ability:GetEstimatedDamageToTarget(hTarget, 10.0, ability:GetDamageType())
-        return actualOneTimeCastDmg, ability:GetManaCost(), ability:GetCastPoint(), 0, 0 --FIXME: Duration, Cooldown
+        return actualOneTimeCastDmg, ability:GetManaCost(), ability:GetCastPoint(), 0, ability:GetCooldown() --FIXME: Duration
     end
     
     if ability:IsFullyCastable() and channelTime > 0 then
         local actualOneTimeCastDmg = ability:GetEstimatedDamageToTarget(hTarget, channelTime, ability:GetDamageType())
-        return actualOneTimeCastDmg, ability:GetManaCost(), ability:GetCastPoint(), channelTime, 0 --FIXME:, Cooldown
+        return actualOneTimeCastDmg, ability:GetManaCost(), ability:GetCastPoint(), channelTime, ability:GetCooldown()
     end
     
     if ability:IsPassive() or ability:IsToggle() then

@@ -1293,7 +1293,6 @@ function U.HaveItem(npcBot, item_name)
     if slot ~= ITEM_SLOT_TYPE_INVALID then
         local slot_type = npcBot:GetItemSlotType(slot)
         if slot_type == ITEM_SLOT_TYPE_MAIN then
-            U.myPrint("Found: ", item_name, " in slot: ", slot, " type: ", type(npcBot:GetItemInSlot(slot)))
             return npcBot:GetItemInSlot(slot)
         elseif slot_type == ITEM_SLOT_TYPE_BACKPACK then
             U.myPrint("FIXME: Implement swapping BACKPACK to MAIN INVENTORY of item: ", item_name)

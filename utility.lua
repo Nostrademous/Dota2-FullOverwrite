@@ -611,6 +611,19 @@ function U.GetOtherTeam()
     end
 end
 
+function U.TreadCycle(bot, stat)
+    local powerTreads = U.HaveItem(bot, "item_power_treads")
+    if powerTreads then
+        local activeStat = powerTreads:GetPowerTreadsStat()
+        for i = 0, 2, 1 do 
+            if activeStat == stat then
+                break
+            end
+            bot:Action_UseAbility(powerTreads)
+        end
+    end
+end
+
 -------------------------------------------------------------------------------
 -- Hero Movement Functions
 -------------------------------------------------------------------------------

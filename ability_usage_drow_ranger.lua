@@ -6,6 +6,8 @@
 _G._savedEnv = getfenv()
 module( "ability_usage_drow_ranger", package.seeall )
 
+require( GetScriptDirectory().."/constants" )
+
 local utils = require( GetScriptDirectory().."/utility" )
 local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
 
@@ -81,7 +83,9 @@ local function UseW()
         local enemyHasStun = Enemies[1]:GetStunDuration(true) > 0
         if (not Enemies[1]:IsSilenced()) or (not Enemies[1]:IsRooted()) or (not Enemies[1]:IsStunned()) and (not Enemies[1]:IsMagicImmune())
         or Enemies[1]:IsChanneling() and (GetUnitToUnitDistance(npcBot, Enemies[1]) < 350 or enemyHasStun) then
+            utils.TreadCycle(npcBot, constants.INTELLIGENCE)
             npcBot:Action_UseAbilityOnLocation(gust, Enemies[1]:GetExtrapolatedLocation(delay))
+            utils.TreadCycle(npcBot, constants.AGILITY)
             return true
         end
     else
@@ -89,7 +93,9 @@ local function UseW()
             if enemy:IsChanneling() then
                 if gust:GetCastRange() > GetUnitToUnitDistance(npcBot, enemy) and (not enemy:IsMagicImmune()) then
                     local gustDelay = gust:GetCastPoint() + GetUnitToUnitDistance(npcBot, enemy)/wave_speed
+                    utils.TreadCycle(npcBot, constants.INTELLIGENCE)
                     npcBot:Action_UseAbilityOnLocation(gust, enemy:GetExtrapolatedLocation(gustDelay))
+                    utils.TreadCycle(npcBot, constants.AGILITY)
                     return true
                 end
             end
@@ -101,7 +107,9 @@ local function UseW()
                 if utils.IsHeroAttackingMe(enemy, 2.0) then
                     if gust:GetCastRange() > GetUnitToUnitDistance(npcBot, enemy) and (not enemy:IsMagicImmune()) then
                         local gustDelay = gust:GetCastPoint() + GetUnitToUnitDistance(npcBot, enemy)/wave_speed
+                        utils.TreadCycle(npcBot, constants.INTELLIGENCE)
                         npcBot:Action_UseAbilityOnLocation(gust, enemy:GetExtrapolatedLocation(gustDelay))
+                        utils.TreadCycle(npcBot, constants.AGILITY)
                         return true
                     end
                 end
@@ -110,7 +118,9 @@ local function UseW()
 
         local center = utils.GetCenter(Enemies)
         if center ~= nil then
+            utils.TreadCycle(npcBot, constants.INTELLIGENCE)
             npcBot:Action_UseAbilityOnLocation(gust, center)
+            utils.TreadCycle(npcBot, constants.AGILITY)
             return true
         end
     end

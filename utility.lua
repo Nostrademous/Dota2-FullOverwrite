@@ -1252,9 +1252,9 @@ function U.NumberOfItems(bot)
 
     for i = 0, 5, 1 do
         local item = bot:GetItemInSlot(i)
-                if item ~= nil then
-                    n = n+1
-                end
+        if item ~= nil then
+            n = n+1
+        end
     end
 
     return n
@@ -1265,9 +1265,9 @@ function U.NumberOfItemsInBackpack(bot)
 
     for i = 6, 8, 1 do
         local item = bot:GetItemInSlot(i)
-                if item ~= nil then
-                    n = n+1
-                end
+        if item ~= nil then
+            n = n+1
+        end
     end
 
     return n
@@ -1280,9 +1280,9 @@ function U.NumberOfItemsInStash(bot)
 
     for i = 9, 14, 1 do
         local item = bot:GetItemInSlot(i)
-                if item ~= nil then
-                    n = n+1
-                end
+        if item ~= nil then
+            n = n+1
+        end
     end
 
     return n

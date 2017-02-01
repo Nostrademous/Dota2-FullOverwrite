@@ -156,10 +156,8 @@ local vulnEnemyBuildings = nil
 function GetLatestVulnerableEnemyBuildings()
     local bUpdate, newTime = utils.TimePassed(lastBuildingUpdate, 3.0)
     if bUpdate then
-        utils.myPrint("GetLatestVulnerableEnemyBuildings - Start")
         vulnEnemyBuildings = buildings_status.GetDestroyableTowers(utils.GetOtherTeam())
         lastBuildingUpdate = newTime
-        utils.myPrint("GetLatestVulnerableEnemyBuildings - End")
     end
     return vulnEnemyBuildings
 end
@@ -168,8 +166,6 @@ local lastGlobalFightDetermination = -1000.0
 function GlobalFightDetermination()
     local bUpdate, newTime = utils.TimePassed(lastGlobalFightDetermination, 0.25)
     if bUpdate then lastGlobalFightDetermination = newTime else return end
-    
-    utils.myPrint("GlobalFightDeterminaton - Start")
     
     enemyData.UpdateEnemyInfo(1.0)
     
@@ -245,8 +241,6 @@ function GlobalFightDetermination()
             end
         end
     end
-    
-    utils.myPrint("GlobalFightDeterminaton - End")
 end
 
 for k,v in pairs( global_game_state ) do _G._savedEnv[k] = v end

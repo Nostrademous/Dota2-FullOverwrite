@@ -182,15 +182,15 @@ end
 
 local function DenyNearbyCreeps(npcBot)
 
-	local AllyCreeps = npcBot:GetNearbyCreeps(EyeRange,false);
-	if AllyCreeps==nil or #AllyCreeps==0 then
-		return false;
+	local AllyCreeps = npcBot:GetNearbyLaneCreeps(EyeRange, false)
+	if AllyCreeps == nil or #AllyCreeps == 0 then
+		return false
 	end
 	
-	local WeakestCreep, WeakestCreepHealth = utils.GetWeakestCreep(AllyCreeps);
+	local WeakestCreep, WeakestCreepHealth = utils.GetWeakestCreep(AllyCreeps)
 	
 	if WeakestCreep == nil then
-		return false;
+		return false
 	end
 
 	AttackRange = npcBot:GetAttackRange()
@@ -209,7 +209,7 @@ local function DenyNearbyCreeps(npcBot)
 	end
 	
 	if damage > WeakestCreep:GetHealth() and utils.GetDistance(npcBot:GetLocation(),WeakestCreep:GetLocation()) < AttackRange then
-		npcBot:Action_AttackUnit(WeakestCreep,true);
+		npcBot:Action_AttackUnit(WeakestCreep, true)
 		return true;
 	end
 	
@@ -219,8 +219,8 @@ local function DenyNearbyCreeps(npcBot)
 	end
 	
 	if WeakestCreepHealth < approachScalar*damage and utils.GetDistance(npcBot:GetLocation(),WeakestCreep:GetLocation()) > npcBot:GetAttackRange() then
-		local dest = utils.VectorTowards(WeakestCreep:GetLocation(),GetLocationAlongLane(CurLane,LanePos-0.03), AttackRange - 20 );
-		npcBot:Action_MoveToLocation(dest);
+		local dest = utils.VectorTowards(WeakestCreep:GetLocation(),GetLocationAlongLane(CurLane,LanePos-0.03), AttackRange - 20 )
+		npcBot:Action_MoveToLocation(dest)
 		return true;
 	end
 

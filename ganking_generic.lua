@@ -34,6 +34,12 @@ local MinRating = 1.0
 ----------------------------------
 
 function FindTarget(bot)
+    local me = getHeroVar("Self")
+    if me:IsReadyToGank(bot) == false then
+        me:RemoveAction(constants.ACTION_GANKING)
+        return false
+    end
+
     -- TODO: don't do this every frame and for every ganking hero. Should be part of team level logic.
     local enemies = GetUnitList(UNIT_LIST_ENEMY_HEROES) -- check all enemies
     local allies = GetUnitList(UNIT_LIST_ALLIED_HEROES)
@@ -101,22 +107,22 @@ function FindTarget(bot)
     return false
 end
 
-function ApproachTarget(bot)
+function ApproachTarget(bot, target)
     local me = getHeroVar("Self")
     local move_ticks = getHeroVar("move_ticks")
 
     if move_ticks > 250 then -- time to check for targets again
         utils.myPrint("move_ticks > 250 :: abandoning gank")
         me:RemoveAction(constants.ACTION_GANKING)
+        self:setHeroVar("GankTarget", {Obj=nil, Id=0})
         return false
     else
         setHeroVar("move_ticks", move_ticks + 1)
     end
 
-    local target = getHeroVar("GankTarget")
-
     if me:IsReadyToGank(bot) == false then
         me:RemoveAction(constants.ACTION_GANKING)
+        self:setHeroVar("GankTarget", {Obj=nil, Id=0})
         return false
     end
 
@@ -137,6 +143,7 @@ function ApproachTarget(bot)
         else
             if GetHeroLastSeenInfo(target.Id).time > 5.0 then
                 me:RemoveAction(constants.ACTION_GANKING)
+                self:setHeroVar("GankTarget", {Obj=nil, Id=0})
                 return false
             else
                 local lastLoc = GetHeroLastSeenInfo(target.Id).location
@@ -170,20 +177,19 @@ function ApproachTarget(bot)
     else
         utils.myPrint("GankTarget is dead!!!")
         me:RemoveAction(constants.ACTION_GANKING)
+        self:setHeroVar("GankTarget", {Obj=nil, Id=0})
         return false
     end
     return false
 end
 
 function KillTarget(bot, target)
-    if target.Obj ~= nil then
-        if target.Obj:IsAlive() then
-            if target.Obj:CanBeSeen() then
-                setHeroVar("Target", target)
-                utils.myPrint("killing target :: ", utils.GetHeroName(target.Obj))
-                bot:Action_AttackUnit(target.Obj, false)
-                return true
-            end
+    if target.Id > 0 and IsHeroAlive(target.Id) then
+        if not target.Obj:IsNull() then
+            setHeroVar("Target", target)
+            utils.myPrint("killing target :: ", utils.GetHeroName(target.Obj))
+            bot:Action_AttackUnit(target.Obj, false)
+            return true
         end
     end
     return false

@@ -1131,8 +1131,8 @@ function X:DoGank(bot)
 
     local gankTarget = self:getHeroVar("GankTarget")
     local bStillGanking = true
-    if gankTarget.Obj ~= nil then
-        local bTimeToKill = ganking_generic.ApproachTarget(bot)
+    if gankTarget.Id > 0 then
+        local bTimeToKill = ganking_generic.ApproachTarget(bot, gankTarget)
         if bTimeToKill then
             bStillGanking = ganking_generic.KillTarget(bot, gankTarget)
         end

@@ -230,7 +230,7 @@ local listSEMISUPPORT = {
 	"npc_dota_hero_jakiro",
 	"npc_dota_hero_leshrac",			--not sure here
 	"npc_dota_hero_lich",
-	"npc_dota_hero_lina",	-- not really a good support
+	--"npc_dota_hero_lina",	-- not really a good support
 	"npc_dota_hero_lion",
 	"npc_dota_hero_ogre_magi",
 	"npc_dota_hero_omniknight",
@@ -389,7 +389,7 @@ end
 
 local function everyObjectAssigned(matrix)
 	for i = 1, 5, 1 do
-		local slot = GetTeamMember( GetTeam(), i )
+		local slot = GetTeamMember( i )
 		if not existsInMatrix(matrix, slot:GetUnitName()) then
 			return i
 		end
@@ -403,7 +403,7 @@ local function fillRoles(rMatrix)
 	obj = everyObjectAssigned(rMatrix)
 
 	if obj ~= 0 then
-		local slot = GetTeamMember( GetTeam(), obj )
+		local slot = GetTeamMember( obj )
 		validRoles = findRole(slot:GetUnitName())
 		for k,v in pairs (validRoles) do
 			if #v > 0 then
@@ -439,13 +439,12 @@ function SetRoles()
 	rMatrix = fillRoles(rMatrix)
 
 	for k, v in pairs( best ) do
-		print(k)
 		for k2, v2 in pairs (v) do
-			print("    ", k2, v2)
 			for i = 1, 5, 1 do
-				local slot = GetTeamMember( GetTeam(), i )
+				local slot = GetTeamMember( i )
 				if v2 == slot:GetUnitName() then
 					roles[i] = k
+                    print("Role: "..k.." - "..v2)
 				end
 			end
 		end
@@ -458,7 +457,7 @@ function GetRoles()
 		SetRoles()
 	end
 
-	return roles;
+	return roles
 end
 
 function GetLaneAndRole(team, role_indx)

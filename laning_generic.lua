@@ -50,7 +50,7 @@ local LaningStates={
 	MovingToLane=8
 }
 
-local LaningState=LaningStates.Start;
+local LaningState = LaningStates.Start
 
 function OnStart(npcBot)
 	setHeroVar("BackTimerGen", -1000)
@@ -81,11 +81,11 @@ local function MovingToLane(npcBot)
 	local dest = GetLocationAlongLane(getHeroVar("CurLane"),GetLaneFrontAmount(GetTeam(), getHeroVar("CurLane"), true) - 0.04);
 	
 	if GetUnitToLocationDistance(npcBot, dest) < 300 then
-		LaningState = LaningStates.Moving;
-		return;
+		LaningState = LaningStates.Moving
+		return
 	end
 	
-	utils.MoveSafelyToLocation(npcBot, dest);
+	utils.MoveSafelyToLocation(npcBot, dest)
 end
 
 local function Start(npcBot)
@@ -244,14 +244,13 @@ local function PushCS(npcBot, WeakestCreep, EnemyCreeps, nAc, damage, AS)
 end
 
 local function CSing(npcBot)
-
-	local AllyCreeps = npcBot:GetNearbyCreeps(EyeRange,false);
-	local EnemyCreeps = npcBot:GetNearbyCreeps(EyeRange,true);
-	local EnemyTowers = npcBot:GetNearbyTowers(EyeRange,true);
+	local AllyCreeps = npcBot:GetNearbyCreeps(EyeRange, false)
+	local EnemyCreeps = npcBot:GetNearbyCreeps(EyeRange, true)
+	local EnemyTowers = npcBot:GetNearbyTowers(EyeRange, true)
 	
 	if (AllyCreeps==nil) or (#AllyCreeps==0) then
-		LaningState = LaningStates.GettingBack;
-		return;
+		LaningState = LaningStates.GettingBack
+		return
 	end
 	
 	if (EnemyCreeps==nil) or (#EnemyCreeps==0) then
@@ -379,7 +378,7 @@ local States = {
 
 local function Updates(npcBot)
 	CurLane = getHeroVar("CurLane")
-	LanePos = utils.PositionAlongLane(npcBot, CurLane);
+	LanePos = utils.PositionAlongLane(npcBot, CurLane)
 	
 	if getHeroVar("IsCore") == nil then
 		IsCore = utils.IsCore(npcBot)
@@ -405,7 +404,7 @@ local function Updates(npcBot)
 	end
 	
 	if ( not npcBot:IsAlive() ) or ( LanePos < 0.15 and LaningState ~= LaningStates.Start ) then
-		LaningState = LaningStates.Moving;
+		LaningState = LaningStates.Moving
 	end
 end
 
@@ -465,7 +464,7 @@ function Think(npcBot)
 		return
 	end
 	
-	--print(utils.GetHeroName(npcBot), " LaningState: ", LaningState)
+	--utils.myPrint(" LaningState: ", LaningState)
 	
 	States[LaningState](npcBot)
 	

@@ -29,6 +29,9 @@ function UseRegenItems()
         return nil
     end
     
+    -- if we are full health and full mana, exit early
+    if npcBot:GetHealth() == npcBot:GetMaxHealth() and npcBot:GetMana() == npcBot:GetMaxMana() then return nil end
+    
     local Enemies = npcBot:GetNearbyHeroes(850, true, BOT_MODE_NONE)
 
     local bottle = utils.HaveItem(npcBot, "item_bottle")

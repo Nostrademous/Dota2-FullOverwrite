@@ -1235,44 +1235,44 @@ end
 -------------------------------------------------------------------------------
 
 function U.NumberOfItems(bot)
-    local n = 0;
+    local n = 0
 
     for i = 0, 5, 1 do
-        local item = bot:GetItemInSlot(i);
+        local item = bot:GetItemInSlot(i)
                 if item ~= nil then
-                    n = n+1;
+                    n = n+1
                 end
     end
 
-    return n;
+    return n
 end
 
 function U.NumberOfItemsInBackpack(bot)
-    local n = 0;
+    local n = 0
 
     for i = 6, 8, 1 do
-        local item = bot:GetItemInSlot(i);
+        local item = bot:GetItemInSlot(i)
                 if item ~= nil then
-                    n = n+1;
+                    n = n+1
                 end
     end
 
-    return n;
+    return n
 end
 
 function U.NumberOfItemsInStash(bot)
     if bot:GetStashValue() == 0 then return 0 end
 
-    local n = 0;
+    local n = 0
 
     for i = 9, 14, 1 do
-        local item = bot:GetItemInSlot(i);
+        local item = bot:GetItemInSlot(i)
                 if item ~= nil then
-                    n = n+1;
+                    n = n+1
                 end
     end
 
-    return n;
+    return n
 end
 
 function U.HaveItem(npcBot, item_name)
@@ -1280,7 +1280,8 @@ function U.HaveItem(npcBot, item_name)
     if slot ~= ITEM_SLOT_TYPE_INVALID then
         local slot_type = npcBot:GetItemSlotType(slot)
         if slot_type == ITEM_SLOT_TYPE_MAIN then
-            return npcBot:GetItemInSlot(slot);
+            U.myPrint("Found: ", item_name, " in slot: ", slot, " type: ", type(npcBot:GetItemInSlot(slot)))
+            return npcBot:GetItemInSlot(slot)
         elseif slot_type == ITEM_SLOT_TYPE_BACKPACK then
             U.myPrint("FIXME: Implement swapping BACKPACK to MAIN INVENTORY of item: ", item_name)
             return nil
@@ -1397,9 +1398,9 @@ function U.CourierThink(npcBot)
     setHeroVar("LastCourierThink", newTime)
 
     local courier = GetCourier(0)
-    if GetCourierState(courier) ~= COURIER_STATE_AT_BASE and GetCourierState(courier) ~= COURIER_STATE_DEAD and GetCourierState(courier) ~= COURIER_STATE_IDLE then
-        npcBot:Action_Courier(GetCourier(0), COURIER_ACTION_BURST)
-    end
+    --if GetCourierState(courier) ~= COURIER_STATE_AT_BASE and GetCourierState(courier) ~= COURIER_STATE_DEAD and GetCourierState(courier) ~= COURIER_STATE_IDLE then
+    --    npcBot:Action_Courier(GetCourier(0), COURIER_ACTION_BURST)
+    --end
     
     if npcBot:IsAlive() and (npcBot:GetStashValue() > 500 or npcBot:GetCourierValue() > 0 or U.HasImportantItem()) and IsCourierAvailable() then
         npcBot:Action_Courier(courier, COURIER_ACTION_TAKE_AND_TRANSFER_ITEMS)
@@ -1437,7 +1438,7 @@ function U.myPrint(...)
         msg = msg .. tostring(v)
     end
     --uncomment to only see messages by bots mentioned underneath
-    --if botname == "lina" or botname == "viper" then
+    --if botname == "drow_ranger" then --or botname == "viper" then
       print(msg)
     --end
 end

@@ -299,6 +299,7 @@ function X:Think(bot)
     -- NOW DECISIONS THAT MODIFY MY ACTION STATES --
     ------------------------------------------------
 
+    --[[
     if ( self:GetAction() == ACTION_RETREAT ) then
         local bRet = self:DoRetreat(bot, self:getHeroVar("RetreatReason"))
         if bRet then return end
@@ -324,6 +325,8 @@ function X:Think(bot)
         if bRet then return end
     end
 
+    --]]
+    
     if ( self:GetAction() == ACTION_RUNEPICKUP or self:Determine_ShouldGetRune(bot) ) then
         local bRet = self:DoGetRune(bot)
         if bRet then return end
@@ -342,7 +345,7 @@ function X:Think(bot)
         local bRet = self:DoRoshan(bot)
         if bRet then return end
     end
-
+    --[[
     local lane, building, numEnemies = self:Determine_ShouldIDefendLane(bot)
     if ( lane ) then
         local bRet = self:DoDefendLane(bot, lane, building, numEnemies)
@@ -378,6 +381,7 @@ function X:Think(bot)
         local bRet = self:DoPushLane(bot)
         if bRet then return end
     end
+    --]]
 
     if ( self:GetAction() == ACTION_LANING or self:Determine_ShouldLane(bot) ) then
         local bRet = self:DoLane(bot)
@@ -566,7 +570,7 @@ function X:Determine_ShouldIRetreat(bot)
     return nil
 end
 
-function X:Determine_ShouldIFighting2(bot)
+function X:Determine_ShouldIFighting(bot)
     global_game_state.GlobalFightDetermination()
     if self:getHeroVar("Target").Id ~= nil then
         return true
@@ -574,7 +578,7 @@ function X:Determine_ShouldIFighting2(bot)
     return false
 end
 
-function X:Determine_ShouldIFighting(bot)
+function X:Determine_ShouldIFighting2(bot)
     -- try to find a taret
     local eyeRange = 1200
     local weakestHero, score = fighting.FindTarget(eyeRange)

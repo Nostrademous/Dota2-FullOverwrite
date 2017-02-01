@@ -22,11 +22,25 @@ local skills = {
     }
 }
 
-function considerAbility(ability)
-    if ability and not ability:IsPassive() and ability:IsFullyCastable() then
-        return true
+function considerAbility(ability, hTarget)
+    if not ability then return 0, 0, 0, 0, 0 end
+    
+    local channelTime = ability:GetChannelTime()
+    if not ability:IsPassive() and ability:IsFullyCastable() and (not channelTime > 0) then
+        local actualOneTimeCastDmg = ability:GetEstimatedDamageToTarget(hTarget, 10.0, ability:GetDamageType())
+        return actualOneTimeCastDmg, ability:GetManaCost(), ability:GetCastPoint() --FIXME: Duration, Cooldown
     end
-    return false
+    
+    if ability:IsFullyCastable() and channelTime > 0 then
+        local actualOneTimeCastDmg = ability:GetEstimatedDamageToTarget(hTarget, channelTime, ability:GetDamageType())
+        return actualOneTimeCastDmg, ability:GetManaCost(), ability:GetCastPoint(), channelTime --FIXME:, Cooldown
+    end
+    
+    if ability:IsPassive() or ability:IsToggle() then
+        -- check if it provides a buff
+    end
+    
+    return 0, 0, 0, 0, 0
 end
 
 function getDmg(duration, hero, target)

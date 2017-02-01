@@ -43,7 +43,7 @@ function EnemyData.UpdateEnemyInfo(timeFreq)
 
             local tDelta = RealTime() - EnemyData[pid].Time
             -- throttle our update to once every 1 second for each enemy
-            if tDelta >= 1.0 and enemy:GetHealth() ~= -1 then
+            if tDelta >= timeFreq and enemy:GetHealth() ~= -1 then
                 EnemyData[pid].Time = RealTime()
                 EnemyData[pid].Obj = enemy
                 EnemyData[pid].Level = enemy:GetLevel()

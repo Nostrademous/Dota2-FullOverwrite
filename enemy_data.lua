@@ -119,7 +119,10 @@ function EnemyData.GetEnemyDmgs(ePID, fDuration)
     --utils.myPrint(" 2s - AllDmg: ", allDmg2, " <> TotalDmg: ", totalDmg2, ", PhysDmg: ", physDmg2, ", MagicDmg: ", magicDmg2, ", pureDmg: ", pureDmg2)
     --utils.myPrint("10s - AllDmg: ", allDmg10, " <> TotalDmg: ", totalDmg10, ", PhysDmg: ", physDmg10, ", MagicDmg: ", magicDmg10, ", pureDmg: ", pureDmg10)
 
-    return
+    if fDuration <= 2.0 then
+        return physDmg2, magicDmg2, pureDmg2
+    end
+    return physDmg10, magicDmg10, pureDmg10
 end
 
 function EnemyData.GetEnemySlowDuration(ePID)

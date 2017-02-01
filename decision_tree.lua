@@ -84,8 +84,10 @@ function X:PrintActionTransition(name)
 
     if ( self:getCurrentAction() ~= self:getPrevAction() ) then
         local target = self:getHeroVar("Target")
-        if target then
-            utils.myPrint("Action Transition: "..self:getPrevAction().." --> "..self:getCurrentAction(), " :: Target: ", utils.GetHeroName(target))
+        if target.Obj then
+            utils.myPrint("Action Transition: "..self:getPrevAction().." --> "..self:getCurrentAction(), " :: Target: ", utils.GetHeroName(target.Obj))
+        elseif target.Id > 0 then
+            utils.myPrint("Action Transition: "..self:getPrevAction().." --> "..self:getCurrentAction(), " :: TargetID: ", target.Id)
         else
             utils.myPrint("Action Transition: "..self:getPrevAction().." --> "..self:getCurrentAction())
         end
@@ -151,7 +153,8 @@ function X:DoInit(bot)
     gHeroVar.SetGlobalVar("PrevEnemyDataDump", -1000.0)
 
     --print( "Initializing PlayerID: ", bot:GetPlayerID() )
-    if GetTeamMember( GetTeam(), 1 ) == nil or GetTeamMember( GetTeam(), 5 ) == nil then return end
+    local allyList = GetUnitList(UNIT_LIST_ALLIED_HEROES)
+    if #allyList ~= 5 then return end
 
     self.pID = bot:GetPlayerID() -- do this to reduce calls to bot:GetPlayerID() in the future
     gHeroVar.InitHeroVar(self.pID)
@@ -164,13 +167,15 @@ function X:DoInit(bot)
     self:setHeroVar("StuckCounter", 0)
     self:setHeroVar("LastLocation", Vector(0, 0, 0))
     self:setHeroVar("LaneChangeTimer", -1000.0)
+    self:setHeroVar("Target", {Obj=nil, Id=0})
+    self:setHeroVar("GankTarget", {Obj=nil, Id=0})
 
     role.GetRoles()
     if role.RolesFilled() then
         self.Init = true
 
-        for i = 1, 5, 1 do
-            local hero = GetTeamMember( GetTeam(), i )
+        for i = 1,5,1 do
+            local hero = GetTeamMember( i )
             if hero:GetUnitName() == bot:GetUnitName() then
                 cLane, cRole = role.GetLaneAndRole(GetTeam(), i)
                 self:setHeroVar("CurLane", cLane)
@@ -458,7 +463,7 @@ function X:Determine_ShouldIRetreat(bot)
         end
         if utils.IsCreepAttackingMe() then
             local pushing = self:getHeroVar("ShouldPush")
-            if self:getHeroVar("Target") == nil or pushing == nil or pushing == false then
+            if self:getHeroVar("Target").Obj == nil or pushing == nil or pushing == false then
                 return constants.RETREAT_CREEP
             end
         end
@@ -471,7 +476,7 @@ function X:Determine_ShouldIRetreat(bot)
         end
         if utils.IsCreepAttackingMe() then
             local pushing = self:getHeroVar("ShouldPush")
-            if self:getHeroVar("Target") == nil or pushing == nil or pushing == false then
+            if self:getHeroVar("Target").Obj == nil or pushing == nil or pushing == false then
                 return constants.RETREAT_CREEP
             end
         end
@@ -553,12 +558,20 @@ function X:Determine_ShouldIRetreat(bot)
     end
     if utils.IsCreepAttackingMe() then
         local pushing = self:getHeroVar("ShouldPush")
-        if self:getHeroVar("Target") == nil or pushing ~= true then
+        if self:getHeroVar("Target").Obj == nil or pushing ~= true then
             return constants.RETREAT_CREEP
         end
     end
 
     return nil
+end
+
+function X:Determine_ShouldIFighting2(bot)
+    global_game_state.GlobalFightDetermination()
+    if self:getHeroVar("Target").Id ~= nil then
+        return true
+    end
+    return false
 end
 
 function X:Determine_ShouldIFighting(bot)
@@ -570,68 +583,70 @@ function X:Determine_ShouldIFighting(bot)
     local myTarget = self:getHeroVar("Target")
     
     -- if I found a new best target, but I have a target already, and they are not the same
-    if weakestHero ~= nil and myTarget ~= nil and myTarget ~= weakestHero then
+    if weakestHero ~= nil and myTarget.Obj ~= nil and myTarget.Obj ~= weakestHero then
         if score > 50.0 or (score > 2.0 and (GetUnitToUnitDistance(bot, weakestHero) < GetUnitToUnitDistance(bot, myTarget)*1.5 or weakestHero:GetStunDuration(true) >= 1.0)) then
-            myTarget = weakestHero
+            myTarget.Obj = weakestHero
+            myTarget.Id = weakestHero:GetPlayerID()
         end
     end
     
-    if myTarget then
-        if not myTarget:IsAlive() then
-            utils.AllChat("You dead buddy!")
-            self:RemoveAction(ACTION_FIGHT)
-            self:setHeroVar("Target", nil)
-            self:setHeroVar("GankTarget", nil)
-            myTarget = nil
-        else
-            local Allies = GetUnitList(UNIT_LIST_ALLIED_HEROES)
-            local nFriend = 0
-            for _, friend in pairs(Allies) do
-                local friendID = friend:GetPlayerID()
-                if gHeroVar.HasID(friendID) and myTarget == gHeroVar.GetVar(friendID, "Target") then 
-                    if (GameTime() - friend:GetLastAttackTime()) < 5.0 and myTarget:GetCurrentMovementSpeed() < friend:GetCurrentMovementSpeed() then
-                        nFriend = nFriend + 1
-                    end
+    if myTarget and myTarget.Id > 0 and not IsHeroAlive( myTarget.Id ) then
+        utils.AllChat("You dead buddy!")
+        self:RemoveAction(ACTION_FIGHT)
+        self:setHeroVar("Target", {Obj=nil, Id=0})
+        self:setHeroVar("GankTarget", {Obj=nil, Id=0})
+        myTarget.Obj = nil
+        myTarget.Id = 0
+    end
+    
+    if myTarget and myTarget.Obj then
+        local Allies = GetUnitList(UNIT_LIST_ALLIED_HEROES)
+        local nFriend = 0
+        for _, friend in pairs(Allies) do
+            local friendID = friend:GetPlayerID()
+            if gHeroVar.HasID(friendID) and myTarget.Id == gHeroVar.GetVar(friendID, "Target").Id then 
+                if (GameTime() - friend:GetLastAttackTime()) < 5.0 and myTarget.Obj:GetCurrentMovementSpeed() < friend:GetCurrentMovementSpeed() then
+                    nFriend = nFriend + 1
                 end
-            end
-            
-            -- none of us can catch them
-            if nFriends == 0 then
-                for _, friend in pairs(Allies) do
-                    local friendID = friend:GetPlayerID()
-                    if gHeroVar.HasID(friendID) and myTarget == gHeroVar.GetVar(friendID, "Target") then
-                        utils.myPrint("abandoning chase of ", utils.GetHeroName(myTarget))
-                        gHeroVar.SetVar(friendID, "Target", nil)
-                    end
-                end
-                myTarget = nil
             end
         end
         
+        -- none of us can catch them
+        if nFriends == 0 then
+            for _, friend in pairs(Allies) do
+                local friendID = friend:GetPlayerID()
+                if gHeroVar.HasID(friendID) and myTarget.Id == gHeroVar.GetVar(friendID, "Target").Id then
+                    utils.myPrint("abandoning chase of ", utils.GetHeroName(myTarget.Obj))
+                    gHeroVar.SetVar(friendID, "Target", {Obj=nil, Id=0})
+                end
+            end
+            myTarget.Obj = nil
+            myTarget.Id = 0
+        end
     end
     
     -- if I have a target, set by me or by team fighting function
-    if myTarget ~= nil and myTarget:IsAlive() then
-        if (not myTarget:CanBeSeen()) and myTarget:GetTimeSinceLastSeen() > 5.0 then
+    if myTarget and myTarget.Obj ~= nil and myTarget.Obj:IsAlive() then
+        if (not myTarget.Obj:CanBeSeen()) and GetHeroLastSeenInfo(myTarget.Id).time > 5.0 then
             utils.myPrint(" - Stopping my fight... lost sight of hero")
             self:RemoveAction(ACTION_FIGHT)
-            self:setHeroVar("Target", nil)
+            self:setHeroVar("Target", {Obj=nil, Id=0})
             return false
         else
             self:setHeroVar("Target", myTarget)
             local Allies = GetUnitList(UNIT_LIST_ALLIED_HEROES)
             for _, friend in pairs(Allies) do
                 local friendID = friend:GetPlayerID()
-                if self.pID ~= friendID and gHeroVar.HasID(friendID) and GetUnitToUnitDistance(myTarget, friend)/friend:GetCurrentMovementSpeed() <= 5.0 then
-                    utils.myPrint("getting help from ", utils.GetHeroName(friend), " in fighting: ", utils.GetHeroName(myTarget))
+                if self.pID ~= friendID and gHeroVar.HasID(friendID) and GetUnitToUnitDistance(myTarget.Obj, friend)/friend:GetCurrentMovementSpeed() <= 5.0 then
+                    utils.myPrint("getting help from ", utils.GetHeroName(friend), " in fighting: ", utils.GetHeroName(myTarget.Obj))
                     gHeroVar.SetVar(friendID, "Target", myTarget)
                 end
             end
             
-            local lastLoc = myTarget:GetLastSeenLocation()
+            local lastLoc = GetHeroLastSeenInfo(myTarget.Id).location
             if utils.GetOtherTeam() == TEAM_DIRE then
-                local prob1 = GetUnitPotentialValue(myTarget, Vector(lastLoc[1] + 500, lastLoc[2]), 1000)
-                local prob2 = GetUnitPotentialValue(myTarget, Vector(lastLoc[1], lastLoc[2] + 500), 1000)
+                local prob1 = GetUnitPotentialValue(myTarget.Obj, Vector(lastLoc[1] + 500, lastLoc[2]), 1000)
+                local prob2 = GetUnitPotentialValue(myTarget.Obj, Vector(lastLoc[1], lastLoc[2] + 500), 1000)
                 if prob1 > 180 and prob1 > prob2 then
                     item_usage.UseMovementItems()
                     bot:Action_MoveToLocation(Vector(lastLoc[1] + 500, lastLoc[2]))
@@ -642,8 +657,8 @@ function X:Determine_ShouldIFighting(bot)
                     return true
                 end
             else
-                local prob1 = GetUnitPotentialValue(myTarget, Vector(lastLoc[1] - 500, lastLoc[2]), 1000)
-                local prob2 = GetUnitPotentialValue(myTarget, Vector(lastLoc[1], lastLoc[2] - 500), 1000)
+                local prob1 = GetUnitPotentialValue(myTarget.Obj, Vector(lastLoc[1] - 500, lastLoc[2]), 1000)
+                local prob2 = GetUnitPotentialValue(myTarget.Obj, Vector(lastLoc[1], lastLoc[2] - 500), 1000)
                 if prob1 > 180 and prob1 > prob2 then
                     item_usage.UseMovementItems()
                     bot:Action_MoveToLocation(Vector(lastLoc[1] - 500, lastLoc[2]))
@@ -665,12 +680,12 @@ function X:Determine_ShouldIFighting(bot)
             if self:HasAction(ACTION_FIGHT) == false then
                 utils.myPrint(" - Fighting ", utils.GetHeroName(weakestHero))
                 self:AddAction(ACTION_FIGHT)
-                self:setHeroVar("Target", weakestHero)
+                self:setHeroVar("Target", {Obj=weakestHero, Id=weakestHero:GetPlayerID()})
             end
 
-            if utils.GetHeroName(weakestHero) ~= utils.GetHeroName(getHeroVar("Target")) then
+            if utils.GetHeroName(weakestHero) ~= utils.GetHeroName(getHeroVar("Target").Obj) then
                 utils.myPrint(" - Fight Change - Fighting ", utils.GetHeroName(weakestHero))
-                self:setHeroVar("Target", weakestHero)
+                self:setHeroVar("Target", {Obj=weakestHero, Id=weakestHero:GetPlayerID()})
             end
             
             local Allies = GetUnitList(UNIT_LIST_ALLIED_HEROES)
@@ -678,7 +693,7 @@ function X:Determine_ShouldIFighting(bot)
                 local friendID = friend:GetPlayerID()
                 if self.pID ~= friendID and gHeroVar.HasID(friendID) and GetUnitToUnitDistance(bot, friend)/friend:GetCurrentMovementSpeed() <= 5.0 then
                     utils.myPrint("getting help from ", utils.GetHeroName(friend), " in fighting: ", utils.GetHeroName(weakestHero))
-                    gHeroVar.SetVar(friendID, "Target", weakestHero)
+                    gHeroVar.SetVar(friendID, "Target", {Obj=weakestHero, Id=weakestHero:GetPlayerID()})
                 end
             end
             
@@ -687,13 +702,14 @@ function X:Determine_ShouldIFighting(bot)
     end
 
     -- if we have a gank target
-    if self:getHeroVar("GankTarget") ~= nil then
-        bot:Action_AttackUnit(self:getHeroVar("GankTarget"), true)
+    local gankTarget = self:getHeroVar("GankTarget")
+    if gankTarget and gankTarget.Obj ~= nil then
+        bot:Action_AttackUnit(gankTarget.Obj, true)
         return true
     end
 
     self:RemoveAction(ACTION_FIGHT)
-    self:setHeroVar("Target", nil)
+    self:setHeroVar("Target", {Obj=nil, Id=0})
     return false
 end
 
@@ -782,17 +798,18 @@ function X:Determine_ShouldJungle(bot)
 end
 
 function X:Determine_ShouldTeamRoshan(bot)
-    local enemies = GetUnitList(UNIT_LIST_ENEMY_HEROES)
-
-    for _, enemy in pairs(enemies) do
-        if not enemy:IsAlive() then
-            table.remove(enemies, 1)
+    local enemyIDs = GetTeamPlayers(utils.GetOtherTeam())
+    
+    local numAlive = 0
+    for _, id in ipairs(enemyIDs) do
+        if IsHeroAlive(id) then
+            numAlive = numAlive + 1
         end
     end
 
 	local isRoshanAlive = DotaTime() - GetRoshanKillTime() > 660 -- max 11 minutes respawn time of roshan
 
-    if (#enemies < 3 and (GetRoshanKillTime == 0 or isRoshanAlive)) then -- FIXME: Implement
+    if (numAlive < 3 and (GetRoshanKillTime == 0 or isRoshanAlive)) then -- FIXME: Implement
         if self:HasAction(ACTION_ROSHAN) == false then
             utils.myPrint(" - Going to Fight Roshan")
             self:AddAction(ACTION_ROSHAN)
@@ -987,43 +1004,44 @@ end
 
 function X:DoFight(bot)
     local target = self:getHeroVar("Target")
-    if target ~= nil then
+    
+    if target.Obj ~= nil then
         if target:IsAlive() then
             local Towers = bot:GetNearbyTowers(750, true)
             if Towers ~= nil and #Towers == 0 then
-                if target:IsAttackImmune() or (bot:GetLastAttackTime() + bot:GetSecondsPerAttack()) > GameTime() then
+                if target.Obj:IsAttackImmune() or (bot:GetLastAttackTime() + bot:GetSecondsPerAttack()) > GameTime() then
                     item_usage.UseMovementItems()
-                    bot:Action_MoveToUnit(target)
+                    bot:Action_MoveToUnit(target.Obj)
                 else
-                    bot:Action_AttackUnit(target, true)
+                    bot:Action_AttackUnit(target.Obj, true)
                 end
                 return true
             else
                 local towerDmgToMe = 0
-                local myDmgToTarget = bot:GetEstimatedDamageToTarget( true, target, 5.0, DAMAGE_TYPE_ALL )
+                local myDmgToTarget = bot:GetEstimatedDamageToTarget( true, target.Obj, 5.0, DAMAGE_TYPE_ALL )
                 for _, tow in pairs(Towers) do
                     if GetUnitToLocationDistance( bot, tow:GetLocation() ) < 750 then
                         towerDmgToMe = towerDmgToMe + tow:GetEstimatedDamageToTarget( false, bot, 5.0, DAMAGE_TYPE_PHYSICAL )
                     end
                 end
-                if myDmgToTarget > target:GetHealth() and towerDmgToMe < (bot:GetHealth() + 100) then
+                if myDmgToTarget > target.Obj:GetHealth() and towerDmgToMe < (bot:GetHealth() + 100) then
                     --print(utils.GetHeroName(bot), " - we are tower diving for the kill")
-                    if target:IsAttackImmune() or (bot:GetLastAttackTime() + bot:GetSecondsPerAttack()) > GameTime() then
-                        bot:Action_MoveToUnit(target)
+                    if target.Obj:IsAttackImmune() or (bot:GetLastAttackTime() + bot:GetSecondsPerAttack()) > GameTime() then
+                        bot:Action_MoveToUnit(target.Obj)
                     else
-                        bot:Action_AttackUnit(target, true)
+                        bot:Action_AttackUnit(target.Obj, true)
                     end
                     return true
                 else
                     self:RemoveAction(ACTION_FIGHT)
-                    self:setHeroVar("Target", nil)
+                    self:setHeroVar("Target", {Obj=nil, Id=0})
                     return false
                 end
             end
         else
             utils.AllChat("Suck it!")
             self:RemoveAction(ACTION_FIGHT)
-            self:setHeroVar("Target", nil)
+            self:setHeroVar("Target", {Obj=nil, Id=0})
         end
     end
     return false
@@ -1113,7 +1131,7 @@ function X:DoGank(bot)
 
     local gankTarget = self:getHeroVar("GankTarget")
     local bStillGanking = true
-    if gankTarget ~= nil then
+    if gankTarget.Obj ~= nil then
         local bTimeToKill = ganking_generic.ApproachTarget(bot)
         if bTimeToKill then
             bStillGanking = ganking_generic.KillTarget(bot, gankTarget)
@@ -1125,8 +1143,8 @@ function X:DoGank(bot)
     if not bStillGanking then
         utils.myPrint("clearing gank")
         self:RemoveAction(ACTION_GANKING)
-        self:setHeroVar("GankTarget", nil)
-        self:setHeroVar("Target", nil)
+        self:setHeroVar("GankTarget", {Obj=nil, Id=0})
+        self:setHeroVar("Target", {Obj=nil, Id=0})
     end
 
     return bStillGanking

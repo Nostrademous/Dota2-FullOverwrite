@@ -46,14 +46,14 @@ function AbilityUsageThink()
     castLBDesire, castLBTarget = ConsiderLagunaBlade(abilityLB)
 
     local target = getHeroVar("Target")
-    if target ~= nil then
-        castLSADesire, castLSALocation = ConsiderLightStrikeArrayFighting(abilityLSA, target)
+    if target.Obj ~= nil then
+        castLSADesire, castLSALocation = ConsiderLightStrikeArrayFighting(abilityLSA, target.Obj)
     else
         castLSADesire, castLSALocation = ConsiderLightStrikeArray(abilityLSA)
     end
 
-    if target ~= nil then
-        castDSDesire, castDSLocation = ConsiderDragonSlaveFighting(abilityDS, target)
+    if target.Obj ~= nil then
+        castDSDesire, castDSLocation = ConsiderDragonSlaveFighting(abilityDS, target.Obj)
     else
         castDSDesire, castDSLocation = ConsiderDragonSlave(abilityDS)
     end

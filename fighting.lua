@@ -37,7 +37,6 @@ function FindTarget(dist)
 	local Enemies = npcBot:GetNearbyHeroes(dist, true, BOT_MODE_NONE);
 
 	if Enemies == nil or #Enemies == 0 then
-		setHeroVar("Target", nil)
 		return nil, 0.0
 	end
 
@@ -76,8 +75,7 @@ function FindTarget(dist)
     
     local lvl = npcBot:GetLevel()
 	for _, enemy in pairs(Enemies) do
-		if utils.NotNilOrDead(enemy) and GetUnitToLocationDistance(enemy, utils.Fountain(utils.GetOtherTeam())) > 1350 
-            and enemy:GetTimeSinceLastSeen() < 1.0 then
+		if utils.NotNilOrDead(enemy) and GetUnitToLocationDistance(enemy, utils.Fountain(utils.GetOtherTeam())) > 1350 then
             
             -- get our stun/slow duration
             local sd = npcBot:GetStunDuration(true) + 0.5*npcBot:GetSlowDuration(true)

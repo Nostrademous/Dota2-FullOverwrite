@@ -809,10 +809,11 @@ function U.EnemiesNearLocation(bot, loc, dist)
     end
 
     local num = 0
+    --FIXME: this list below only returns visible heroes, need to do this for all alive heroes
     local Enemies = GetUnitList(UNIT_LIST_ENEMY_HEROES)
     for _, enemy in pairs(Enemies) do
-        if U.NotNilOrDead(enemy) and enemy:GetLastSeenLocation() ~= nil and
-            U.GetDistance(enemy:GetLastSeenLocation(), loc) <= dist and enemy:GetTimeSinceLastSeen() < 30 then
+        if U.NotNilOrDead(enemy) and U.GetDistance(GetHeroLastSeenInfo(enemy:GetPlayerID()).location, loc) <= dist 
+            and GetHeroLastSeenInfo(enemy:GetPlayerID()).time < 30 then
             num = num + 1
         end
     end
@@ -1394,30 +1395,18 @@ function U.CourierThink(npcBot)
 
     if not checkLevel then return end
     setHeroVar("LastCourierThink", newTime)
-    
-    --[[
-    U.myPrint(COURIER_ACTION_RETURN)
-    U.myPrint(COURIER_ACTION_SECRET_SHOP)
-    U.myPrint(COURIER_ACTION_STASH_ITEMS)
-    U.myPrint(COURIER_ACTION_TRANSFER_ITEMS)
-    U.myPrint(COURIER_ACTION_BURST)
-    U.myPrint(COURIER_ACTION_TAKE_AND_TRANSFER_ITEMS)
-    --]]
 
     local courier = GetCourier(0)
-    --[[
-    if GetCourierState(courier) ~= COURIER_STATE_IDLE and GetCourierState(courier) ~= COURIER_STATE_DEAD then
+    if GetCourierState(courier) ~= COURIER_STATE_AT_BASE and GetCourierState(courier) ~= COURIER_STATE_DEAD and GetCourierState(courier) ~= COURIER_STATE_IDLE then
         npcBot:Action_Courier(GetCourier(0), COURIER_ACTION_BURST)
     end
-    --]]
     
     if npcBot:IsAlive() and (npcBot:GetStashValue() > 500 or npcBot:GetCourierValue() > 0 or U.HasImportantItem()) and IsCourierAvailable() then
         npcBot:Action_Courier(courier, COURIER_ACTION_TAKE_AND_TRANSFER_ITEMS)
         return
     end
     
-    if GetCourierState(courier) ~= COURIER_STATE_DEAD and GetCourierState(courier) ~= COURIER_STATE_DELIVERING_ITEMS and
-        GetCourierState(courier) ~= COURIER_STATE_MOVING and GetCourierState(courier) ~= COURIER_STATE_IDLE then
+    if GetCourierState(courier) ~= COURIER_STATE_DEAD and GetCourierState(courier) == COURIER_STATE_IDLE then
         npcBot:Action_Courier(courier, COURIER_ACTION_RETURN)
         return
     end

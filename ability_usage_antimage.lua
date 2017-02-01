@@ -105,11 +105,11 @@ function ConsiderManaVoid(abilityMV)
 	-- If we're going after someone
 	local npcTarget = getHeroVar("Target")
 
-	if ( npcTarget ~= nil ) then
-		local manaDiff = npcTarget:GetMaxMana() - npcTarget:GetMana()
+	if npcTarget.Obj ~= nil then
+		local manaDiff = npcTarget.Obj:GetMaxMana() - npcTarget.Obj:GetMana()
 		aoeDmg = manaDiff * nDmgPerMana
-		if CanCastManaVoidOnTarget( npcTarget ) and (npcTarget:IsChanneling() or npcTarget:GetHealth() < aoeDmg) then
-			return BOT_ACTION_DESIRE_HIGH, npcTarget
+		if CanCastManaVoidOnTarget( npcTarget.Obj ) and (npcTarget.Obj:IsChanneling() or npcTarget.Obj:GetHealth() < aoeDmg) then
+			return BOT_ACTION_DESIRE_HIGH, npcTarget.Obj
 		end
 	end
 

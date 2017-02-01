@@ -178,15 +178,14 @@ function bloodseekerBot:DoCleanCamp(bot, neutrals)
     end
     for i, neutral in ipairs(neutrals) do
         -- kill the Ghost first as they slow down our DPS tremendously by being around
-        if string.find(neutral:GetUnitName(), "ghost") ~= nil and bloodraged then
+        if string.find(neutral:GetUnitName(), "ghost") ~= nil and bloodraged and GetUnitToUnitDistance(bot, neutral) < bot:GetAttackRange() then
             bot:Action_AttackUnit(neutral, true)
             return
         end
     end
     for i, neutral in ipairs(neutrals) do
         local eDamage = bot:GetEstimatedDamageToTarget(true, neutral, bot:GetAttackSpeed(), DAMAGE_TYPE_PHYSICAL)
-        -- kill the Ghost first as they slow down our DPS tremendously by being around
-        if not (eDamage > neutral:GetHealth()) or bloodraged then -- make sure we lasthit with bloodrage on
+        if ((not eDamage > neutral:GetHealth()) or bloodraged) and GetUnitToUnitDistance(bot, neutral) < bot:GetAttackRange() then -- make sure we lasthit with bloodrage on
             bot:Action_AttackUnit(neutral, true)
             break
         end

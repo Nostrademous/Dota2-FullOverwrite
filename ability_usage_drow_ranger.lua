@@ -37,25 +37,12 @@ local function UseQ()
 
     local Enemies = npcBot:GetNearbyHeroes(frostArrow:GetCastRange(), true, BOT_MODE_NONE)
 
-    if #Enemies == 0 or getHeroVar("Target") == nil then return false end
-
-    if #Enemies == 1 then
-        setHeroVar("Target", Enemies[1])
-        return false
-    end
+    if #Enemies == 0 or getHeroVar("Target").Obj == nil then return false end
 
     local target = getHeroVar("Target")
-    if target ~= nil and GetUnitToUnitDistance(npcBot, target) < frostArrow:GetCastRange() and (not target:IsRooted()) or (not target:IsStunned()) and (not target:IsMagicImmune()) then
-        npcBot:Action_UseAbilityOnEntity(frostArrow, target)
+    if target.Obj ~= nil and GetUnitToUnitDistance(npcBot, target.Obj) < frostArrow:GetCastRange() and (not target.Obj:IsRooted()) or (not target.Obj:IsStunned()) and (not target.Obj:IsMagicImmune()) then
+        npcBot:Action_UseAbilityOnEntity(frostArrow, target.Obj)
         return true
-    end
-
-    if (npcBot:GetMana()/npcBot:GetMaxMana()) > 0.5 and #Enemies > 0 and #Enemies < 3 then
-        local weakestHero, weakestHeroHealth = utils.GetWeakestHero(npcBot, frostArrow:GetCastRange() + 100)
-        if weakestHero ~= nil and (not weakestHero:IsRooted()) or (not weakestHero:IsStunned()) and (not weakestHero:IsMagicImmune()) then
-            npcBot:Action_UseAbilityOnEntity(frostArrow, weakestHero)
-            return true
-        end
     end
 
     return false

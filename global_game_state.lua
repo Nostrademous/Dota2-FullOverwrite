@@ -2,6 +2,7 @@ _G._savedEnv = getfenv()
 module( "global_game_state", package.seeall )
 
 require( GetScriptDirectory().."/buildings_status" )
+local gHero = require( GetScriptDirectory().."/global_hero_data" )
 local utils = require( GetScriptDirectory().."/utility" )
 local enemyData = require( GetScriptDirectory().."/enemy_data" )
 
@@ -159,6 +160,91 @@ function GetLatestVulnerableEnemyBuildings()
         lastBuildingUpdate = newTime
     end
     return vulnEnemyBuildings
-end    
+end
+
+function setHeroVar(hero, var, value)
+    
+end
+
+local lastGlobalFightDetermination = -1000.0
+function GlobalFightDetermination()
+    local bUpdate, newTime = utils.TimePassed(lastGlobalFightDetermination, 0.25)
+    if bUpdate then lastGlobalFightDetermination = newTime else return end
+    
+    enemyData.UpdateEnemyInfo(1.0)
+    
+    local eyeRange = 1200
+    local listAllies = GetUnitList(UNIT_LIST_ALLIED_HEROES)
+    for _, ally in ipairs(listAllies) do
+        if ally:IsAlive() and gHero.HasID(ally:GetPlayerID()) and gHero.GetVar(ally:GetPlayerID(), "Target").Obj == nil then
+            for k, enemy in ipairs(enemyData) do
+                -- get a valid enemyData enemy 
+                if type(k) == "number" and enemy.Health > 0 then
+                    local distance = GetUnitToLocationDistance(ally, enemy.Location)
+                    local timeToReach = distance/ally:GetCurrentMovementSpeed()
+                    
+                    if distance <= eyeRange then
+                        utils.myPrint("sees ", enemy.Name, " ", distance, " units away. Time to reach: ", timeToReach)
+                        
+                        local myStun = ally:GetStunDuration(true)
+                        local mySlow = ally:GetSlowDuration(true)
+                        local myTimeToKillTarget = 0.0
+                        if enemy.Obj ~= nil then
+                            myTimeToKillTarget = fight_simul.estimateTimeToKill(ally, enemy)
+                        else
+                            myTimeToKillTarget = enemy.Health /(ally:GetAttackDamage()/ally:GetSecondsPerAttack())/0.75
+                        end
+                        
+                        local totalTimeToKillTarget = myTimeToKillTarget
+                        
+                        local participatingAllyIDs = {}
+                        local listAllies2 = GetUnitList(UNIT_LIST_ALLIED_HEROES)
+                        for _, ally2 in ipairs(listAllies2) do
+                            if ally2:IsAlive() and not gHero.HasID(ally2:GetPlayerID()) then
+                                local distToEnemy = GetUnitToLocationDistance(ally2, enemy.Location)
+                                local allyTimeToReach = distToEnemy/ally2:GetCurrentMovementSpeed()
+                                
+                                if distToEnemy <= 2*eyeRange then
+                                    utils.myPrint("ally ", utils.GetHeroName(ally2), " is ", distToEnemy, " units away. Time to reach: ", allyTimeToReach)
+                                    totalTimeToKillTarget = totalTimeToKillTarget + 8.0
+                                    table.insert(participatingAllyIDs, ally2:GetPlayerID())
+                                end
+                                
+                            elseif ally2:IsAlive() and ally2:GetPlayerID() ~= ally:GetPlayerID() and gHero.GetVar(ally2:GetPlayerID(), "Target").Obj == nil then
+                                --local distToMe = GetUnitToUnitDistance(ally2, ally)
+                                local distToEnemy = GetUnitToLocationDistance(ally2, enemy.Location)
+                                local allyTimeToReach = distToEnemy/ally2:GetCurrentMovementSpeed()
+                                
+                                if distToEnemy <= 2*eyeRange then
+                                    utils.myPrint("ally ", utils.GetHeroName(ally2), " is ", distToEnemy, " units away. Time to reach: ", allyTimeToReach)
+                                    
+                                    local allyStun = ally2:GetStunDuration()
+                                    local allySlow = ally2:GetSlowDuration()
+                                    local allyTimeToKillTarget = 0.0
+                                    if enemy.Obj ~= nil then
+                                        allyTimeToKillTarget = fight_simul.estimateTimeToKill(ally2, enemy)
+                                    else
+                                        allyTimeToKillTarget = enemy.Health /(ally2:GetAttackDamage()/ally2:GetSecondsPerAttack())/0.75
+                                    end
+                                    totalTimeToKillTarget = totalTimeToKillTarget + allyTimeToKillTarget
+                                    table.insert(participatingAllyIDs, ally2:GetPlayerID())
+                                end
+                            end
+                        end
+                        
+                        local anticipatedTimeToKill = totalTimeToKillTarget/(#participatingAllyIDs+1)
+                        if enemy.Obj ~= nil and anticipatedTimeToKill < 6.0 then
+                            utils.myPrint("Engaging! Anticipated Time to kill: ", anticipatedTimeToKill)
+                            gHero.SetVar(ally:GetPlayerID(), "Target", {Obj=enemy.Obj, Id=enemy.Obj:GetPlayerID()})
+                            for _, v in ipairs(participatingAllyIDs) do
+                                gHero.SetVar(v:GetPlayerID(), "Target", {Obj=enemy.Obj, Id=enemy.Obj:GetPlayerID()})
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+end
 
 for k,v in pairs( global_game_state ) do _G._savedEnv[k] = v end

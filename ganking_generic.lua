@@ -39,41 +39,39 @@ function FindTarget(bot)
     local allies = GetUnitList(UNIT_LIST_ALLIED_HEROES)
     local ratings = {}
     for i, e in pairs(enemies) do
-        if e:CanBeSeen() then
-            local r = 0
-            r = r + HealthFactor * (1 - e:GetHealth()/e:GetMaxHealth())
-            -- time to get there in 10s units
-            r = r - DistanceFactor * GetUnitToUnitDistance(bot, e) / bot:GetCurrentMovementSpeed() / 10
-            r = r + UnitPosFactor * (1 - global_game_state.GetPositionBetweenBuildings(e, GetTeam()))
-            local hero_count = 0
-            for _, enemy in pairs(enemies) do
-                if enemy:CanBeSeen() and utils.GetHeroName(enemy) ~= utils.GetHeroName(e) then
-                    if GetUnitToUnitDistance(enemy, e) < 1500 then
-                        hero_count = hero_count - 1
-                    end
+        local r = 0
+        r = r + HealthFactor * (1 - e:GetHealth()/e:GetMaxHealth())
+        -- time to get there in 10s units
+        r = r - DistanceFactor * GetUnitToUnitDistance(bot, e) / bot:GetCurrentMovementSpeed() / 10
+        r = r + UnitPosFactor * (1 - global_game_state.GetPositionBetweenBuildings(e, GetTeam()))
+        local hero_count = 0
+        for _, enemy in pairs(enemies) do
+            if enemy:CanBeSeen() and utils.GetHeroName(enemy) ~= utils.GetHeroName(e) then
+                if GetUnitToUnitDistance(enemy, e) < 1500 then
+                    hero_count = hero_count - 1
                 end
             end
-            for _, ally in pairs(allies) do
-                if ally:GetPlayerID() ~= bot:GetPlayerID() then
-                    if GetUnitToUnitDistance(ally, e) < 1500 then
-                        hero_count = hero_count + 1
-                    end
-                end
-            end
-            r = r + HeroCountFactor * hero_count
-            if false then
-                  print(utils.GetHeroName(e), 1 - e:GetHealth()/e:GetMaxHealth())
-                  print(utils.GetHeroName(e), HealthFactor * (1 - e:GetHealth()/e:GetMaxHealth()))
-                  print(utils.GetHeroName(e), GetUnitToUnitDistance(bot, e) / 300 / 10)
-                  print(utils.GetHeroName(e), DistanceFactor * GetUnitToUnitDistance(bot, e) / 300 / 10)
-                  print(utils.GetHeroName(e), 1 - global_game_state.GetPositionBetweenBuildings(e, GetTeam()))
-                  print(utils.GetHeroName(e), UnitPosFactor * (1 - global_game_state.GetPositionBetweenBuildings(e, GetTeam())))
-                  print(utils.GetHeroName(e), hero_count)
-                  print(utils.GetHeroName(e), HeroCountFactor * hero_count)
-                  print(utils.GetHeroName(e), r)
-            end
-            ratings[#ratings+1] = {r, e}
         end
+        for _, ally in pairs(allies) do
+            if ally:GetPlayerID() ~= bot:GetPlayerID() then
+                if GetUnitToUnitDistance(ally, e) < 1500 then
+                    hero_count = hero_count + 1
+                end
+            end
+        end
+        r = r + HeroCountFactor * hero_count
+        if false then
+              print(utils.GetHeroName(e), 1 - e:GetHealth()/e:GetMaxHealth())
+              print(utils.GetHeroName(e), HealthFactor * (1 - e:GetHealth()/e:GetMaxHealth()))
+              print(utils.GetHeroName(e), GetUnitToUnitDistance(bot, e) / 300 / 10)
+              print(utils.GetHeroName(e), DistanceFactor * GetUnitToUnitDistance(bot, e) / 300 / 10)
+              print(utils.GetHeroName(e), 1 - global_game_state.GetPositionBetweenBuildings(e, GetTeam()))
+              print(utils.GetHeroName(e), UnitPosFactor * (1 - global_game_state.GetPositionBetweenBuildings(e, GetTeam())))
+              print(utils.GetHeroName(e), hero_count)
+              print(utils.GetHeroName(e), HeroCountFactor * hero_count)
+              print(utils.GetHeroName(e), r)
+        end
+        ratings[#ratings+1] = {r, e}
     end
       if #ratings == 0 then
           return false
@@ -95,7 +93,7 @@ function FindTarget(bot)
         end
     end
     if (bot:GetEstimatedDamageToTarget( true, target, 5.0, DAMAGE_TYPE_ALL ) * (1 + 0.5*heroAmpFactor)) > target:GetHealth() then
-        setHeroVar("GankTarget", target)
+        setHeroVar("GankTarget", {Obj=target, Id=target:GetPlayerID()})
         setHeroVar("move_ticks", 0)
         utils.myPrint(" stalking "..utils.GetHeroName(target))
         return true
@@ -122,30 +120,30 @@ function ApproachTarget(bot)
         return false
     end
 
-    if target ~= nil then
-        if target:IsAlive() then
-            if target:CanBeSeen() then
-                if GetUnitToUnitDistance(bot, target) < 1000 then
+    if target.Obj ~= nil then
+        if target.Obj:IsAlive() then
+            if target.Obj:CanBeSeen() then
+                if GetUnitToUnitDistance(bot, target.Obj) < 1000 then
                     return true
                 else
-                    if GetUnitToUnitDistance(bot, target) < 1400 then
+                    if GetUnitToUnitDistance(bot, target.Obj) < 1400 then
                         if bot:GetMana() > 300 then
                             item_usage.UseSilverEdge()
                             item_usage.UseShadowBlade()
                         end
                     end
-                    bot:Action_MoveToUnit(target) -- Let's go there
+                    bot:Action_MoveToUnit(target.Obj) -- Let's go there
                     return false
                 end
             else
-                if target:GetTimeSinceLastSeen() > 5.0 then
+                if GetHeroLastSeenInfo(target.Id).time > 5.0 then
                     me:RemoveAction(constants.ACTION_GANKING)
                     return false
                 else
-                    local lastLoc = target:GetLastSeenLocation()
+                    local lastLoc = GetHeroLastSeenInfo(target.Id).location
                     if utils.GetOtherTeam() == TEAM_DIRE then
-                        local prob1 = GetUnitPotentialValue(target, Vector(lastLoc[1] + 500, lastLoc[2]), 1000)
-                        local prob2 = GetUnitPotentialValue(target, Vector(lastLoc[1], lastLoc[2] + 500), 1000)
+                        local prob1 = GetUnitPotentialValue(target.Obj, Vector(lastLoc[1] + 500, lastLoc[2]), 1000)
+                        local prob2 = GetUnitPotentialValue(target.Obj, Vector(lastLoc[1], lastLoc[2] + 500), 1000)
                         if prob1 > 180 and prob1 > prob2 then
                             item_usage.UseMovementItems()
                             bot:Action_MoveToLocation(Vector(lastLoc[1] + 500, lastLoc[2]))
@@ -156,8 +154,8 @@ function ApproachTarget(bot)
                             return false
                         end
                     else
-                        local prob1 = GetUnitPotentialValue(target, Vector(lastLoc[1] - 500, lastLoc[2]), 1000)
-                        local prob2 = GetUnitPotentialValue(target, Vector(lastLoc[1], lastLoc[2] - 500), 1000)
+                        local prob1 = GetUnitPotentialValue(target.Obj, Vector(lastLoc[1] - 500, lastLoc[2]), 1000)
+                        local prob2 = GetUnitPotentialValue(target.Obj, Vector(lastLoc[1], lastLoc[2] - 500), 1000)
                         if prob1 > 180 and prob1 > prob2 then
                             item_usage.UseMovementItems()
                             bot:Action_MoveToLocation(Vector(lastLoc[1] - 500, lastLoc[2]))
@@ -180,12 +178,12 @@ function ApproachTarget(bot)
 end
 
 function KillTarget(bot, target)
-    if target ~= nil then
-        if target:IsAlive() then
-            if target:CanBeSeen() then
+    if target.Obj ~= nil then
+        if target.Obj:IsAlive() then
+            if target.Obj:CanBeSeen() then
                 setHeroVar("Target", target)
-                utils.myPrint("killing target :: ", utils.GetHeroName(target))
-                bot:Action_AttackUnit(target, false)
+                utils.myPrint("killing target :: ", utils.GetHeroName(target.Obj))
+                bot:Action_AttackUnit(target.Obj, false)
                 return true
             end
         end

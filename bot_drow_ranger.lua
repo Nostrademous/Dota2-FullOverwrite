@@ -194,14 +194,4 @@ function drowRangerBot:HarassLaneEnemies(bot)
             end
         end
     end
-
-    --[[
-    if target:GetHealth() < math.min(target:GetMaxHealth()*0.50, 400) then
-        self:AddAction(ACTION_FIGHT)
-        self:setHeroVar("Target", target)
-    else
-        self:RemoveAction(ACTION_FIGHT)
-        self:setHeroVar("Target", nil)
-    end
-    --]]
 end

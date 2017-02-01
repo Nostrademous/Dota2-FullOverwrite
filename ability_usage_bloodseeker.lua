@@ -36,12 +36,12 @@ local function UseW()
     local Enemies = npcBot:GetNearbyHeroes(1500, true, BOT_MODE_NONE)
 
     if #Enemies == 1 and ( ult ~= nil and ult:IsFullyCastable() ) then
-        setHeroVar("Target", Enemies[1])
+        setHeroVar("Target", {Obj=Enemies[1], Id=Enemies[1]:GetPlayerID()})
         return false
     end
 
     local target = getHeroVar("Target")
-    if target ~= nil and GetUnitToUnitDistance(npcBot, target) > 1500 then
+    if target.Obj ~= nil and GetUnitToUnitDistance(npcBot, target.Obj) > 1500 then
         return false
     end
     
@@ -67,7 +67,7 @@ local function UseUlt()
     if ability == nil or (not ability:IsFullyCastable()) then return false end
 
     local enemy = getHeroVar("Target")
-    if enemy == nil then return false end
+    if enemy.Obj == nil then return false end
     
     --[[
     local enemyTowers = npcBot:GetNearbyTowers(1200, true)
@@ -76,15 +76,15 @@ local function UseUlt()
         return false
     end
     --]]
-    local timeToKillRightClicking = fight_simul.estimateTimeToKill(npcBot, enemy)
+    local timeToKillRightClicking = fight_simul.estimateTimeToKill(npcBot, enemy.Obj)
     utils.myPrint("Estimating Time To Kill with Right Clicks: ", timeToKillRightClicking)
     if timeToKillRightClicking < 3.0 then
         utils.myPrint("Not Using Ult")
         return false
     end
 
-    if GetUnitToUnitDistance(enemy, npcBot) < (ability:GetCastRange() - 100) then
-        npcBot:Action_UseAbilityOnEntity(ability, enemy)
+    if GetUnitToUnitDistance(enemy.Obj, npcBot) < (ability:GetCastRange() - 100) then
+        npcBot:Action_UseAbilityOnEntity(ability, enemy.Obj)
         return true
     end
 
@@ -97,8 +97,8 @@ local function UseQ()
     if ability == nil or (not ability:IsFullyCastable()) then return false end
 
     local enemy = getHeroVar("Target")
-    if enemy ~= nil and GetUnitToUnitDistance(enemy, npcBot) < (ability:GetCastRange() - 100) then
-        npcBot:Action_UseAbilityOnEntity(ability, enemy)
+    if enemy.Obj ~= nil and GetUnitToUnitDistance(enemy.Obj, npcBot) < (ability:GetCastRange() - 100) then
+        npcBot:Action_UseAbilityOnEntity(ability, enemy.Obj)
         return true
     end
     
@@ -115,7 +115,7 @@ function AbilityUsageThink()
 
     if npcBot:IsChanneling() or npcBot:IsUsingAbility() then return false end
 
-    if getHeroVar("Target") == nil then return false end
+    if getHeroVar("Target").Obj == nil then return false end
 
     if UseQ() or UseUlt() or UseW() then return true end
 end

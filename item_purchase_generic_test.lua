@@ -525,23 +525,7 @@ function X:ConsiderBuyingExtensions()
 	local SilenceCount = enemyData.GetEnemyTeamNumSilences()
 	local TrueStrikeCount = enemyData.GetEnemyTeamNumTruestrike()
 
-
-	local DamageMagicalPure = 0
-	local DamagePhysical = 0
-	-- Get possible damage (physical/magical+pure)
-	for p = 1, 5, 1 do
-		--FIXME: Figure out a way to store this for previously visible enemy heroes
-		local enemy = GetTeamMember( utils.GetOtherTeam(), p )
-		if enemy ~= nil then
-			DamageMagicalPure = DamageMagicalPure + enemy:GetEstimatedDamageToTarget(true, bot, DamageTime, DAMAGE_TYPE_MAGICAL)
-			DamageMagicalPure = DamageMagicalPure + enemy:GetEstimatedDamageToTarget(true, bot, DamageTime, DAMAGE_TYPE_PURE)
-			DamagePhysical = DamagePhysical + enemy:GetEstimatedDamageToTarget(true, bot, DamageTime, DAMAGE_TYPE_PHYSICAL)
-		end
-	end
-
-	--utils.myPrint("Enemy has ",DamageTime," seconds of disable")
-	--utils.myPrint("Total # of silences: ",SilenceCount," ,enemies with true strike: ",TrueStrikeCount)
-	--utils.myPrint("Enemy deals ",DamageMagicalPure," magical and pure damage and ",DamagePhysical," physical damage (",DamageTime,")")
+    local DamagePhysical, DamageMagical, DamagePure = enemyData.GetEnemyDmgs(bot:GetPlayerID(), 10.0)
 
 	--[[
 		The damage numbers should be calculated, also the disable time and the silence counter should work
@@ -571,7 +555,7 @@ function X:ConsiderBuyingExtensions()
 	end
 
 	-- Remove magic immunty if not needed
-	if DamageMagicalPure > DamagePhysical then
+	if DamageMagical > DamagePhysical then
 		if utils.InTable(self.ExtensionItems.DefensiveItems, "item_hood_of_defiance") or utils.InTable(self.ExtensionItems.DefensiveItems, "item_pipe") then
 			--utils.myPrint(" Considering magic damage reduction")
 		elseif utils.InTable(self.ExtensionItems.DefensiveItems, "item_black_king_bar") then

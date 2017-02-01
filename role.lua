@@ -389,7 +389,7 @@ end
 
 local function everyObjectAssigned(matrix)
 	for i = 1, 5, 1 do
-		local slot = GetTeamMember( GetTeam(), i )
+		local slot = GetTeamMember(i)
 		if not existsInMatrix(matrix, slot:GetUnitName()) then
 			return i
 		end
@@ -403,7 +403,7 @@ local function fillRoles(rMatrix)
 	obj = everyObjectAssigned(rMatrix)
 
 	if obj ~= 0 then
-		local slot = GetTeamMember( GetTeam(), obj )
+		local slot = GetTeamMember(obj)
 		validRoles = findRole(slot:GetUnitName())
 		for k,v in pairs (validRoles) do
 			if #v > 0 then
@@ -443,7 +443,7 @@ function SetRoles()
 		for k2, v2 in pairs (v) do
 			print("    ", k2, v2)
 			for i = 1, 5, 1 do
-				local slot = GetTeamMember( GetTeam(), i )
+				local slot = GetTeamMember( i )
 				if v2 == slot:GetUnitName() then
 					roles[i] = k
 				end

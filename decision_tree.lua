@@ -583,7 +583,7 @@ function X:Determine_ShouldIFighting2(bot)
     local myTarget = self:getHeroVar("Target")
     
     -- if I found a new best target, but I have a target already, and they are not the same
-    if weakestHero ~= nil and (myTarget and not myTarget.Obj:IsNull()) and myTarget.Obj ~= weakestHero then
+    if weakestHero ~= nil and utils.ValidTarget(myTarget) and myTarget.Obj ~= weakestHero then
         if score > 50.0 or (score > 2.0 and (GetUnitToUnitDistance(bot, weakestHero) < GetUnitToUnitDistance(bot, myTarget)*1.5 or weakestHero:GetStunDuration(true) >= 1.0)) then
             myTarget.Obj = weakestHero
             myTarget.Id = weakestHero:GetPlayerID()
@@ -626,7 +626,7 @@ function X:Determine_ShouldIFighting2(bot)
     end
     
     -- if I have a target, set by me or by team fighting function
-    if myTarget and not myTarget.Obj:IsNull() and IsHeroAlive(myTarget.id) then
+    if myTarget.Id > 0 and IsHeroAlive(myTarget.Id) then
         if GetHeroLastSeenInfo(myTarget.Id).time > 5.0 then
             utils.myPrint(" - Stopping my fight... lost sight of hero")
             self:RemoveAction(ACTION_FIGHT)
@@ -638,7 +638,7 @@ function X:Determine_ShouldIFighting2(bot)
             for _, friend in pairs(Allies) do
                 local friendID = friend:GetPlayerID()
                 if self.pID ~= friendID and gHeroVar.HasID(friendID) and GetUnitToUnitDistance(myTarget.Obj, friend)/friend:GetCurrentMovementSpeed() <= 5.0 then
-                    utils.myPrint("getting help from ", utils.GetHeroName(friend), " in fighting: ", utils.GetHeroName(myTarget.Obj))
+                    utils.myPrint("getting help from ", utils.GetHeroName(friend), " in fighting enemyID: ", myTarget.Id)
                     gHeroVar.SetVar(friendID, "Target", myTarget)
                 end
             end
@@ -703,7 +703,7 @@ function X:Determine_ShouldIFighting2(bot)
 
     -- if we have a gank target
     local gankTarget = self:getHeroVar("GankTarget")
-    if gankTarget and not gankTarget.Obj:IsNull() then
+    if utils.ValidTarget(gankTarget) then
         bot:Action_AttackUnit(gankTarget.Obj, true)
         return true
     end
@@ -1005,8 +1005,8 @@ end
 function X:DoFight(bot)
     local target = self:getHeroVar("Target")
     
-    if target and target.Id > 0 and IsHeroAlive(target.Id) then
-        if target and not target.Obj:IsNull() then
+    if target.Id > 0 and IsHeroAlive(target.Id) then
+        if utils.ValidTarget(target) then
             local Towers = bot:GetNearbyTowers(750, true)
             if Towers ~= nil and #Towers == 0 then
                 if target.Obj:IsAttackImmune() or (bot:GetLastAttackTime() + bot:GetSecondsPerAttack()) > GameTime() then

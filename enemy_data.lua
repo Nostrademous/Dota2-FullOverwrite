@@ -16,9 +16,6 @@ EnemyData.LastUpdate = -1000.0
 -------------------------------------------------------------------------------
 -- FUNCTIONS - implement rudimentary atomic operation insurance
 -------------------------------------------------------------------------------
-local function EnemyEntryValidAndAlive(entry)
-    return not entry.obj:IsNull() and entry.last_seen ~= -1000.0 and entry.obj:GetHealth() ~= -1
-end
 
 function EnemyData.UpdateEnemyInfo(timeFreq)
     if ( GetGameState() ~= GAME_STATE_GAME_IN_PROGRESS and GetGameState() ~= GAME_STATE_PRE_GAME ) then return end

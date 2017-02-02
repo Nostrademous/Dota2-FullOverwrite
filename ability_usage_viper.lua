@@ -64,13 +64,12 @@ local function UseUlt()
 	local npcBot = GetBot()
     
     local ability = npcBot:GetAbilityByName(Abilities[4])
-	
-	local enemy = getHeroVar("Target")
-	if not utils.ValidTarget(enemy) then return false end
-	
 	if (ability == nil) or (not ability:IsFullyCastable()) then
 		return false
 	end
+    
+	local enemy = getHeroVar("Target")
+	if not utils.ValidTarget(enemy) then return false end
 	
 	if GetUnitToUnitDistance(enemy.Obj, npcBot) < ability:GetCastRange() then
 		npcBot:Action_UseAbilityOnEntity(ability, enemy.Obj)

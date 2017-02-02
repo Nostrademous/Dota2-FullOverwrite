@@ -127,9 +127,8 @@ function ApproachTarget(bot, target)
         return false
     end
 
-    utils.myPrint("TargetID: ", target.Id, ", Alive: ", IsHeroAlive(target.Id))
-    if target.Id > 0 and not IsHeroAlive(target.Id) then
-        if not target.Obj:IsNull() then
+    if target.Id > 0 and IsHeroAlive(target.Id) then
+        if utils.ValidTarget(target) then
             if GetUnitToUnitDistance(bot, target.Obj) < 1000 then
                 return true
             else
@@ -187,8 +186,8 @@ end
 
 function KillTarget(bot, target)
     utils.myPrint("[KillTarget()] - TargetID: ", target.Id, ", Alive: ", IsHeroAlive(target.Id))
-    if target.Id > 0 and not IsHeroAlive(target.Id) then
-        if not target.Obj:IsNull() then
+    if target.Id > 0 and IsHeroAlive(target.Id) then
+        if utils.ValidTarget(target) then
             setHeroVar("Target", target)
             utils.myPrint("killing target :: ", utils.GetHeroName(target.Obj))
             bot:Action_AttackUnit(target.Obj, false)

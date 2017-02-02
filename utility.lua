@@ -392,8 +392,11 @@ function U.Round(num, numDecimalPlaces)
     return math.floor(num * mult + 0.5) / mult
 end
 
-function U.GetHeightDiff(loc1, loc2)
-    return (loc1[2] - loc2[2])
+function U.GetHeightDiff(hUnit1, hUnit2)
+    if type(hUnit2) == "number" then -- case for trees
+        return (hUnit1:GetGroundHeight() - GetTreeLocation(hUnit2)[3])
+    end
+    return (hUnit1:GetGroundHeight() - hUnit2:GetGroundHeight())
 end
 
 -- CONTRIBUTOR: Function below was coded by Platinum_dota2
@@ -1441,7 +1444,9 @@ function U.GetNearestTree(npcBot)
 	local trees = npcBot:GetNearbyTrees(1200)
 	
 	for _, tree in ipairs(trees) do
-        if GetUnitToLocationDistance(npcBot, GetTreeLocation(tree)) < 700 and U.GetHeightDiff(npcBot:GetLocation(), GetTreeLocation(tree)) == 0 then
+        local treeLoc = GetTreeLocation(tree)
+        --U.myPrint("Tree Loc: <", treeLoc[1], ", ", treeLoc[2], ", ", treeLoc[3], ">")
+        if GetUnitToLocationDistance(npcBot, treeLoc) < 700 and U.GetHeightDiff(npcBot, tree) == 0 then
             return tree
         end
     end

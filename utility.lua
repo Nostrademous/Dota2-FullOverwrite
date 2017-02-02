@@ -394,7 +394,7 @@ end
 
 function U.GetHeightDiff(hUnit1, hUnit2)
     if type(hUnit2) == "number" then -- case for trees
-        return (hUnit1:GetGroundHeight() - GetTreeLocation(hUnit2)[3])
+        return (hUnit1:GetGroundHeight() - hUnit2)
     end
     return (hUnit1:GetGroundHeight() - hUnit2:GetGroundHeight())
 end
@@ -1441,12 +1441,12 @@ function U.CourierThink(npcBot)
 end
 
 function U.GetNearestTree(npcBot)
-	local trees = npcBot:GetNearbyTrees(1200)
+	local trees = npcBot:GetNearbyTrees(700)
 	
 	for _, tree in ipairs(trees) do
         local treeLoc = GetTreeLocation(tree)
         --U.myPrint("Tree Loc: <", treeLoc[1], ", ", treeLoc[2], ", ", treeLoc[3], ">")
-        if GetUnitToLocationDistance(npcBot, treeLoc) < 700 and U.GetHeightDiff(npcBot, tree) == 0 then
+        if U.GetHeightDiff(npcBot, treeLoc[3]) == 0 then
             return tree
         end
     end

@@ -1434,7 +1434,7 @@ function U.GetNearestTree(npcBot)
 	local trees = npcBot:GetNearbyTrees(1200)
 	
 	for _, tree in ipairs(trees) do
-        if GetUnitToLocationDistance(npcBot, GetTreeLocation(tree)) < 700 then
+        if GetUnitToLocationDistance(npcBot, GetTreeLocation(tree)) < 700 and U.GetHeightDiff(npcBot, GetTreeLocation(tree)) == 0 then
             return tree
         end
     end

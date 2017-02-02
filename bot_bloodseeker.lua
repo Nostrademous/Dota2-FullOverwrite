@@ -178,7 +178,7 @@ function bloodseekerBot:DoCleanCamp(bot, neutrals)
     end
     for i, neutral in ipairs(neutrals) do
         -- kill the Ghost first as they slow down our DPS tremendously by being around
-        if string.find(neutral:GetUnitName(), "ghost") ~= nil and bloodraged and GetUnitToUnitDistance(bot, neutral) < bot:GetAttackRange() then
+        if string.find(neutral:GetUnitName(), "ghost") ~= nil and bloodraged then
             bot:Action_AttackUnit(neutral, true)
             return
         end

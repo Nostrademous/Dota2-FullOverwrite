@@ -185,7 +185,7 @@ function GlobalFightDetermination()
                         local myStun = ally:GetStunDuration(true)
                         local mySlow = ally:GetSlowDuration(true)
                         local myTimeToKillTarget = 0.0
-                        if enemy.Obj ~= nil then
+                        if not enemy.Obj:IsNull() then
                             myTimeToKillTarget = fight_simul.estimateTimeToKill(ally, enemy)
                         else
                             myTimeToKillTarget = enemy.Health /(ally:GetAttackDamage()/ally:GetSecondsPerAttack())/0.75
@@ -217,7 +217,7 @@ function GlobalFightDetermination()
                                     local allyStun = ally2:GetStunDuration()
                                     local allySlow = ally2:GetSlowDuration()
                                     local allyTimeToKillTarget = 0.0
-                                    if enemy.Obj ~= nil then
+                                    if not enemy.Obj:IsNull() then
                                         allyTimeToKillTarget = fight_simul.estimateTimeToKill(ally2, enemy)
                                     else
                                         allyTimeToKillTarget = enemy.Health /(ally2:GetAttackDamage()/ally2:GetSecondsPerAttack())/0.75
@@ -229,7 +229,7 @@ function GlobalFightDetermination()
                         end
                         
                         local anticipatedTimeToKill = totalTimeToKillTarget/(#participatingAllyIDs+1)
-                        if enemy.Obj ~= nil and anticipatedTimeToKill < 6.0 then
+                        if not enemy.Obj:IsNull() and anticipatedTimeToKill < 6.0 then
                             utils.myPrint("Engaging! Anticipated Time to kill: ", anticipatedTimeToKill)
                             gHero.SetVar(ally:GetPlayerID(), "Target", {Obj=enemy.Obj, Id=enemy.Obj:GetPlayerID()})
                             for _, v in ipairs(participatingAllyIDs) do

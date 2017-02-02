@@ -568,7 +568,7 @@ end
 
 function X:Determine_ShouldIFighting(bot)
     global_game_state.GlobalFightDetermination()
-    if self:getHeroVar("Target").Id ~= nil then
+    if self:getHeroVar("Target").Id > 0 then
         return true
     end
     return false
@@ -583,7 +583,7 @@ function X:Determine_ShouldIFighting2(bot)
     local myTarget = self:getHeroVar("Target")
     
     -- if I found a new best target, but I have a target already, and they are not the same
-    if weakestHero ~= nil and myTarget.Obj ~= nil and myTarget.Obj ~= weakestHero then
+    if weakestHero ~= nil and (myTarget and not myTarget.Obj:IsNull()) and myTarget.Obj ~= weakestHero then
         if score > 50.0 or (score > 2.0 and (GetUnitToUnitDistance(bot, weakestHero) < GetUnitToUnitDistance(bot, myTarget)*1.5 or weakestHero:GetStunDuration(true) >= 1.0)) then
             myTarget.Obj = weakestHero
             myTarget.Id = weakestHero:GetPlayerID()
@@ -626,8 +626,8 @@ function X:Determine_ShouldIFighting2(bot)
     end
     
     -- if I have a target, set by me or by team fighting function
-    if myTarget and myTarget.Obj ~= nil and myTarget.Obj:IsAlive() then
-        if (not myTarget.Obj:CanBeSeen()) and GetHeroLastSeenInfo(myTarget.Id).time > 5.0 then
+    if myTarget and not myTarget.Obj:IsNull() and IsHeroAlive(myTarget.id) then
+        if GetHeroLastSeenInfo(myTarget.Id).time > 5.0 then
             utils.myPrint(" - Stopping my fight... lost sight of hero")
             self:RemoveAction(ACTION_FIGHT)
             self:setHeroVar("Target", {Obj=nil, Id=0})
@@ -703,7 +703,7 @@ function X:Determine_ShouldIFighting2(bot)
 
     -- if we have a gank target
     local gankTarget = self:getHeroVar("GankTarget")
-    if gankTarget and gankTarget.Obj ~= nil then
+    if gankTarget and not gankTarget.Obj:IsNull() then
         bot:Action_AttackUnit(gankTarget.Obj, true)
         return true
     end
@@ -1005,8 +1005,8 @@ end
 function X:DoFight(bot)
     local target = self:getHeroVar("Target")
     
-    if target.Obj ~= nil then
-        if target:IsAlive() then
+    if target and target.Id > 0 and IsHeroAlive(target.Id) then
+        if target and not target.Obj:IsNull() then
             local Towers = bot:GetNearbyTowers(750, true)
             if Towers ~= nil and #Towers == 0 then
                 if target.Obj:IsAttackImmune() or (bot:GetLastAttackTime() + bot:GetSecondsPerAttack()) > GameTime() then
@@ -1038,12 +1038,46 @@ function X:DoFight(bot)
                     return false
                 end
             end
-        else
-            utils.AllChat("Suck it!")
-            self:RemoveAction(ACTION_FIGHT)
-            self:setHeroVar("Target", {Obj=nil, Id=0})
+        else -- target alive but we don't see it
+            if GetHeroLastSeenInfo(target.Id).time > 5.0 then
+                me:RemoveAction(constants.ACTION_FIGHT)
+                setHeroVar("Target", {Obj=nil, Id=0})
+                return false
+            else
+                local lastLoc = GetHeroLastSeenInfo(target.Id).location
+                if utils.GetOtherTeam() == TEAM_DIRE then
+                    local prob1 = GetUnitPotentialValue(target.Id, Vector(lastLoc[1] + 500, lastLoc[2]), 1000)
+                    local prob2 = GetUnitPotentialValue(target.Id, Vector(lastLoc[1], lastLoc[2] + 500), 1000)
+                    if prob1 > 180 and prob1 > prob2 then
+                        item_usage.UseMovementItems()
+                        bot:Action_MoveToLocation(Vector(lastLoc[1] + 500, lastLoc[2]))
+                        return false
+                    elseif prob2 > 180 then
+                        item_usage.UseMovementItems()
+                        bot:Action_MoveToLocation(Vector(lastLoc[1], lastLoc[2] + 500))
+                        return false
+                    end
+                else
+                    local prob1 = GetUnitPotentialValue(target.Id, Vector(lastLoc[1] - 500, lastLoc[2]), 1000)
+                    local prob2 = GetUnitPotentialValue(target.Id, Vector(lastLoc[1], lastLoc[2] - 500), 1000)
+                    if prob1 > 180 and prob1 > prob2 then
+                        item_usage.UseMovementItems()
+                        bot:Action_MoveToLocation(Vector(lastLoc[1] - 500, lastLoc[2]))
+                        return false
+                    elseif prob2 > 180 then
+                        item_usage.UseMovementItems()
+                        bot:Action_MoveToLocation(Vector(lastLoc[1], lastLoc[2] - 500))
+                        return false
+                    end
+                end
+            end
         end
+    else
+        utils.AllChat("Suck it!")
+        self:RemoveAction(ACTION_FIGHT)
+        self:setHeroVar("Target", {Obj=nil, Id=0})
     end
+
     return false
 end
 

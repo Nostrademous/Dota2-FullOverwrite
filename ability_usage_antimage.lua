@@ -7,6 +7,7 @@ _G._savedEnv = getfenv()
 module( "ability_usage_antimage", package.seeall )
 
 local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
+local utils = require( GetScriptDirectory().."/utility" )
 
 function setHeroVar(var, value)
 	local bot = bot or GetBot()
@@ -105,7 +106,7 @@ function ConsiderManaVoid(abilityMV)
 	-- If we're going after someone
 	local npcTarget = getHeroVar("Target")
 
-	if npcTarget.Obj ~= nil then
+	if utils.ValidTarget(npcTarget) then
 		local manaDiff = npcTarget.Obj:GetMaxMana() - npcTarget.Obj:GetMana()
 		aoeDmg = manaDiff * nDmgPerMana
 		if CanCastManaVoidOnTarget( npcTarget.Obj ) and (npcTarget.Obj:IsChanneling() or npcTarget.Obj:GetHealth() < aoeDmg) then

@@ -567,6 +567,13 @@ function U.AllChat(msg)
     bot:Action_Chat(msg, true)
 end
 
+function U.ValidTarget(target)
+    if target.Obj ~= nil and not target.Obj:IsNull() then
+        return true
+    end
+    return false
+end
+
 function U.NotNilOrDead(unit)
     if unit==nil then
         return false;
@@ -1183,7 +1190,7 @@ function U.GetCenter(Heroes)
     local hn = 0.0
 
     for _,hero in pairs(Heroes) do
-        if hero ~= nil and hero:IsAlive() and hero:CanBeSeen() then
+        if not hero:IsNull() and hero:IsAlive() then
             sum = sum + hero:GetLocation()
             hn = hn + 1
         end
@@ -1434,7 +1441,7 @@ function U.GetNearestTree(npcBot)
 	local trees = npcBot:GetNearbyTrees(1200)
 	
 	for _, tree in ipairs(trees) do
-        if GetUnitToLocationDistance(npcBot, GetTreeLocation(tree)) < 700 and U.GetHeightDiff(npcBot, GetTreeLocation(tree)) == 0 then
+        if GetUnitToLocationDistance(npcBot, GetTreeLocation(tree)) < 700 and U.GetHeightDiff(npcBot:GetLocation(), GetTreeLocation(tree)) == 0 then
             return tree
         end
     end

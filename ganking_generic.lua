@@ -114,19 +114,21 @@ function ApproachTarget(bot, target)
     if move_ticks > 250 then -- time to check for targets again
         utils.myPrint("move_ticks > 250 :: abandoning gank")
         me:RemoveAction(constants.ACTION_GANKING)
-        self:setHeroVar("GankTarget", {Obj=nil, Id=0})
+        setHeroVar("GankTarget", {Obj=nil, Id=0})
         return false
     else
         setHeroVar("move_ticks", move_ticks + 1)
     end
 
-    if me:IsReadyToGank(bot) == false then
+    if not me:IsReadyToGank(bot) then
+        utils.myPrint("[ApproachTarget()] - not read to gank!")
         me:RemoveAction(constants.ACTION_GANKING)
-        self:setHeroVar("GankTarget", {Obj=nil, Id=0})
+        setHeroVar("GankTarget", {Obj=nil, Id=0})
         return false
     end
 
-    if target.Id > 0 and IsHeroAlive(target.Id) then
+    utils.myPrint("TargetID: ", target.Id, ", Alive: ", IsHeroAlive(target.Id))
+    if target.Id > 0 and not IsHeroAlive(target.Id) then
         if not target.Obj:IsNull() then
             if GetUnitToUnitDistance(bot, target.Obj) < 1000 then
                 return true
@@ -143,13 +145,13 @@ function ApproachTarget(bot, target)
         else
             if GetHeroLastSeenInfo(target.Id).time > 5.0 then
                 me:RemoveAction(constants.ACTION_GANKING)
-                self:setHeroVar("GankTarget", {Obj=nil, Id=0})
+                setHeroVar("GankTarget", {Obj=nil, Id=0})
                 return false
             else
                 local lastLoc = GetHeroLastSeenInfo(target.Id).location
                 if utils.GetOtherTeam() == TEAM_DIRE then
-                    local prob1 = GetUnitPotentialValue(target.Obj, Vector(lastLoc[1] + 500, lastLoc[2]), 1000)
-                    local prob2 = GetUnitPotentialValue(target.Obj, Vector(lastLoc[1], lastLoc[2] + 500), 1000)
+                    local prob1 = GetUnitPotentialValue(target.Id, Vector(lastLoc[1] + 500, lastLoc[2]), 1000)
+                    local prob2 = GetUnitPotentialValue(target.Id, Vector(lastLoc[1], lastLoc[2] + 500), 1000)
                     if prob1 > 180 and prob1 > prob2 then
                         item_usage.UseMovementItems()
                         bot:Action_MoveToLocation(Vector(lastLoc[1] + 500, lastLoc[2]))
@@ -160,8 +162,8 @@ function ApproachTarget(bot, target)
                         return false
                     end
                 else
-                    local prob1 = GetUnitPotentialValue(target.Obj, Vector(lastLoc[1] - 500, lastLoc[2]), 1000)
-                    local prob2 = GetUnitPotentialValue(target.Obj, Vector(lastLoc[1], lastLoc[2] - 500), 1000)
+                    local prob1 = GetUnitPotentialValue(target.Id, Vector(lastLoc[1] - 500, lastLoc[2]), 1000)
+                    local prob2 = GetUnitPotentialValue(target.Id, Vector(lastLoc[1], lastLoc[2] - 500), 1000)
                     if prob1 > 180 and prob1 > prob2 then
                         item_usage.UseMovementItems()
                         bot:Action_MoveToLocation(Vector(lastLoc[1] - 500, lastLoc[2]))
@@ -177,14 +179,15 @@ function ApproachTarget(bot, target)
     else
         utils.myPrint("GankTarget is dead!!!")
         me:RemoveAction(constants.ACTION_GANKING)
-        self:setHeroVar("GankTarget", {Obj=nil, Id=0})
+        setHeroVar("GankTarget", {Obj=nil, Id=0})
         return false
     end
     return false
 end
 
 function KillTarget(bot, target)
-    if target.Id > 0 and IsHeroAlive(target.Id) then
+    utils.myPrint("[KillTarget()] - TargetID: ", target.Id, ", Alive: ", IsHeroAlive(target.Id))
+    if target.Id > 0 and not IsHeroAlive(target.Id) then
         if not target.Obj:IsNull() then
             setHeroVar("Target", target)
             utils.myPrint("killing target :: ", utils.GetHeroName(target.Obj))

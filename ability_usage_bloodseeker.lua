@@ -41,7 +41,7 @@ local function UseW()
     end
 
     local target = getHeroVar("Target")
-    if target.Obj ~= nil and GetUnitToUnitDistance(npcBot, target.Obj) > 1500 then
+    if utils.ValidTarget(target) and GetUnitToUnitDistance(npcBot, target.Obj) > 1500 then
         return false
     end
     
@@ -67,7 +67,7 @@ local function UseUlt()
     if ability == nil or (not ability:IsFullyCastable()) then return false end
 
     local enemy = getHeroVar("Target")
-    if enemy.Obj == nil then return false end
+    if not utils.ValidTarget(enemy) then return false end
     
     --[[
     local enemyTowers = npcBot:GetNearbyTowers(1200, true)
@@ -78,7 +78,7 @@ local function UseUlt()
     --]]
     local timeToKillRightClicking = fight_simul.estimateTimeToKill(npcBot, enemy.Obj)
     utils.myPrint("Estimating Time To Kill with Right Clicks: ", timeToKillRightClicking)
-    if timeToKillRightClicking < 3.0 then
+    if timeToKillRightClicking < 4.0 then
         utils.myPrint("Not Using Ult")
         return false
     end
@@ -97,7 +97,7 @@ local function UseQ()
     if ability == nil or (not ability:IsFullyCastable()) then return false end
 
     local enemy = getHeroVar("Target")
-    if enemy.Obj ~= nil and GetUnitToUnitDistance(enemy.Obj, npcBot) < (ability:GetCastRange() - 100) then
+    if utils.ValidTarget(enemy) and GetUnitToUnitDistance(enemy.Obj, npcBot) < (ability:GetCastRange() - 100) then
         npcBot:Action_UseAbilityOnEntity(ability, enemy.Obj)
         return true
     end
@@ -115,7 +115,7 @@ function AbilityUsageThink()
 
     if npcBot:IsChanneling() or npcBot:IsUsingAbility() then return false end
 
-    if getHeroVar("Target").Obj == nil then return false end
+    if not utils.ValidTarget(getHeroVar("Target")) then return false end
 
     if UseQ() or UseUlt() or UseW() then return true end
 end

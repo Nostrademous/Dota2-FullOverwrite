@@ -38,11 +38,11 @@ local function UseQ()
     end
 
     local Enemies = npcBot:GetNearbyHeroes(frostArrow:GetCastRange(), true, BOT_MODE_NONE)
-
-    if #Enemies == 0 or getHeroVar("Target").Obj == nil then return false end
-
     local target = getHeroVar("Target")
-    if target.Obj ~= nil and GetUnitToUnitDistance(npcBot, target.Obj) < frostArrow:GetCastRange() and (not target.Obj:IsRooted()) or (not target.Obj:IsStunned()) and (not target.Obj:IsMagicImmune()) then
+    
+    if #Enemies == 0 or not utils.ValidTarget(target) then return false end
+
+    if GetUnitToUnitDistance(npcBot, target.Obj) < frostArrow:GetCastRange() and (not target.Obj:IsRooted()) or (not target.Obj:IsStunned()) and (not target.Obj:IsMagicImmune()) then
         npcBot:Action_UseAbilityOnEntity(frostArrow, target.Obj)
         return true
     end

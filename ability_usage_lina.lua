@@ -5,6 +5,8 @@
 
 _G._savedEnv = getfenv()
 module( "ability_usage_lina", package.seeall )
+
+local utils = require( GetScriptDirectory().."/utility" )
 local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
 
 function setHeroVar(var, value)
@@ -46,13 +48,13 @@ function AbilityUsageThink()
     castLBDesire, castLBTarget = ConsiderLagunaBlade(abilityLB)
 
     local target = getHeroVar("Target")
-    if target.Obj ~= nil then
+    if utils.ValidTarget(target) then
         castLSADesire, castLSALocation = ConsiderLightStrikeArrayFighting(abilityLSA, target.Obj)
     else
         castLSADesire, castLSALocation = ConsiderLightStrikeArray(abilityLSA)
     end
 
-    if target.Obj ~= nil then
+    if utils.ValidTarget(target) then
         castDSDesire, castDSLocation = ConsiderDragonSlaveFighting(abilityDS, target.Obj)
     else
         castDSDesire, castDSLocation = ConsiderDragonSlave(abilityDS)
@@ -123,14 +125,12 @@ end
 
 
 function ConsiderLightStrikeArray(abilityLSA)
-
-    local npcBot = GetBot();
+    local npcBot = GetBot()
 
     -- Make sure it's castable
     if not abilityLSA:IsFullyCastable() then
-        return BOT_ACTION_DESIRE_NONE, 0;
-    end;
-
+        return BOT_ACTION_DESIRE_NONE, 0
+    end
 
     -- Get some of its values
     local nRadius = abilityLSA:GetSpecialValueInt( "light_strike_array_aoe" )
@@ -142,7 +142,7 @@ function ConsiderLightStrikeArray(abilityLSA)
     --------------------------------------
 
     -- Check for a channeling enemy
-    local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nCastRange + nRadius + 200, true, BOT_MODE_NONE );
+    local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nCastRange + nRadius + 200, true, BOT_MODE_NONE )
     for _,npcEnemy in pairs( tableNearbyEnemyHeroes ) do
         if npcEnemy:IsChanneling() then
             return BOT_ACTION_DESIRE_HIGH, npcEnemy:GetLocation()
@@ -154,10 +154,10 @@ function ConsiderLightStrikeArray(abilityLSA)
     --------------------------------------
 
     -- If we're farming and can kill 3+ creeps with LSA
-    local locationAoE = npcBot:FindAoELocation( true, false, npcBot:GetLocation(), nCastRange, nRadius, abilityLSA:GetCastPoint(), nDamage );
+    local locationAoE = npcBot:FindAoELocation( true, false, npcBot:GetLocation(), nCastRange, nRadius, abilityLSA:GetCastPoint(), nDamage )
 
     if ( locationAoE.count >= 3 ) then
-        return BOT_ACTION_DESIRE_LOW, locationAoE.targetloc;
+        return BOT_ACTION_DESIRE_LOW, locationAoE.targetloc
     end
 
     -- If we're seriously retreating, see if we can land a stun on someone who's damaged us recently
@@ -180,15 +180,15 @@ end
 ----------------------------------------------------------------------------------------------------
 
 function ConsiderDragonSlaveFighting(abilityDS, enemy)
-    local npcBot = GetBot();
+    local npcBot = GetBot()
 
     if ( not abilityDS:IsFullyCastable() ) then
-        return BOT_ACTION_DESIRE_NONE, 0;
+        return BOT_ACTION_DESIRE_NONE, 0
     end;
 
-    local nCastRange = abilityDS:GetCastRange();
+    local nCastRange = abilityDS:GetCastRange()
 
-    local d = GetUnitToUnitDistance(npcBot,enemy);
+    local d = GetUnitToUnitDistance(npcBot,enemy)
 
     if d < nCastRange and CanCastDragonSlaveOnTarget(enemy) then
         if enemy:IsStunned() or enemy:IsRooted() then
@@ -201,56 +201,56 @@ function ConsiderDragonSlaveFighting(abilityDS, enemy)
         end
     end
 
-    return BOT_ACTION_DESIRE_NONE, 0;
+    return BOT_ACTION_DESIRE_NONE, 0
 end
 
 function ConsiderDragonSlave(abilityDS)
 
-    local npcBot = GetBot();
+    local npcBot = GetBot()
 
     if ( not abilityDS:IsFullyCastable() ) then
-        return BOT_ACTION_DESIRE_NONE, 0;
-    end;
+        return BOT_ACTION_DESIRE_NONE, 0
+    end
 
     -- Get some of its values
-    local nRadius = abilityDS:GetSpecialValueInt( "dragon_slave_width_end" );
-    local nCastRange = abilityDS:GetCastRange();
-    local nDamage = abilityDS:GetAbilityDamage();
-    --print("dragon_slave damage:" .. nDamage);
+    local nRadius = abilityDS:GetSpecialValueInt( "dragon_slave_width_end" )
+    local nCastRange = abilityDS:GetCastRange()
+    local nDamage = abilityDS:GetAbilityDamage()
+    --print("dragon_slave damage:" .. nDamage)
 
     --------------------------------------
     -- Mode based usage
     --------------------------------------
 
     -- If we're farming and can kill 2+ creeps with LSA when we have plenty mana
-    local locationAoE = npcBot:FindAoELocation( true, false, npcBot:GetLocation(), nCastRange, nRadius, 0, nDamage );
+    local locationAoE = npcBot:FindAoELocation( true, false, npcBot:GetLocation(), nCastRange, nRadius, 0, nDamage )
 
     if ( locationAoE.count >= 2 ) then
-        return BOT_ACTION_DESIRE_LOW, locationAoE.targetloc;
+        return BOT_ACTION_DESIRE_LOW, locationAoE.targetloc
     end
 
     -- If we're pushing or defending a lane and can hit 4+ creeps, go for it
     -- wasting mana banned!
     if npcBot.ShouldPush and ( npcBot:GetMana() / npcBot:GetMaxMana() >= 0.5 ) then
-        local locationAoE = npcBot:FindAoELocation( true, false, npcBot:GetLocation(), nCastRange, nRadius, 0, 0 );
+        local locationAoE = npcBot:FindAoELocation( true, false, npcBot:GetLocation(), nCastRange, nRadius, 0, 0 )
 
         if ( locationAoE.count >= 5 )
         then
-            return BOT_ACTION_DESIRE_LOW, locationAoE.targetloc;
+            return BOT_ACTION_DESIRE_LOW, locationAoE.targetloc
         end
     end
 
     -- If we have plenty mana and high level DS
     if(npcBot:GetMana() / npcBot:GetMaxMana() > 0.6 and nDamage > 300) then
-        local locationAoE = npcBot:FindAoELocation( true, true, npcBot:GetLocation(), nCastRange, nRadius, 0, 0 );
+        local locationAoE = npcBot:FindAoELocation( true, true, npcBot:GetLocation(), nCastRange, nRadius, 0, 0 )
 
         -- hit heros
         if locationAoE.count >= 1 then
-            return BOT_ACTION_DESIRE_LOW, locationAoE.targetloc;
+            return BOT_ACTION_DESIRE_LOW, locationAoE.targetloc
         end
     end
 
-    return BOT_ACTION_DESIRE_NONE, 0;
+    return BOT_ACTION_DESIRE_NONE, 0
 end
 
 
@@ -258,24 +258,24 @@ end
 
 function ConsiderLagunaBlade(abilityLB)
 
-    local npcBot = GetBot();
+    local npcBot = GetBot()
 
     -- Make sure it's castable
     if ( not abilityLB:IsFullyCastable() ) then
-        return BOT_ACTION_DESIRE_NONE, 0;
+        return BOT_ACTION_DESIRE_NONE, 0
     end
 
     -- Get some of its values
     local nCastRange = abilityLB:GetCastRange();
-    local nDamage = abilityLB:GetSpecialValueInt( "damage" );
+    local nDamage = abilityLB:GetSpecialValueInt( "damage" )
     local eDamageType = DAMAGE_TYPE_MAGICAL
     if npcBot:HasScepter() then
         eDamageType = DAMAGE_TYPE_PURE
     end
 
     -- If a mode has set a target, and we can kill them, do it
-    local NearbyEnemyHeroes = npcBot:GetNearbyHeroes( nCastRange + 200, true, BOT_MODE_NONE );
-    if NearbyEnemyHeroes ~= nil then
+    local NearbyEnemyHeroes = npcBot:GetNearbyHeroes( nCastRange + 200, true, BOT_MODE_NONE )
+    if #NearbyEnemyHeroes > 0 then
         for _,npcEnemy in pairs( NearbyEnemyHeroes ) do
             if CanCastLagunaBladeOnTarget( npcEnemy ) then
                 if npcEnemy:GetActualDamage( nDamage, eDamageType ) > npcEnemy:GetHealth() then
@@ -315,7 +315,7 @@ function ConsiderLagunaBlade(abilityLB)
     end
     ]]
 
-    return BOT_ACTION_DESIRE_NONE, 0;
+    return BOT_ACTION_DESIRE_NONE, 0
 
 end
 

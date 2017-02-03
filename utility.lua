@@ -624,11 +624,11 @@ end
 function U.TreadCycle(bot, stat)
     local powerTreads = U.HaveItem(bot, "item_power_treads")
     if powerTreads then
-        for i = 0, 2, 1 do 
-            local activeStat = powerTreads:GetPowerTreadsStat()
-            if activeStat == stat then
-                break
-            end
+        local activeStat = powerTreads:GetPowerTreadsStat()
+        if activeState == stat then return end
+        for i = 0, 2, 1 do
+            activeStat = powerTreads:GetPowerTreadsStat()
+            if activeStat == stat then return end
             bot:Action_UseAbility(powerTreads)
         end
     end
@@ -835,13 +835,40 @@ function U.EnemiesNearLocation(bot, loc, dist)
     --FIXME: this list below only returns visible heroes, need to do this for all alive heroes
     local Enemies = GetUnitList(UNIT_LIST_ENEMY_HEROES)
     for _, enemy in pairs(Enemies) do
-        if U.NotNilOrDead(enemy) and U.GetDistance(GetHeroLastSeenInfo(enemy:GetPlayerID()).location, loc) <= dist 
+        if U.NotNilOrDead(enemy) and U.GetDistance(GetHeroLastSeenInfo(enemy:GetPlayerID()).location, loc) <= dist
             and GetHeroLastSeenInfo(enemy:GetPlayerID()).time < 30 then
             num = num + 1
         end
     end
 
     return num
+end
+
+function U.PredictedLocation(bot, targetID)
+    if targetID == 0 or (targetID > 0 and not HeroIsAlive(targetID)) then return nil end
+
+    --[[ FIXME: Re-enable code once GetUnitPotentialValue() is fixed to work on ID
+    local lastLoc = GetHeroLastSeenInfo(targetID).location
+    if U.GetOtherTeam() == TEAM_DIRE then
+        local prob1 = GetUnitPotentialValue(targetID, Vector(lastLoc[1] + 500, lastLoc[2]), 1000)
+        local prob2 = GetUnitPotentialValue(targetID, Vector(lastLoc[1], lastLoc[2] + 500), 1000)
+        if prob1 > 180 and prob1 > prob2 then
+            return Vector(lastLoc[1] + 500, lastLoc[2])
+        elseif prob2 > 180 then
+            bot:Action_MoveToLocation()
+            return Vector(lastLoc[1], lastLoc[2] + 500)
+        end
+    else
+        local prob1 = GetUnitPotentialValue(targetID, Vector(lastLoc[1] - 500, lastLoc[2]), 1000)
+        local prob2 = GetUnitPotentialValue(targetID, Vector(lastLoc[1], lastLoc[2] - 500), 1000)
+        if prob1 > 180 and prob1 > prob2 then
+            return Vector(lastLoc[1] - 500, lastLoc[2])
+        elseif prob2 > 180 then
+            return Vector(lastLoc[1], lastLoc[2] - 500)
+        end
+    end
+    --]]
+    return nil
 end
 
 function U.GetWardingSpot(lane)
@@ -1130,7 +1157,7 @@ function U.GetWeakestCreep(creeps)
             if creep:GetHealth()<LowestHealth then
                 LowestHealth=creep:GetHealth();
                 WeakestCreep=creep;
-			end
+            end
         end
     end
 
@@ -1206,23 +1233,23 @@ end
 function U.GetWeakestHero(bot, r)
     local EnemyHeroes = bot:GetNearbyHeroes(r, true, BOT_MODE_NONE);
 
-    if EnemyHeroes==nil or #EnemyHeroes==0 then
-        return nil,10000;
+    if EnemyHeroes == nil or #EnemyHeroes == 0 then
+        return nil, 10000
     end
 
-    local WeakestHero=nil;
-    local LowestHealth=10000;
+    local WeakestHero = nil
+    local LowestHealth = 10000
 
-    for _,hero in pairs(EnemyHeroes) do
-        if hero~=nil and hero:IsAlive() then
-            if hero:GetHealth()<LowestHealth then
-                LowestHealth=hero:GetHealth();
-                WeakestHero=hero;
+    for _, hero in ipairs(EnemyHeroes) do
+        if hero ~= nil and hero:IsAlive() then
+            if hero:GetHealth() < LowestHealth then
+                LowestHealth = hero:GetHealth()
+                WeakestHero = hero
             end
         end
     end
 
-    return WeakestHero, LowestHealth;
+    return WeakestHero, LowestHealth
 end
 
 function U.EnemyHasBreakableBuff(enemy)
@@ -1234,18 +1261,19 @@ function U.EnemyHasBreakableBuff(enemy)
     return false
 end
 
-function U.UseOrbEffect(npcBot, enemy)
+function U.UseOrbEffect(bot, enemy)
     local enemy = enemy or nil
     local orb = getHeroVar("HasOrbAbility")
     if orb ~= nil then
-        local ability = npcBot:GetAbilityByName(orb)
+        local ability = bot:GetAbilityByName(orb)
         if ability ~= nil and ability:IsFullyCastable() then
             if enemy == nil then
-                enemy, _ = U.GetWeakestHero(npcBot, ability:GetCastRange())
+                enemy, _ = U.GetWeakestHero(bot, ability:GetCastRange())
             end
 
             if enemy ~= nil then
-                npcBot:Action_UseAbilityOnEntity(ability, enemy)
+                U.TreadCycle(bot, constants.INTELLIGENCE)
+                bot:Action_UseAbilityOnEntity(ability, enemy)
                 return true
             end
         end
@@ -1372,7 +1400,7 @@ function U.GetTeleportationAbility(npcBot)
             return ability
         end
     end
-    
+
     local tp = U.HaveItem(npcBot, "item_tpscroll")
     if tp ~= nil and tp:IsFullyCastable() then
         return tp
@@ -1423,17 +1451,17 @@ function U.CourierThink(npcBot)
     --if GetCourierState(courier) ~= COURIER_STATE_AT_BASE and GetCourierState(courier) ~= COURIER_STATE_DEAD and GetCourierState(courier) ~= COURIER_STATE_IDLE then
     --    npcBot:Action_Courier(GetCourier(0), COURIER_ACTION_BURST)
     --end
-    
+
     if npcBot:IsAlive() and (npcBot:GetStashValue() > 500 or npcBot:GetCourierValue() > 0 or U.HasImportantItem()) and GetCourierState(courier) == COURIER_STATE_AT_BASE then
         npcBot:Action_Courier(courier, COURIER_ACTION_TAKE_AND_TRANSFER_ITEMS)
         return
     end
-    
+
     if GetCourierState(courier) ~= COURIER_STATE_DEAD and GetCourierState(courier) == COURIER_STATE_IDLE then
         npcBot:Action_Courier(courier, COURIER_ACTION_RETURN)
         return
     end
-    
+
     if GetCourierState(courier) ~= COURIER_STATE_DEAD and GetCourierState(courier) == COURIER_STATE_AT_BASE and
         (not npcBot:IsAlive()) and npcBot:GetCourierValue() > 0 then
         npcBot:Action_Courier(courier, COURIER_ACTION_RETURN_STASH_ITEMS)
@@ -1441,9 +1469,9 @@ function U.CourierThink(npcBot)
 end
 
 function U.GetNearestTree(npcBot)
-	local trees = npcBot:GetNearbyTrees(700)
-	
-	for _, tree in ipairs(trees) do
+    local trees = npcBot:GetNearbyTrees(700)
+
+    for _, tree in ipairs(trees) do
         local treeLoc = GetTreeLocation(tree)
         --U.myPrint("Tree Loc: <", treeLoc[1], ", ", treeLoc[2], ", ", treeLoc[3], ">")
         if U.GetHeightDiff(npcBot, treeLoc[3]) == 0 then

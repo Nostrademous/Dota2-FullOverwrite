@@ -202,6 +202,36 @@ function X:Think(bot)
 
     if ( GetGameState() ~= GAME_STATE_GAME_IN_PROGRESS and GetGameState() ~= GAME_STATE_PRE_GAME ) then return end
 
+    -- TEST STUFF
+    --[[
+    local gulHandles = GetUnitList(UNIT_LIST_ENEMY_HEROES);
+    local gnhHandles = bot:GetNearbyHeroes(1500, true, BOT_MODE_NONE);
+
+    for _, aaa in ipairs(gnhHandles) do
+        if not utils.InTable(gulHandles, aaa) then
+            print("GNH Info");
+            print("-----------------------------");
+            for _, enemy_handle_gnh in pairs(gnhHandles) do
+                local gt = GameTime();
+                local eh = tostring(enemy_handle_gnh);
+                local en = enemy_handle_gnh:GetUnitName();
+                print(gt .. ": " .. en .. " " .. eh);
+            end
+
+            print("");
+
+            print("GUL Info");
+            print("-----------------------------");
+            for _, enemy_handle_gul in pairs(gulHandles) do
+                local gt = GameTime();
+                local eh = tostring(enemy_handle_gul);
+                local en = enemy_handle_gul:GetUnitName();
+                print(gt .. ": " .. en .. " " .. eh);
+            end
+        end
+    end
+    --]]
+    
     -- check if jungle respawn timer was hit to repopulate our table
     jungle_status.checkSpawnTimer()
     buildings_status.Update()
@@ -305,6 +335,7 @@ function X:Think(bot)
     end
     local safe = self:Determine_ShouldIRetreat(bot)
     if safe ~= nil then
+        utils.TreadCycle(bot, constants.STRENGTH)
         self:setHeroVar("RetreatReason", safe)
         local bRet = self:DoRetreat(bot, safe)
         if bRet then return end
@@ -566,7 +597,7 @@ function X:Determine_ShouldIRetreat(bot)
     return nil
 end
 
-function X:Determine_ShouldIFighting(bot)
+function X:Determine_ShouldIFighting2(bot)
     global_game_state.GlobalFightDetermination()
     if self:getHeroVar("Target").Id > 0 then
         return true
@@ -574,7 +605,7 @@ function X:Determine_ShouldIFighting(bot)
     return false
 end
 
-function X:Determine_ShouldIFighting2(bot)
+function X:Determine_ShouldIFighting(bot)
     -- try to find a taret
     local eyeRange = 1200
     local weakestHero, score = fighting.FindTarget(eyeRange)
@@ -590,7 +621,7 @@ function X:Determine_ShouldIFighting2(bot)
         end
     end
     
-    if myTarget and myTarget.Id > 0 and not IsHeroAlive( myTarget.Id ) then
+    if myTarget.Id > 0 and not IsHeroAlive( myTarget.Id ) then
         utils.AllChat("You dead buddy!")
         self:RemoveAction(ACTION_FIGHT)
         self:setHeroVar("Target", {Obj=nil, Id=0})
@@ -599,7 +630,7 @@ function X:Determine_ShouldIFighting2(bot)
         myTarget.Id = 0
     end
     
-    if myTarget and myTarget.Obj then
+    if U.ValidTarget(myTarget) then
         local Allies = GetUnitList(UNIT_LIST_ALLIED_HEROES)
         local nFriend = 0
         for _, friend in pairs(Allies) do
@@ -627,7 +658,7 @@ function X:Determine_ShouldIFighting2(bot)
     
     -- if I have a target, set by me or by team fighting function
     if myTarget.Id > 0 and IsHeroAlive(myTarget.Id) then
-        if GetHeroLastSeenInfo(myTarget.Id).time > 5.0 then
+        if GetHeroLastSeenInfo(myTarget.Id).time > 3.0 then
             utils.myPrint(" - Stopping my fight... lost sight of hero")
             self:RemoveAction(ACTION_FIGHT)
             self:setHeroVar("Target", {Obj=nil, Id=0})
@@ -643,31 +674,11 @@ function X:Determine_ShouldIFighting2(bot)
                 end
             end
             
-            local lastLoc = GetHeroLastSeenInfo(myTarget.Id).location
-            if utils.GetOtherTeam() == TEAM_DIRE then
-                local prob1 = GetUnitPotentialValue(myTarget.Obj, Vector(lastLoc[1] + 500, lastLoc[2]), 1000)
-                local prob2 = GetUnitPotentialValue(myTarget.Obj, Vector(lastLoc[1], lastLoc[2] + 500), 1000)
-                if prob1 > 180 and prob1 > prob2 then
-                    item_usage.UseMovementItems()
-                    bot:Action_MoveToLocation(Vector(lastLoc[1] + 500, lastLoc[2]))
-                    return true
-                elseif prob2 > 180 then
-                    item_usage.UseMovementItems()
-                    bot:Action_MoveToLocation(Vector(lastLoc[1], lastLoc[2] + 500))
-                    return true
-                end
-            else
-                local prob1 = GetUnitPotentialValue(myTarget.Obj, Vector(lastLoc[1] - 500, lastLoc[2]), 1000)
-                local prob2 = GetUnitPotentialValue(myTarget.Obj, Vector(lastLoc[1], lastLoc[2] - 500), 1000)
-                if prob1 > 180 and prob1 > prob2 then
-                    item_usage.UseMovementItems()
-                    bot:Action_MoveToLocation(Vector(lastLoc[1] - 500, lastLoc[2]))
-                    return true
-                elseif prob2 > 180 then
-                    item_usage.UseMovementItems()
-                    bot:Action_MoveToLocation(Vector(lastLoc[1], lastLoc[2] - 500))
-                    return true
-                end
+            local pLoc = U.PredictedLocation(bot, myTarget.Id)
+            if pLoc ~= nil then
+                item_usage.UseMovementItems()
+                bot:Action_MoveToLocation(pLoc)
+                return true
             end
         end
     end
@@ -1158,24 +1169,29 @@ function X:DoDefendLane(bot, lane, building, numEnemies)
 end
 
 function X:DoGank(bot)
-    if ( self:HasAction(ACTION_GANKING) == false ) then
-        utils.myPrint(" STARTING TO GANK ")
-        self:AddAction(ACTION_GANKING)
-    end
-
     local gankTarget = self:getHeroVar("GankTarget")
-    local bStillGanking = true
-    if gankTarget.Id > 0 then
+    if gankTarget.Id > 0 and IsHeroAlive(gankTarget.Id) then
+        if ( self:HasAction(ACTION_GANKING) == false ) then
+            utils.myPrint(" STARTING TO GANK ")
+            self:AddAction(ACTION_GANKING)
+        end
+        
+        local bStillGanking = true
         local bTimeToKill = ganking_generic.ApproachTarget(bot, gankTarget)
         if bTimeToKill then
             bStillGanking = ganking_generic.KillTarget(bot, gankTarget)
         end
+        
+        if not bStillGanking then
+            utils.myPrint("clearing gank")
+            self:RemoveAction(ACTION_GANKING)
+            self:setHeroVar("GankTarget", {Obj=nil, Id=0})
+            self:setHeroVar("Target", {Obj=nil, Id=0})
+        end
     else
-        bStillGanking = false
-    end
-
-    if not bStillGanking then
-        utils.myPrint("clearing gank")
+        if utils.ValidTarget(gankTarget) then
+            utils.myPrint("clearing gank - target [Id:"..gankTarget.Id.."] Health: ", gankTarget.Obj:GetHealth(), ", Alive: ", IsHeroAlive(gankTarget.Id))
+        end
         self:RemoveAction(ACTION_GANKING)
         self:setHeroVar("GankTarget", {Obj=nil, Id=0})
         self:setHeroVar("Target", {Obj=nil, Id=0})

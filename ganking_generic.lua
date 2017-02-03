@@ -132,51 +132,34 @@ function ApproachTarget(bot, target)
             if GetUnitToUnitDistance(bot, target.Obj) < 1000 then
                 return true
             else
+                --[[ FIXME: need to teach bots not to use abilities from afar when invis
                 if GetUnitToUnitDistance(bot, target.Obj) < 1400 then
                     if bot:GetMana() > 300 then
                         item_usage.UseSilverEdge()
                         item_usage.UseShadowBlade()
                     end
                 end
+                --]]
                 bot:Action_MoveToUnit(target.Obj) -- Let's go there
                 return false
             end
         else
-            if GetHeroLastSeenInfo(target.Id).time > 5.0 then
+            if GetHeroLastSeenInfo(target.Id).time > 3.0 then
+                utils.myPrint("Lost Sight of GankTarget["..targetId.."] for over 3.0 seconds - abandoning")
                 me:RemoveAction(constants.ACTION_GANKING)
                 setHeroVar("GankTarget", {Obj=nil, Id=0})
                 return false
             else
-                local lastLoc = GetHeroLastSeenInfo(target.Id).location
-                if utils.GetOtherTeam() == TEAM_DIRE then
-                    local prob1 = GetUnitPotentialValue(target.Id, Vector(lastLoc[1] + 500, lastLoc[2]), 1000)
-                    local prob2 = GetUnitPotentialValue(target.Id, Vector(lastLoc[1], lastLoc[2] + 500), 1000)
-                    if prob1 > 180 and prob1 > prob2 then
-                        item_usage.UseMovementItems()
-                        bot:Action_MoveToLocation(Vector(lastLoc[1] + 500, lastLoc[2]))
-                        return false
-                    elseif prob2 > 180 then
-                        item_usage.UseMovementItems()
-                        bot:Action_MoveToLocation(Vector(lastLoc[1], lastLoc[2] + 500))
-                        return false
-                    end
-                else
-                    local prob1 = GetUnitPotentialValue(target.Id, Vector(lastLoc[1] - 500, lastLoc[2]), 1000)
-                    local prob2 = GetUnitPotentialValue(target.Id, Vector(lastLoc[1], lastLoc[2] - 500), 1000)
-                    if prob1 > 180 and prob1 > prob2 then
-                        item_usage.UseMovementItems()
-                        bot:Action_MoveToLocation(Vector(lastLoc[1] - 500, lastLoc[2]))
-                        return false
-                    elseif prob2 > 180 then
-                        item_usage.UseMovementItems()
-                        bot:Action_MoveToLocation(Vector(lastLoc[1], lastLoc[2] - 500))
-                        return false
-                    end
+                local pLoc = U.PredictedLocation(bot, target.Id)
+                if pLoc ~= nil then
+                    item_usage.UseMovementItems()
+                    bot:Action_MoveToLocation(pLoc)
+                    return true
                 end
             end
         end
     else
-        utils.myPrint("GankTarget is dead!!!")
+        utils.myPrint("GankTarget[ID: "..target.Id.."] is dead!!!")
         me:RemoveAction(constants.ACTION_GANKING)
         setHeroVar("GankTarget", {Obj=nil, Id=0})
         return false

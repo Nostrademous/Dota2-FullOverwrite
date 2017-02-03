@@ -123,7 +123,7 @@ function FindTarget(dist)
 					if distance < 1200 then
                         local dmgTime = badfightLength - distance/enemy2.MoveSpeed
 						badHealthPool = badHealthPool + enemy2.Health
-                        if enemy2.Obj ~= nil then
+                        if utils.ValidTarget(enemy2) then
                             badDmg = badDmg + enemy2.Obj:GetEstimatedDamageToTarget(true, npcBot, dmgTime, DAMAGE_TYPE_ALL)
                         end
 					end

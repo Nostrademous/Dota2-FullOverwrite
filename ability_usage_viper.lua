@@ -6,6 +6,8 @@
 _G._savedEnv = getfenv()
 module( "ability_usage_viper", package.seeall )
 
+require( GetScriptDirectory().."/constants" )
+
 local utils = require( GetScriptDirectory().."/utility" )
 local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
 
@@ -26,6 +28,9 @@ local Abilities ={
     "viper_viper_strike"
 }
 
+local DoTdpsQ = 0
+local DoTdpsUlt = 0
+
 function AbilityUsageThink()
     if ( GetGameState() ~= GAME_STATE_GAME_IN_PROGRESS and GetGameState() ~= GAME_STATE_PRE_GAME ) then return false end
 
@@ -33,13 +38,14 @@ function AbilityUsageThink()
     if not bot:IsAlive() then return false end
 
     -- Check if we're already using an ability
-    if ( bot:IsUsingAbility() or bot:IsChanneling() ) then return false end
+    if bot:IsUsingAbility() or bot:IsChanneling() then return false end
 
     local target = getHeroVar("Target")
     if not utils.ValidTarget(target) then
         target, _ = utils.GetWeakestHero(bot, bot:GetAttackRange()+200)
         if target ~= nil then
-            if CalcDmg(bot, target)*6 > target:GetHealth() and HasUlt(bot) then
+            local totalDmgPerSec = (CalcRightClickDmg(bot, target) + DoTdpsUlt + DoTdpsQ)/bot:GetSecondsPerAttack()
+            if totalDmgPerSec*5.1 > target:GetHealth() and HasUlt(bot) then
                 setHeroVar("Target", {Obj=target, Id=target:GetPlayerID()})
             end
         end
@@ -54,7 +60,10 @@ function UseQ(bot)
     if (ability == nil) or (not ability:IsFullyCastable()) then
         return false
     end
-
+    
+    -- set our local var
+    DoTdpsQ = ability:GetSpecialValueInt("damage")
+    
     local target = getHeroVar("Target")
 
     -- if we don't have a valid target, return
@@ -63,6 +72,7 @@ function UseQ(bot)
     -- if target is magic immune or invulnerable, return
     if target.Obj:IsMagicImmune() or target.Obj:IsInvulnerable() then return false end
 
+    DoTdpsQ = target.Obj:GetActualDamage(DoTdpsQ, DAMAGE_TYPE_MAGICAL)
 
     if GetUnitToUnitDistance(bot, target.Obj) < (ability:GetCastRange() + 100) then
         utils.TreadCycle(bot, constants.INTELLIGENCE)
@@ -71,7 +81,7 @@ function UseQ(bot)
     end
 
     -- harassment code when in lane
-    --[[ DON'T DO THIS HERE - IT'S HANDLED in laning_generic.lua
+    --[[ DON'T DO THIS HERE - IT'S HANDLED in laning_generic.lua UseOrbEffect()
     if (bot:GetMana()/bot:GetMaxMana()) > 0.5 then
         local weakestHero, weakestHeroHealth = utils.GetWeakestHero(bot, ability:GetCastRange() + 100)
         if weakestHero ~= nil then
@@ -90,6 +100,7 @@ function HasUlt(bot)
     if ability == nil or not ability:IsFullyCastable() then
         return false
     end
+    
     return true
 end
 
@@ -105,6 +116,19 @@ function UseUlt(bot)
     if target.Obj:IsMagicImmune() or target.Obj:IsInvulnerable() then return false end
 
     local ability = bot:GetAbilityByName(Abilities[4])
+    
+    -- set our local var
+    DoTdpsUlt = ability:GetSpecialValueInt("damage")
+
+    if bot:GetLevel() >= 25 then
+        local unique2 = bot:GetAbilityByName("special_bonus_unique_viper_2")
+        if unique2 and unique2:GetLevel() >= 1 then
+            DoTdpsUlt = DoTdpsUlt + 80
+        end
+    end
+    
+    DoTdpsUlt = target.Obj:GetActualDamage(DoTdpsUlt, DAMAGE_TYPE_MAGICAL)
+    
     if GetUnitToUnitDistance(target.Obj, bot) < (ability:GetCastRange() + 100) then
         utils.TreadCycle(bot, constants.INTELLIGENCE)
         bot:Action_UseAbilityOnEntity(ability, target.Obj)
@@ -114,7 +138,7 @@ function UseUlt(bot)
     return false
 end
 
-function CalcDmg(bot, target)
+function CalcRightClickDmg(bot, target)
     local toxin = bot:GetAbilityByName(Abilities[2])
     local bonusDmg = 0
     if toxin ~= nil and toxin:GetLevel() > 0 then

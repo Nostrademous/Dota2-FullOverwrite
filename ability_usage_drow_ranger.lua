@@ -1,5 +1,5 @@
 -------------------------------------------------------------------------------
---- AUTHOR: pbenologa
+--- AUTHOR: pbenologa, Nostrademous
 --- GITHUB REPO: https://github.com/Nostrademous/Dota2-FullOverwrite
 -------------------------------------------------------------------------------
 

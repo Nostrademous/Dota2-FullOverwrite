@@ -568,7 +568,7 @@ function X:Determine_ShouldIRetreat(bot)
             if utils.NotNilOrDead(enemy) and enemy:GetHealth()/enemy:GetMaxHealth() > 0.4 then
                 local enemyManaRatio = enemy:GetMana()/enemy:GetMaxMana()
                 local pDamage = enemy:GetEstimatedDamageToTarget(true, bot, MaxStun, DAMAGE_TYPE_PHYSICAL)
-                local mDamage = bot:GetActualIncomingDamage(enemy:GetEstimatedDamageToTarget(true, bot, MaxStun, DAMAGE_TYPE_MAGICAL), DAMAGE_TYPE_MAGICAL)
+                local mDamage = enemy:GetEstimatedDamageToTarget(true, bot, MaxStun, DAMAGE_TYPE_MAGICAL)
                 if enemyManaRatio < ( 0.5 - enemy:GetLevel()/100.0) then
                     enemyDamage = enemyDamage + pDamage + 0.5*mDamage + 0.5*enemy:GetEstimatedDamageToTarget(true, bot, MaxStun, DAMAGE_TYPE_PURE)
                 else

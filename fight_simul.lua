@@ -73,7 +73,7 @@ function getLinaDmg(duration, hero, target)
     while startTime < duration do
         considerAbility(abilityQ)
         
-        totalDmg = totalDmg + target:GetActualDamage(rightClickDmg, DAMAGE_TYPE_PHYSICAL)
+        totalDmg = totalDmg + target:GetActualIncomingDamage(rightClickDmg, DAMAGE_TYPE_PHYSICAL)
         startTime = startTime + rightClickDmg
     end
     
@@ -83,7 +83,7 @@ end
 function estimateTimeToKill(hero, target)
     local rightClickDmg = hero:GetAttackDamage()
     local rightClickCastPoint = hero:GetAttackPoint()
-    local actualDmg = target:GetActualDamage(rightClickDmg, DAMAGE_TYPE_PHYSICAL)
+    local actualDmg = target:GetActualIncomingDamage(rightClickDmg, DAMAGE_TYPE_PHYSICAL)
     
     local numHits = math.ceil(target:GetHealth()/actualDmg)
     return hero:GetSecondsPerAttack()*(numHits-1) + rightClickCastPoint

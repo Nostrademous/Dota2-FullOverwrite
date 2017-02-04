@@ -89,9 +89,9 @@ function ConsiderManaVoid(abilityMV)
 	if lowestManaHero == nil then return BOT_ACTION_DESIRE_NONE, nil end
 	
 	local aoeDmg = highestManaDiff * nDmgPerMana
-	local actualDmgLowest = lowestManaHero:GetActualDamage( aoeDmg, DAMAGE_TYPE_MAGICAL )
+	local actualDmgLowest = lowestManaHero:GetActualIncomingDamage( aoeDmg, DAMAGE_TYPE_MAGICAL )
 	
-	if channelingHero ~= nil and channelingHero:GetHealth() < channelingHero:GetActualDamage( aoeDmg, DAMAGE_TYPE_MAGICAL ) 
+	if channelingHero ~= nil and channelingHero:GetHealth() < channelingHero:GetActualIncomingDamage( aoeDmg, DAMAGE_TYPE_MAGICAL ) 
 		and GetUnitToUnitDistance(channelingHero, lowestManaHero) < nRadius then
 		return BOT_ACTION_DESIRE_HIGH, lowestManaHero
 	elseif lowestManaHero:GetHealth() < actualDmgLowest then

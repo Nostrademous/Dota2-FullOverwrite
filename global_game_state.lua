@@ -40,7 +40,7 @@ function DetectEnemyPushMid()
     enemyData.UpdateEnemyInfo(1.0)
     
     local building
-    local listRemainingBuildings = GetVulnerableBuildingIDs(GetTeam())
+    local listRemainingBuildings = buildings_status.GetStandingBuildingIDs(GetTeam())
     if utils.InTable(listRemainingBuildings, TOWER_MID_1) then building = TOWER_MID_1
     elseif utils.InTable(listRemainingBuildings, TOWER_MID_2) then building = TOWER_MID_2
     elseif utils.InTable(listRemainingBuildings, TOWER_MID_3) then building = TOWER_MID_3
@@ -73,7 +73,7 @@ function DetectEnemyPushTop()
     enemyData.UpdateEnemyInfo(1.0)
     
     local building
-    local listRemainingBuildings = GetVulnerableBuildingIDs(GetTeam())
+    local listRemainingBuildings = buildings_status.GetStandingBuildingIDs(GetTeam())
     if utils.InTable(listRemainingBuildings, TOWER_TOP_1) then building = TOWER_TOP_1
     elseif utils.InTable(listRemainingBuildings, TOWER_TOP_2) then building = TOWER_TOP_2
     elseif utils.InTable(listRemainingBuildings, TOWER_TOP_3) then building = TOWER_TOP_3
@@ -106,7 +106,7 @@ function DetectEnemyPushBot()
     enemyData.UpdateEnemyInfo(1.0)
     
     local building
-    local listRemainingBuildings = GetVulnerableBuildingIDs(GetTeam())
+    local listRemainingBuildings = buildings_status.GetStandingBuildingIDs(GetTeam())
     if utils.InTable(listRemainingBuildings, TOWER_BOT_1) then building = TOWER_BOT_1
     elseif utils.InTable(listRemainingBuildings, TOWER_BOT_2) then building = TOWER_BOT_2
     elseif utils.InTable(listRemainingBuildings, TOWER_BOT_3) then building = TOWER_BOT_3

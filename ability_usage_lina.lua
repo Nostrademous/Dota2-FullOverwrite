@@ -191,7 +191,7 @@ function ConsiderDragonSlaveFighting(abilityDS, enemy)
     local d = GetUnitToUnitDistance(npcBot,enemy)
 
     if d < nCastRange and CanCastDragonSlaveOnTarget(enemy) then
-        if enemy:IsStunned() or enemy:IsRooted() then
+        if utils.IsCrowdControlled(enemy) then
             return BOT_ACTION_DESIRE_HIGH, enemy:GetLocation()
         else
             -- NOTE: cast point is 0.45, speed is 1200
@@ -231,10 +231,10 @@ function ConsiderDragonSlave(abilityDS)
 
     -- If we're pushing or defending a lane and can hit 4+ creeps, go for it
     -- wasting mana banned!
-    if npcBot.ShouldPush and ( npcBot:GetMana() / npcBot:GetMaxMana() >= 0.5 ) then
+    if getHeroVar("ShouldDefend") == true or (getHeroVar("ShouldPush") == true and ( npcBot:GetMana() / npcBot:GetMaxMana() >= 0.4 )) then
         local locationAoE = npcBot:FindAoELocation( true, false, npcBot:GetLocation(), nCastRange, nRadius, 0, 0 )
 
-        if ( locationAoE.count >= 5 )
+        if ( locationAoE.count >= 4 )
         then
             return BOT_ACTION_DESIRE_LOW, locationAoE.targetloc
         end

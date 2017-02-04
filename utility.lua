@@ -833,10 +833,11 @@ function U.EnemiesNearLocation(bot, loc, dist)
 
     local num = 0
     --FIXME: this list below only returns visible heroes, need to do this for all alive heroes
-    local Enemies = GetUnitList(UNIT_LIST_ENEMY_HEROES)
-    for _, enemy in pairs(Enemies) do
-        if U.NotNilOrDead(enemy) and U.GetDistance(GetHeroLastSeenInfo(enemy:GetPlayerID()).location, loc) <= dist
-            and GetHeroLastSeenInfo(enemy:GetPlayerID()).time < 30 then
+    local listEnemies = GetUnitList(UNIT_LIST_ENEMY_HEROES)
+    for _, enemy in pairs(listEnemies) do
+        local eID = enemy:GetPlayerID()
+        if U.ValidTarget(enemy) and IsHeroAlive(eID) and U.GetDistance(enemy:GetLocation(), loc) <= dist then
+            --and U.GetDistance(GetHeroLastSeenInfo(eID).location, loc) <= dist and GetHeroLastSeenInfo(enemy:GetPlayerID()).time < 30 then
             num = num + 1
         end
     end
@@ -1279,6 +1280,10 @@ function U.UseOrbEffect(bot, enemy)
         end
     end
     return false
+end
+
+function U.IsCrowdControlled(enemy)
+    return enemy:IsRooted() or enemy:IsHexed() or enemy:IsStunned() or enemy:IsNightmared()
 end
 
 -------------------------------------------------------------------------------

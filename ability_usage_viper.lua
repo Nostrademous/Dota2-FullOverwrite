@@ -52,6 +52,8 @@ function AbilityUsageThink()
     end
 
     if UseUlt(bot) or UseQ(bot) then return true end
+    
+    return false
 end
 
 function UseQ(bot)

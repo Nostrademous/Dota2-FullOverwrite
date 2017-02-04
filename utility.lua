@@ -1380,6 +1380,17 @@ function U.MoveItemsFromStashToInventory(bot)
     end
 end
 
+function U.GetFreeSlotInBackPack(bot)
+    local slot = 0
+    for i = 6, 8, 1 do
+        if bot:GetItemInSlot(i) == nil then
+            slot = i
+            break
+        end
+    end
+    return slot
+end
+
 function U.HaveTeleportation(npcBot)
     if U.GetHeroName(npcBot) == "furion" then
         return true

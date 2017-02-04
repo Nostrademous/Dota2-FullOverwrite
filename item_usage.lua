@@ -327,6 +327,8 @@ end
 function UseTP(lane)
     local lane = lane or getHeroVar("CurLane")
     local npcBot = GetBot()
+    local tpSwap = false
+    local backPackSlot = 0
 
     if npcBot:IsChanneling() or npcBot:IsUsingAbility() then
         return nil
@@ -348,9 +350,14 @@ function UseTP(lane)
 
     local dest = GetLocationAlongLane(lane, 0.5) -- 0.5 is basically 1/2 way down our lane
     if tp == nil and GetUnitToLocationDistance(npcBot, dest) > 3000 and
-        GetUnitToLocationDistance(npcBot, utils.Fountain(GetTeam())) < 200 and utils.NumberOfItems(npcBot) < 6 and
+        GetUnitToLocationDistance(npcBot, utils.Fountain(GetTeam())) < 200 and
         npcBot:GetGold() > 50 then
         local savedValue = npcBot:GetNextItemPurchaseValue()
+        backPackSlot = utils.GetFreeSlotInBackPack(npcBot)
+        if utils.NumberOfItems(npcBot) == 6 and backPackSlot ~= 0then 
+            npcBot:Action_SwapItems(0, backPackSlot)
+            tpSwap = true
+        end
         npcBot:Action_PurchaseItem( "item_tpscroll" )
         tp = utils.HaveItem(npcBot, "item_tpscroll")
         npcBot:SetNextItemPurchaseValue(savedValue)
@@ -361,6 +368,9 @@ function UseTP(lane)
         -- just default to closest location we can TP to in that direction
         if GetUnitToLocationDistance(npcBot, dest) > 3000 and GetUnitToLocationDistance(npcBot, utils.Fountain(GetTeam())) < 200 then
             npcBot:Action_UseAbilityOnLocation(tp, dest);
+            if tpSwap then 
+                npcBot:Action_SwapItems(0, backPackSlot)
+            end
         end
     end
 end

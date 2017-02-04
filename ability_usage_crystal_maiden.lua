@@ -42,12 +42,6 @@ function AbilityUsageThink()
     return false
 end
 
-local function CanCastMagicAbility(target)
-    -- if target is magic immune or invulnerable, return
-    if target:IsMagicImmune() or target:IsInvulnerable() then return false end
-    return true
-end
-
 function UseQ(bot)
     local ability = bot:GetAbilityByName(Abilities[1])
 
@@ -116,7 +110,7 @@ function UseW(bot)
         local bestTarget = nil
         if #NearbyEnemyHeroes > 0 then
             for _, enemy in pairs( NearbyEnemyHeroes ) do
-                if CanCastMagicAbility( enemy ) then
+                if not utils.IsTargetMagicImmune( enemy ) then
                     if enemy:GetActualIncomingDamage( nDamage, DAMAGE_TYPE_MAGICAL ) > enemy:GetHealth() then
                         bestTarget = enemy
                         break
@@ -136,7 +130,7 @@ function UseW(bot)
             return true
         end
     else
-        if not utils.IsCrowdControlled(target.Obj) then
+        if not utils.IsCrowdControlled(target.Obj) and not utils.IsTargetMagicImmune(target.Obj) then
             bot:Action_UseAbilityOnEntity( ability, bestTarget )
             return true
         end

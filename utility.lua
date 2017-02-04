@@ -1282,6 +1282,10 @@ function U.UseOrbEffect(bot, enemy)
     return false
 end
 
+function U.IsTargetMagicImmune(target)
+    return target:IsMagicImmune() or target:IsInvulnerable()
+end
+
 function U.IsCrowdControlled(enemy)
     return enemy:IsRooted() or enemy:IsHexed() or enemy:IsStunned() or enemy:IsNightmared()
 end

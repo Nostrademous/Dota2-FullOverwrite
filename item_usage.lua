@@ -354,7 +354,7 @@ function UseTP(lane)
         npcBot:GetGold() > 50 then
         local savedValue = npcBot:GetNextItemPurchaseValue()
         backPackSlot = utils.GetFreeSlotInBackPack(npcBot)
-        if utils.NumberOfItems(npcBot) == 6 and backPackSlot ~= 0then 
+        if utils.NumberOfItems(npcBot) == 6 and backPackSlot ~= 0 then 
             npcBot:Action_SwapItems(0, backPackSlot)
             tpSwap = true
         end

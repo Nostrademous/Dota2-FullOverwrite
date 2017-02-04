@@ -45,6 +45,7 @@ end
 local function CanCastMagicAbility(target)
     -- if target is magic immune or invulnerable, return
     if target:IsMagicImmune() or target:IsInvulnerable() then return false end
+    return true
 end
 
 function UseQ(bot)
@@ -116,7 +117,7 @@ function UseW(bot)
         if #NearbyEnemyHeroes > 0 then
             for _, enemy in pairs( NearbyEnemyHeroes ) do
                 if CanCastMagicAbility( enemy ) then
-                    if enemy:GetActualDamage( nDamage, DAMAGE_TYPE_MAGICAL ) > enemy:GetHealth() then
+                    if enemy:GetActualIncomingDamage( nDamage, DAMAGE_TYPE_MAGICAL ) > enemy:GetHealth() then
                         bestTarget = enemy
                         break
                     elseif enemy:IsChanneling() then
@@ -130,7 +131,7 @@ function UseW(bot)
                 end
             end
         end
-        if bestTarget and  not utils.IsCrowdControlled(bestTarget) then
+        if bestTarget and not utils.IsCrowdControlled(bestTarget) then
             bot:Action_UseAbilityOnEntity( ability, bestTarget )
             return true
         end

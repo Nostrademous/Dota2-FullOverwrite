@@ -278,7 +278,7 @@ function ConsiderLagunaBlade(abilityLB)
     if #NearbyEnemyHeroes > 0 then
         for _,npcEnemy in pairs( NearbyEnemyHeroes ) do
             if CanCastLagunaBladeOnTarget( npcEnemy ) then
-                if npcEnemy:GetActualDamage( nDamage, eDamageType ) > npcEnemy:GetHealth() then
+                if npcEnemy:GetActualIncomingDamage( nDamage, eDamageType ) > npcEnemy:GetHealth() then
                     return BOT_ACTION_DESIRE_MODERATE, npcEnemy
                 end
             end

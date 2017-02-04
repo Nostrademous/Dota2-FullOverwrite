@@ -99,7 +99,7 @@ function bloodseekerBot:DoRetreat(bot, reason)
     table.sort(neutrals, function(n1, n2) return n1:GetHealth() < n2:GetHealth() end)
 
     local estimatedDamage = bot:GetEstimatedDamageToTarget(true, neutrals[1], bot:GetSecondsPerAttack(), DAMAGE_TYPE_PHYSICAL)
-    --local actualDamage = neutrals[1]:GetActualDamage(estimatedDamage, DAMAGE_TYPE_PHYSICAL)
+    --local actualDamage = neutrals[1]:GetActualIncomingDamage(estimatedDamage, DAMAGE_TYPE_PHYSICAL)
     local bloodrageHeal = bloodragePct * neutrals[1]:GetMaxHealth()
     local healthThreshold = math.max(bot:GetMaxHealth()*0.15, 100)
 

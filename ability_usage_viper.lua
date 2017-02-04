@@ -74,7 +74,7 @@ function UseQ(bot)
     -- if target is magic immune or invulnerable, return
     if target.Obj:IsMagicImmune() or target.Obj:IsInvulnerable() then return false end
 
-    DoTdpsQ = target.Obj:GetActualDamage(DoTdpsQ, DAMAGE_TYPE_MAGICAL)
+    DoTdpsQ = target.Obj:GetActualIncomingDamage(DoTdpsQ, DAMAGE_TYPE_MAGICAL)
 
     if GetUnitToUnitDistance(bot, target.Obj) < (ability:GetCastRange() + 100) then
         utils.TreadCycle(bot, constants.INTELLIGENCE)
@@ -129,7 +129,7 @@ function UseUlt(bot)
         end
     end
     
-    DoTdpsUlt = target.Obj:GetActualDamage(DoTdpsUlt, DAMAGE_TYPE_MAGICAL)
+    DoTdpsUlt = target.Obj:GetActualIncomingDamage(DoTdpsUlt, DAMAGE_TYPE_MAGICAL)
     
     if GetUnitToUnitDistance(target.Obj, bot) < (ability:GetCastRange() + 100) then
         utils.TreadCycle(bot, constants.INTELLIGENCE)
@@ -151,7 +151,7 @@ function CalcRightClickDmg(bot, target)
     end
 
     local rightClickDmg = bot:GetAttackDamage() + bonusDmg
-    local actualDmg = target:GetActualDamage(rightClickDmg, DAMAGE_TYPE_PHYSICAL)
+    local actualDmg = target:GetActualIncomingDamage(rightClickDmg, DAMAGE_TYPE_PHYSICAL)
     return actualDmg
 end
 

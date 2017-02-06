@@ -445,6 +445,15 @@ function UseTomeOfKnowledge()
     end
 end
 
+function UseGlimmerCape(target)
+    local bot = GetBot()
+    local target = target or bot
+    local gc = utils.HaveItem(bot, "item_glimmer_cape")
+    if gc ~= nil and target ~= nil then
+        bot:Action_UseAbilityOnEntity(gc, target)
+    end
+end
+
 -- will return a handle to the ward or nil if we don't have it, checks both
 -- individual ward types and the combined ward dispenser item and switches
 -- it's state to the selection we want prior to returning

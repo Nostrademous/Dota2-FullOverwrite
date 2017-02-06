@@ -49,8 +49,8 @@ function EnemyData.UpdateEnemyInfo(timeFreq)
                 EnemyData[pid].Mana = enemy:GetMana()
                 EnemyData[pid].MaxMana = enemy:GetMaxMana()
                 EnemyData[pid].MoveSpeed = enemy:GetCurrentMovementSpeed()
-                EnemyData[pid].LocExtra1 = enemy:GetExtrapolatedLocation(0.5)
-                EnemyData[pid].LocExtra2 = enemy:GetExtrapolatedLocation(3.0)
+                EnemyData[pid].LocExtra1 = enemy:GetExtrapolatedLocation(0.5) -- 1/2 second
+                EnemyData[pid].LocExtra2 = enemy:GetExtrapolatedLocation(3.0) -- 3 second
                 EnemyData[pid].Location = utils.deepcopy(enemy:GetLocation())
                 for i = 0, 5, 1 do
                     local item = enemy:GetItemInSlot(i)

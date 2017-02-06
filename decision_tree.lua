@@ -285,6 +285,16 @@ function X:Think(bot)
         if bRet then return end
     end
     
+    --ACTIONS QUEUED?
+    if bot:HasQueuedAction() then
+        local target = self:getHeroVar("Target")
+        if target.Id > 0 and not IsHeroAlive( target.Id ) then
+            bot:SetActionQueueing(false)
+        else
+            return
+        end
+    end
+    
     -- FIXME - right place?
     local bRet = self:ConsiderItemUse()
     if bRet then return end

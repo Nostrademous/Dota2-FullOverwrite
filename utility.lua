@@ -846,7 +846,7 @@ function U.EnemiesNearLocation(bot, loc, dist)
 end
 
 function U.PredictedLocation(bot, targetID)
-    if targetID == 0 or (targetID > 0 and not HeroIsAlive(targetID)) then return nil end
+    if targetID == 0 or (targetID > 0 and not IsHeroAlive(targetID)) then return nil end
 
     --[[ FIXME: Re-enable code once GetUnitPotentialValue() is fixed to work on ID
     local lastLoc = GetHeroLastSeenInfo(targetID).location

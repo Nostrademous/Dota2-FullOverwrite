@@ -84,7 +84,7 @@ function X:PrintActionTransition(name)
 
     if ( self:getCurrentAction() ~= self:getPrevAction() ) then
         local target = self:getHeroVar("Target")
-        if target.Obj then
+        if utils.ValidTarget(target) then
             utils.myPrint("Action Transition: "..self:getPrevAction().." --> "..self:getCurrentAction(), " :: Target: ", utils.GetHeroName(target.Obj))
         elseif target.Id > 0 then
             utils.myPrint("Action Transition: "..self:getPrevAction().." --> "..self:getCurrentAction(), " :: TargetID: ", target.Id)
@@ -607,7 +607,7 @@ function X:Determine_ShouldIRetreat(bot)
     return nil
 end
 
-function X:Determine_ShouldIFighting2(bot)
+function X:Determine_ShouldIFighting(bot)
     global_game_state.GlobalFightDetermination()
     if self:getHeroVar("Target").Id > 0 then
         return true
@@ -615,7 +615,7 @@ function X:Determine_ShouldIFighting2(bot)
     return false
 end
 
-function X:Determine_ShouldIFighting(bot)
+function X:Determine_ShouldIFighting2(bot)
     -- try to find a taret
     local eyeRange = 1200
     local weakestHero, score = fighting.FindTarget(eyeRange)
@@ -668,7 +668,10 @@ function X:Determine_ShouldIFighting(bot)
     
     -- if I have a target, set by me or by team fighting function
     if myTarget.Id > 0 and IsHeroAlive(myTarget.Id) then
-        if GetHeroLastSeenInfo(myTarget.Id).time > 3.0 then
+        if utils.ValidTarget(myTarget) then
+            bot:Action_AttackUnit(myTarget.Obj, true)
+            return true
+        elseif GetHeroLastSeenInfo(myTarget.Id).time > 3.0 then
             utils.myPrint(" - Stopping my fight... lost sight of hero")
             self:RemoveAction(ACTION_FIGHT)
             self:setHeroVar("Target", {Obj=nil, Id=0})

@@ -26,6 +26,31 @@ local Abilities =   {
     "lina_laguna_blade"
 }
 
+local function comboDamage( bot, enemy, abilityLB, abilityLSA, abilityDS )
+    if abilityLB:GetLevel() == 0 then return 0, 0 end
+    
+    local mana = bot:GetMana()
+    
+    local manaCostPartCombo = abilityLB:GetManaCost() + abilityDS:GetManaCost()
+    if (mana < manaCostPartCombo) or (not abilityLB:IsFullyCastable()) or (not abilityDS:IsFullyCastable()) then return 0, 0 end
+    
+    local actualDmgPartCombo = 0
+    if bot:HasScepter() then
+        actualDmgPartCombo = abilityLB:GetAbilityDamage() + enemy:GetActualIncomingDamage(abilityDS:GetAbilityDamage(), DAMAGE_TYPE_MAGICAL)
+    else
+        actualDmgPartCombo = enemy:GetActualIncomingDamage(abilityLB:GetAbilityDamage() + abilityDS:GetAbilityDamage(), DAMAGE_TYPE_MAGICAL)
+    end
+    
+    local manaCostFullCombo = manaCostPartCombo + abilityLSA:GetManaCost()
+    if mana < manaCostFullCombo or not abilityLSA:IsFullyCastable() then return actualDmgPartCombo, 2 end
+    if bot:HasScepter() then
+        actualDmgFullCombo = abilityLB:GetAbilityDamage() + enemy:GetActualIncomingDamage(abilityDS:GetAbilityDamage() + abilityLSA:GetAbilityDamage(), DAMAGE_TYPE_MAGICAL)
+    else
+        actualDmgFullCombo = enemy:GetActualIncomingDamage(abilityLB:GetAbilityDamage() + abilityDS:GetAbilityDamage() + abilityLSA:GetAbilityDamage(), DAMAGE_TYPE_MAGICAL)
+    end
+    return actualDmgFullCombo, 3
+end
+
 function AbilityUsageThink()
     if ( GetGameState() ~= GAME_STATE_GAME_IN_PROGRESS and GetGameState() ~= GAME_STATE_PRE_GAME ) then return false end
 
@@ -44,10 +69,46 @@ function AbilityUsageThink()
 
     if ( #EnemyHeroes == 0 and #EnemyCreeps == 0 ) then return false end
 
+    if #EnemyHeroes == 1 then
+        local enemy = EnemyHeroes[1]
+        local dmg, spells = comboDamage( npcBot, enemy, abilityLB, abilityLSA, abilityDS )
+        utils.myPrint("Dmg: ", dmg, ", Spells: ", spells)
+        if dmg > enemy:GetHealth() and not utils.IsTargetMagicImmune( enemy ) then
+            setHeroVar("Target", {Obj=enemy, Id=enemy:GetPlayerID()})
+            utils.AllChat("Killing "..utils.GetHeroName(enemy).." softly with my song")
+            npcBot:SetActionQueueing(true)
+            if spells == 2 then
+                local nCastRange = abilityDS:GetCastRange()
+                local dist = GetUnitToUnitDistance(npcBot, enemy)
+
+                if dist < nCastRange then
+                    -- NOTE: cast point is 0.45, speed is 1200
+                    local loc = enemy:GetExtrapolatedLocation(0.45 + dist/1200)
+                    npcBot:Action_UseAbilityOnLocation( abilityDS, loc )
+                    npcBot:Action_UseAbilityOnEntity( abilityLB, enemy )
+                    npcBot:Action_AttackUnit( enemy, false )
+                end
+            elseif spells == 3 then
+                local nRadius = abilityLSA:GetSpecialValueInt( "light_strike_array_aoe" )
+                local nCastRange = abilityLSA:GetCastRange()
+                local dist = GetUnitToUnitDistance(npcBot, enemy)
+
+                if dist < (nCastRange + nRadius) then
+                    npcBot:Action_UseAbilityOnLocation( abilityLSA, enemy:GetExtrapolatedLocation(0.95) )
+                    npcBot:Action_UseAbilityOnLocation( abilityDS, enemy:GetLocation() )
+                    npcBot:Action_UseAbilityOnEntity( abilityLB, enemy )
+                    npcBot:Action_AttackUnit( enemy, false )
+                end
+            end
+            return true
+        end
+    end
+    
     -- Consider using each ability
     castLBDesire, castLBTarget = ConsiderLagunaBlade(abilityLB)
 
     local target = getHeroVar("Target")
+    
     if utils.ValidTarget(target) then
         castLSADesire, castLSALocation = ConsiderLightStrikeArrayFighting(abilityLSA, target.Obj)
     else
@@ -83,16 +144,8 @@ end
 
 ----------------------------------------------------------------------------------------------------
 
-function CanCastLightStrikeArrayOnTarget( npcTarget )
-    return npcTarget:CanBeSeen() and not npcTarget:IsMagicImmune() and not npcTarget:IsInvulnerable();
-end
-
-function CanCastDragonSlaveOnTarget( npcTarget )
-    return npcTarget:CanBeSeen() and not npcTarget:IsMagicImmune() and not npcTarget:IsInvulnerable();
-end
-
-function CanCastLagunaBladeOnTarget( npcTarget )
-    return npcTarget:CanBeSeen() and npcTarget:IsHero() and ( GetBot():HasScepter() or not npcTarget:IsMagicImmune() ) and not npcTarget:IsInvulnerable();
+local function CanCastLagunaBladeOnTarget( npcTarget )
+    return npcTarget:IsHero() and ( GetBot():HasScepter() or not npcTarget:IsMagicImmune() ) and not npcTarget:IsInvulnerable()
 end
 
 ----------------------------------------------------------------------------------------------------
@@ -117,7 +170,7 @@ function ConsiderLightStrikeArrayFighting(abilityLSA, enemy)
 
     local d = GetUnitToLocationDistance(npcBot, EnemyLocation)
 
-    if d < (nCastRange + nRadius) and CanCastLightStrikeArrayOnTarget( enemy ) then
+    if d < (nCastRange + nRadius) and not utils.IsTargetMagicImmune( enemy ) then
         return BOT_ACTION_DESIRE_HIGH, EnemyLocation
     end
     return BOT_ACTION_DESIRE_NONE, 0
@@ -187,16 +240,14 @@ function ConsiderDragonSlaveFighting(abilityDS, enemy)
     end;
 
     local nCastRange = abilityDS:GetCastRange()
+    local d = GetUnitToUnitDistance(npcBot, enemy)
 
-    local d = GetUnitToUnitDistance(npcBot,enemy)
-
-    if d < nCastRange and CanCastDragonSlaveOnTarget(enemy) then
+    if d < nCastRange and not utils.IsTargetMagicImmune( enemy ) then
         if utils.IsCrowdControlled(enemy) then
             return BOT_ACTION_DESIRE_HIGH, enemy:GetLocation()
         else
             -- NOTE: cast point is 0.45, speed is 1200
-            local dist = GetUnitToUnitDistance(npcBot, enemy)
-            local locDelta = enemy:GetExtrapolatedLocation(0.45 + dist/1200)
+            local locDelta = enemy:GetExtrapolatedLocation(0.45 + d/1200)
             return BOT_ACTION_DESIRE_HIGH, locDelta
         end
     end
@@ -277,43 +328,13 @@ function ConsiderLagunaBlade(abilityLB)
     local NearbyEnemyHeroes = npcBot:GetNearbyHeroes( nCastRange + 200, true, BOT_MODE_NONE )
     if #NearbyEnemyHeroes > 0 then
         for _,npcEnemy in pairs( NearbyEnemyHeroes ) do
-            if CanCastLagunaBladeOnTarget( npcEnemy ) then
+            if CanCastLagunaBladeOnTarget(npcEnemy) then
                 if npcEnemy:GetActualIncomingDamage( nDamage, eDamageType ) > npcEnemy:GetHealth() then
                     return BOT_ACTION_DESIRE_MODERATE, npcEnemy
                 end
             end
         end
     end
-
-    --[[
-    -- If we're in a teamfight, use it on the scariest enemy
-    local tableNearbyAttackingAlliedHeroes = npcBot:GetNearbyHeroes( 1000, false, BOT_MODE_ATTACK );
-    if ( #tableNearbyAttackingAlliedHeroes >= 2 )
-    then
-
-        local npcMostDangerousEnemy = nil;
-        local nMostDangerousDamage = 0;
-
-        local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nCastRange, true, BOT_MODE_NONE );
-        for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
-        do
-            if ( CanCastLagunaBladeOnTarget( npcEnemy ) )
-            then
-                local nDamage = npcEnemy:GetEstimatedDamageToTarget( false, npcBot, 3.0, DAMAGE_TYPE_ALL );
-                if ( nDamage > nMostDangerousDamage )
-                then
-                    nMostDangerousDamage = nDamage;
-                    npcMostDangerousEnemy = npcEnemy;
-                end
-            end
-        end
-
-        if ( npcMostDangerousEnemy ~= nil )
-        then
-            return BOT_ACTION_DESIRE_HIGH, npcMostDangerousEnemy;
-        end
-    end
-    ]]
 
     return BOT_ACTION_DESIRE_NONE, 0
 

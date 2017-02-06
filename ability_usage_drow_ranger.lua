@@ -70,7 +70,7 @@ local function UseW(bot)
         local enemyHasStun = Enemies[1]:GetStunDuration(true) > 0
         if not utils.IsTargetMagicImmune(Enemies[1]) or not utils.IsCrowdControlled(Enemies[1]) 
         or (not Enemies[1]:IsSilenced()) or Enemies[1]:IsChanneling() 
-        and (GetUnitToUnitDistance(bot, Enemies[1]) < 450 or (enemyHasStun and Enemies[1]:IsUsingAbility()) then 
+        and (GetUnitToUnitDistance(bot, Enemies[1]) < 450 or (enemyHasStun and Enemies[1]:IsUsingAbility())) then 
             utils.TreadCycle(bot, constants.INTELLIGENCE)
             bot:Action_UseAbilityOnLocation(gust, Enemies[1]:GetExtrapolatedLocation(delay))
             return true

@@ -7,6 +7,7 @@ _G._savedEnv = getfenv()
 module( "ability_usage_crystal_maiden", package.seeall )
 
 require( GetScriptDirectory().."/constants" )
+require( GetScriptDirectory().."/item_usage" )
 
 local utils = require( GetScriptDirectory().."/utility" )
 local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
@@ -147,6 +148,8 @@ function UseUlt(bot)
     end
     
     --FIXME: Implement
+    
+    --item_usage.UseGlimmerCape(bot)
     
     return false
 end

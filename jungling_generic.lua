@@ -108,7 +108,16 @@ local function MoveToCamp(bot)
         bot:Action_MoveToLocation(getHeroVar("currentCamp")[constants.VECTOR])
         return
     end
-    local neutrals = bot:GetNearbyCreeps(EyeRange, true)
+    local neutrals = bot:GetNearbyNeutralCreeps(EyeRange)
+    --[[
+    local allNeutrals = GetUnitList(UNIT_LIST_NEUTRAL_CREEPS)
+    for _, n in ipairs(allNeutrals) do
+        if GetUnitToUnitDistance(bot, n) < EyeRange then
+            table.insert(neutrals, n)
+        end
+    end
+    --]]
+    
     if #neutrals == 0 then -- no creeps here
         local jungle = jungle_status.GetJungle(GetTeam()) or {}
         jungle = FindCampsByMaxDifficulty(jungle, getHeroVar("Self"):GetMaxClearableCampLevel(bot))
@@ -158,7 +167,16 @@ local function CleanCamp(bot)
         setHeroVar("waituntil", utils.NextNeutralSpawn())
         return
     end
-    local neutrals = bot:GetNearbyCreeps(EyeRange,true)
+    local neutrals = bot:GetNearbyNeutralCreeps(EyeRange)
+    --[[
+    local allNeutrals = GetUnitList(UNIT_LIST_NEUTRAL_CREEPS)
+    for _, n in ipairs(allNeutrals) do
+        if GetUnitToUnitDistance(bot, n) < EyeRange then
+            table.insert(neutrals, n)
+        end
+    end
+    --]]
+    
     if #neutrals == 0 then -- we did it
         local camp, _ = utils.NearestNeutralCamp(bot, jungle_status.GetJungle(GetTeam())) -- we might not have killed the `currentCamp`
         -- we could have been killing lane creeps, don't mistaken for neutral

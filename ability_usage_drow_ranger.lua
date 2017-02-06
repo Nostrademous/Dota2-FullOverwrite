@@ -40,8 +40,8 @@ local function UseQ(bot)
     -- if we don't have a valid target, return
     if not utils.ValidTarget(target) then return false end
 
-    -- if target is magic immune or invulnerable, return
-    if target.Obj:IsMagicImmune() or target.Obj:IsInvulnerable() then return false end
+    -- if target is magic immune or invulnerable and is crowd controlled, return
+    if utils.IsTargetMagicImmune(target.Obj) and utils.IsCrowdControlled(target.Obj) then return false end
 
     if GetUnitToUnitDistance(bot, target.Obj) < (ability:GetCastRange() + 100) then
         utils.TreadCycle(bot, constants.INTELLIGENCE)
@@ -68,8 +68,9 @@ local function UseW(bot)
 
     if #Enemies == 1 then
         local enemyHasStun = Enemies[1]:GetStunDuration(true) > 0
-        if (not Enemies[1]:IsSilenced()) or (not Enemies[1]:IsRooted()) or (not Enemies[1]:IsStunned()) and (not Enemies[1]:IsMagicImmune())
-        or Enemies[1]:IsChanneling() and (GetUnitToUnitDistance(bot, Enemies[1]) < 350 or enemyHasStun) then
+        if not utils.IsTargetMagicImmune(Enemies[1]) or not utils.IsCrowdControlled(Enemies[1]) or (not Enemies[1]:IsSilenced())
+        or Enemies[1]:IsChanneling() and (GetUnitToUnitDistance(bot, Enemies[1]) < 450 or (enemyHasStun and GetUnitToUnitDistance(bot, Enemies[1]) < 500)) then 
+        -- It may seem redundant to have a double distance check but this is to prevent the bot from spamming gust and depleting all its mana, now it only cast gust if the enemy is below 500 range(This is intended for enemies with no disable but has escape or nuke) or if it has stun/disable and is below 500 range. I made two almost identical condition for two different scenario.
             utils.TreadCycle(bot, constants.INTELLIGENCE)
             bot:Action_UseAbilityOnLocation(gust, Enemies[1]:GetExtrapolatedLocation(delay))
             return true
@@ -89,13 +90,11 @@ local function UseW(bot)
         --Use Gust as a Defensive skill to fend off chasing enemies
         if getHeroVar("IsRetreating") and (bot:GetHealth()/bot:GetMaxHealth()) < 0.5 then
             for _, enemy in pairs( Enemies ) do
-                if utils.IsHeroAttackingMe(enemy, 2.0) then
-                    if gust:GetCastRange() > GetUnitToUnitDistance(bot, enemy) and (not enemy:IsMagicImmune()) then
-                        local gustDelay = gust:GetCastPoint() + GetUnitToUnitDistance(bot, enemy)/wave_speed
-                        utils.TreadCycle(bot, constants.INTELLIGENCE)
-                        bot:Action_UseAbilityOnLocation(gust, enemy:GetExtrapolatedLocation(gustDelay))
-                        return true
-                    end
+                if gust:GetCastRange() > GetUnitToUnitDistance(bot, enemy) and (not enemy:IsMagicImmune()) then
+                    local gustDelay = gust:GetCastPoint() + GetUnitToUnitDistance(bot, enemy)/wave_speed
+                    utils.TreadCycle(bot, constants.INTELLIGENCE)
+                    bot:Action_UseAbilityOnLocation(gust, enemy:GetExtrapolatedLocation(gustDelay))
+                    return true
                 end
             end
         end

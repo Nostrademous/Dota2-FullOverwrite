@@ -185,7 +185,7 @@ function drowRangerBot:HarassLaneEnemies(bot)
     local frostArrow = bot:GetAbilityByName(SKILL_Q)
     if(frostArrow ~= nil) and (frostArrow:IsFullyCastable()) then
         if GetUnitToUnitDistance(bot, target) < frostArrow:GetCastRange() and self:GetAction() ~= constants.ACTION_RETREAT then
-            if (not target:IsRooted()) or (not target:IsStunned()) and (not target:IsMagicImmune())
+            if not utils.IsTargetMagicImmune(target) or not utils.IsCrowdControlled(target)
                 and bot:GetMana() < math.max(bot:GetMaxMana()*0.40, 180) then
                 bot:Action_UseAbilityOnEntity(frostArrow, target)
             end

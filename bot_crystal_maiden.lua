@@ -6,7 +6,6 @@
 require( GetScriptDirectory().."/constants" )
 require( GetScriptDirectory().."/item_purchase_crystal_maiden" )
 require( GetScriptDirectory().."/ability_usage_crystal_maiden" )
-require( GetScriptDirectory().."/constants" )
 
 local utils = require( GetScriptDirectory().."/utility" )
 local dt = require( GetScriptDirectory().."/decision_tree" )

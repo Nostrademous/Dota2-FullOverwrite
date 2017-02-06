@@ -68,9 +68,9 @@ local function UseW(bot)
 
     if #Enemies == 1 then
         local enemyHasStun = Enemies[1]:GetStunDuration(true) > 0
-        if not utils.IsTargetMagicImmune(Enemies[1]) or not utils.IsCrowdControlled(Enemies[1]) or (not Enemies[1]:IsSilenced())
-        or Enemies[1]:IsChanneling() and (GetUnitToUnitDistance(bot, Enemies[1]) < 450 or (enemyHasStun and GetUnitToUnitDistance(bot, Enemies[1]) < 500)) then 
-        -- It may seem redundant to have a double distance check but this is to prevent the bot from spamming gust and depleting all its mana, now it only cast gust if the enemy is below 500 range(This is intended for enemies with no disable but has escape or nuke) or if it has stun/disable and is below 500 range. I made two almost identical condition for two different scenario.
+        if not utils.IsTargetMagicImmune(Enemies[1]) or not utils.IsCrowdControlled(Enemies[1]) 
+        or (not Enemies[1]:IsSilenced()) or Enemies[1]:IsChanneling() 
+        and (GetUnitToUnitDistance(bot, Enemies[1]) < 450 or (enemyHasStun and Enemies[1]:IsUsingAbility()) then 
             utils.TreadCycle(bot, constants.INTELLIGENCE)
             bot:Action_UseAbilityOnLocation(gust, Enemies[1]:GetExtrapolatedLocation(delay))
             return true

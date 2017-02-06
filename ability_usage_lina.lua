@@ -69,10 +69,9 @@ function AbilityUsageThink()
 
     if ( #EnemyHeroes == 0 and #EnemyCreeps == 0 ) then return false end
 
-    if #EnemyHeroes == 1 then
+    if #EnemyHeroes == 1 and EnemyHeroes[1]:GetHealth() > 0 then
         local enemy = EnemyHeroes[1]
         local dmg, spells = comboDamage( npcBot, enemy, abilityLB, abilityLSA, abilityDS )
-        utils.myPrint("Dmg: ", dmg, ", Spells: ", spells)
         if dmg > enemy:GetHealth() and not utils.IsTargetMagicImmune( enemy ) then
             setHeroVar("Target", {Obj=enemy, Id=enemy:GetPlayerID()})
             utils.AllChat("Killing "..utils.GetHeroName(enemy).." softly with my song")
@@ -268,10 +267,6 @@ function ConsiderDragonSlave(abilityDS)
     local nCastRange = abilityDS:GetCastRange()
     local nDamage = abilityDS:GetAbilityDamage()
     --print("dragon_slave damage:" .. nDamage)
-
-    --------------------------------------
-    -- Mode based usage
-    --------------------------------------
 
     -- If we're farming and can kill 2+ creeps with LSA when we have plenty mana
     local locationAoE = npcBot:FindAoELocation( true, false, npcBot:GetLocation(), nCastRange, nRadius, 0, nDamage )

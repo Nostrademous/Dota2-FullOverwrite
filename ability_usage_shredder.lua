@@ -214,32 +214,22 @@ local function RetUlt()
 	end
 end
 
-function AbilityUsageThink()
+function AbilityUsageThink(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCreep, nearbyAlliedCreep, nearbyEnemyTowers, nearbyAlliedTowers)
 	if ( GetGameState() ~= GAME_STATE_GAME_IN_PROGRESS and GetGameState() ~= GAME_STATE_PRE_GAME ) then return end
 	
-	local npcBot = GetBot()
-	if not npcBot:IsAlive() then return end
-	
-	RetUlt()
-	
-	if npcBot:IsChanneling() then
-		return
-	end
+	local bot = GetBot()
+    if not bot:IsAlive() then return false end
+
+    RetUlt()
+    
+    -- Check if we're already using an ability
+    if bot:IsUsingAbility() or bot:IsChanneling() then return false end
 	
 	UseQ()
 	
-	local Enemies = npcBot:GetNearbyHeroes(1400, true, BOT_MODE_NONE)
-	local nEn = 0
-	if Enemies ~= nil then
-		nEn = #Enemies
-	end
-	
-	local Allies = npcBot:GetNearbyHeroes(1000, false, BOT_MODE_NONE)
-	local nAl = 0
-	if Allies ~= nil then
-		nAl = nAl + #Allies
-	end
-	
+	local nEn = #nearbyEnemyHeroes
+	local nAl = #nearbyAlliedHeroes
+
 	local EnemyCreeps = npcBot:GetNearbyCreeps(1000, false)
 	
 	if (npcBot:GetMana()/npcBot:GetMaxMana()>0.65 or npcBot:GetMana()>700 or ((EnemyCreeps==nil or #EnemyCreeps==0) and npcBot:GetMana()/npcBot:GetMaxMana()>0.4)) 

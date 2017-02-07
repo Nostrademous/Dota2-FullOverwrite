@@ -26,6 +26,10 @@ local Abilities =   {
     "lina_laguna_blade"
 }
 
+local castLSADesire = 0
+local castDSDesire  = 0
+local castLBDesire  = 0
+
 local function comboDamage( bot, enemy, abilityLB, abilityLSA, abilityDS )
     if abilityLB:GetLevel() == 0 then return 0, 0 end
     
@@ -51,7 +55,7 @@ local function comboDamage( bot, enemy, abilityLB, abilityLSA, abilityDS )
     return actualDmgFullCombo, 3
 end
 
-function AbilityUsageThink()
+function AbilityUsageThink(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCreep, nearbyAlliedCreep, nearbyEnemyTowers, nearbyAlliedTowers)
     if ( GetGameState() ~= GAME_STATE_GAME_IN_PROGRESS and GetGameState() ~= GAME_STATE_PRE_GAME ) then return false end
 
     local npcBot = GetBot()
@@ -64,23 +68,20 @@ function AbilityUsageThink()
     local abilityDS = npcBot:GetAbilityByName( Abilities[2] )
     local abilityLB = npcBot:GetAbilityByName( Abilities[4] )
 
-    local EnemyHeroes = npcBot:GetNearbyHeroes(1200, true, BOT_MODE_NONE)
-    local EnemyCreeps = npcBot:GetNearbyCreeps(1200, true)
+    if ( #nearbyEnemyHeroes == 0 and #nearbyEnemyCreep == 0 ) then return false end
 
-    if ( #EnemyHeroes == 0 and #EnemyCreeps == 0 ) then return false end
-
-    if #EnemyHeroes == 1 and EnemyHeroes[1]:GetHealth() > 0 then
-        local enemy = EnemyHeroes[1]
+    if #nearbyEnemyHeroes == 1 and nearbyEnemyHeroes[1]:GetHealth() > 0 then
+        local enemy = nearbyEnemyHeroes[1]
         local dmg, spells = comboDamage( npcBot, enemy, abilityLB, abilityLSA, abilityDS )
         if dmg > enemy:GetHealth() and not utils.IsTargetMagicImmune( enemy ) then
             setHeroVar("Target", {Obj=enemy, Id=enemy:GetPlayerID()})
-            utils.AllChat("Killing "..utils.GetHeroName(enemy).." softly with my song")
             npcBot:SetActionQueueing(true)
             if spells == 2 then
                 local nCastRange = abilityDS:GetCastRange()
                 local dist = GetUnitToUnitDistance(npcBot, enemy)
 
                 if dist < nCastRange then
+                    utils.AllChat("Killing "..utils.GetHeroName(enemy).." softly with my song")
                     -- NOTE: cast point is 0.45, speed is 1200
                     local loc = enemy:GetExtrapolatedLocation(0.45 + dist/1200)
                     npcBot:Action_UseAbilityOnLocation( abilityDS, loc )
@@ -93,6 +94,7 @@ function AbilityUsageThink()
                 local dist = GetUnitToUnitDistance(npcBot, enemy)
 
                 if dist < (nCastRange + nRadius) then
+                    utils.AllChat("Killing "..utils.GetHeroName(enemy).." softly with my song")
                     npcBot:Action_UseAbilityOnLocation( abilityLSA, enemy:GetExtrapolatedLocation(0.95) )
                     npcBot:Action_UseAbilityOnLocation( abilityDS, enemy:GetLocation() )
                     npcBot:Action_UseAbilityOnEntity( abilityLB, enemy )
@@ -104,14 +106,14 @@ function AbilityUsageThink()
     end
     
     -- Consider using each ability
-    castLBDesire, castLBTarget = ConsiderLagunaBlade(abilityLB)
+    castLBDesire, castLBTarget = ConsiderLagunaBlade(abilityLB, nearbyEnemyHeroes)
 
     local target = getHeroVar("Target")
     
     if utils.ValidTarget(target) then
         castLSADesire, castLSALocation = ConsiderLightStrikeArrayFighting(abilityLSA, target.Obj)
     else
-        castLSADesire, castLSALocation = ConsiderLightStrikeArray(abilityLSA)
+        castLSADesire, castLSALocation = ConsiderLightStrikeArray(abilityLSA, nearbyEnemyHeroes)
     end
 
     if utils.ValidTarget(target) then
@@ -142,6 +144,10 @@ function AbilityUsageThink()
 end
 
 ----------------------------------------------------------------------------------------------------
+
+local function CanCastLightStrikeArrayOnTarget( npcTarget )
+    return npcTarget:IsHero() and not utils.IsTargetMagicImmune(npcTarget)
+end
 
 local function CanCastLagunaBladeOnTarget( npcTarget )
     return npcTarget:IsHero() and ( GetBot():HasScepter() or not npcTarget:IsMagicImmune() ) and not npcTarget:IsInvulnerable()
@@ -176,7 +182,7 @@ function ConsiderLightStrikeArrayFighting(abilityLSA, enemy)
 end
 
 
-function ConsiderLightStrikeArray(abilityLSA)
+function ConsiderLightStrikeArray(abilityLSA, nearbyEnemyHeroes)
     local npcBot = GetBot()
 
     -- Make sure it's castable
@@ -194,10 +200,11 @@ function ConsiderLightStrikeArray(abilityLSA)
     --------------------------------------
 
     -- Check for a channeling enemy
-    local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nCastRange + nRadius + 200, true, BOT_MODE_NONE )
-    for _,npcEnemy in pairs( tableNearbyEnemyHeroes ) do
-        if npcEnemy:IsChanneling() then
-            return BOT_ACTION_DESIRE_HIGH, npcEnemy:GetLocation()
+    for _, npcEnemy in pairs( nearbyEnemyHeroes ) do
+        if npcEnemy:IsChanneling() and GetUnitToUnitDistance(npcBot, npcEnemy) < (nCastRange + nRadius + 200) then
+            if CanCastLightStrikeArrayOnTarget( npcEnemy ) then
+                return BOT_ACTION_DESIRE_HIGH, npcEnemy:GetLocation()
+            end
         end
     end
 
@@ -213,15 +220,16 @@ function ConsiderLightStrikeArray(abilityLSA)
     end
 
     -- If we're seriously retreating, see if we can land a stun on someone who's damaged us recently
-    local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nCastRange + nRadius + 200, true, BOT_MODE_NONE );
-    for _,npcEnemy in pairs( tableNearbyEnemyHeroes ) do
-        -- FIXME: This logic will fail against Heartstopper Aura or Radiance probably making us LSA all the time
-        --        as we take damage and are below 50% health
-        if npcBot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) and (npcBot:GetHealth()/npcBot:GetMaxHealth()) < 0.5 then
-            if CanCastLightStrikeArrayOnTarget( npcEnemy ) and abilityLSA:GetCastRange() > GetUnitToUnitDistance(npcBot, npcEnemy) then
-                -- NOTE: LSA cast point is 0.45, hit delay is 0.50
-                local locDelta = npcEnemy:GetExtrapolatedLocation(0.95)
-                return BOT_ACTION_DESIRE_MODERATE, locDelta
+    for _,npcEnemy in pairs( nearbyEnemyHeroes ) do
+        if GetUnitToUnitDistance(npcBot, npcEnemy) < (nCastRange + nRadius + 200) then
+            -- FIXME: This logic will fail against Heartstopper Aura or Radiance probably making us LSA all the time
+            --        as we take damage and are below 50% health
+            if npcBot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) and (npcBot:GetHealth()/npcBot:GetMaxHealth()) < 0.5 then
+                if CanCastLightStrikeArrayOnTarget( npcEnemy ) and abilityLSA:GetCastRange() > GetUnitToUnitDistance(npcBot, npcEnemy) then
+                    -- NOTE: LSA cast point is 0.45, hit delay is 0.50
+                    local locDelta = npcEnemy:GetExtrapolatedLocation(0.95)
+                    return BOT_ACTION_DESIRE_MODERATE, locDelta
+                end
             end
         end
     end
@@ -302,7 +310,7 @@ end
 
 ----------------------------------------------------------------------------------------------------
 
-function ConsiderLagunaBlade(abilityLB)
+function ConsiderLagunaBlade(abilityLB, nearbyEnemyHeroes)
 
     local npcBot = GetBot()
 
@@ -320,10 +328,9 @@ function ConsiderLagunaBlade(abilityLB)
     end
 
     -- If a mode has set a target, and we can kill them, do it
-    local NearbyEnemyHeroes = npcBot:GetNearbyHeroes( nCastRange + 200, true, BOT_MODE_NONE )
-    if #NearbyEnemyHeroes > 0 then
-        for _,npcEnemy in pairs( NearbyEnemyHeroes ) do
-            if CanCastLagunaBladeOnTarget(npcEnemy) then
+    if #nearbyEnemyHeroes > 0 then
+        for _, npcEnemy in pairs( nearbyEnemyHeroes ) do
+            if GetUnitToUnitDistance(npcBot, npcEnemy) < (nCastRange + 200) and CanCastLagunaBladeOnTarget(npcEnemy) then
                 if npcEnemy:GetActualIncomingDamage( nDamage, eDamageType ) > npcEnemy:GetHealth() then
                     return BOT_ACTION_DESIRE_MODERATE, npcEnemy
                 end

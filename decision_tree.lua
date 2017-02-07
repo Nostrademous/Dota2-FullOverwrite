@@ -161,6 +161,7 @@ function X:DoInit(bot)
 
     self:setHeroVar("Self", self)
     self:setHeroVar("Name", utils.GetHeroName(bot))
+    self:setHeroVar("WorldUpdateTime", -1000.0)
     self:setHeroVar("LastCourierThink", -1000.0)
     self:setHeroVar("LastLevelUpThink", -1000.0)
     self:setHeroVar("LastStuckCheck", -1000.0)
@@ -193,6 +194,17 @@ function X:DoHeroSpecificInit(bot)
     return
 end
 
+-- LOCAL VARIABLES THAT WE WILL NEED FOR THIS FRAME
+local updateFrequency    = 0.03
+
+local EyeRange           = 1200
+local nearbyEnemyHeroes  = {}
+local nearbyAlliedHeroes = {}
+local nearbyEnemyCreep   = {}
+local nearbyAlliedCreep  = {}
+local nearbyEnemyTowers  = {}
+local nearbyAlliedTowers = {}
+
 function X:Think(bot)
     if ( GetGameState() == GAME_STATE_PRE_GAME ) then
         if not self.Init then
@@ -201,6 +213,39 @@ function X:Think(bot)
     end
 
     if ( GetGameState() ~= GAME_STATE_GAME_IN_PROGRESS and GetGameState() ~= GAME_STATE_PRE_GAME ) then return end
+    
+    local bUpdate, newTime = utils.TimePassed(self:getHeroVar("WorldUpdateTime"), updateFrequency)
+    if bUpdate then
+        self:setHeroVar("WorldUpdateTime", newTime)
+        nearbyEnemyHeroes   = bot:GetNearbyHeroes(EyeRange, true, BOT_MODE_NONE)
+        nearbyAlliedHeroes  = bot:GetNearbyHeroes(EyeRange, false, BOT_MODE_NONE)
+        nearbyEnemyCreep    = bot:GetNearbyLaneCreeps(EyeRange, true)
+        nearbyAlliedCreep   = bot:GetNearbyLaneCreeps(EyeRange, false)
+        nearbyEnemyTowers   = bot:GetNearbyTowers(EyeRange, true)
+        nearbyAlliedTowers  = bot:GetNearbyTowers(EyeRange, false)
+        
+        local setTarget = self:getHeroVar("Target")
+        if setTarget.Id > 0 and not utils.ValidTarget(setTarget) then
+            for _, v in pairs(nearbyEnemyHeroes) do
+                if setTarget.Id == v:GetPlayerID() then
+                    utils.myPrint("Updated my Target after re-aquire")
+                    setTarget.Obj = v
+                    break
+                end
+            end
+        end
+        
+        local gankTarget = self:getHeroVar("GankTarget")
+        if gankTarget.Id > 0 and not utils.ValidTarget(gankTarget) then
+            for _, v in pairs(nearbyEnemyHeroes) do
+                if gankTarget.Id == v:GetPlayerID() then
+                    utils.myPrint("Updated my GankTarget after re-aquire")
+                    gankTarget.Obj = v
+                    break
+                end
+            end
+        end
+    end
 
     -- TEST STUFF
     --[[
@@ -289,6 +334,7 @@ function X:Think(bot)
     if bot:HasQueuedAction() then
         local target = self:getHeroVar("Target")
         if target.Id > 0 and not IsHeroAlive( target.Id ) then
+            utils.myPrint("Queueing Disabled")
             bot:SetActionQueueing(false)
         else
             return
@@ -354,7 +400,7 @@ function X:Think(bot)
     if bot:IsUsingAbility() then 
         return
     else
-        local bRet = self:ConsiderAbilityUse()
+        local bRet = self:ConsiderAbilityUse(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCreep, nearbyAlliedCreep, nearbyEnemyTowers, nearbyAlliedTowers)
         if bRet then return end
     end
 
@@ -451,7 +497,7 @@ function X:DoWhileDead(bot)
 end
 
 function X:DoWhileChanneling(bot)
-    -- FIXME: Check Items like Glimmer Cape for activation if wanted
+    item_usage.UseGlimmerCape(bot)
     return true
 end
 
@@ -464,7 +510,7 @@ function X:ConsiderBuyback(bot)
 end
 
 -- Pure Abstract Function - Designed for Overload
-function X:ConsiderAbilityUse()
+function X:ConsiderAbilityUse(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCreep, nearbyAlliedCreep, nearbyEnemyTowers, nearbyAlliedTowers)
     return false
 end
 -------------------------------------------------
@@ -524,41 +570,18 @@ function X:Determine_ShouldIRetreat(bot)
         return nil
     end
 
-    local Enemies = bot:GetNearbyHeroes(1500, true, BOT_MODE_NONE)
-    local Allies = bot:GetNearbyHeroes(1500, false, BOT_MODE_NONE)
-    local Towers = bot:GetNearbyTowers(900, true)
-
-    local nEn = 0
-    if Enemies ~= nil then
-        nEn = #Enemies
-    end
-
-    local nAl = 0
-
-    if Allies ~= nil then
-        for _,ally in pairs(Allies) do
-            if utils.NotNilOrDead(ally) then
-                nAl = nAl + 1
-            end
-        end
-    end
-
-    local nTo = 0
-    if Towers ~= nil then
-        nTo = #Towers
-    end
-
     if ((bot:GetHealth()/bot:GetMaxHealth()) < 0.33 and self:GetAction() ~= ACTION_JUNGLING) or
         (bot:GetMana()/bot:GetMaxMana() < 0.07 and self:getPrevAction() == ACTION_LANING) then
+        self:setHeroVar("IsRetreating", true)
         return constants.RETREAT_FOUNTAIN
     end
 
-    if nAl < 2 then
+    if #nearbyAlliedHeroes < 2 then
         local MaxStun = 0
 
         --enemyData.GetEnemyTeamSlowDuration()/2.0
 
-        for _,enemy in pairs(Enemies) do
+        for _,enemy in pairs(nearbyEnemyHeroes) do
             if utils.NotNilOrDead(enemy) and enemy:GetHealth()/enemy:GetMaxHealth() > 0.4 then
                 local bEscape = self:getHeroVar("HasEscape")
                 local enemyManaRatio = enemy:GetMana()/enemy:GetMaxMana()
@@ -574,7 +597,7 @@ function X:Determine_ShouldIRetreat(bot)
         end
 
         local enemyDamage = 0
-        for _, enemy in pairs(Enemies) do
+        for _, enemy in pairs(nearbyEnemyHeroes) do
             if utils.NotNilOrDead(enemy) and enemy:GetHealth()/enemy:GetMaxHealth() > 0.4 then
                 local enemyManaRatio = enemy:GetMana()/enemy:GetMaxMana()
                 local pDamage = enemy:GetEstimatedDamageToTarget(true, bot, MaxStun, DAMAGE_TYPE_PHYSICAL)
@@ -607,7 +630,7 @@ function X:Determine_ShouldIRetreat(bot)
     return nil
 end
 
-function X:Determine_ShouldIFighting(bot)
+function X:Determine_ShouldIFighting2(bot)
     global_game_state.GlobalFightDetermination()
     if self:getHeroVar("Target").Id > 0 then
         return true
@@ -615,10 +638,9 @@ function X:Determine_ShouldIFighting(bot)
     return false
 end
 
-function X:Determine_ShouldIFighting2(bot)
+function X:Determine_ShouldIFighting(bot)
     -- try to find a taret
-    local eyeRange = 1200
-    local weakestHero, score = fighting.FindTarget(eyeRange)
+    local weakestHero, score = fighting.FindTarget(nearbyEnemyHeroes, nearbyEnemyTowers, nearbyAlliedTowers, nearbyEnemyCreep, nearbyAlliedCreep)
     
     -- get my possible existing target
     local myTarget = self:getHeroVar("Target")
@@ -687,8 +709,8 @@ function X:Determine_ShouldIFighting2(bot)
                 end
             end
             
-            local pLoc = U.PredictedLocation(bot, myTarget.Id)
-            if pLoc ~= nil then
+            local pLoc = enemyData.PredictedLocation(myTarget.Id, GetHeroLastSeenInfo(myTarget.Id).time)
+            if pLoc then
                 item_usage.UseMovementItems()
                 bot:Action_MoveToLocation(pLoc)
                 return true
@@ -742,43 +764,20 @@ function X:Determine_DoAlliesNeedHelp(bot)
 end
 
 function X:Determine_ShouldIPushLane(bot)
-    -- DETERMINE MY SURROUNDING INFO --
-    local RANGE = 1200
-
-    --GET HEROES WITHIN XYZ UNIT RANGE
-    local EnemyHeroes = bot:GetNearbyHeroes(RANGE, true, BOT_MODE_NONE);
-    --local AllyHeroes = bot:GetNearbyHeroes(RANGE, false, BOT_MODE_NONE);
-
-    --GET TOWERS WITHIN XYZ UNIT RANGE
-    local EnemyTowers = bot:GetNearbyTowers(RANGE, true);
-    local AllyTowers = bot:GetNearbyTowers(RANGE, false);
-
-    --GET CREEPS WITHIN XYZ UNIT RANGE
-    local EnemyCreeps = bot:GetNearbyCreeps(RANGE, true);
-    local AllyCreeps = bot:GetNearbyCreeps(RANGE, false);
-
-    local EnemyTowers = bot:GetNearbyTowers(900, true)
-    if EnemyTowers == nil or #EnemyTowers == 0 then
+    if #nearbyEnemyTowers == 0 then
         return false
     end
-
-    if #AllyCreeps >= #EnemyCreeps and #EnemyHeroes == 0 then
-        local NearAC = 0
-        for _,creep in pairs(AllyCreeps) do
-            if GetUnitToUnitDistance(creep, EnemyTowers[1]) < 800 then
-                NearAC = NearAC + 1
-            end
-        end
-
-        if NearAC > 0 then
-            --print(utils.GetHeroName(bot), " :: Pushing Tower")
-            return true
-        end
-    end
-
-    if ( EnemyTowers[1]:GetHealth() / EnemyTowers[1]:GetMaxHealth() ) < 0.1 then
+    
+    if ( nearbyEnemyTowers[1]:GetHealth() / nearbyEnemyTowers[1]:GetMaxHealth() ) < 0.1 then
+        self:setHeroVar("ShouldPush", true)
         return true
     end
+
+    if #nearbyAlliedCreep > 0 and #nearbyEnemyHeroes == 0 then
+        self:setHeroVar("ShouldPush", true)
+        return true
+    end
+
     return false
 end
 
@@ -787,8 +786,7 @@ function X:Determine_ShouldIDefendLane(bot)
 end
 
 function X:Determine_ShouldGank(bot)
-    local me = getHeroVar("Self")
-    if getHeroVar("Role") == ROLE_ROAMER or (getHeroVar("Role") == ROLE_JUNGLER and me:IsReadyToGank(bot)) then
+    if getHeroVar("Role") == ROLE_ROAMER or (getHeroVar("Role") == ROLE_JUNGLER and self:IsReadyToGank(bot)) then
         return ganking_generic.FindTarget(bot)
     end
     return false
@@ -862,19 +860,27 @@ function X:Determine_ShouldGetRune(bot)
 end
 
 function X:Determine_ShouldWard(bot)
-    local wardPlacedTimer = self:getHeroVar("WardPlacedTimer")
+    local WardCheckTimer = self:getHeroVar("WardCheckTimer")
     local bCheck = true
     local newTime = GameTime()
-    if wardPlacedTimer ~= nil then
-        bCheck, newTime = utils.TimePassed(wardPlacedTimer, 0.5)
+    if WardCheckTimer ~= nil then
+        bCheck, newTime = utils.TimePassed(WardCheckTimer, 0.5)
     end
     if bCheck then
-        self:setHeroVar("WardPlacedTimer", newTime)
+        self:setHeroVar("WardCheckTimer", newTime)
         local ward = item_usage.HaveWard("item_ward_observer")
         if ward then
             local alliedMapWards = GetUnitList(UNIT_LIST_ALLIED_WARDS)
             if #alliedMapWards < 2 then --FIXME: don't hardcode.. you get more wards then you can use this way
                 local wardLoc = utils.GetWardingSpot(self:getHeroVar("CurLane"))
+                
+                for _, value in ipairs(alliedMapWards) do
+                    -- FIXME: Consider ward expiration time
+                    if wardLoc ~= nil and value:GetLocation() == wardLoc then
+                        return false
+                    end
+                end
+                
                 if wardLoc ~= nil and utils.EnemiesNearLocation(bot, wardLoc, 2000) < 2 then
                     self:setHeroVar("WardLocation", wardLoc)
                     utils.InitPath()
@@ -907,7 +913,6 @@ function X:Determine_WhereToMove(bot)
 end
 
 function X:DoRetreat(bot, reason)
-    --if reason == nil then return false end
 
     if reason == constants.RETREAT_FOUNTAIN then
         if ( self:HasAction(ACTION_RETREAT) == false ) then
@@ -981,7 +986,11 @@ function X:DoRetreat(bot, reason)
         local rLoc = self:getHeroVar("TargetOfRunAwayFromCreepOrTower")
         local d = GetUnitToLocationDistance(bot, rLoc)
         if d > 50 and utils.IsTowerAttackingMe(2.0) then
-            bot:Action_MoveToLocation(rLoc)
+            if utils.IsInLane(bot) then
+                bot:Action_MoveToLocation(rLoc)
+            else
+                utils.MoveSafelyToLocation(bot, rLoc)
+            end
             return true
         end
         --utils.myPrint("DoRetreat - RETREAT TOWER End")
@@ -1011,7 +1020,11 @@ function X:DoRetreat(bot, reason)
         --utils.myPrint("Creep Retreat - Destination - <",rLoc[1],", ",rLoc[2],">")
         local d = GetUnitToLocationDistance(bot, rLoc)
         if d > 50 and utils.IsCreepAttackingMe(2.0) then
-            bot:Action_MoveToLocation(rLoc)
+            if utils.IsInLane(bot) then
+                bot:Action_MoveToLocation(rLoc)
+            else
+                utils.MoveSafelyToLocation(bot, rLoc)
+            end
             return true
         end
         --utils.myPrint("DoRetreat - RETREAT CREEP End")
@@ -1063,36 +1076,17 @@ function X:DoFight(bot)
                 end
             end
         else -- target alive but we don't see it
-            if GetHeroLastSeenInfo(target.Id).time > 5.0 then
-                me:RemoveAction(constants.ACTION_FIGHT)
+            local timeSinceSeen = GetHeroLastSeenInfo(target.Id).time
+            if timeSinceSeen > 3.0 then
+                self:RemoveAction(constants.ACTION_FIGHT)
                 setHeroVar("Target", {Obj=nil, Id=0})
                 return false
             else
-                local lastLoc = GetHeroLastSeenInfo(target.Id).location
-                if utils.GetOtherTeam() == TEAM_DIRE then
-                    local prob1 = GetUnitPotentialValue(target.Id, Vector(lastLoc[1] + 500, lastLoc[2]), 1000)
-                    local prob2 = GetUnitPotentialValue(target.Id, Vector(lastLoc[1], lastLoc[2] + 500), 1000)
-                    if prob1 > 180 and prob1 > prob2 then
-                        item_usage.UseMovementItems()
-                        bot:Action_MoveToLocation(Vector(lastLoc[1] + 500, lastLoc[2]))
-                        return false
-                    elseif prob2 > 180 then
-                        item_usage.UseMovementItems()
-                        bot:Action_MoveToLocation(Vector(lastLoc[1], lastLoc[2] + 500))
-                        return false
-                    end
-                else
-                    local prob1 = GetUnitPotentialValue(target.Id, Vector(lastLoc[1] - 500, lastLoc[2]), 1000)
-                    local prob2 = GetUnitPotentialValue(target.Id, Vector(lastLoc[1], lastLoc[2] - 500), 1000)
-                    if prob1 > 180 and prob1 > prob2 then
-                        item_usage.UseMovementItems()
-                        bot:Action_MoveToLocation(Vector(lastLoc[1] - 500, lastLoc[2]))
-                        return false
-                    elseif prob2 > 180 then
-                        item_usage.UseMovementItems()
-                        bot:Action_MoveToLocation(Vector(lastLoc[1], lastLoc[2] - 500))
-                        return false
-                    end
+                local pLoc = enemyData.PredictedLocation(target.Id, timeSinceSeen)
+                if pLoc then
+                    item_usage.UseMovementItems()
+                    bot:Action_MoveToLocation(pLoc)
+                    return true
                 end
             end
         end
@@ -1110,14 +1104,12 @@ function X:DoDefendAlly(bot)
 end
 
 function X:DoPushLane(bot)
-    self:setHeroVar("ShouldPush", true)
 
-    local Towers = bot:GetNearbyTowers(750, true)
     local Shrines = bot:GetNearbyShrines(750, true)
     local Barracks = bot:GetNearbyBarracks(750, true)
     local Ancient = GetAncient(utils.GetOtherTeam())
     
-    if #Towers == 0 and #Shrines == 0 and #Barracks == 0 then
+    if #nearbyEnemyTowers == 0 and #Shrines == 0 and #Barracks == 0 then
         if utils.NotNilOrDead(Ancient) and GetUnitToLocationDistance(bot, Ancient:GetLocation()) < bot:GetAttackRange() and
             (not Ancient:HasModifier("modifier_fountain_glyph")) then
             bot:Action_AttackUnit(Ancient, true)
@@ -1126,8 +1118,12 @@ function X:DoPushLane(bot)
         return false
     end
 
-    if #Towers > 0 then
-        for _, tower in ipairs(Towers) do
+    if #nearbyEnemyCreep > 0 then
+        return false
+    end
+    
+    if #nearbyEnemyTowers > 0 then
+        for _, tower in ipairs(nearbyEnemyTowers) do
             if utils.NotNilOrDead(tower) and (not tower:HasModifier("modifier_fountain_glyph")) then
                 if GetUnitToUnitDistance(tower, bot) < bot:GetAttackRange() then
                     bot:Action_AttackUnit(tower, true)
@@ -1204,6 +1200,8 @@ function X:DoGank(bot)
     else
         if utils.ValidTarget(gankTarget) then
             utils.myPrint("clearing gank - target [Id:"..gankTarget.Id.."] Health: ", gankTarget.Obj:GetHealth(), ", Alive: ", IsHeroAlive(gankTarget.Id))
+        else
+            utils.myPrint("clearing gank - target [Id:"..gankTarget.Id.."] Alive: ", IsHeroAlive(gankTarget.Id))
         end
         self:RemoveAction(ACTION_GANKING)
         self:setHeroVar("GankTarget", {Obj=nil, Id=0})
@@ -1369,7 +1367,7 @@ function X:DoLane(bot)
         laning_generic.OnStart(bot)
     end
 
-    laning_generic.Think(bot)
+    laning_generic.Think(bot, nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCreep, nearbyAlliedCreep, nearbyEnemyTowers, nearbyAlliedTowers)
 
     return true
 end

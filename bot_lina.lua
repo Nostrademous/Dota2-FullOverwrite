@@ -50,8 +50,8 @@ linaBot.Init = false
 function linaBot:DoHeroSpecificInit(bot)
 end
 
-function linaBot:ConsiderAbilityUse()
-    return ability_usage_lina.AbilityUsageThink()
+function linaBot:ConsiderAbilityUse(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCreep, nearbyAlliedCreep, nearbyEnemyTowers, nearbyAlliedTowers)
+    return ability_usage_lina.AbilityUsageThink(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCreep, nearbyAlliedCreep, nearbyEnemyTowers, nearbyAlliedTowers)
 end
 
 function Think()

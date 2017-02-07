@@ -47,8 +47,8 @@ enigmaBot = enigmaBot:new{actionQueue = enigmaActionQueue, abilityPriority = Eni
 
 enigmaBot.Init = false;
 
-function enigmaBot:ConsiderAbilityUse()
-    ability_usage_enigma.AbilityUsageThink()
+function enigmaBot:ConsiderAbilityUse(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCreep, nearbyAlliedCreep, nearbyEnemyTowers, nearbyAlliedTowers)
+    ability_usage_enigma.AbilityUsageThink(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCreep, nearbyAlliedCreep, nearbyEnemyTowers, nearbyAlliedTowers)
 end
 
 function Think()

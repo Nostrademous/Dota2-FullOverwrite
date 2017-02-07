@@ -63,8 +63,8 @@ function drowRangerBot:DoHeroSpecificInit(bot)
     self:setHeroVar("HasOrbAbility", SKILL_Q)
 end
 
-function drowRangerBot:ConsiderAbilityUse()
-    ability_usage_drow_ranger.AbilityUsageThink()
+function drowRangerBot:ConsiderAbilityUse(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCreep, nearbyAlliedCreep, nearbyEnemyTowers, nearbyAlliedTowers)
+    ability_usage_drow_ranger.AbilityUsageThink(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCreep, nearbyAlliedCreep, nearbyEnemyTowers, nearbyAlliedTowers)
 end
 
 function Think()

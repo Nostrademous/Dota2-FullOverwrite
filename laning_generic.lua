@@ -22,19 +22,25 @@ function getHeroVar(var)
 end
 ----------
 
-local CurLane = nil;
-local EyeRange=1200;
-local BaseDamage=50;
-local AttackRange=150;
-local AttackSpeed=0.6;
-local LastTiltTime=0.0;
+local listEnemies = {}
+local listAllies = {}
+local listEnemyCreep = {}
+local listAlliedCreep = {}
+local listEnemyTowers = {}
+local listAlliedTowers = {}
 
-local DamageThreshold=1.0;
-local MoveThreshold=1.0;
+local CurLane           = nil
+local BaseDamage        = 50
+local AttackRange       = 150
+local AttackSpeed       = 0.6
+local LastTiltTime      = 0.0
 
-local ShouldPush = false;
-local IsCore = nil;
-local LanePos = nil;
+local DamageThreshold   = 1.0
+local MoveThreshold     = 1.0
+
+local ShouldPush        = false
+local IsCore            = nil
+local LanePos           = nil
 
 local LaningStates={
     Start       = 0,
@@ -47,52 +53,52 @@ local LaningStates={
 
 local LaningState = LaningStates.Start
 
-function OnStart(npcBot)
+function OnStart(bot)
     setHeroVar("BackTimerGen", -1000)
 
-    if not utils.HaveTeleportation(npcBot) then
-        if DotaTime()>10 and npcBot:GetGold()>50 and GetUnitToLocationDistance(npcBot,GetLocationAlongLane(getHeroVar("CurLane"),0.0))<700 and utils.NumberOfItems(npcBot)<=5 then
-            npcBot:Action_PurchaseItem("item_tpscroll")
+    if not utils.HaveTeleportation(bot) then
+        if DotaTime() > 10 and bot:GetGold() > 50 and GetUnitToLocationDistance(bot,GetLocationAlongLane(getHeroVar("CurLane"),0.0))<700 and utils.NumberOfItems(bot)<=5 then
+            bot:Action_PurchaseItem("item_tpscroll")
             return
         end
     end
 
-    if npcBot:IsChanneling() or npcBot:IsUsingAbility() then
+    if bot:IsChanneling() or bot:IsUsingAbility() then
         return
     end
 
-    local dest=GetLocationAlongLane(getHeroVar("CurLane"),GetLaneFrontAmount(GetTeam(),getHeroVar("CurLane"),true)-0.04)
-    if GetUnitToLocationDistance(npcBot,dest)>1500 then
-        utils.InitPath(npcBot)
+    local dest = GetLocationAlongLane(getHeroVar("CurLane"), GetLaneFrontAmount(GetTeam(), getHeroVar("CurLane"), true)-0.04)
+    if GetUnitToLocationDistance(bot, dest) > 1500 then
+        utils.InitPath(bot)
         setHeroVar("LaningState", LaningStates.MovingToLane)
     end
 
-    --print(utils.GetHeroName(npcBot), " LANING OnStart Done")
+    --print(utils.GetHeroName(bot), " LANING OnStart Done")
 end
 
 -------------------------------
 
-local function MovingToLane(npcBot)
+local function MovingToLane(bot)
     local dest = GetLocationAlongLane(getHeroVar("CurLane"),GetLaneFrontAmount(GetTeam(), getHeroVar("CurLane"), true) - 0.04)
 
-    if GetUnitToLocationDistance(npcBot, dest) < 300 then
+    if GetUnitToLocationDistance(bot, dest) < 300 then
         LaningState = LaningStates.Moving
         return
     end
 
-    utils.MoveSafelyToLocation(npcBot, dest)
+    utils.MoveSafelyToLocation(bot, dest)
 end
 
-local function Start(npcBot)
+local function Start(bot)
     if CurLane == LANE_MID then
-        npcBot:Action_MoveToLocation(GetRuneSpawnLocation(RUNE_BOUNTY_2))
+        bot:Action_MoveToLocation(GetRuneSpawnLocation(RUNE_BOUNTY_2))
     elseif CurLane == LANE_TOP then
-        npcBot:Action_MoveToLocation(GetRuneSpawnLocation(RUNE_BOUNTY_2)+Vector(-250, 1000))
+        bot:Action_MoveToLocation(GetRuneSpawnLocation(RUNE_BOUNTY_2)+Vector(-250, 1000))
     elseif CurLane == LANE_BOT then
         if IsCore then
-            npcBot:Action_MoveToLocation(GetRuneSpawnLocation(RUNE_BOUNTY_1))
+            bot:Action_MoveToLocation(GetRuneSpawnLocation(RUNE_BOUNTY_1))
         else
-            npcBot:Action_MoveToLocation(GetRuneSpawnLocation(RUNE_BOUNTY_1)+Vector(-250, -250))
+            bot:Action_MoveToLocation(GetRuneSpawnLocation(RUNE_BOUNTY_1)+Vector(-250, -250))
         end
     end
 
@@ -101,47 +107,35 @@ local function Start(npcBot)
     end
 end
 
-local function Moving(npcBot)
+local function Moving(bot)
     local frontier = GetLaneFrontAmount(GetTeam(), CurLane, true)
     local enemyFrontier = GetLaneFrontAmount(utils.GetOtherTeam(), CurLane, false)
     frontier = Min(frontier, enemyFrontier)
 
-    local towerRange = 900.0
-    local EnemyTowers = npcBot:GetNearbyTowers(towerRange, true)
     local noTower = true
-    if #EnemyTowers > 0 and GetUnitToUnitDistance(npcBot, EnemyTowers[1]) > towerRange then
+    if #listEnemyTowers > 0 and GetUnitToUnitDistance(bot, listEnemyTowers[1]) > 750 then
         noTower = false
     end
 
     if frontier >= LanePos and (noTower or ShouldPush) then
-        local target = GetLocationAlongLane(CurLane,Min(1.0,LanePos+0.03))
-        --print( " Going Forward :: MyLoc: ", npcBot:GetLocation()[1], ",", npcBot:GetLocation()[2], " TARGET: ", target[1], ",", target[2])
-        npcBot:Action_MoveToLocation(target)
+        local target = GetLocationAlongLane(CurLane, Min(1.0, LanePos+0.03))
+        --print( " Going Forward :: MyLoc: ", bot:GetLocation()[1], ",", bot:GetLocation()[2], " TARGET: ", target[1], ",", target[2])
+        bot:Action_MoveToLocation(target)
     else
-        local target = GetLocationAlongLane(CurLane,Min(1.0,LanePos-0.03))
-        npcBot:Action_MoveToLocation(target)
+        local target = GetLocationAlongLane(CurLane, Min(1.0, LanePos-0.03))
+        bot:Action_MoveToLocation(target)
     end
 
-    local EnemyCreeps = npcBot:GetNearbyCreeps(EyeRange, true)
-
-    local nCr = 0
-
-    for _,creep in pairs(EnemyCreeps) do
-        if utils.NotNilOrDead(creep) then -- and (string.find(creep:GetUnitName(),"melee")~=nil or string.find(creep:GetUnitName(),"range")~=nil or string.find(creep:GetUnitName(),"siege")~=nil) then
-            nCr = nCr + 1
-        end
-    end
-
-    if nCr > 0 then
+    if #listEnemyCreep > 0 then
         LaningState = LaningStates.MovingToPos
     end
 end
 
-local function MovingToPos(npcBot)
-    local listEnemyCreeps = npcBot:GetNearbyCreeps(EyeRange, true)
+local function MovingToPos(bot)
+
     local bNeedToGoHigher = false
-    for _, eCreep in ipairs(listEnemyCreeps) do
-        if eCreep:GetHealth()/eCreep:GetMaxHealth() <= 0.5 and utils.GetHeightDiff(npcBot, eCreep) < 0 then
+    for _, eCreep in ipairs(listEnemyCreep) do
+        if eCreep:GetHealth()/eCreep:GetMaxHealth() <= 0.5 and utils.GetHeightDiff(bot, eCreep) < 0 then
             bNeedToGoHigher = true
             utils.myPrint("Would be nice to go to high ground to ensure no miss-chance")
             break
@@ -155,7 +149,7 @@ local function MovingToPos(npcBot)
     local bpos = GetLocationAlongLane(CurLane, LanePos-0.02)
 
     local dest = utils.VectorTowards(cpos, bpos, 500)
-    if utils.IsMelee(npcBot) then
+    if utils.IsMelee(bot) then
         dest = utils.VectorTowards(cpos, bpos, 1000)
     end
 
@@ -163,44 +157,38 @@ local function MovingToPos(npcBot)
 
     dest = dest + rndtilt
 
-    npcBot:Action_MoveToLocation(dest)
+    bot:Action_MoveToLocation(dest)
 
     LaningState = LaningStates.CSing
 end
 
-local function GettingBack(npcBot)
-    local AllyCreeps = npcBot:GetNearbyCreeps(EyeRange, false)
-    local AllyTowers = npcBot:GetNearbyTowers(EyeRange, false)
-
-    if #AllyCreeps > 0 or LanePos < 0.18 then
+local function GettingBack(bot)
+    if #listAlliedCreep > 0 or LanePos < 0.18 then
         LaningState = LaningStates.Moving
         return
     end
 
-    npcBot:Action_MoveToLocation(GetLocationAlongLane(CurLane, Max(LanePos-0.03, 0.0)))
+    bot:Action_MoveToLocation(GetLocationAlongLane(CurLane, Max(LanePos-0.03, 0.0)))
 end
 
-local function DenyNearbyCreeps(npcBot)
-
-    local AllyCreeps = npcBot:GetNearbyLaneCreeps(EyeRange, false)
-    if AllyCreeps == nil or #AllyCreeps == 0 then
-        --utils.myPrint("NearbyFrinedlyCreep count: ", #AllyCreeps)
+local function DenyNearbyCreeps(bot)
+    if #listAlliedCreep == 0 then
         return false
     end
 
-    local WeakestCreep, WeakestCreepHealth = utils.GetWeakestCreep(AllyCreeps)
+    local WeakestCreep, WeakestCreepHealth = utils.GetWeakestCreep(listAlliedCreep)
 
     if WeakestCreep == nil then
         return false
     end
 
-    AttackRange = npcBot:GetAttackRange()
+    AttackRange = bot:GetAttackRange()
 
-    local eDamage = npcBot:GetEstimatedDamageToTarget(true, WeakestCreep, npcBot:GetAttackSpeed(), DAMAGE_TYPE_PHYSICAL)
-    if utils.IsMelee(npcBot) then
-        damage = eDamage + utils.GetCreepHealthDeltaPerSec(WeakestCreep) * (npcBot:GetAttackPoint() / (1 + npcBot:GetAttackSpeed()))
+    local eDamage = bot:GetEstimatedDamageToTarget(true, WeakestCreep, bot:GetAttackSpeed(), DAMAGE_TYPE_PHYSICAL)
+    if utils.IsMelee(bot) then
+        damage = eDamage + utils.GetCreepHealthDeltaPerSec(WeakestCreep) * (bot:GetAttackPoint() / (1 + bot:GetAttackSpeed()))
     else
-        damage = eDamage + utils.GetCreepHealthDeltaPerSec(WeakestCreep) * (npcBot:GetAttackPoint() / (1 + npcBot:GetAttackSpeed()) + GetUnitToUnitDistance(npcBot,WeakestCreep) / 1100)
+        damage = eDamage + utils.GetCreepHealthDeltaPerSec(WeakestCreep) * (bot:GetAttackPoint() / (1 + bot:GetAttackSpeed()) + GetUnitToUnitDistance(bot, WeakestCreep) / 1100)
     end
 
     if WeakestCreep ~= nil and damage > WeakestCreep:GetMaxHealth() then
@@ -209,96 +197,91 @@ local function DenyNearbyCreeps(npcBot)
         damage = eDamage
     end
 
-    if damage > WeakestCreep:GetHealth() and utils.GetDistance(npcBot:GetLocation(),WeakestCreep:GetLocation()) < AttackRange then
-        utils.TreadCycle(npcBot, constants.AGILITY)
-        npcBot:Action_AttackUnit(WeakestCreep, true)
+    if damage > WeakestCreep:GetHealth() and utils.GetDistance(bot:GetLocation(),WeakestCreep:GetLocation()) < AttackRange then
+        utils.TreadCycle(bot, constants.AGILITY)
+        bot:Action_AttackUnit(WeakestCreep, true)
         return true
     end
 
     local approachScalar = 2.0
-    if utils.IsMelee(npcBot) then
+    if utils.IsMelee(bot) then
         approachScalar = 2.5
     end
 
-    if WeakestCreepHealth < approachScalar*damage and utils.GetDistance(npcBot:GetLocation(),WeakestCreep:GetLocation()) > npcBot:GetAttackRange() then
+    if WeakestCreepHealth < approachScalar*damage and utils.GetDistance(bot:GetLocation(),WeakestCreep:GetLocation()) > bot:GetAttackRange() then
         local dest = utils.VectorTowards(WeakestCreep:GetLocation(),GetLocationAlongLane(CurLane,LanePos-0.03), AttackRange - 20 )
-        npcBot:Action_MoveToLocation(dest)
+        bot:Action_MoveToLocation(dest)
         return true
     end
 
     return false
 end
 
-local function PushCS(npcBot, WeakestCreep, EnemyCreeps, nAc, damage, AS)
-    utils.TreadCycle(npcBot, constants.AGILITY)
+local function PushCS(bot, WeakestCreep, nAc, damage, AS)
+    utils.TreadCycle(bot, constants.AGILITY)
     if WeakestCreep:GetHealth() > damage and WeakestCreep:GetHealth() < (damage + 17*nAc*AS) and nAc > 1 then
-        if #EnemyCreeps > 1 then
-            if EnemyCreeps[1] ~= WeakestCreep then
-                npcBot:Action_AttackUnit(EnemyCreeps[1], false)
+        if #listEnemyCreep > 1 then
+            if listEnemyCreep[1] ~= WeakestCreep then
+                bot:Action_AttackUnit(listEnemyCreep[1], false)
             else
-                npcBot:Action_AttackUnit(EnemyCreeps[2], false)
+                bot:Action_AttackUnit(listEnemyCreep[2], false)
             end
+            return true
         else
-            return
+            return false
         end
     end
 
-    npcBot:Action_AttackUnit(WeakestCreep, false)
+    bot:Action_AttackUnit(WeakestCreep, false)
+    return true
 end
 
-local function CSing(npcBot)
-    local AllyCreeps = npcBot:GetNearbyCreeps(EyeRange, false)
-    local EnemyCreeps = npcBot:GetNearbyCreeps(EyeRange, true)
-    local EnemyTowers = npcBot:GetNearbyTowers(EyeRange, true)
-
-    if #AllyCreeps == 0 then
+local function CSing(bot)
+    if #listAlliedCreep == 0 then
         if not ShouldPush then
             LaningState = LaningStates.Moving
             return
         end
     end
 
-    if #EnemyCreeps == 0 then
+    if #listEnemyCreep == 0 then
         LaningState = LaningStates.Moving
         return
     end
 
-    AttackRange = npcBot:GetAttackRange() + npcBot:GetBoundingRadius()
-    AttackSpeed = npcBot:GetAttackPoint()
-
-    local AlliedHeroes = npcBot:GetNearbyHeroes(EyeRange,false,BOT_MODE_NONE);
-    local Enemies = npcBot:GetNearbyHeroes(EyeRange,true,BOT_MODE_NONE);
+    AttackRange = bot:GetAttackRange() + bot:GetBoundingRadius()
+    AttackSpeed = bot:GetAttackPoint()
 
     local NoCoreAround = true
-    for _,hero in pairs(AlliedHeroes) do
+    for _,hero in pairs(listAllies) do
         if utils.IsCore(hero) then
             NoCoreAround = false
         end
     end
 
-    if ShouldPush and (#Enemies > 0 or DotaTime() < (60*3)) then
+    if ShouldPush and (#listEnemies > 0 or DotaTime() < (60*3)) then
         ShouldPush = false
     end
 
-    if IsCore or (NoCoreAround and (Enemies == nil or #Enemies < 2)) then
-        local WeakestCreep, WeakestCreepHealth = utils.GetWeakestCreep(EnemyCreeps);
+    if IsCore or (NoCoreAround and #listEnemies < 2) then
+        local WeakestCreep, WeakestCreepHealth = utils.GetWeakestCreep(listEnemyCreep)
 
         if WeakestCreep == nil then return end
 
         local nAc = 0
         if WeakestCreep ~= nil then
-            for _,acreep in pairs(AllyCreeps) do
-                if utils.NotNilOrDead(acreep) and GetUnitToUnitDistance(acreep,WeakestCreep) < 120 then
+            for _,acreep in pairs(listAlliedCreep) do
+                if utils.NotNilOrDead(acreep) and GetUnitToUnitDistance(acreep, WeakestCreep) < 120 then
                     nAc = nAc + 1
                 end
             end
         end
 
-        local eDamage = npcBot:GetEstimatedDamageToTarget(true, WeakestCreep, npcBot:GetAttackSpeed(), DAMAGE_TYPE_PHYSICAL)
-        if utils.IsMelee(npcBot) then
-            damage = eDamage + utils.GetCreepHealthDeltaPerSec(WeakestCreep) * (npcBot:GetAttackPoint() / (1 + npcBot:GetAttackSpeed()))
+        local eDamage = bot:GetEstimatedDamageToTarget(true, WeakestCreep, bot:GetAttackSpeed(), DAMAGE_TYPE_PHYSICAL)
+        if utils.IsMelee(bot) then
+            damage = eDamage + utils.GetCreepHealthDeltaPerSec(WeakestCreep) * (bot:GetAttackPoint() / (1 + bot:GetAttackSpeed()))
         else
-            damage = eDamage + utils.GetCreepHealthDeltaPerSec(WeakestCreep) * (npcBot:GetAttackPoint() / (1 + npcBot:GetAttackSpeed()) + GetUnitToUnitDistance(npcBot,WeakestCreep) / 1100)
+            damage = eDamage + utils.GetCreepHealthDeltaPerSec(WeakestCreep) * (bot:GetAttackPoint() / (1 + bot:GetAttackSpeed()) + GetUnitToUnitDistance(bot, WeakestCreep) / 1100)
         end
 
         if WeakestCreep ~= nil and damage > WeakestCreep:GetMaxHealth() then
@@ -308,24 +291,24 @@ local function CSing(npcBot)
         end
 
         if WeakestCreep ~= nil and WeakestCreepHealth < damage then
-            utils.TreadCycle(npcBot, constants.AGILITY)
-            npcBot:Action_AttackUnit(WeakestCreep, true)
+            utils.TreadCycle(bot, constants.AGILITY)
+            bot:Action_AttackUnit(WeakestCreep, true)
             return
         end
 
         if ShouldPush and WeakestCreep ~= nil then
-            PushCS(npcBot, WeakestCreep, EnemyCreeps, nAc, damage, AttackSpeed)
-            return
+            local bDone = PushCS(bot, WeakestCreep, nAc, damage, AttackSpeed)
+            if bDone then return end
         end
 
         -- check if enemy has a breakable buff
-        if #Enemies == 1 then
-            if utils.EnemyHasBreakableBuff(Enemies[1]) then
-                --print(utils.GetHeroName(Enemies[1]).." has a breakable buff running")
-                if (not utils.UseOrbEffect(npcBot, Enemies[1])) then
-                    if GetUnitToUnitDistance(npcBot, Enemies[1]) < (AttackRange+Enemies[1]:GetBoundingRadius()) then
-                        utils.TreadCycle(npcBot, constants.AGILITY)
-                        npcBot:Action_AttackUnit(Enemies[1], true)
+        if #listEnemies == 1 then
+            if utils.EnemyHasBreakableBuff(listEnemies[1]) then
+                --print(utils.GetHeroName(listEnemies[1]).." has a breakable buff running")
+                if (not utils.UseOrbEffect(bot, listEnemies[1])) then
+                    if GetUnitToUnitDistance(bot, listEnemies[1]) < (AttackRange+listEnemies[1]:GetBoundingRadius()) then
+                        utils.TreadCycle(bot, constants.AGILITY)
+                        bot:Action_AttackUnit(listEnemies[1], true)
                         return
                     end
                 else
@@ -335,31 +318,31 @@ local function CSing(npcBot)
         end
 
         local approachScalar = 2.0
-        if utils.IsMelee(npcBot) then
+        if utils.IsMelee(bot) then
             approachScalar = 2.5
         end
 
-        if (not ShouldPush) and WeakestCreepHealth < damage*approachScalar and GetUnitToUnitDistance(npcBot,WeakestCreep) > AttackRange and EnemyTowers == nil then
+        if (not ShouldPush) and WeakestCreepHealth < damage*approachScalar and GetUnitToUnitDistance(bot,WeakestCreep) > AttackRange and EnemyTowers == nil then
             local dest = utils.VectorTowards(WeakestCreep:GetLocation(),GetLocationAlongLane(CurLane,LanePos-0.03), AttackRange-20)
-            npcBot:Action_MoveToLocation(dest)
+            bot:Action_MoveToLocation(dest)
             return
         end
 
         if not ShouldPush then
-            if DenyNearbyCreeps(npcBot) then
+            if DenyNearbyCreeps(bot) then
                 return
             end
         end
     elseif not NoCoreAround then
         -- we are not a Core, we are not pushing, deny only
         if not ShouldPush then
-            if DenyNearbyCreeps(npcBot) then
+            if DenyNearbyCreeps(bot) then
                 return
             end
         end
     end
 
-    utils.UseOrbEffect(npcBot)
+    utils.UseOrbEffect(bot)
 
     LaningState = LaningStates.MovingToPos;
 end
@@ -377,12 +360,19 @@ local States = {
 
 ----------------------------------
 
-local function Updates(npcBot)
+local function Updates(bot, lE, lA, lEC, lAC, lET, lAT)
+    listEnemies = lE
+    listAllies = lA
+    listEnemyCreep = lEC
+    listAlliedCreep = lAC
+    listEnemyTowers = lET
+    listAlliedTowers = lAT
+
     CurLane = getHeroVar("CurLane")
-    LanePos = utils.PositionAlongLane(npcBot, CurLane)
+    LanePos = utils.PositionAlongLane(bot, CurLane)
 
     if getHeroVar("IsCore") == nil then
-        IsCore = utils.IsCore(npcBot)
+        IsCore = utils.IsCore(bot)
         setHeroVar("IsCore", IsCore)
     else
         IsCore = getHeroVar("IsCore")
@@ -404,12 +394,12 @@ local function Updates(npcBot)
         ShouldPush = getHeroVar("ShouldPush")
     end
 
-    if ( not npcBot:IsAlive() ) or ( LanePos < 0.15 and LaningState ~= LaningStates.Start ) then
+    if ( not bot:IsAlive() ) or ( LanePos < 0.15 and LaningState ~= LaningStates.Start ) then
         LaningState = LaningStates.Moving
     end
 end
 
-local function GetBackGen(npcBot)
+local function GetBackGen(bot)
     if getHeroVar("BackTimerGen") == nil then
         setHeroVar("BackTimerGen", -1000)
         return false
@@ -419,19 +409,16 @@ local function GetBackGen(npcBot)
         return true
     end
 
-    local Enemies = npcBot:GetNearbyHeroes(EyeRange, true, BOT_MODE_NONE)
-    local Allies = npcBot:GetNearbyHeroes(EyeRange, false, BOT_MODE_NONE)
-    if #Enemies == 0 then
+    if #listEnemies == 0 then
         return false
     end
 
-    local AllyTowers = npcBot:GetNearbyTowers(600, false)
-    if #AllyTowers > 0 and (#Enemies - #Allies) < 2 then
+    if #listAlliedTowers > 0 and (#listEnemies - #listAllies) < 2 then
         return false
     end
 
     --[[
-    if utils.IsMelee(npcBot) and utils.IsAnyHeroAttackingMe(1.0) then
+    if utils.IsMelee(bot) and utils.IsAnyHeroAttackingMe(1.0) then
         setHeroVar("BackTimerGen", DotaTime())
         return true
     end
@@ -441,16 +428,16 @@ local function GetBackGen(npcBot)
     return false
 end
 
-local function StayBack(npcBot)
+local function StayBack(bot)
     local LaneFront = GetLaneFrontAmount(GetTeam(), getHeroVar("CurLane"), true)
     -- FIXME: we need to Min or Max depending on Team the LaneFrontAmount() with furthest standing tower
     local LaneEnemyFront = GetLaneFrontAmount(utils.GetOtherTeam(), getHeroVar("CurLane"), false)
 
     local BackPos = GetLocationAlongLane(getHeroVar("CurLane"), Min(LaneFront-0.05,LaneEnemyFront-0.05)) + RandomVector(200)
-    if utils.IsMelee(npcBot) then
+    if utils.IsMelee(bot) then
         BackPos = GetLocationAlongLane(getHeroVar("CurLane"), Min(LaneFront, LaneEnemyFront+0.03)) + RandomVector(200)
     end
-    npcBot:Action_MoveToLocation(BackPos)
+    bot:Action_MoveToLocation(BackPos)
 end
 
 local function LaningStatePrint(state)
@@ -464,25 +451,26 @@ local function LaningStatePrint(state)
     end
 end
 
-function Think(npcBot)
-    Updates(npcBot)
+function Think(bot, listEnemies, listAllies, listEnemyCreep, listAlliedCreep, listEnemyTowers, listAlliedTowers)
+    Updates(bot, listEnemies, listAllies, listEnemyCreep, listAlliedCreep, listEnemyTowers, listAlliedTowers)
 
-    if npcBot:IsUsingAbility() or npcBot:IsChanneling() then
+    if bot:IsUsingAbility() or bot:IsChanneling() then
         return
     end
 
     --[[
-    if LaningState ~= LaningStates.MovingToLane and GetBackGen(npcBot) then
-        StayBack(npcBot)
+    if LaningState ~= LaningStates.MovingToLane and GetBackGen(bot) then
+        StayBack(bot)
         return
     end
     --]]
 
     --utils.myPrint("LaningState: ", LaningStatePrint(LaningState))
 
-    States[LaningState](npcBot)
+    States[LaningState](bot)
 
     setHeroVar("LaningState", LaningState)
+    setHeroVar("ShouldPush", shouldPush)
 end
 
 

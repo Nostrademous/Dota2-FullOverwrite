@@ -31,7 +31,7 @@ local Abilities ={
 local function UseQ(bot)
     local ability = bot:GetAbilityByName(Abilities[1])
 
-    if (ability == nil) or (not ability:IsFullyCastable()) then
+    if not ability:IsFullyCastable() then
         return false
     end
 
@@ -52,33 +52,32 @@ local function UseQ(bot)
     return false
 end
 
-local function UseW(bot)
+local function UseW(bot, nearbyEnemyHeroes)
     local gust = bot:GetAbilityByName(Abilities[2])
 
-    if (gust == nil) or (not gust:IsFullyCastable()) then
+    if not gust:IsFullyCastable() then
         return false
     end
 
-    local Enemies = bot:GetNearbyHeroes(gust:GetCastRange(), true, BOT_MODE_NONE)
+    if #nearbyEnemyHeroes == 0 then return false end
 
-    if #Enemies == 0 then return false end
-
+    local enemy = nearbyEnemyHeroes[1]
     local wave_speed = gust:GetSpecialValueFloat("wave_speed")
-    local delay = gust:GetCastPoint() + GetUnitToUnitDistance(bot, Enemies[1])/wave_speed
+    local delay = gust:GetCastPoint() + GetUnitToUnitDistance(bot, enemy)/wave_speed
 
-    if #Enemies == 1 then
-        local enemyHasStun = Enemies[1]:GetStunDuration(true) > 0
-        if not utils.IsTargetMagicImmune(Enemies[1]) or not utils.IsCrowdControlled(Enemies[1]) 
-        or (not Enemies[1]:IsSilenced()) or Enemies[1]:IsChanneling() 
-        and (GetUnitToUnitDistance(bot, Enemies[1]) < 450 or (enemyHasStun and Enemies[1]:IsUsingAbility())) then 
+    if #nearbyEnemyHeroes == 1 then
+        local enemyHasStun = enemy:GetStunDuration(true) > 0
+        if not utils.IsTargetMagicImmune(enemy) or not utils.IsCrowdControlled(enemy) 
+        or (not enemy:IsSilenced()) or enemy:IsChanneling() 
+        and (GetUnitToUnitDistance(bot, enemy) < 450 or (enemyHasStun and enemy:IsUsingAbility())) then 
             utils.TreadCycle(bot, constants.INTELLIGENCE)
-            bot:Action_UseAbilityOnLocation(gust, Enemies[1]:GetExtrapolatedLocation(delay))
+            bot:Action_UseAbilityOnLocation(gust, enemy:GetExtrapolatedLocation(delay))
             return true
         end
     else
-        for _, enemy in pairs( Enemies ) do
-            if enemy:IsChanneling() then
-                if gust:GetCastRange() > GetUnitToUnitDistance(bot, enemy) and (not enemy:IsMagicImmune()) then
+        for _, enemy in pairs( nearbyEnemyHeroes ) do
+            if GetUnitToUnitDistance(bot, enemy) < gust:GetCastRange() and enemy:IsChanneling() then
+                if not enemy:IsMagicImmune() then
                     local gustDelay = gust:GetCastPoint() + GetUnitToUnitDistance(bot, enemy)/wave_speed
                     utils.TreadCycle(bot, constants.INTELLIGENCE)
                     bot:Action_UseAbilityOnLocation(gust, enemy:GetExtrapolatedLocation(gustDelay))
@@ -89,8 +88,8 @@ local function UseW(bot)
 
         --Use Gust as a Defensive skill to fend off chasing enemies
         if getHeroVar("IsRetreating") and (bot:GetHealth()/bot:GetMaxHealth()) < 0.5 then
-            for _, enemy in pairs( Enemies ) do
-                if gust:GetCastRange() > GetUnitToUnitDistance(bot, enemy) and (not enemy:IsMagicImmune()) then
+            for _, enemy in pairs( nearbyEnemyHeroes ) do
+                if GetUnitToUnitDistance(bot, enemy) < gust:GetCastRange() and (not enemy:IsMagicImmune()) then
                     local gustDelay = gust:GetCastPoint() + GetUnitToUnitDistance(bot, enemy)/wave_speed
                     utils.TreadCycle(bot, constants.INTELLIGENCE)
                     bot:Action_UseAbilityOnLocation(gust, enemy:GetExtrapolatedLocation(gustDelay))
@@ -99,7 +98,7 @@ local function UseW(bot)
             end
         end
 
-        local center = utils.GetCenter(Enemies)
+        local center = utils.GetCenter(nearbyEnemyHeroes)
         if center ~= nil then
             utils.TreadCycle(bot, constants.INTELLIGENCE)
             bot:Action_UseAbilityOnLocation(gust, center)
@@ -110,26 +109,24 @@ local function UseW(bot)
     return false
 end
 
-local function UseE(bot)
+local function UseE(bot, nearbyEnemyTowers, nearbyAlliedCreep)
     local trueshot = bot:GetAbilityByName(Abilities[3])
 
-    if (trueshot == nil) or (not trueshot:IsFullyCastable()) then
+    if not trueshot:IsFullyCastable() then
         return false
     end
     -- TODO: use GetAttackTarget() to check if drow is attacking a tower before using trueshot not sure which is better
-    local towersNearby = bot:GetNearbyTowers(bot:GetAttackRange(), true)
 
-    if towersNearby == nil then return false end
+    if #nearbyEnemyTowers == 0 then return false end
 
-    local alliedCreeps = bot:GetNearbyCreeps(900, false)
-
-    for i, creeps in ipairs(alliedCreeps) do
+    local rangedCnt = 0
+    for i, creeps in ipairs(nearbyAlliedCreep) do
         if (utils.IsMelee(creeps)) then
-            table.remove(alliedCreeps, 1 )
+            rangedCnt = rangedCnt + 1
         end
     end
 
-    if (towersNearby ~= nil and #alliedCreeps > 3) then
+    if #nearbyEnemyTowers > 0 and rangedCnt > 3 then
         bot:Action_UseAbility(trueshot)
         return true
     end
@@ -137,16 +134,22 @@ local function UseE(bot)
     return false
 end
 
-function AbilityUsageThink()
+function AbilityUsageThink(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCreep, nearbyAlliedCreep, nearbyEnemyTowers, nearbyAlliedTowers)
     if ( GetGameState() ~= GAME_STATE_GAME_IN_PROGRESS and GetGameState() ~= GAME_STATE_PRE_GAME ) then return false end
 
     local bot = GetBot()
+    if not bot:IsAlive() then return false end
 
-    if bot:IsChanneling() or bot:IsUsingAbility() then return false end
+    -- Check if we're already using an ability
+    if ( bot:IsUsingAbility() or bot:IsChanneling() ) then return false end
 
-    if UseE(bot) then return true end
+    if UseE(bot, nearbyEnemyTowers, nearbyAlliedCreep) then return true end
 
-    if UseW(bot) or UseQ(bot) then return true end
+    if UseW(bot, nearbyEnemyHeroes) then return true end
+    
+    --if UseQ(bot) then return true end
+    
+    return false
 end
 
 for k,v in pairs( ability_usage_drow_ranger ) do _G._savedEnv[k] = v end

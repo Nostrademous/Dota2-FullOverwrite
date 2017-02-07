@@ -27,42 +27,22 @@ function GlobalFindTarget(heroToEnemyDist)
     
 end
 
-function FindTarget(dist)
+function FindTarget(listEnemies, listEnemyTowers, listAlliedTowers, listEnemyCreeps, listAlliedCreeps)
 	local npcBot = GetBot()
 
 	local mindis = 100000
 	local candidate = nil
 	local bestScore = -1
 
-	local Enemies = npcBot:GetNearbyHeroes(dist, true, BOT_MODE_NONE);
-
-	if Enemies == nil or #Enemies == 0 then
+	if #listEnemies == 0 then
 		return nil, 0.0
 	end
 
-	local Towers = npcBot:GetNearbyTowers(750, true)
-	local AlliedTowers = npcBot:GetNearbyTowers(750, false)
-	local AlliedCreeps = npcBot:GetNearbyCreeps(700, false)
-	local EnemyCreeps = npcBot:GetNearbyCreeps(700 ,true)
-	local nEc = 0
-	local nAc = 0
-    
-	if AlliedCreeps ~= nil then
-		nAc = #AlliedCreeps
-	end
-	if EnemyCreeps ~= nil then
-		nEc = #EnemyCreeps
-	end
+	local nEc = #listEnemyCreeps
+	local nAc = #listAlliedCreeps
 
-	local nTo = 0
-	if Towers ~= nil then
-		nTo = #Towers
-	end
-
-	local fTo = 0
-	if AlliedTowers ~= nil then
-		fTo = #AlliedTowers
-	end
+	local nTo = #listEnemyTowers
+    local fTo = #listAlliedTowers
 
     local goodHealthPool = 0
     local badHealthPool = 0
@@ -74,7 +54,7 @@ function FindTarget(dist)
     local deadBaddies = {}
     
     local lvl = npcBot:GetLevel()
-	for _, enemy in pairs(Enemies) do
+	for _, enemy in pairs(listEnemies) do
 		if utils.NotNilOrDead(enemy) and GetUnitToLocationDistance(enemy, utils.Fountain(utils.GetOtherTeam())) > 1350 then
             
             -- get our stun/slow duration
@@ -139,7 +119,6 @@ function FindTarget(dist)
 				end
 			end
             
-			local allyList = GetUnitList(UNIT_LIST_ALLIED_HEROES)
             for _, ally in pairs(allyList) do
                 local timeToLocation = GetUnitToUnitDistance(enemy, ally)/ally:GetCurrentMovementSpeed()
 				if utils.NotNilOrDead(Ally) and timeToLocation < goodFightLength then

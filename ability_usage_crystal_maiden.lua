@@ -29,7 +29,7 @@ local Abilities ={
     "crystal_maiden_freezing_field"
 }
 
-function AbilityUsageThink()
+function AbilityUsageThink(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCreep, nearbyAlliedCreep, nearbyEnemyTowers, nearbyAlliedTowers)
     if ( GetGameState() ~= GAME_STATE_GAME_IN_PROGRESS and GetGameState() ~= GAME_STATE_PRE_GAME ) then return false end
 
     local bot = GetBot()
@@ -38,21 +38,20 @@ function AbilityUsageThink()
     -- Check if we're already using an ability
     if bot:IsUsingAbility() or bot:IsChanneling() then return false end
 
-    if UseUlt(bot) or UseW(bot) or UseQ(bot) then return true end
+    if UseUlt(bot, nearbyEnemyHeroes) or UseW(bot, nearbyEnemyHeroes) or UseQ(bot, nearbyAlliedHeroes) then return true end
     
     return false
 end
 
-function UseQ(bot)
+function UseQ(bot, nearbyAlliedHeroes)
     local ability = bot:GetAbilityByName(Abilities[1])
 
-    if (ability == nil) or (not ability:IsFullyCastable()) then
+    if not ability:IsFullyCastable() then
         return false
     end
     
-    local listAllies = bot:GetNearbyHeroes( 700, false, BOT_MODE_NONE )
     local coreNear = false
-    for _, ally in ipairs(listAllies) do
+    for _, ally in ipairs(nearbyAlliedHeroes) do
         if utils.IsCore(ally) then
             coreNear = true
             break
@@ -72,7 +71,7 @@ function UseQ(bot)
     
     -- If we're pushing or defending a lane and can hit 4+ creeps, go for it
     if getHeroVar("ShouldDefend") == true or ( getHeroVar("ShouldPush") == true and currManaPerct >= 0.4 ) then
-        local locationAoE = npcBot:FindAoELocation( true, false, npcBot:GetLocation(), nCastRange, nRadius, 0, 0 )
+        local locationAoE = bot:FindAoELocation( true, false, bot:GetLocation(), nCastRange, nRadius, 0, 0 )
 
         if locationAoE.count >= 4 then
             bot:Action_UseAbilityOnLocation(ability, locationAoE.targetloc)
@@ -93,10 +92,10 @@ function UseQ(bot)
     return false
 end
 
-function UseW(bot)
+function UseW(bot, nearbyEnemyHeroes)
     local ability = bot:GetAbilityByName(Abilities[2])
 
-    if (ability == nil) or (not ability:IsFullyCastable()) then
+    if not ability:IsFullyCastable() then
         return false
     end
     
@@ -106,12 +105,11 @@ function UseW(bot)
 
     -- if we don't have a valid target
     if not utils.ValidTarget(target) then
-        local NearbyEnemyHeroes = bot:GetNearbyHeroes( ability:GetCastRange() + 250, true, BOT_MODE_NONE )
         local currManaPerct = bot:GetMana()/bot:GetMaxMana()
         local bestTarget = nil
-        if #NearbyEnemyHeroes > 0 then
-            for _, enemy in pairs( NearbyEnemyHeroes ) do
-                if not utils.IsTargetMagicImmune( enemy ) then
+        if #nearbyEnemyHeroes > 0 then
+            for _, enemy in pairs( nearbyEnemyHeroes ) do
+                if not utils.IsTargetMagicImmune( enemy ) and GetUnitToUnitDistance(bot, enemy) < (ability:GetCastRange() + 250) then
                     if enemy:GetActualIncomingDamage( nDamage, DAMAGE_TYPE_MAGICAL ) > enemy:GetHealth() then
                         bestTarget = enemy
                         break
@@ -140,10 +138,10 @@ function UseW(bot)
     return false
 end
 
-function UseUlt(bot)
+function UseUlt(bot, nearbyEnemyHeroes)
     local ability = bot:GetAbilityByName(Abilities[4])
 
-    if (ability == nil) or (not ability:IsFullyCastable()) then
+    if not ability:IsFullyCastable() then
         return false
     end
     

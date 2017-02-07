@@ -31,7 +31,7 @@ local Abilities ={
 local DoTdpsQ = 0
 local DoTdpsUlt = 0
 
-function AbilityUsageThink()
+function AbilityUsageThink(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCreep, nearbyAlliedCreep, nearbyEnemyTowers, nearbyAlliedTowers)
     if ( GetGameState() ~= GAME_STATE_GAME_IN_PROGRESS and GetGameState() ~= GAME_STATE_PRE_GAME ) then return false end
 
     local bot = GetBot()
@@ -83,17 +83,7 @@ function UseQ(bot)
     end
 
     -- harassment code when in lane
-    --[[ DON'T DO THIS HERE - IT'S HANDLED in laning_generic.lua UseOrbEffect()
-    if (bot:GetMana()/bot:GetMaxMana()) > 0.5 then
-        local weakestHero, weakestHeroHealth = utils.GetWeakestHero(bot, ability:GetCastRange() + 100)
-        if weakestHero ~= nil then
-            utils.TreadCycle(bot, constants.INTELLIGENCE)
-            bot:Action_UseAbilityOnEntity(ability, weakestHero)
-            return true
-        end
-    end
-    --]]
-
+    -- DON'T DO THIS HERE - IT'S HANDLED in laning_generic.lua UseOrbEffect()
     return false
 end
 

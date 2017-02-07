@@ -192,66 +192,103 @@ U.SECRET_SHOP_RADIANT = Vector(-4472,1328);
 U.SECRET_SHOP_DIRE = Vector(4586,-1588);
 U.ROSHAN = Vector(-2450, 1880);
 
-U.RadiantSafeSpots={
-    Vector(4088,-3919),
-    Vector(5153,-3784),
-    Vector(2810,-5053),
-    Vector(2645,-3814),
-    Vector(724,-3003),
-    Vector(1037,-5629),
-    Vector(1271,-4128),
-    Vector(-989,-5559),
-    Vector(-780,-3919),
-    Vector(-128,-2523),
-    Vector(-2640,-2200),
-    Vector(-1284,-962),
-    Vector(-2032,364),
-    Vector(-3545,-892),
-    Vector(-5518,-1450),
-    Vector(-4301,377),
-    Vector(-5483,1633),
-    Vector(-6152,-5664),
-    Vector(-6622,-3666),
-    Vector(-6413,-1651),
-    Vector(-4814,-4242),
-    Vector(-3379,-3073),
-    Vector(-4283,-6091),
-    Vector(-2441,-6056),
-    Vector(5722,-2602),
-    Vector(4595,-1540),
-    Vector(617, -2390),
-    Vector(-122, -6300)
+U.MapSafeSpots = {
+    Vector(-7180, 4811),
+    Vector(-6237, 4985),
+    Vector(-6998, 3659),
+    Vector(-5255, 4484),
+    Vector(-6159, 3385),
+    Vector(-4433, 4719),
+    Vector(-3377, 5090),
+    Vector(-2825, 4122),
+    Vector(-3255, 5888),
+    Vector(-2217, 6228),
+    Vector(-1943, 4920),
+    Vector(-795, 4994),
+    Vector(-22, 4096),
+    Vector(-1547, 3720),
+    Vector(-934, 3393),
+    Vector(-1973, 2805),
+    Vector(-3560, 2460),
+    Vector(1521, 4209),
+    Vector(2843, 3738),
+    Vector(2104, 3646), 
+    Vector(1817, 2787),
+    Vector(1039, 2342),
+    Vector(3990, 2831),
+    Vector(-196, 2329),
+    Vector(4173, 1950),
+    Vector(3599, 1042),
+    Vector(3160, -148),
+    Vector(5146, 1849),
+    Vector(1965, 571),
+    Vector(1982, -113),
+    Vector(2399, -1029),
+    Vector(1669, -816),
+    Vector(-335, 1282),
+    Vector(-300, 209),
+    Vector(-1743, 1195),
+    Vector(-2012, 462),
+    Vector(-2504, 9),
+    Vector(-3338, -1213),
+    Vector(-1221, -471),
+    Vector(-517, -1230),
+    Vector(-535, -2006),
+    Vector(-1274, -2486),
+    Vector(700, -2608),
+    Vector(2021, -2425),
+    Vector(2838, -2085),
+    Vector(4386, -1535),
+    Vector(4803, -131),
+    Vector(-4525, 1317),
+    Vector(-5003, 314),
+    Vector(-5994, 628),
+    Vector(-3447, -1117),
+    Vector(-4872, -1056),
+    Vector(-4412, -1884),
+    Vector(-2873, -2041),
+    Vector(-2417, -2465),
+    Vector(-2404, -2791),
+    Vector(-1908, -3027),
+    Vector(-1704, -3795),
+    Vector(-400, -4353),
+    Vector(1095, -4327),
+    Vector(-2817, -3969),
+    Vector(1469, -4745),
+    Vector(3269, -5295),
+    Vector(3156, -6132),
+    Vector(2025, -6211),
+    Vector(3703, -3768),
+    Vector(4486, -5033),
+    Vector(5972, -4964),
+    Vector(7354, -4144),
+    Vector(7467, -3149),
+    Vector(5190, -3768)
 }
 
-U.DireSafeSpots={
-    Vector(-1912,2412),
-    Vector(-4405,4735),
-    Vector(-2840,4194),
-    Vector(-1319,4735),
-    Vector(-980,3330),
-    Vector(776,4229),
-    Vector(11,2405),
-    Vector(324,670),
-    Vector(1480,1760),
-    Vector(2236,3217),
-    Vector(3079,1812),
-    Vector(1958,-116),
-    Vector(3375,242),
-    Vector(3636,-1023),
-    Vector(4957,1812),
-    Vector(4914,434),
-    Vector(5487,-1729),
-    Vector(6026,5585),
-    Vector(6339,3631),
-    Vector(6113,1782),
-    Vector(4653,4154),
-    Vector(3219,2916),
-    Vector(4070,5821),
-    Vector(2036,5637),
-    Vector(-3715,2246),
-    Vector(-113, 2565),
-    Vector(43, 6036)
-}
+U.RadiantSafeSpots = {unpack(U.MapSafeSpots)}
+U.RadiantSafeSpots[#U.RadiantSafeSpots+1] = U.Locations.RadiantBase
+U.RadiantSafeSpots[#U.RadiantSafeSpots+1] = U.Locations.RBT1
+U.RadiantSafeSpots[#U.RadiantSafeSpots+1] = U.Locations.RBT2
+U.RadiantSafeSpots[#U.RadiantSafeSpots+1] = U.Locations.RBT3
+U.RadiantSafeSpots[#U.RadiantSafeSpots+1] = U.Locations.RMT1
+U.RadiantSafeSpots[#U.RadiantSafeSpots+1] = U.Locations.RMT2
+U.RadiantSafeSpots[#U.RadiantSafeSpots+1] = U.Locations.RMT3
+U.RadiantSafeSpots[#U.RadiantSafeSpots+1] = U.Locations.RTT1
+U.RadiantSafeSpots[#U.RadiantSafeSpots+1] = U.Locations.RTT2
+U.RadiantSafeSpots[#U.RadiantSafeSpots+1] = U.Locations.RTT3
+
+U.DireSafeSpots = {unpack(U.MapSafeSpots)}
+U.DireSafeSpots[#U.DireSafeSpots+1] = U.Locations.DireBase
+U.DireSafeSpots[#U.DireSafeSpots+1] = U.Locations.DBT1
+U.DireSafeSpots[#U.DireSafeSpots+1] = U.Locations.DBT2
+U.DireSafeSpots[#U.DireSafeSpots+1] = U.Locations.DBT3
+U.DireSafeSpots[#U.DireSafeSpots+1] = U.Locations.DMT1
+U.DireSafeSpots[#U.DireSafeSpots+1] = U.Locations.DMT2
+U.DireSafeSpots[#U.DireSafeSpots+1] = U.Locations.DMT3
+U.DireSafeSpots[#U.DireSafeSpots+1] = U.Locations.DTT1
+U.DireSafeSpots[#U.DireSafeSpots+1] = U.Locations.DTT2
+U.DireSafeSpots[#U.DireSafeSpots+1] = U.Locations.DTT3
 
 -------------------------------------------------------------------------------
 -- Properties
@@ -845,33 +882,6 @@ function U.EnemiesNearLocation(bot, loc, dist)
     return num
 end
 
-function U.PredictedLocation(bot, targetID)
-    if targetID == 0 or (targetID > 0 and not IsHeroAlive(targetID)) then return nil end
-
-    --[[ FIXME: Re-enable code once GetUnitPotentialValue() is fixed to work on ID
-    local lastLoc = GetHeroLastSeenInfo(targetID).location
-    if U.GetOtherTeam() == TEAM_DIRE then
-        local prob1 = GetUnitPotentialValue(targetID, Vector(lastLoc[1] + 500, lastLoc[2]), 1000)
-        local prob2 = GetUnitPotentialValue(targetID, Vector(lastLoc[1], lastLoc[2] + 500), 1000)
-        if prob1 > 180 and prob1 > prob2 then
-            return Vector(lastLoc[1] + 500, lastLoc[2])
-        elseif prob2 > 180 then
-            bot:Action_MoveToLocation()
-            return Vector(lastLoc[1], lastLoc[2] + 500)
-        end
-    else
-        local prob1 = GetUnitPotentialValue(targetID, Vector(lastLoc[1] - 500, lastLoc[2]), 1000)
-        local prob2 = GetUnitPotentialValue(targetID, Vector(lastLoc[1], lastLoc[2] - 500), 1000)
-        if prob1 > 180 and prob1 > prob2 then
-            return Vector(lastLoc[1] - 500, lastLoc[2])
-        elseif prob2 > 180 then
-            return Vector(lastLoc[1], lastLoc[2] - 500)
-        end
-    end
-    --]]
-    return nil
-end
-
 function U.GetWardingSpot(lane)
     -- GOOD RESOURCE: http://devilesk.com/dota2/apps/interactivemap3/?x=426&y=96&zoom=0
 
@@ -1149,20 +1159,20 @@ end
 
 -- takes a "RANGE", returns creep handle and health value of that creep
 function U.GetWeakestCreep(creeps)
-    local WeakestCreep=nil;
-    local LowestHealth=10000;
+    local WeakestCreep = nil
+    local LowestHealth = 100000
 
     for _,creep in pairs(creeps) do
         U.UpdateCreepHealth(creep)
         if creep:IsAlive() then
-            if creep:GetHealth()<LowestHealth then
-                LowestHealth=creep:GetHealth();
-                WeakestCreep=creep;
+            if creep:GetHealth() < LowestHealth then
+                LowestHealth = creep:GetHealth()
+                WeakestCreep = creep
             end
         end
     end
 
-    return WeakestCreep, LowestHealth;
+    return WeakestCreep, LowestHealth
 end
 
 -------------------------------------------------------------------------------
@@ -1232,7 +1242,7 @@ end
 -- takes a "RANGE", returns hero handle and health value of that hero
 -- FIXME - make it handle heroes that went invisible if we have detection
 function U.GetWeakestHero(bot, r)
-    local EnemyHeroes = bot:GetNearbyHeroes(r, true, BOT_MODE_NONE);
+    local EnemyHeroes = bot:GetNearbyHeroes(r, true, BOT_MODE_NONE)
 
     if EnemyHeroes == nil or #EnemyHeroes == 0 then
         return nil, 10000
@@ -1254,6 +1264,8 @@ function U.GetWeakestHero(bot, r)
 end
 
 function U.EnemyHasBreakableBuff(enemy)
+    if enemy:IsNull() then return false end
+    
     if enemy:HasModifier("modifier_clarity_potion") or
         enemy:HasModifier("modifier_flask_healing") or
         enemy:HasModifier("modifier_bottle_regeneration") then

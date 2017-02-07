@@ -60,8 +60,8 @@ bloodseekerBot = botBS:new{actionStack = bloodseekerActionStack, abilityPriority
 
 bloodseekerBot.Init = false
 
-function bloodseekerBot:ConsiderAbilityUse()
-    ability_usage_bloodseeker.AbilityUsageThink()
+function bloodseekerBot:ConsiderAbilityUse(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCreep, nearbyAlliedCreep, nearbyEnemyTowers, nearbyAlliedTowers)
+    ability_usage_bloodseeker.AbilityUsageThink(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCreep, nearbyAlliedCreep, nearbyEnemyTowers, nearbyAlliedTowers)
 end
 
 function Think()

@@ -50,8 +50,8 @@ function viperBot:DoHeroSpecificInit(bot)
     self:setHeroVar("HasOrbAbility", SKILL_Q)
 end
 
-function viperBot:ConsiderAbilityUse()
-    return ability_usage_viper.AbilityUsageThink()
+function viperBot:ConsiderAbilityUse(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCreep, nearbyAlliedCreep, nearbyEnemyTowers, nearbyAlliedTowers)
+    return ability_usage_viper.AbilityUsageThink(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCreep, nearbyAlliedCreep, nearbyEnemyTowers, nearbyAlliedTowers)
 end
 
 function Think()

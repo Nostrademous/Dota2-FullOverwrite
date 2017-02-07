@@ -47,8 +47,8 @@ timberBot = TimberBot:new{actionStack = timberActionStack, abilityPriority = Tim
 
 timberBot.Init = false
 
-function timberBot:ConsiderAbilityUse()
-    return ability_usage_shredder.AbilityUsageThink()
+function timberBot:ConsiderAbilityUse(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCreep, nearbyAlliedCreep, nearbyEnemyTowers, nearbyAlliedTowers)
+    return ability_usage_shredder.AbilityUsageThink(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCreep, nearbyAlliedCreep, nearbyEnemyTowers, nearbyAlliedTowers)
 end
 
 function Think()

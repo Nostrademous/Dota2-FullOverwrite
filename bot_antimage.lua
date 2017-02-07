@@ -44,8 +44,8 @@ amBot = AMBot:new{actionStack = antimageActionStack, abilityPriority = AntimageA
 
 amBot.Init = false
 
-function amBot:ConsiderAbilityUse()
-    ability_usage_antimage.AbilityUsageThink()
+function amBot:ConsiderAbilityUse(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCreep, nearbyAlliedCreep, nearbyEnemyTowers, nearbyAlliedTowers)
+    ability_usage_antimage.AbilityUsageThink(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCreep, nearbyAlliedCreep, nearbyEnemyTowers, nearbyAlliedTowers)
 end
 
 function amBot:DoHeroSpecificInit(bot)

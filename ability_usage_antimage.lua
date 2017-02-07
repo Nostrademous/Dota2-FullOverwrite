@@ -19,26 +19,24 @@ function getHeroVar(var)
 	return gHeroVar.GetVar(bot:GetPlayerID(), var)
 end
 
-function AbilityUsageThink()
+function AbilityUsageThink(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCreep, nearbyAlliedCreep, nearbyEnemyTowers, nearbyAlliedTowers)
 	if ( GetGameState() ~= GAME_STATE_GAME_IN_PROGRESS and GetGameState() ~= GAME_STATE_PRE_GAME ) then return false end
 	
-	local npcBot = GetBot()
-	if not npcBot:IsAlive() then return false end
-	
-	local EnemyHeroes = npcBot:GetNearbyHeroes(1200, true, BOT_MODE_NONE)
-	
-	if #EnemyHeroes == 0 then return false end
+	local bot = GetBot()
+    if not bot:IsAlive() then return false end
 
-	-- Check if we're already using an ability
-	if npcBot:IsUsingAbility() then return false end
+    -- Check if we're already using an ability
+    if bot:IsUsingAbility() or bot:IsChanneling() then return false end
+	
+	if #nearbyEnemyHeroes == 0 then return false end
 
-	abilityMV = npcBot:GetAbilityByName( "antimage_mana_void" )
+	abilityMV = bot:GetAbilityByName( "antimage_mana_void" )
 
 	-- Consider using each ability
 	castMVDesire, castMVTarget = ConsiderManaVoid( abilityMV )
 
 	if castMVDesire > 0 then
-		npcBot:Action_UseAbilityOnEntity( abilityMV, castMVTarget )
+		bot:Action_UseAbilityOnEntity( abilityMV, castMVTarget )
 		return true
 	end
 	
@@ -48,12 +46,12 @@ end
 ----------------------------------------------------------------------------------------------------
 
 function CanCastManaVoidOnTarget( npcTarget )
-	return npcTarget:CanBeSeen() and not npcTarget:IsMagicImmune() and not npcTarget:IsInvulnerable();
+	return npcTarget:CanBeSeen() and not utils.IsTargetMagicImmune( npcTarget )
 end
 
 ----------------------------------------------------------------------------------------------------
 
-function ConsiderManaVoid(abilityMV)
+function ConsiderManaVoid(abilityMV, nearbyEnemyHeroes)
 
 	local npcBot = GetBot()
 
@@ -71,16 +69,15 @@ function ConsiderManaVoid(abilityMV)
 	-- Global high-priorty usage
 	--------------------------------------
 
-	local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nCastRange, true, BOT_MODE_NONE )
 	local channelingHero = nil
 	local lowestManaHero = nil
 	local highestManaDiff = 0
-	for _,npcEnemy in pairs( tableNearbyEnemyHeroes ) do
-		if npcEnemy:IsChanneling() then
+	for _,npcEnemy in pairs( nearbyEnemyHeroes ) do
+		if GetUnitToUnitDistance( npcBot, npcEnemy ) < nCastRange and npcEnemy:IsChanneling() then
 			channelingHero = npcEnemy
 		end
 		local manaDiff = npcEnemy:GetMaxMana() - npcEnemy:GetMana()
-		if manaDiff > highestManaDiff then
+		if GetUnitToUnitDistance( npcBot, npcEnemy ) < nCastRange and manaDiff > highestManaDiff then
 			lowestManaHero = npcEnemy
 			highestManaDiff = manaDiff
 		end

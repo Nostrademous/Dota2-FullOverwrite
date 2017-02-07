@@ -13,6 +13,7 @@ require( GetScriptDirectory().. "/global_game_state" )
 
 local utils = require( GetScriptDirectory().."/utility")
 local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
+local enemyData = require( GetScriptDirectory().."/enemy_data" )
 
 function setHeroVar(var, value)
     local bot = GetBot()
@@ -140,21 +141,23 @@ function ApproachTarget(bot, target)
                     end
                 end
                 --]]
-                bot:Action_MoveToUnit(target.Obj) -- Let's go there
+                bot:Action_MoveToLocation(target.Obj:GetLocation()) -- Let's go there
                 return false
             end
         else
-            if GetHeroLastSeenInfo(target.Id).time > 3.0 then
-                utils.myPrint("Lost Sight of GankTarget["..targetId.."] for over 3.0 seconds - abandoning")
+            utils.myPrint("Target not visible... estimating")
+            local timeSinceSeen =  GetHeroLastSeenInfo(target.Id).time
+            if timeSinceSeen > 3.0 then
+                utils.myPrint("Lost Sight of GankTarget["..target.Id.."] for over 3.0 seconds - abandoning")
                 me:RemoveAction(constants.ACTION_GANKING)
                 setHeroVar("GankTarget", {Obj=nil, Id=0})
                 return false
             else
-                local pLoc = U.PredictedLocation(bot, target.Id)
-                if pLoc ~= nil then
+                local pLoc = enemyData.PredictedLocation(target.Id, timeSinceSeen)
+                if pLoc then
                     item_usage.UseMovementItems()
                     bot:Action_MoveToLocation(pLoc)
-                    return true
+                    return false
                 end
             end
         end

@@ -57,8 +57,8 @@ cmBot = botCM:new{actionStack = cmActionStack, abilityPriority = AbilityPriority
 
 cmBot.Init = false
 
-function cmBot:ConsiderAbilityUse()
-    ability_usage_crystal_maiden.AbilityUsageThink()
+function cmBot:ConsiderAbilityUse(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCreep, nearbyAlliedCreep, nearbyEnemyTowers, nearbyAlliedTowers)
+    ability_usage_crystal_maiden.AbilityUsageThink(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCreep, nearbyAlliedCreep, nearbyEnemyTowers, nearbyAlliedTowers)
 end
 
 function Think()

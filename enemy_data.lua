@@ -84,6 +84,30 @@ function EnemyData.UpdateEnemyInfo(timeFreq)
     EnemyData.Lock = false
 end
 
+local function GetEnemyFutureLocation(ePID, fTime)
+    if ( EnemyData.Lock ) then return nil end
+    EnemyData.Lock = true
+    
+    for k, v in pairs(EnemyData) do
+        if type(k) == "number"  and k == ePID then
+            if fTime <= 0.5 then
+                return v.LocExtra1
+            else
+                return v.LocExtra2
+            end
+        end
+    end
+    
+    EnemyData.Lock = false
+    return nil
+end
+
+function EnemyData.PredictedLocation(targetID, fTime)
+    if targetID == 0 or (targetID > 0 and not IsHeroAlive(targetID)) then return nil end
+
+    return GetEnemyFutureLocation(targetID, fTime)
+end
+
 function EnemyData.GetEnemyDmgs(ePID, fDuration)
     if ( EnemyData.Lock ) then return 0 end
     EnemyData.Lock = true

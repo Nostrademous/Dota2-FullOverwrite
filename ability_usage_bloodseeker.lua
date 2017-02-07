@@ -26,17 +26,15 @@ local Abilities ={
     "bloodseeker_rupture"
 };
 
-local function UseW()
+local function UseW(nearbyEnemyHeroes)
     local npcBot = GetBot()
     local ability = npcBot:GetAbilityByName(Abilities[2])
     if ability == nil or (not ability:IsFullyCastable()) then return false end
 
     local ult = npcBot:GetAbilityByName(Abilities[4])
 
-    local Enemies = npcBot:GetNearbyHeroes(1500, true, BOT_MODE_NONE)
-
-    if #Enemies == 1 and ( ult ~= nil and ult:IsFullyCastable() ) then
-        setHeroVar("Target", {Obj=Enemies[1], Id=Enemies[1]:GetPlayerID()})
+    if #nearbyEnemyHeroes == 1 and ( ult ~= nil and ult:IsFullyCastable() ) then
+        setHeroVar("Target", {Obj=nearbyEnemyHeroes[1], Id=nearbyEnemyHeroes[1]:GetPlayerID()})
         return false
     end
 
@@ -46,11 +44,11 @@ local function UseW()
     end
     
     local delay = ability:GetSpecialValueFloat("delay_plus_castpoint_tooltip")
-    if #Enemies == 1 then
-        npcBot:Action_UseAbilityOnLocation(ability, Enemies[1]:GetExtrapolatedLocation(delay))
+    if #nearbyEnemyHeroes == 1 then
+        npcBot:Action_UseAbilityOnLocation(ability, nearbyEnemyHeroes[1]:GetExtrapolatedLocation(delay))
         return true
     else
-        local center = utils.GetCenter(Enemies)
+        local center = utils.GetCenter(nearbyEnemyHeroes)
         if center ~= nil then
             npcBot:Action_UseAbilityOnLocation(ability, center)
             return true
@@ -60,7 +58,7 @@ local function UseW()
     return false
 end
 
-local function UseUlt()
+local function UseUlt(nearbyEnemyHeroes, nearbyEnemyTowers)
     -- TODO: don't use it if we can kill the enemy by rightclicking / have teammates around
     local npcBot = GetBot()
     local ability = npcBot:GetAbilityByName(Abilities[4])
@@ -70,9 +68,7 @@ local function UseUlt()
     if not utils.ValidTarget(enemy) then return false end
     
     --[[
-    local enemyTowers = npcBot:GetNearbyTowers(1200, true)
-    local enemyHeroes = npcBot:GetNearbyHeroes(1200, true, BOT_MODE_NONE)
-    if #enemyHeroes == 0 and #enemyTowers == 0 and (enemy:GetHealth()/enemy:GetMaxHealth()) < 0.2 then
+    if #nearbyEnemyHeroes == 0 and #nearbyEnemyTowers == 0 and (enemy:GetHealth()/enemy:GetMaxHealth()) < 0.2 then
         return false
     end
     --]]
@@ -108,7 +104,7 @@ local function UseQ()
     return true
 end
 
-function AbilityUsageThink()
+function AbilityUsageThink(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCreep, nearbyAlliedCreep, nearbyEnemyTowers, nearbyAlliedTowers)
     if ( GetGameState() ~= GAME_STATE_GAME_IN_PROGRESS and GetGameState() ~= GAME_STATE_PRE_GAME ) then return false end
 
     local npcBot = GetBot()
@@ -117,7 +113,13 @@ function AbilityUsageThink()
 
     if not utils.ValidTarget(getHeroVar("Target")) then return false end
 
-    if UseQ() or UseUlt() or UseW() then return true end
+    if UseQ() then return true end
+    
+    if #nearbyEnemyHeroes == 0 then return false end
+
+    if UseUlt(nearbyEnemyHeroes, nearbyEnemyTowers) or UseW(nearbyEnemyHeroes) then return true end
+    
+    return false
 end
 
 for k,v in pairs( ability_usage_bloodseeker ) do _G._savedEnv[k] = v end

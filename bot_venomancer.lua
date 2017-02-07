@@ -57,8 +57,8 @@ vmBot = botVM:new{actionStack = vmActionStack, abilityPriority = AbilityPriority
 
 vmBot.Init = false
 
-function vmBot:ConsiderAbilityUse()
-    ability_usage_venomancer.AbilityUsageThink()
+function vmBot:ConsiderAbilityUse(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCreep, nearbyAlliedCreep, nearbyEnemyTowers, nearbyAlliedTowers)
+    ability_usage_venomancer.AbilityUsageThink(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCreep, nearbyAlliedCreep, nearbyEnemyTowers, nearbyAlliedTowers)
 end
 
 function Think()

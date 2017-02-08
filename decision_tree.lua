@@ -299,6 +299,10 @@ function X:Think(bot)
     -- check if jungle respawn timer was hit to repopulate our table
     jungle_status.checkSpawnTimer()
     buildings_status.Update()
+    
+    -- HANDLE ILLUSIONS
+    local bIllusion = self:DoHandleIllusions(bot)
+    if bIllusion then return end
 
     -- LEVEL UP ABILITIES
     local checkLevel, newTime = utils.TimePassed(self:getHeroVar("LastLevelUpThink"), 2.0)
@@ -547,7 +551,7 @@ function X:Determine_ShouldUseGlyph(bot)
 	    local listHeroCount = tower:GetNearbyHeroes(tower:GetAttackRange(), true, BOT_MODE_NONE)
 
 	    if tower:GetHealth() < math.max(tower:GetMaxHealth()*0.15, 150) and tower:TimeSinceDamagedByAnyHero() < 3
-            and tower:TimeSinceDamagedByCreep() < 3 and (#listEnemyCreep >= 2 or #listHeroCount >= 1) then
+            and tower:TimeSinceDamagedByCreep() < 3 then --FIXME uncomment when fixed and (#listEnemyCreep >= 2 or #listHeroCount >= 1) then
 		    return true
 	    end
     end
@@ -1414,6 +1418,10 @@ function X:SaveLocation(bot)
     if self.Init then
         self:setHeroVar("LastLocation", bot:GetLocation())
     end
+end
+
+function X:DoHandleIllusions(bot)
+    return bot:IsIllusion()
 end
 
 return X;

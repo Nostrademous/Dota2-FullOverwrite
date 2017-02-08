@@ -56,6 +56,6 @@ end
 
 function Think()
     local npcBot = GetBot()
-
+    
     linaBot:Think(npcBot)
 end

@@ -186,10 +186,12 @@ function GlobalFightDetermination()
                     local timeToReach = distance/ally:GetCurrentMovementSpeed()
                     
                     if distance <= eyeRange then
-                        utils.myPrint("sees "..enemy.Name.." ", distance, " units away. Time to reach: ", timeToReach)
+                        --utils.myPrint(utils.GetHeroName(ally), " sees "..enemy.Name.." ", distance, " units away. Time to reach: ", timeToReach)
                         
                         local myStun = ally:GetStunDuration(true)
                         local mySlow = ally:GetSlowDuration(true)
+                        local allAllyStun = 0
+                        local allAllySlow = 0
                         local myTimeToKillTarget = 0.0
                         if utils.ValidTarget(enemy) then
                             myTimeToKillTarget = fight_simul.estimateTimeToKill(ally, enemy.Obj)
@@ -220,7 +222,7 @@ function GlobalFightDetermination()
                                 local allyTimeToReach = distToEnemy/ally2:GetCurrentMovementSpeed()
                                 
                                 if distToEnemy <= 2*eyeRange then
-                                    utils.myPrint("ally ", utils.GetHeroName(ally2), " is ", distToEnemy, " units away. Time to reach: ", allyTimeToReach)
+                                    --utils.myPrint("ally ", utils.GetHeroName(ally2), " is ", distToEnemy, " units away. Time to reach: ", allyTimeToReach)
                                     totalTimeToKillTarget = totalTimeToKillTarget + 8.0
                                     table.insert(participatingAllyIDs, ally2:GetPlayerID())
                                 end
@@ -242,10 +244,10 @@ function GlobalFightDetermination()
                                 local allyTimeToReach = distToEnemy/ally2:GetCurrentMovementSpeed()
                                 
                                 if distToEnemy <= 2*eyeRange then
-                                    utils.myPrint("ally ", utils.GetHeroName(ally2), " is ", distToEnemy, " units away. Time to reach: ", allyTimeToReach)
+                                    --utils.myPrint("ally ", utils.GetHeroName(ally2), " is ", distToEnemy, " units away. Time to reach: ", allyTimeToReach)
                                     
-                                    local allyStun = ally2:GetStunDuration()
-                                    local allySlow = ally2:GetSlowDuration()
+                                    allAllyStun = allAllyStun + ally2:GetStunDuration(true)
+                                    allAllySlow = allAllySlow + ally2:GetSlowDuration(true)
                                     local allyTimeToKillTarget = 0.0
                                     if utils.ValidTarget(enemy) then
                                         allyTimeToKillTarget = fight_simul.estimateTimeToKill(ally2, enemy.Obj)
@@ -258,13 +260,21 @@ function GlobalFightDetermination()
                             end
                         end
                         
-                        local anticipatedTimeToKill = totalTimeToKillTarget/(#participatingAllyIDs+1)
-                        if utils.ValidTarget(enemy) and anticipatedTimeToKill < 6.0 then
-                            utils.myPrint("Engaging! Anticipated Time to kill: ", anticipatedTimeToKill)
+                        local numAttackers = #participatingAllyIDs+1
+                        local anticipatedTimeToKill = totalTimeToKillTarget/numAttackers
+                        local totalStun = myStun + allAllyStun
+                        local totalSlow = mySlow + allAllySlow
+                        local timeToKillBonus = numAttackers*(totalStun + 0.5*totalSlow)
+                        
+                        if utils.ValidTarget(enemy) and (anticipatedTimeToKill - timeToKillBonus) < 6.0 then
+                            utils.myPrint(#participatingAllyIDs+1, " of us can Stun for: ", totalStun, " and Slow for: ", totalSlow, ". AnticipatedTimeToKill ", enemy.Name ,": ", anticipatedTimeToKill)
+                            utils.myPrint(utils.GetHeroName(ally), " - Engaging! Anticipated Time to kill: ", anticipatedTimeToKill)
                             gHero.SetVar(ally:GetPlayerID(), "Target", {Obj=enemy.Obj, Id=k})
-                            for _, v in ipairs(participatingAllyIDs) do
-                                if gHero.GetVar(v:GetPlayerID(), "GankTarget").Id == 0 then
-                                    gHero.SetVar(v:GetPlayerID(), "Target", {Obj=enemy.Obj, Id=k})
+                            gHero.GetVar(ally:GetPlayerID(), "Self"):AddAction(constants.ACTION_FIGHT)
+                            for _, v in pairs(participatingAllyIDs) do
+                                if gHero.GetVar(v, "GankTarget").Id == 0 then
+                                    gHero.SetVar(v, "Target", {Obj=enemy.Obj, Id=k})
+                                    gHero.GetVar(v, "Self"):AddAction(constants.ACTION_FIGHT)
                                 end
                             end
                         end

@@ -1108,11 +1108,15 @@ function X:DoFight(bot)
                     item_usage.UseMovementItems()
                     bot:Action_MoveToLocation(pLoc)
                     return true
+                else
+                    self:RemoveAction(constants.ACTION_FIGHT)
+                    setHeroVar("Target", NoTarget)
+                    return false
                 end
             end
         end
     else
-        utils.myPrint("TargetId was: ", target.Id)
+        --utils.myPrint("TargetId was: ", target.Id)
         utils.AllChat("Suck it!")
         self:RemoveAction(ACTION_FIGHT)
         self:setHeroVar("Target", NoTarget)

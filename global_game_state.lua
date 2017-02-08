@@ -180,7 +180,7 @@ function GlobalFightDetermination()
                         elseif GetHeroLastSeenInfo(k).time <= 3.0 then
                             distance = GetUnitToLocationDistance(ally, enemy.LocExtra2)
                         else
-                            distance = GetUnitToLocationDistance(ally, GetHeroLastSeenInfo(k).location)
+                            break --distance = GetUnitToLocationDistance(ally, GetHeroLastSeenInfo(k).location)
                         end
                     end
                     local timeToReach = distance/ally:GetCurrentMovementSpeed()
@@ -216,7 +216,7 @@ function GlobalFightDetermination()
                                     elseif GetHeroLastSeenInfo(k).time <= 3.0 then
                                         distToEnemy = GetUnitToLocationDistance(ally2, enemy.LocExtra2)
                                     else
-                                        distToEnemy = GetUnitToLocationDistance(ally2, GetHeroLastSeenInfo(k).location)
+                                        break --distToEnemy = GetUnitToLocationDistance(ally2, GetHeroLastSeenInfo(k).location)
                                     end
                                 end
                                 local allyTimeToReach = distToEnemy/ally2:GetCurrentMovementSpeed()

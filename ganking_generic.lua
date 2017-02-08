@@ -141,12 +141,12 @@ function ApproachTarget(bot, target)
                     end
                 end
                 --]]
-                bot:Action_MoveToLocation(target.Obj:GetLocation()) -- Let's go there
+                bot:Action_MoveToUnit(target.Obj) -- Let's go there
                 return false
             end
         else
-            utils.myPrint("Target not visible... estimating")
             local timeSinceSeen =  GetHeroLastSeenInfo(target.Id).time
+            utils.myPrint("Target not visible... estimating location. Time: ", timeSinceSeen)
             if timeSinceSeen > 3.0 then
                 utils.myPrint("Lost Sight of GankTarget["..target.Id.."] for over 3.0 seconds - abandoning")
                 me:RemoveAction(constants.ACTION_GANKING)
@@ -157,8 +157,10 @@ function ApproachTarget(bot, target)
                 if pLoc then
                     item_usage.UseMovementItems()
                     bot:Action_MoveToLocation(pLoc)
-                    return false
+                else
+                    utils.myPrint("didn't get a valid predicted location")
                 end
+                return false
             end
         end
     else

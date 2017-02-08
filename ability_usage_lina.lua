@@ -75,6 +75,7 @@ function AbilityUsageThink(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCre
         local dmg, spells = comboDamage( npcBot, enemy, abilityLB, abilityLSA, abilityDS )
         if dmg > enemy:GetHealth() and not utils.IsTargetMagicImmune( enemy ) then
             setHeroVar("Target", {Obj=enemy, Id=enemy:GetPlayerID()})
+            setHeroVar("Queued", true)
             npcBot:SetActionQueueing(true)
             if spells == 2 then
                 local nCastRange = abilityDS:GetCastRange()

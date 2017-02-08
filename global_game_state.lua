@@ -167,16 +167,25 @@ function GlobalFightDetermination()
     local bUpdate, newTime = utils.TimePassed(lastGlobalFightDetermination, 0.25)
     if bUpdate then lastGlobalFightDetermination = newTime else return end
     
-    enemyData.UpdateEnemyInfo(1.0)
-    
     local eyeRange = 1200
     local listAllies = GetUnitList(UNIT_LIST_ALLIED_HEROES)
     for _, ally in ipairs(listAllies) do
         if ally:IsAlive() and gHero.HasID(ally:GetPlayerID()) and gHero.GetVar(ally:GetPlayerID(), "Target").Obj == nil then
             for k, enemy in ipairs(enemyData) do
                 -- get a valid enemyData enemy 
-                if type(k) == "number" and enemy.Health > 0 then
-                    local distance = GetUnitToLocationDistance(ally, enemy.Location)
+                if type(k) == "number" and enemy.Alive then
+                    local distance = 100000
+                    if enemy.Obj then
+                        distance = GetUnitToUnitDistance(ally, enemy.Obj)
+                    else
+                        if GetHeroLastSeenInfo(k).time <= 0.5 then
+                            distance = GetUnitToLocationDistance(ally, enemy.LocExtra1)
+                        elseif GetHeroLastSeenInfo(k).time <= 3.0 then
+                            distance = GetUnitToLocationDistance(ally, enemy.LocExtra2)
+                        else
+                            distance = GetUnitToLocationDistance(ally, GetHeroLastSeenInfo(k).location)
+                        end
+                    end
                     local timeToReach = distance/ally:GetCurrentMovementSpeed()
                     
                     if distance <= eyeRange then
@@ -188,7 +197,7 @@ function GlobalFightDetermination()
                         if utils.ValidTarget(enemy) then
                             myTimeToKillTarget = fight_simul.estimateTimeToKill(ally, enemy)
                         else
-                            myTimeToKillTarget = enemy.Health /(ally:GetAttackDamage()/ally:GetSecondsPerAttack())/0.75
+                            myTimeToKillTarget = enemy.Health/(ally:GetAttackDamage()/ally:GetSecondsPerAttack())/0.75
                         end
                         
                         local totalTimeToKillTarget = myTimeToKillTarget
@@ -197,7 +206,18 @@ function GlobalFightDetermination()
                         local listAllies2 = GetUnitList(UNIT_LIST_ALLIED_HEROES)
                         for _, ally2 in ipairs(listAllies2) do
                             if ally2:IsAlive() and not gHero.HasID(ally2:GetPlayerID()) then
-                                local distToEnemy = GetUnitToLocationDistance(ally2, enemy.Location)
+                                local distToEnemy = 100000
+                                if enemy.Obj then
+                                    distToEnemy = GetUnitToUnitDistance(ally2, enemy.Obj)
+                                else
+                                    if GetHeroLastSeenInfo(k).time <= 0.5 then
+                                        distToEnemy = GetUnitToLocationDistance(ally2, enemy.LocExtra1)
+                                    elseif GetHeroLastSeenInfo(k).time <= 3.0 then
+                                        distToEnemy = GetUnitToLocationDistance(ally2, enemy.LocExtra2)
+                                    else
+                                        distToEnemy = GetUnitToLocationDistance(ally2, GetHeroLastSeenInfo(k).location)
+                                    end
+                                end
                                 local allyTimeToReach = distToEnemy/ally2:GetCurrentMovementSpeed()
                                 
                                 if distToEnemy <= 2*eyeRange then
@@ -206,9 +226,20 @@ function GlobalFightDetermination()
                                     table.insert(participatingAllyIDs, ally2:GetPlayerID())
                                 end
                                 
-                            elseif ally2:IsAlive() and ally2:GetPlayerID() ~= ally:GetPlayerID() and gHero.GetVar(ally2:GetPlayerID(), "Target").Obj == nil then
-                                --local distToMe = GetUnitToUnitDistance(ally2, ally)
-                                local distToEnemy = GetUnitToLocationDistance(ally2, enemy.Location)
+                            elseif ally2:IsAlive() and ally2:GetPlayerID() ~= ally:GetPlayerID() and gHero.GetVar(ally2:GetPlayerID(), "Target").Obj == nil 
+                                and (gHero.GetVar(ally2:GetPlayerID(), "GankTarget").Id == 0 or gHero.GetVar(ally2:GetPlayerID(), "GankTarget").Id == k) then
+                                local distToEnemy = 100000
+                                if enemy.Obj then
+                                    distToEnemy = GetUnitToUnitDistance(ally2, enemy.Obj)
+                                else
+                                    if GetHeroLastSeenInfo(k).time <= 0.5 then
+                                        distToEnemy = GetUnitToLocationDistance(ally2, enemy.LocExtra1)
+                                    elseif GetHeroLastSeenInfo(k).time <= 3.0 then
+                                        distToEnemy = GetUnitToLocationDistance(ally2, enemy.LocExtra2)
+                                    else
+                                        distToEnemy = GetUnitToLocationDistance(ally2, GetHeroLastSeenInfo(k).location)
+                                    end
+                                end
                                 local allyTimeToReach = distToEnemy/ally2:GetCurrentMovementSpeed()
                                 
                                 if distToEnemy <= 2*eyeRange then
@@ -231,9 +262,11 @@ function GlobalFightDetermination()
                         local anticipatedTimeToKill = totalTimeToKillTarget/(#participatingAllyIDs+1)
                         if utils.ValidTarget(enemy) and anticipatedTimeToKill < 6.0 then
                             utils.myPrint("Engaging! Anticipated Time to kill: ", anticipatedTimeToKill)
-                            gHero.SetVar(ally:GetPlayerID(), "Target", {Obj=enemy.Obj, Id=enemy.Obj:GetPlayerID()})
+                            gHero.SetVar(ally:GetPlayerID(), "Target", {Obj=enemy.Obj, Id=k})
                             for _, v in ipairs(participatingAllyIDs) do
-                                gHero.SetVar(v:GetPlayerID(), "Target", {Obj=enemy.Obj, Id=enemy.Obj:GetPlayerID()})
+                                if gHero.GetVar(v:GetPlayerID(), "GankTarget").Id == 0 then
+                                    gHero.SetVar(v:GetPlayerID(), "Target", {Obj=enemy.Obj, Id=k})
+                                end
                             end
                         end
                     end

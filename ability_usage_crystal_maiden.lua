@@ -71,7 +71,7 @@ function UseQ(bot, nearbyAlliedHeroes)
     
     -- If we're pushing or defending a lane and can hit 4+ creeps, go for it
     if getHeroVar("ShouldDefend") == true or ( getHeroVar("ShouldPush") == true and currManaPerct >= 0.4 ) then
-        local locationAoE = bot:FindAoELocation( true, false, bot:GetLocation(), nCastRange, nRadius, 0, 0 )
+        local locationAoE = bot:FindAoELocation( true, false, bot:GetLocation(), ability:GetCastRange(), nRadius, 0, 0 )
 
         if locationAoE.count >= 4 then
             bot:Action_UseAbilityOnLocation(ability, locationAoE.targetloc)

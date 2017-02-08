@@ -75,7 +75,6 @@ function Think()
     -- if we are initialized, do the rest
     if drowRangerBot.Init then
         drowRangerBot:Determine_ShouldJungle(bot)
-        drowRangerBot:HarassLaneEnemies(bot)
     end
 end
 
@@ -105,7 +104,7 @@ function drowRangerBot:DoRetreat(bot, reason)
     -- if we are not a jungler, invoke default DoRetreat behavior
     else
         -- we use '.' instead of ':' and pass 'self' so it is the correct self
-        return dt.DoRetreat(self, bot, getHeroVar("RetreatReason"))
+        return dt.DoRetreat(self, bot, reason)
     end
 end
 
@@ -165,33 +164,4 @@ function drowRangerBot:Determine_ShouldJungle(bot)
                 drowRangerBot:RemoveAction(constants.ACTION_JUNGLING)
             end
         end
-end
-
-function drowRangerBot:HarassLaneEnemies(bot)
-    if self:GetAction() == constants.ACTION_RETREAT then return end
-    
-    local enemies = bot:GetNearbyHeroes(1200, true, BOT_MODE_NONE)
-    local target = nil
-
-    if enemies == nil then return end
-
-    for _,enemy in pairs(enemies) do
-        if target == nil then target = enemy end
-        if GetUnitToUnitDistance(bot, enemy) < GetUnitToUnitDistance(bot, target) then target = enemy end -- get nearest enemy
-    end
-
-    if target == nil then return end
-
-    local frostArrow = bot:GetAbilityByName(SKILL_Q)
-    if(frostArrow ~= nil) and (frostArrow:IsFullyCastable()) then
-        if GetUnitToUnitDistance(bot, target) < frostArrow:GetCastRange() and self:GetAction() ~= constants.ACTION_RETREAT then
-            if not utils.IsTargetMagicImmune(target) or not utils.IsCrowdControlled(target)
-                and bot:GetMana() < math.max(bot:GetMaxMana()*0.40, 180) then
-                bot:Action_UseAbilityOnEntity(frostArrow, target)
-            end
-            if not utils.IsCore() then
-                bot:Action_AttackUnit(target, false)
-            end
-        end
-    end
 end

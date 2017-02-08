@@ -1,9 +1,8 @@
 -------------------------------------------------------------------------------
 --- AUTHOR: Nostrademous
---- CONTRIBUTOR: some inspiration from Platinum_dota2
+--- CONTRIBUTOR: minor inspiration from Platinum_dota2
 --- GITHUB REPO: https://github.com/Nostrademous/Dota2-FullOverwrite
 -------------------------------------------------------------------------------
-
 
 _G._savedEnv = getfenv()
 module( "fighting", package.seeall )
@@ -13,17 +12,29 @@ local utils = require( GetScriptDirectory().."/utility" )
 local enemyData = require( GetScriptDirectory().."/enemy_data" )
 
 function GlobalFindTarget(heroToEnemyDist)
-
-    enemyData.UpdateEnemyInfo()
+    local viableEnemiesToFight = {}
     for k, enemy in pairs(enemyData) do
-        if type(k) == "number" then
+        if type(k) == "number" and enemy.Alive then
+            table.insert(viableEnemiesToFight, enemy)
+        end
+    end
+
+    local listAllies = GetUnitList(UNIT_LIST_ALLIED_HEROES)
+    for _, enemy in ipairs(viableEnemiesToFight) do
+        enemy.alliesThatCanAttack = {}
+        for _, ally in pairs(listAllies) do
+            if ally:IsAlive() and (ally:GetHealth()/ally:GetMaxHealth()) > 0.4 then
+                local timeToLocation = GetUnitToUnitDistance(enemy, ally)/ally:GetCurrentMovementSpeed()
+                if timeToLocation < 3.0 then
+                    table.insert(enemy.alliesThatCanAttack, ally)
+                end
+            end
         end
     end
     
-
-    local listAllies = GetUnitList(UNIT_LIST_ALLIED_HEROES)
-    for _, ally in ipairs(listAllies) do
-    end
+    -- sort by high-to-low number of allies that can converge on target
+    table.sort(viableEnemiesToFight, function(n1, n2) return #n1.alliesThatCanAttack > #n2.alliesThatCanAttack end)
+    
     
 end
 
@@ -89,8 +100,20 @@ function FindTarget(listEnemies, listEnemyTowers, listAlliedTowers, listEnemyCre
             
             -- first check for stun duration
             for k, enemy2 in pairs(enemyData) do
-				if type(k) == "number" and enemy2.Health > 0 and (enemy2.Health/enemy2.MaxHealth) > 0.1 then
-                    local distance = GetUnitToLocationDistance(enemy, enemy2.Location)
+				if type(k) == "number" and enemy2.Alive and (enemy2.Health/enemy2.MaxHealth) > 0.1 then
+                    local distance = 100000
+                    if enemy2.Obj then
+                        distance = GetUnitToUnitDistance(enemy, enemy2.Obj)
+                    else
+                        if GetHeroLastSeenInfo(k).time <= 0.5 then
+                            distance = GetUnitToLocationDistance(enemy, enemy2.LocExtra1)
+                        elseif GetHeroLastSeenInfo(k).time <= 3.0 then
+                            distance = GetUnitToLocationDistance(enemy, enemy2.LocExtra2)
+                        else
+                            distance = GetUnitToLocationDistance(enemy, GetHeroLastSeenInfo(k).location)
+                        end
+                    end
+                    
 					if distance < 1200 then
                         badfightLength = badfightLength + enemy2.StunDur + 0.5*enemy2.SlowDur
 					end
@@ -98,8 +121,20 @@ function FindTarget(listEnemies, listEnemyTowers, listAlliedTowers, listEnemyCre
 			end
             
             for k, enemy2 in pairs(enemyData) do
-				if type(k) == "number" and enemy2.Health > 0 and (enemy2.Health/enemy2.MaxHealth) > 0.1 then
-                    local distance = GetUnitToLocationDistance(enemy, enemy2.Location)
+				if type(k) == "number" and enemy2.Alive and (enemy2.Health/enemy2.MaxHealth) > 0.1 then
+                    local distance = 100000
+                    if enemy2.Obj then
+                        distance = GetUnitToUnitDistance(enemy, enemy2.Obj)
+                    else
+                        if GetHeroLastSeenInfo(k).time <= 0.5 then
+                            distance = GetUnitToLocationDistance(enemy, enemy2.LocExtra1)
+                        elseif GetHeroLastSeenInfo(k).time <= 3.0 then
+                            distance = GetUnitToLocationDistance(enemy, enemy2.LocExtra2)
+                        else
+                            distance = GetUnitToLocationDistance(enemy, GetHeroLastSeenInfo(k).location)
+                        end
+                    end
+                    
 					if distance < 1200 then
                         local dmgTime = badfightLength - distance/enemy2.MoveSpeed
 						badHealthPool = badHealthPool + enemy2.Health

@@ -8,50 +8,72 @@ local utils = require( GetScriptDirectory().."/utility" )
 local EnemyData = {}
 
 -- GLOBAL ENEMY INFORMATION ARRAY
-
-EnemyData.Lock = false
-
-EnemyData.LastUpdate = -1000.0
+local UpdateFreq1 = 0.5
+local UpdateFreq2 = 3.0
 
 -------------------------------------------------------------------------------
 -- FUNCTIONS - implement rudimentary atomic operation insurance
 -------------------------------------------------------------------------------
 
+function EnemyData.CheckAlive()
+    local enemyIDs = GetTeamPlayers(utils.GetOtherTeam())
+    
+    for _, id in ipairs(enemyIDs) do
+        if EnemyData[id] == nil then
+            EnemyData[id] = {  Name = name, Time1 = -100, Time2 = -100, Obj = nil, Level = 1,
+                               Alive = true, Health = -1, MaxHealth = -1, Mana = -1, Items = {},
+                               PhysDmg2 = {}, MagicDmg2 = {}, PureDmg2 = {}, AllDmg2 = {},
+                               PhysDmg10 = {}, MagicDmg10 = {}, PureDmg10 = {}, AllDmg10 = {}
+                            }
+        end
+    
+        -- update who is alive and who is dead
+        if IsHeroAlive(id) then
+            EnemyData[id].Alive = true
+        else
+            EnemyData[id].Alive = false
+        end
+        
+        -- invalidate our object handle
+        EnemyData[id].Obj = nil
+    end
+end
+
+function EnemyData.GetNumAlive()
+    local numAlive = 0
+    for k, v in pairs(EnemyData) do
+        if type(k) == "number" and v.Alive then
+            numAlive = numAlive + 1
+        end
+    end
+    return numAlive
+end
+
 function EnemyData.UpdateEnemyInfo(timeFreq)
     if ( GetGameState() ~= GAME_STATE_GAME_IN_PROGRESS and GetGameState() ~= GAME_STATE_PRE_GAME ) then return end
-    local timeFreq = timeFreq or 0.5
+    
+    EnemyData.CheckAlive()
+    
+    local enemies = GetUnitList(UNIT_LIST_ENEMY_HEROES)
+    for _, enemy in pairs(enemies) do
+        local pid = enemy:GetPlayerID()
+        local name = utils.GetHeroName(enemy)
 
-    local bUpdate, newTime = utils.TimePassed(EnemyData.LastUpdate, timeFreq)
-    if bUpdate then
-        if ( EnemyData.Lock ) then return end
-        EnemyData.Lock = true
+        EnemyData[pid].Obj = enemy
+        EnemyData[pid].Level = enemy:GetLevel()
 
-        local enemies = GetUnitList(UNIT_LIST_ENEMY_HEROES)
-        for _, enemy in pairs(enemies) do
-            local pid = enemy:GetPlayerID()
-            local name = utils.GetHeroName(enemy)
+        if (RealTime() - EnemyData[pid].Time1) >= UpdateFreq1 then
+            EnemyData[pid].Time1        = RealTime()
+            EnemyData[pid].Health       = enemy:GetHealth()
+            EnemyData[pid].MaxHealth    = enemy:GetMaxHealth()
+            EnemyData[pid].Mana         = enemy:GetMana()
+            EnemyData[pid].MaxMana      = enemy:GetMaxMana()
+            EnemyData[pid].MoveSpeed    = enemy:GetCurrentMovementSpeed()
+            EnemyData[pid].LocExtra1    = enemy:GetExtrapolatedLocation(0.5) -- 1/2 second
+            EnemyData[pid].LocExtra2    = enemy:GetExtrapolatedLocation(3.0) -- 3 second
 
-            if EnemyData[pid] == nil then
-                EnemyData[pid] = { Name = name, Time = -100, Obj = nil, Level = 1, Health = -1, MaxHealth = -1, Mana = -1, Location = nil, Items = {},
-                                    PhysDmg2 = {}, MagicDmg2 = {}, PureDmg2 = {}, AllDmg2 = {},
-                                    PhysDmg10 = {}, MagicDmg10 = {}, PureDmg10 = {}, AllDmg10 = {}
-                                 }
-            end
-
-            local tDelta = RealTime() - EnemyData[pid].Time
-            -- throttle our update to once every 1 second for each enemy
-            if tDelta >= timeFreq and enemy:GetHealth() ~= -1 then
-                EnemyData[pid].Time = RealTime()
-                EnemyData[pid].Obj = enemy
-                EnemyData[pid].Level = enemy:GetLevel()
-                EnemyData[pid].Health = enemy:GetHealth()
-                EnemyData[pid].MaxHealth = enemy:GetMaxHealth()
-                EnemyData[pid].Mana = enemy:GetMana()
-                EnemyData[pid].MaxMana = enemy:GetMaxMana()
-                EnemyData[pid].MoveSpeed = enemy:GetCurrentMovementSpeed()
-                EnemyData[pid].LocExtra1 = enemy:GetExtrapolatedLocation(0.5) -- 1/2 second
-                EnemyData[pid].LocExtra2 = enemy:GetExtrapolatedLocation(3.0) -- 3 second
-                EnemyData[pid].Location = utils.deepcopy(enemy:GetLocation())
+            if (RealTime() - EnemyData[pid].Time2) >= UpdateFreq2 then
+                EnemyData[pid].Time2 = RealTime()
                 for i = 0, 5, 1 do
                     local item = enemy:GetItemInSlot(i)
                     if item ~= nil then
@@ -77,28 +99,21 @@ function EnemyData.UpdateEnemyInfo(timeFreq)
                 end
             end
         end
-        -- update our timer
-        EnemyData.LastUpdate = newTime
     end
-
-    EnemyData.Lock = false
 end
 
 local function GetEnemyFutureLocation(ePID, fTime)
-    if ( EnemyData.Lock ) then return nil end
-    EnemyData.Lock = true
-    
     for k, v in pairs(EnemyData) do
         if type(k) == "number"  and k == ePID then
             if fTime <= 0.5 then
                 return v.LocExtra1
-            else
+            elseif fTime <= 3.0 then
                 return v.LocExtra2
+            else
+                return nil
             end
         end
     end
-    
-    EnemyData.Lock = false
     return nil
 end
 
@@ -109,9 +124,6 @@ function EnemyData.PredictedLocation(targetID, fTime)
 end
 
 function EnemyData.GetEnemyDmgs(ePID, fDuration)
-    if ( EnemyData.Lock ) then return 0 end
-    EnemyData.Lock = true
-
     local physDmg2 = 0
     local magicDmg2 = 0
     local pureDmg2 = 0
@@ -135,8 +147,6 @@ function EnemyData.GetEnemyDmgs(ePID, fDuration)
         end
     end
 
-    EnemyData.Lock = false
-
     local totalDmg2 = physDmg2 + magicDmg2 + pureDmg2
     local totalDmg10 = physDmg10 + magicDmg10 + pureDmg10
     --utils.myPrint(" 2s - AllDmg: ", allDmg2, " <> TotalDmg: ", totalDmg2, ", PhysDmg: ", physDmg2, ", MagicDmg: ", magicDmg2, ", pureDmg: ", pureDmg2)
@@ -149,9 +159,6 @@ function EnemyData.GetEnemyDmgs(ePID, fDuration)
 end
 
 function EnemyData.GetEnemySlowDuration(ePID)
-    if ( EnemyData.Lock ) then return 0 end
-    EnemyData.Lock = true
-
     local duration = 0
     for k, v in pairs(EnemyData) do
         if type(k) == "number"  and k == ePID then
@@ -159,16 +166,10 @@ function EnemyData.GetEnemySlowDuration(ePID)
             break
         end
     end
-
-    EnemyData.Lock = false
-
     return duration
 end
 
 function EnemyData.GetEnemyStunDuration(ePID)
-    if ( EnemyData.Lock ) then return 0 end
-    EnemyData.Lock = true
-
     local duration = 0
     for k, v in pairs(EnemyData) do
         if type(k) == "number"  and k == ePID then
@@ -176,48 +177,30 @@ function EnemyData.GetEnemyStunDuration(ePID)
             break
         end
     end
-
-    EnemyData.Lock = false
-
     return duration
 end
 
 function EnemyData.GetEnemyTeamSlowDuration()
-    if ( EnemyData.Lock ) then return 0 end
-    EnemyData.Lock = true
-
     local duration = 0
     for k, v in pairs(EnemyData) do
         if type(k) == "number" then
             duration = duration + v.SlowDur
         end
     end
-
-    EnemyData.Lock = false
-
     return duration
 end
 
 function EnemyData.GetEnemyTeamStunDuration()
-    if ( EnemyData.Lock ) then return 0 end
-    EnemyData.Lock = true
-
     local duration = 0
     for k, v in pairs(EnemyData) do
         if type(k) == "number" then
             duration = duration + v.StunDur
         end
     end
-
-    EnemyData.Lock = false
-
     return duration
 end
 
 function EnemyData.GetEnemyTeamNumSilences()
-    if ( EnemyData.Lock ) then return 0 end
-    EnemyData.Lock = true
-
     local num = 0
     for k, v in pairs(EnemyData) do
         if type(k) == "number" then
@@ -226,16 +209,10 @@ function EnemyData.GetEnemyTeamNumSilences()
             end
         end
     end
-
-    EnemyData.Lock = false
-
     return num
 end
 
 function EnemyData.GetEnemyTeamNumTruestrike()
-    if ( EnemyData.Lock ) then return 0 end
-    EnemyData.Lock = true
-
     local num = 0
     for k, v in pairs(EnemyData) do
         if type(k) == "number" then
@@ -244,30 +221,19 @@ function EnemyData.GetEnemyTeamNumTruestrike()
             end
         end
     end
-
-    EnemyData.Lock = false
-
     return num
 end
 
 function EnemyData.PrintEnemyInfo()
-
-    if ( EnemyData.Lock ) then return end
-    EnemyData.Lock = true
-
     for k, v in pairs(EnemyData) do
         if type(k) == "number" then
             print("")
             print("     Name: ", v.Name)
             print("    Level: ", v.Level)
-            print("Last Seen: ", v.Time)
+            print("Last Seen: ", v.Time1)
             print("   Health: ", v.Health)
             print("     Mana: ", v.Mana)
-            if v.Location then
-                print(" Location: <", v.Location[1]..", "..v.Location[2]..", "..v.Location[3]..">")
-            else
-                print(" Location: <UNKNOWN>")
-            end
+
             local iStr = ""
             for k2, v2 in pairs(v.Items) do
                 iStr = iStr .. v2 .. " "
@@ -275,8 +241,6 @@ function EnemyData.PrintEnemyInfo()
             print("    Items: { "..iStr.." }")
         end
     end
-
-    EnemyData.Lock = false
 end
 
 return EnemyData

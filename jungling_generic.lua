@@ -85,7 +85,7 @@ local function FindCamp(bot)
     end
 
     if getHeroVar("currentCamp") == nil or camp[constants.VECTOR] ~= getHeroVar("currentCamp")[constants.VECTOR] then
-        print(utils.GetHeroName(bot), "moves to camp")
+        utils.myPrint("moves to camp")
     end
     setHeroVar("currentCamp", camp)
     setHeroVar("move_ticks", 0)

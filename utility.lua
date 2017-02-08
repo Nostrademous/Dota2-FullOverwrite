@@ -659,6 +659,7 @@ function U.GetOtherTeam()
 end
 
 function U.TreadCycle(bot, stat)
+    --[[
     local powerTreads = U.HaveItem(bot, "item_power_treads")
     if powerTreads then
         local activeStat = powerTreads:GetPowerTreadsStat()
@@ -669,6 +670,7 @@ function U.TreadCycle(bot, stat)
             bot:Action_UseAbility(powerTreads)
         end
     end
+    --]]
 end
 
 -------------------------------------------------------------------------------
@@ -676,21 +678,21 @@ end
 -------------------------------------------------------------------------------
 
 function U.PositionAlongLane(npcBot, lane)
-    local bestPos=0.0;
-    local pos=0.0;
-    local closest=0.0;
-    local dis=20000.0;
+    local bestPos = 0.0
+    local pos = 0.0
+    local lastDist = 0.0
+    local dist = 20000.0
 
-    while (pos<1.0) do
-        local thisPos = GetLocationAlongLane(lane, pos);
-        if (U.GetDistance(thisPos,npcBot:GetLocation()) < dis) then
-            dis=U.GetDistance(thisPos,npcBot:GetLocation());
-            bestPos=pos;
+    while pos < 1.0 do
+        local thisPos = GetLocationAlongLane(lane, pos)
+        if U.GetDistance(thisPos, npcBot:GetLocation()) < dist then
+            dist = U.GetDistance(thisPos, npcBot:GetLocation())
+            bestPos = pos
         end
-        pos = pos+0.01;
+        pos = pos + 0.01
     end
 
-    return bestPos;
+    return bestPos
 end
 
 -- CONTRIBUTOR: Function below was coded by Platinum_dota2
@@ -1292,6 +1294,16 @@ function U.UseOrbEffect(bot, enemy)
         end
     end
     return false
+end
+
+function U.GetEnemyHeroFromId( id )
+    local enemyList = GetUnitList(UNIT_LIST_ENEMY_HEROES)
+    for _, enemy in pairs(enemyList) do
+        if enemy:GetPlayerID() == id then
+            return enemy
+        end
+    end
+    return nil
 end
 
 function U.IsTargetMagicImmune(target)

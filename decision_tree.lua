@@ -137,10 +137,12 @@ function X:GetAction()
 end
 
 function X:setHeroVar(var, value)
+    --utils.myPrint("setHeroVar: ", var, ", Value: ", value)
     gHeroVar.SetVar(self.pID, var, value)
 end
 
 function X:getHeroVar(var)
+    --utils.myPrint("getHeroVar: ", var)
     return gHeroVar.GetVar(self.pID, var)
 end
 
@@ -194,6 +196,8 @@ function X:DoHeroSpecificInit(bot)
     return
 end
 
+local NoTarget = { Obj = nil, Id = 0 }
+
 -- LOCAL VARIABLES THAT WE WILL NEED FOR THIS FRAME
 local updateFrequency    = 0.03
 
@@ -214,9 +218,12 @@ function X:Think(bot)
 
     if ( GetGameState() ~= GAME_STATE_GAME_IN_PROGRESS and GetGameState() ~= GAME_STATE_PRE_GAME ) then return end
     
-    local bUpdate, newTime = utils.TimePassed(self:getHeroVar("WorldUpdateTime"), updateFrequency)
-    if bUpdate then
-        self:setHeroVar("WorldUpdateTime", newTime)
+    -- UPDATE GLOBAL INFO --
+    enemyData.UpdateEnemyInfo()
+    
+    --local bUpdate, newTime = utils.TimePassed(self:getHeroVar("WorldUpdateTime"), updateFrequency)
+    --if bUpdate then
+        --self:setHeroVar("WorldUpdateTime", newTime)
         nearbyEnemyHeroes   = bot:GetNearbyHeroes(EyeRange, true, BOT_MODE_NONE)
         nearbyAlliedHeroes  = bot:GetNearbyHeroes(EyeRange, false, BOT_MODE_NONE)
         nearbyEnemyCreep    = bot:GetNearbyLaneCreeps(EyeRange, true)
@@ -226,26 +233,38 @@ function X:Think(bot)
         
         local setTarget = self:getHeroVar("Target")
         if setTarget.Id > 0 and not utils.ValidTarget(setTarget) then
-            for _, v in pairs(nearbyEnemyHeroes) do
+            for id, v in pairs(nearbyEnemyHeroes) do
                 if setTarget.Id == v:GetPlayerID() then
-                    utils.myPrint("Updated my Target after re-aquire")
-                    setTarget.Obj = v
-                    break
+                    if IsHeroAlive(setTarget.Id) then
+                        utils.myPrint("Updated my Target after re-aquire")
+                        self:setHeroVar("Target", {Obj=v, Id=setTarget.Id})
+                        break
+                    else
+                        utils.myPrint("Target is dead, clearing")
+                        self:setHeroVar("Target", NoTarget)
+                        break
+                    end
                 end
             end
         end
         
         local gankTarget = self:getHeroVar("GankTarget")
         if gankTarget.Id > 0 and not utils.ValidTarget(gankTarget) then
-            for _, v in pairs(nearbyEnemyHeroes) do
+            for id, v in pairs(nearbyEnemyHeroes) do
                 if gankTarget.Id == v:GetPlayerID() then
-                    utils.myPrint("Updated my GankTarget after re-aquire")
-                    gankTarget.Obj = v
-                    break
+                    if IsHeroAlive(gankTarget.Id) then
+                        utils.myPrint("Updated my GankTarget after re-aquire")
+                        self:setHeroVar("GankTarget", {Obj=v, Id=gankTarget.Id})
+                        break
+                    else
+                        utils.myPrint("GankTarget is dead, clearing")
+                        self:setHeroVar("GankTarget", NoTarget)
+                        break
+                    end
                 end
             end
         end
-    end
+    --end
 
     -- TEST STUFF
     --[[
@@ -281,10 +300,6 @@ function X:Think(bot)
     jungle_status.checkSpawnTimer()
     buildings_status.Update()
 
-    --[[
-        FIRST DECISIONS THAT DON'T AFFECT THE MY ACTION STATES
-        :: Leveling Up Abilities, Buying Items (in most cases), Using Courier
-    --]]
     -- LEVEL UP ABILITIES
     local checkLevel, newTime = utils.TimePassed(self:getHeroVar("LastLevelUpThink"), 2.0)
     if checkLevel then
@@ -298,16 +313,15 @@ function X:Think(bot)
     self:setCurrentAction(self:GetAction())
     self:PrintActionTransition(utils.GetHeroName(bot))
 
-    -- UPDATE GLOBAL INFO --
-    enemyData.UpdateEnemyInfo()
-
     -- DEBUG ENEMY DUMP
     -- Dump enemy info every 15 seconds
+    --[[
     checkLevel, newTime = utils.TimePassed(gHeroVar.GetGlobalVar("PrevEnemyDataDump"), 15.0)
     if checkLevel then
         gHeroVar.SetGlobalVar("PrevEnemyDataDump", newTime)
-        --enemyData.PrintEnemyInfo()
+        enemyData.PrintEnemyInfo()
     end
+    --]]
 
     --USE COURIER AS NECESSARY
     utils.CourierThink(bot)
@@ -318,7 +332,7 @@ function X:Think(bot)
     end
 
     --AM I ALIVE
-    if( not bot:IsAlive() ) then
+    if not bot:IsAlive() then
         --print( "You are dead, nothing to do!!!");
         local bRet = self:DoWhileDead(bot)
         if bRet then return end
@@ -330,22 +344,24 @@ function X:Think(bot)
         if bRet then return end
     end
     
-    --ACTIONS QUEUED?
-    if bot:HasQueuedAction() then
+    --ACTIONS QUEUED? DO THEM OR UNSET
+    if self:getHeroVar("Queued") and bot:HasQueuedAction() then
         local target = self:getHeroVar("Target")
-        if target.Id > 0 and not IsHeroAlive( target.Id ) then
-            utils.myPrint("Queueing Disabled")
+        if target.Id == 0 or (target.Id > 0 and not IsHeroAlive( target.Id )) then
             bot:SetActionQueueing(false)
+            bot:Action_ClearActions(true)
+            self:setHeroVar("Queued", false)
         else
             return
         end
     end
     
-    -- FIXME - right place?
+    --USE ITEMS
     local bRet = self:ConsiderItemUse()
     if bRet then return end
     
-    -- Check if we are stuck
+    --STUCK CHECK
+    --[[
     if GetGameState() == GAME_STATE_GAME_IN_PROGRESS then
         local curLoc = bot:GetLocation()
         local checkLevel, newTime = utils.TimePassed(self:getHeroVar("LastStuckCheck"), 3.0)
@@ -380,11 +396,13 @@ function X:Think(bot)
             end
         end
     end
+    --]]
 
     ------------------------------------------------
     -- NOW DECISIONS THAT MODIFY MY ACTION STATES --
     ------------------------------------------------
 
+    -- SAFETY CHECK
     if ( self:GetAction() == ACTION_RETREAT ) then
         local bRet = self:DoRetreat(bot, self:getHeroVar("RetreatReason"))
         if bRet then return end
@@ -397,6 +415,7 @@ function X:Think(bot)
         if bRet then return end
     end
 
+    -- ARE WE USING ABILITIES
     if bot:IsUsingAbility() then 
         return
     else
@@ -630,7 +649,7 @@ function X:Determine_ShouldIRetreat(bot)
     return nil
 end
 
-function X:Determine_ShouldIFighting2(bot)
+function X:Determine_ShouldIFighting(bot)
     global_game_state.GlobalFightDetermination()
     if self:getHeroVar("Target").Id > 0 then
         return true
@@ -638,7 +657,7 @@ function X:Determine_ShouldIFighting2(bot)
     return false
 end
 
-function X:Determine_ShouldIFighting(bot)
+function X:Determine_ShouldIFighting2(bot)
     -- try to find a taret
     local weakestHero, score = fighting.FindTarget(nearbyEnemyHeroes, nearbyEnemyTowers, nearbyAlliedTowers, nearbyEnemyCreep, nearbyAlliedCreep)
     
@@ -650,18 +669,20 @@ function X:Determine_ShouldIFighting(bot)
         if score > 50.0 or (score > 2.0 and (GetUnitToUnitDistance(bot, weakestHero) < GetUnitToUnitDistance(bot, myTarget)*1.5 or weakestHero:GetStunDuration(true) >= 1.0)) then
             myTarget.Obj = weakestHero
             myTarget.Id = weakestHero:GetPlayerID()
+            self:setHeroVar("Target", myTarget)
         end
     end
     
     if myTarget.Id > 0 and not IsHeroAlive( myTarget.Id ) then
         utils.AllChat("You dead buddy!")
         self:RemoveAction(ACTION_FIGHT)
-        self:setHeroVar("Target", {Obj=nil, Id=0})
-        self:setHeroVar("GankTarget", {Obj=nil, Id=0})
+        self:setHeroVar("Target", NoTarget)
+        self:setHeroVar("GankTarget", NoTarget)
         myTarget.Obj = nil
         myTarget.Id = 0
     end
     
+    --[[
     if U.ValidTarget(myTarget) then
         local Allies = GetUnitList(UNIT_LIST_ALLIED_HEROES)
         local nFriend = 0
@@ -680,13 +701,14 @@ function X:Determine_ShouldIFighting(bot)
                 local friendID = friend:GetPlayerID()
                 if gHeroVar.HasID(friendID) and myTarget.Id == gHeroVar.GetVar(friendID, "Target").Id then
                     utils.myPrint("abandoning chase of ", utils.GetHeroName(myTarget.Obj))
-                    gHeroVar.SetVar(friendID, "Target", {Obj=nil, Id=0})
+                    gHeroVar.SetVar(friendID, "Target", NoTarget)
                 end
             end
-            myTarget.Obj = nil
-            myTarget.Id = 0
+            myTarget = NoTarget
+            self:setHeroVar("Target", NoTarget)
         end
     end
+    --]]
     
     -- if I have a target, set by me or by team fighting function
     if myTarget.Id > 0 and IsHeroAlive(myTarget.Id) then
@@ -696,11 +718,12 @@ function X:Determine_ShouldIFighting(bot)
         elseif GetHeroLastSeenInfo(myTarget.Id).time > 3.0 then
             utils.myPrint(" - Stopping my fight... lost sight of hero")
             self:RemoveAction(ACTION_FIGHT)
-            self:setHeroVar("Target", {Obj=nil, Id=0})
+            self:setHeroVar("Target", NoTarget)
             return false
         else
             self:setHeroVar("Target", myTarget)
             local Allies = GetUnitList(UNIT_LIST_ALLIED_HEROES)
+            
             for _, friend in pairs(Allies) do
                 local friendID = friend:GetPlayerID()
                 if self.pID ~= friendID and gHeroVar.HasID(friendID) and GetUnitToUnitDistance(myTarget.Obj, friend)/friend:GetCurrentMovementSpeed() <= 5.0 then
@@ -748,14 +771,16 @@ function X:Determine_ShouldIFighting(bot)
     end
 
     -- if we have a gank target
+    --[[
     local gankTarget = self:getHeroVar("GankTarget")
     if utils.ValidTarget(gankTarget) then
         bot:Action_AttackUnit(gankTarget.Obj, true)
         return true
     end
+    --]]
 
     self:RemoveAction(ACTION_FIGHT)
-    self:setHeroVar("Target", {Obj=nil, Id=0})
+    self:setHeroVar("Target", NoTarget)
     return false
 end
 
@@ -820,14 +845,7 @@ function X:Determine_ShouldJungle(bot)
 end
 
 function X:Determine_ShouldTeamRoshan(bot)
-    local enemyIDs = GetTeamPlayers(utils.GetOtherTeam())
-    
-    local numAlive = 0
-    for _, id in ipairs(enemyIDs) do
-        if IsHeroAlive(id) then
-            numAlive = numAlive + 1
-        end
-    end
+    local numAlive = enemyData.GetNumAlive()
 
 	local isRoshanAlive = DotaTime() - GetRoshanKillTime() > 660 -- max 11 minutes respawn time of roshan
 
@@ -1071,7 +1089,7 @@ function X:DoFight(bot)
                     return true
                 else
                     self:RemoveAction(ACTION_FIGHT)
-                    self:setHeroVar("Target", {Obj=nil, Id=0})
+                    self:setHeroVar("Target", NoTarget)
                     return false
                 end
             end
@@ -1079,7 +1097,7 @@ function X:DoFight(bot)
             local timeSinceSeen = GetHeroLastSeenInfo(target.Id).time
             if timeSinceSeen > 3.0 then
                 self:RemoveAction(constants.ACTION_FIGHT)
-                setHeroVar("Target", {Obj=nil, Id=0})
+                setHeroVar("Target", NoTarget)
                 return false
             else
                 local pLoc = enemyData.PredictedLocation(target.Id, timeSinceSeen)
@@ -1091,9 +1109,10 @@ function X:DoFight(bot)
             end
         end
     else
+        utils.myPrint("TargetId was: ", target.Id)
         utils.AllChat("Suck it!")
         self:RemoveAction(ACTION_FIGHT)
-        self:setHeroVar("Target", {Obj=nil, Id=0})
+        self:setHeroVar("Target", NoTarget)
     end
 
     return false
@@ -1178,6 +1197,7 @@ function X:DoDefendLane(bot, lane, building, numEnemies)
 end
 
 function X:DoGank(bot)
+    local bStillGanking = true
     local gankTarget = self:getHeroVar("GankTarget")
     if gankTarget.Id > 0 and IsHeroAlive(gankTarget.Id) then
         if ( self:HasAction(ACTION_GANKING) == false ) then
@@ -1185,7 +1205,6 @@ function X:DoGank(bot)
             self:AddAction(ACTION_GANKING)
         end
         
-        local bStillGanking = true
         local bTimeToKill = ganking_generic.ApproachTarget(bot, gankTarget)
         if bTimeToKill then
             bStillGanking = ganking_generic.KillTarget(bot, gankTarget)
@@ -1390,10 +1409,6 @@ end
 
 function X:GetMaxClearableCampLevel(bot)
     return constants.CAMP_ANCIENT
-end
-
-function X:HarassLaneEnemies(bot)
-    return
 end
 
 function X:SaveLocation(bot)

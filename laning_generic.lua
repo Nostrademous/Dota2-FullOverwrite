@@ -137,7 +137,7 @@ local function MovingToPos(bot)
     for _, eCreep in ipairs(listEnemyCreep) do
         if eCreep:GetHealth()/eCreep:GetMaxHealth() <= 0.5 and utils.GetHeightDiff(bot, eCreep) < 0 then
             bNeedToGoHigher = true
-            utils.myPrint("Would be nice to go to high ground to ensure no miss-chance")
+            --utils.myPrint("Would be nice to go to high ground to ensure no miss-chance")
             break
         end
     end

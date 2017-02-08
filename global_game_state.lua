@@ -37,9 +37,7 @@ end
 
 -- Detect if a tower is being pushed
 function DetectEnemyPushMid()
-    enemyData.UpdateEnemyInfo(1.0)
-    
-    local building
+    local building = 0
     local listRemainingBuildings = buildings_status.GetStandingBuildingIDs(GetTeam())
     if utils.InTable(listRemainingBuildings, TOWER_MID_1) then building = TOWER_MID_1
     elseif utils.InTable(listRemainingBuildings, TOWER_MID_2) then building = TOWER_MID_2
@@ -70,9 +68,7 @@ function DetectEnemyPushMid()
 end
 
 function DetectEnemyPushTop()
-    enemyData.UpdateEnemyInfo(1.0)
-    
-    local building
+    local building = 0
     local listRemainingBuildings = buildings_status.GetStandingBuildingIDs(GetTeam())
     if utils.InTable(listRemainingBuildings, TOWER_TOP_1) then building = TOWER_TOP_1
     elseif utils.InTable(listRemainingBuildings, TOWER_TOP_2) then building = TOWER_TOP_2
@@ -103,9 +99,7 @@ function DetectEnemyPushTop()
 end
 
 function DetectEnemyPushBot()
-    enemyData.UpdateEnemyInfo(1.0)
-    
-    local building
+    local building = 0
     local listRemainingBuildings = buildings_status.GetStandingBuildingIDs(GetTeam())
     if utils.InTable(listRemainingBuildings, TOWER_BOT_1) then building = TOWER_BOT_1
     elseif utils.InTable(listRemainingBuildings, TOWER_BOT_2) then building = TOWER_BOT_2
@@ -170,14 +164,17 @@ function GlobalFightDetermination()
     local eyeRange = 1200
     local listAllies = GetUnitList(UNIT_LIST_ALLIED_HEROES)
     for _, ally in ipairs(listAllies) do
-        if ally:IsAlive() and gHero.HasID(ally:GetPlayerID()) and gHero.GetVar(ally:GetPlayerID(), "Target").Obj == nil then
-            for k, enemy in ipairs(enemyData) do
+        if ally:IsAlive() and ally:GetHealth()/ally:GetMaxHealth() > 0.4 and 
+            gHero.HasID(ally:GetPlayerID()) and gHero.GetVar(ally:GetPlayerID(), "Target").Id == 0 then
+            for k, enemy in pairs(enemyData) do
                 -- get a valid enemyData enemy 
                 if type(k) == "number" and enemy.Alive then
                     local distance = 100000
                     if enemy.Obj then
                         distance = GetUnitToUnitDistance(ally, enemy.Obj)
                     else
+                        if GetHeroLastSeenInfo(k) == nil then break end
+                        
                         if GetHeroLastSeenInfo(k).time <= 0.5 then
                             distance = GetUnitToLocationDistance(ally, enemy.LocExtra1)
                         elseif GetHeroLastSeenInfo(k).time <= 3.0 then
@@ -189,13 +186,13 @@ function GlobalFightDetermination()
                     local timeToReach = distance/ally:GetCurrentMovementSpeed()
                     
                     if distance <= eyeRange then
-                        utils.myPrint("sees ", enemy.Name, " ", distance, " units away. Time to reach: ", timeToReach)
+                        utils.myPrint("sees "..enemy.Name.." ", distance, " units away. Time to reach: ", timeToReach)
                         
                         local myStun = ally:GetStunDuration(true)
                         local mySlow = ally:GetSlowDuration(true)
                         local myTimeToKillTarget = 0.0
                         if utils.ValidTarget(enemy) then
-                            myTimeToKillTarget = fight_simul.estimateTimeToKill(ally, enemy)
+                            myTimeToKillTarget = fight_simul.estimateTimeToKill(ally, enemy.Obj)
                         else
                             myTimeToKillTarget = enemy.Health/(ally:GetAttackDamage()/ally:GetSecondsPerAttack())/0.75
                         end
@@ -210,6 +207,8 @@ function GlobalFightDetermination()
                                 if enemy.Obj then
                                     distToEnemy = GetUnitToUnitDistance(ally2, enemy.Obj)
                                 else
+                                    if GetHeroLastSeenInfo(k) == nil then break end
+                                    
                                     if GetHeroLastSeenInfo(k).time <= 0.5 then
                                         distToEnemy = GetUnitToLocationDistance(ally2, enemy.LocExtra1)
                                     elseif GetHeroLastSeenInfo(k).time <= 3.0 then
@@ -226,7 +225,7 @@ function GlobalFightDetermination()
                                     table.insert(participatingAllyIDs, ally2:GetPlayerID())
                                 end
                                 
-                            elseif ally2:IsAlive() and ally2:GetPlayerID() ~= ally:GetPlayerID() and gHero.GetVar(ally2:GetPlayerID(), "Target").Obj == nil 
+                            elseif ally2:IsAlive() and ally2:GetPlayerID() ~= ally:GetPlayerID() and gHero.GetVar(ally2:GetPlayerID(), "Target").Id == 0 
                                 and (gHero.GetVar(ally2:GetPlayerID(), "GankTarget").Id == 0 or gHero.GetVar(ally2:GetPlayerID(), "GankTarget").Id == k) then
                                 local distToEnemy = 100000
                                 if enemy.Obj then
@@ -249,7 +248,7 @@ function GlobalFightDetermination()
                                     local allySlow = ally2:GetSlowDuration()
                                     local allyTimeToKillTarget = 0.0
                                     if utils.ValidTarget(enemy) then
-                                        allyTimeToKillTarget = fight_simul.estimateTimeToKill(ally2, enemy)
+                                        allyTimeToKillTarget = fight_simul.estimateTimeToKill(ally2, enemy.Obj)
                                     else
                                         allyTimeToKillTarget = enemy.Health /(ally2:GetAttackDamage()/ally2:GetSecondsPerAttack())/0.75
                                     end

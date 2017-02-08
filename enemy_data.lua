@@ -20,7 +20,7 @@ function EnemyData.CheckAlive()
     
     for _, id in ipairs(enemyIDs) do
         if EnemyData[id] == nil then
-            EnemyData[id] = {  Name = name, Time1 = -100, Time2 = -100, Obj = nil, Level = 1,
+            EnemyData[id] = {  Name = "", Time1 = -100, Time2 = -100, Obj = nil, Level = 1,
                                Alive = true, Health = -1, MaxHealth = -1, Mana = -1, Items = {},
                                PhysDmg2 = {}, MagicDmg2 = {}, PureDmg2 = {}, AllDmg2 = {},
                                PhysDmg10 = {}, MagicDmg10 = {}, PureDmg10 = {}, AllDmg10 = {}
@@ -57,8 +57,8 @@ function EnemyData.UpdateEnemyInfo(timeFreq)
     local enemies = GetUnitList(UNIT_LIST_ENEMY_HEROES)
     for _, enemy in pairs(enemies) do
         local pid = enemy:GetPlayerID()
-        local name = utils.GetHeroName(enemy)
 
+        EnemyData[pid].Name = utils.GetHeroName(enemy)
         EnemyData[pid].Obj = enemy
         EnemyData[pid].Level = enemy:GetLevel()
 

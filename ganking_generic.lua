@@ -145,7 +145,7 @@ function ApproachTarget(bot, target)
                 return false
             end
         else
-            local timeSinceSeen =  GetHeroLastSeenInfo(target.Id).time
+            local timeSinceSeen = GetHeroLastSeenInfo(target.Id).time
             utils.myPrint("Target not visible... estimating location. Time: ", timeSinceSeen)
             if timeSinceSeen > 3.0 then
                 utils.myPrint("Lost Sight of GankTarget["..target.Id.."] for over 3.0 seconds - abandoning")

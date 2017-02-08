@@ -425,7 +425,7 @@ function X:Think(bot)
 
     -- NOTE: Unlike many others, we should re-evalute need to fight every time and
     --       not check if GetAction == ACTION_FIGHT
-    if ( self:Determine_ShouldIFighting(bot) ) then
+    if ( self:Determine_ShouldIFight(bot) ) then
         local bRet = self:DoFight(bot)
         if bRet then return end
     end
@@ -547,8 +547,7 @@ function X:Determine_ShouldUseGlyph(bot)
 	    local listHeroCount = tower:GetNearbyHeroes(tower:GetAttackRange(), true, BOT_MODE_NONE)
 
 	    if tower:GetHealth() < math.max(tower:GetMaxHealth()*0.15, 150) and tower:TimeSinceDamagedByAnyHero() < 3
-            and tower:TimeSinceDamagedByCreep() < 3 and (listEnemyCreep and #listEnemyCreep >= 2) 
-            and (listHeroCount and #listHeroCount >= 1) then
+            and tower:TimeSinceDamagedByCreep() < 3 and (#listEnemyCreep >= 2 or #listHeroCount >= 1) then
 		    return true
 	    end
     end
@@ -649,7 +648,7 @@ function X:Determine_ShouldIRetreat(bot)
     return nil
 end
 
-function X:Determine_ShouldIFighting(bot)
+function X:Determine_ShouldIFight(bot)
     global_game_state.GlobalFightDetermination()
     if self:getHeroVar("Target").Id > 0 then
         return true
@@ -657,7 +656,7 @@ function X:Determine_ShouldIFighting(bot)
     return false
 end
 
-function X:Determine_ShouldIFighting2(bot)
+function X:Determine_ShouldIFight2(bot)
     -- try to find a taret
     local weakestHero, score = fighting.FindTarget(nearbyEnemyHeroes, nearbyEnemyTowers, nearbyAlliedTowers, nearbyEnemyCreep, nearbyAlliedCreep)
     

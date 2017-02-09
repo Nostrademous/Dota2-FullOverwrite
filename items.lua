@@ -361,7 +361,7 @@ function X:GetItemValueNumber(item)
 	elseif item == "item_cheese" then
 		return 10000
 	elseif item == "item_tpscroll" then
-		return 10000
+		return 1000000
 	elseif item == "item_gem" then
 		return 10000
 	elseif item == "item_courier" then

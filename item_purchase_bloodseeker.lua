@@ -18,31 +18,31 @@ local ItemsToBuyAsJungler = {
         "item_tango",
         "item_branches",
         "item_branches"
-	},
-	UtilityItems = {
-	},
-	CoreItems = {
+    },
+    UtilityItems = {
+    },
+    CoreItems = {
         "item_iron_talon",
-		"item_power_treads_agi",
-		"item_invis_sword",
-		"item_yasha",
+        "item_power_treads_agi",
+        "item_invis_sword",
+        "item_yasha",
         "item_sange_and_yasha",
-		"item_basher",
-		"item_abyssal_blade",
+        "item_basher",
+        "item_abyssal_blade",
         "item_assault"
-	},
-	ExtensionItems = {
-		OffensiveItems = {
+    },
+    ExtensionItems = {
+        OffensiveItems = {
             "item_silver_edge",
-			"item_butterfly",
-			"item_monkey_king_bar"
-		},
-		DefensiveItems = {
-			"item_heart",
-			"item_black_king_bar",
-			"item_aghs_scepter"
-		}
-	}
+            "item_butterfly",
+            "item_monkey_king_bar"
+        },
+        DefensiveItems = {
+            "item_heart",
+            "item_black_king_bar",
+            "item_aghs_scepter"
+        }
+    }
 }
 
 local ItemsToBuyAsRoamer = {}
@@ -92,8 +92,8 @@ function ItemPurchaseThink()
     local npcBot = GetBot()
 
     if not init then
-            -- init the tables
-            init = bsBuy:InitTable()
+        -- init the tables
+        init = bsBuy:InitTable()
     end
 
     bsBuy:Think(npcBot)

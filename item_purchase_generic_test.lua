@@ -214,7 +214,8 @@ function X:InitTable()
 	if #self.StartingItems > 0
 		or #self.UtilityItems > 0
 		or #self.CoreItems > 0
-		or #self.ExtensionItems > 0 then
+		or #self.ExtensionItems.OffensiveItems > 0 
+        or #self.ExtensionItems.DefensiveItems > 0 then
 		return false
 	else
 		-- Init tables based on role
@@ -294,7 +295,14 @@ function X:BuySupportItems()
 			local tomes = GetItemStockCount("item_tome_of_knowledge")
 			local flyingCour = GetItemStockCount("item_flying_courier")
 			-- buy all available wards
-			if wards > 0 then
+            local bot = GetBot()
+            local item = utils.HaveItem(bot, "item_ward_observer")
+            local currWardCount = 0
+            if item ~= nil then
+                currWardCount = item:GetCurrentCharges()
+            end
+            
+			if wards > 0 and currWardCount < 1 then
 				while wards > 0 do
 					table.insert(self.PurchaseOrder, 1, "item_ward_observer")
 					wards = wards - 1

@@ -57,7 +57,7 @@ function OnStart(bot)
     setHeroVar("BackTimerGen", -1000)
 
     if not utils.HaveTeleportation(bot) then
-        if DotaTime() > 10 and bot:GetGold() > 50 and GetUnitToLocationDistance(bot,GetLocationAlongLane(getHeroVar("CurLane"),0.0))<700 and utils.NumberOfItems(bot)<=5 then
+        if DotaTime() > 10 and bot:GetGold() > 50 and GetUnitToLocationDistance(bot,GetLocationAlongLane(getHeroVar("CurLane"),0.0))<700 and utils.NumberOfItems(bot) <= 5 then
             bot:Action_PurchaseItem("item_tpscroll")
             return
         end

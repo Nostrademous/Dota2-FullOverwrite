@@ -101,7 +101,6 @@ function FindTarget(bot)
     end
     if (bot:GetEstimatedDamageToTarget( true, target, 5.0, DAMAGE_TYPE_ALL ) * (1 + 0.5*heroAmpFactor)) > target:GetHealth() then
         setHeroVar("GankTarget", {Obj=target, Id=target:GetPlayerID()})
-        setHeroVar("move_ticks", 0)
         utils.myPrint(" stalking "..utils.GetHeroName(target))
         return true
     end
@@ -110,16 +109,6 @@ end
 
 function ApproachTarget(bot, target)
     local me = getHeroVar("Self")
-    local move_ticks = getHeroVar("move_ticks")
-
-    if move_ticks > 250 then -- time to check for targets again
-        utils.myPrint("move_ticks > 250 :: abandoning gank")
-        me:RemoveAction(constants.ACTION_GANKING)
-        setHeroVar("GankTarget", {Obj=nil, Id=0})
-        return false
-    else
-        setHeroVar("move_ticks", move_ticks + 1)
-    end
 
     if not me:IsReadyToGank(bot) then
         utils.myPrint("[ApproachTarget()] - not read to gank!")
@@ -130,7 +119,18 @@ function ApproachTarget(bot, target)
 
     if target.Id > 0 and IsHeroAlive(target.Id) then
         if utils.ValidTarget(target) then
-            if GetUnitToUnitDistance(bot, target.Obj) < 1000 then
+            local distFromTarget = GetUnitToUnitDistance(bot, target.Obj)
+            local timeToIntercept = distFromTarget/bot:GetCurrentMovementSpeed()
+            local timeUntilEscaped = utils.TimeForEnemyToGetIntoTheirBase(target)
+            
+            if timeUntilEscaped <= timeToIntercept then
+                utils.myPrint("GankTarget[ID: "..target.Id.."] will escape before I can kill him :(")
+                me:RemoveAction(constants.ACTION_GANKING)
+                setHeroVar("GankTarget", {Obj=nil, Id=0})
+                return false
+            end
+            
+            if distFromTarget < 1000 and target:CanBeSeen() then
                 return true
             else
                 --[[ FIXME: need to teach bots not to use abilities from afar when invis

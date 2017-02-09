@@ -80,6 +80,12 @@ function getLinaDmg(duration, hero, target)
     return totalDmg
 end
 
+function estimateRightClickDamage( hHero, hTarget, fDuration )
+    local actualDmg = hTarget:GetActualIncomingDamage(hHero:GetAttackDamage(), DAMAGE_TYPE_PHYSICAL)
+    local numHits = math.floor(fDuration/hHero:GetSecondsPerAttack())
+    return actualDmg*numHits
+end
+
 function estimateTimeToKill(hero, target)
     local rightClickDmg = hero:GetAttackDamage()
     local rightClickCastPoint = hero:GetAttackPoint()

@@ -60,15 +60,15 @@ function EnemyData.UpdateEnemyInfo(timeFreq)
 
         EnemyData[pid].Name = utils.GetHeroName(enemy)
         EnemyData[pid].Obj = enemy
-        EnemyData[pid].Level = enemy:GetLevel()
 
         if (RealTime() - EnemyData[pid].Time1) >= UpdateFreq1 then
             EnemyData[pid].Time1        = RealTime()
+            EnemyData[pid].Level        = enemy:GetLevel()
             EnemyData[pid].Health       = enemy:GetHealth()
             EnemyData[pid].MaxHealth    = enemy:GetMaxHealth()
             EnemyData[pid].Mana         = enemy:GetMana()
             EnemyData[pid].MaxMana      = enemy:GetMaxMana()
-            EnemyData[pid].MoveSpeed    = enemy:GetCurrentMovementSpeed()
+            EnemyData[pid].MoveSpeed    = enemy:GetCurrentMovementSpeed() or 400
             EnemyData[pid].LocExtra1    = enemy:GetExtrapolatedLocation(0.5) -- 1/2 second
             EnemyData[pid].LocExtra2    = enemy:GetExtrapolatedLocation(3.0) -- 3 second
 

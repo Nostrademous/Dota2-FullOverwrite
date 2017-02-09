@@ -262,8 +262,7 @@ U.MapSafeSpots = {
     Vector(4486, -5033),
     Vector(5972, -4964),
     Vector(7354, -4144),
-    Vector(7467, -3149),
-    Vector(5190, -3768)
+    Vector(7467, -3149)
 }
 
 U.RadiantSafeSpots = {unpack(U.MapSafeSpots)}
@@ -434,6 +433,38 @@ function U.GetHeightDiff(hUnit1, hUnit2)
         return (hUnit1:GetGroundHeight() - hUnit2)
     end
     return (hUnit1:GetGroundHeight() - hUnit2:GetGroundHeight())
+end
+
+function U.EnemyDistanceFromTheirAncient( hEnemy )
+    --[[
+    local locAncient = Vector(5527, 4997)
+    if GetTeam() == TEAM_DIRE then
+        locAncient = Vector(-5846, -5332)
+    end
+    --]]
+    
+    local locAncient = GetAncient(U.GetOtherTeam()):GetLocation()
+    if U.ValidTarget( hEnemy ) then
+        return U.GetDistance( locAncient, hEnemy.Obj:GetLocation() )
+    else
+        local timeSinceSeen = GetHeroLastSeenInfo(hEnemy.Id).time
+        if  timeSinceSeen > 3 then
+            return 0
+        elseif timeSinceSeen <= 0.5 then
+            return U.GetDistance( locAncient, hEnemy.LocExtra1 )
+        elseif timeSinceSeen <= 3.0 then
+            return U.GetDistance( locAncient, hEnemy.LocExtra2 )
+        end
+    end
+    return 0
+end
+
+function U.TimeForEnemyToGetIntoTheirBase( hEnemy )
+    local distFromBase = U.EnemyDistanceFromTheirAncient( hEnemy )
+    if U.ValidTarget( hEnemy ) then
+        return distFromBase/hEnemy.Obj:GetCurrentMovementSpeed()
+    end
+    return distFromBase/hEnemy.MoveSpeed
 end
 
 -- CONTRIBUTOR: Function below was coded by Platinum_dota2
@@ -891,22 +922,40 @@ function U.GetWardingSpot(lane)
     local laneTower2 = U.GetLaneTower(U.GetOtherTeam(), lane, 2)
 
     if U.NotNilOrDead(laneTower1) then
-        U.myPrint(" - WARDING - lane tower 1 still up, placing wards accordingly")
+        --U.myPrint(" - WARDING - lane tower 1 still up, placing wards accordingly")
         if GetTeam() == TEAM_RADIANT then
             if lane == LANE_BOT then
-                return Vector(3553, -1500)
+                return {Vector(3552, -1522), Vector(5684, -3228)}
             elseif lane == LANE_MID then
-                return Vector(-874, 1191)
+                return {Vector(-874, 1191)}
             elseif lane == LANE_TOP then
-                return Vector(-3069, 3873)
+                return {Vector(-3069, 3873)}
             end
         else
             if lane == LANE_TOP then
-                return Vector(-5105, 2083)
+                return {Vector(-5105, 2083)}
             elseif lane == LANE_MID then
-                return Vector(-130, -1047)
+                return {Vector(-130, -1047)}
             elseif lane == LANE_BOT then
-                return Vector(4199, -4763)
+                return {Vector(4199, -4763)}
+            end
+        end
+    elseif U.NotNilOrDead(laneTower2) then
+        if GetTeam() == TEAM_RADIANT then
+            if lane == LANE_BOT then
+                return {Vector(5072, 761), Vector(3096, -211)}
+            elseif lane == LANE_MID then
+                return {Vector(218, 2393)}
+            elseif lane == LANE_TOP then
+                return {Vector(1021, 4641)}
+            end
+        else
+            if lane == LANE_TOP then
+                return {Vector(-4380, -1283)}
+            elseif lane == LANE_MID then
+                return {Vector(-4380, -1283)}
+            elseif lane == LANE_BOT then
+                return {Vector(-1035, -4588)}
             end
         end
     else
@@ -1307,7 +1356,7 @@ function U.GetEnemyHeroFromId( id )
 end
 
 function U.IsTargetMagicImmune(target)
-    return target:IsMagicImmune() or target:IsInvulnerable()
+    return target:IsInvulnerable() or target:IsMagicImmune()
 end
 
 function U.IsCrowdControlled(enemy)
@@ -1359,20 +1408,19 @@ function U.NumberOfItemsInStash(bot)
     return n
 end
 
-function U.HaveItem(npcBot, item_name)
-    local slot = npcBot:FindItemSlot(item_name)
+function U.HaveItem(bot, item_name)
+    local slot = bot:FindItemSlot(item_name)
     if slot ~= ITEM_SLOT_TYPE_INVALID then
-        local slot_type = npcBot:GetItemSlotType(slot)
+        local slot_type = bot:GetItemSlotType(slot)
         if slot_type == ITEM_SLOT_TYPE_MAIN then
-            return npcBot:GetItemInSlot(slot)
+            return bot:GetItemInSlot(slot)
         elseif slot_type == ITEM_SLOT_TYPE_BACKPACK then
-            U.myPrint("FIXME: Implement swapping BACKPACK to MAIN INVENTORY of item: ", item_name)
-            return nil
+            return U.MoveItemsFromBackpackToInventory(bot, slot)
         elseif slot_type == ITEM_SLOT_TYPE_STASH then
-            if npcBot:HasModifier("modifier_fountain_aura") then
+            if bot:HasModifier("modifier_fountain_aura") then
                 if U.NumberOfItems(bot) < 6 then
                     U.MoveItemsFromStashToInventory(bot)
-                    return U.HaveItem(npcBot, item_name)
+                    return U.HaveItem(bot, item_name)
                 else
                     U.myPrint("FIXME: Implement swapping STASH to MAIN INVENTORY of item: ", item_name)
                 end
@@ -1383,6 +1431,27 @@ function U.HaveItem(npcBot, item_name)
         end
     end
 
+    return nil
+end
+
+function U.MoveItemsFromBackpackToInventory(bot, bpSlot)
+    if U.NumberOfItems(bot) < 6 then
+        for i = 0, 5, 1 do
+            if bot:GetItemInSlot(i) == nil then
+                bot:Action_SwapItems(i, bpSlot)
+                return bot:GetItemInSlot(i)
+            end
+        end
+    else
+        local bpItem = bot:GetItemInSlot(bpSlot)
+        if bpItem:GetName() == "item_tpscroll" or bpItem:GetName() == "item_tome_of_knowledge" then
+            bot:Action_SwapItems(5, bpSlot)
+            return bot:GetItemInSlot(5)
+        else
+            U.myPrint("FIXME: Implement swapping BACKPACK to MAIN INVENTORY of item: ", bpItem:GetName())
+            return nil
+        end
+    end
     return nil
 end
 
@@ -1414,14 +1483,12 @@ function U.MoveItemsFromStashToInventory(bot)
 end
 
 function U.GetFreeSlotInBackPack(bot)
-    local slot = 0
     for i = 6, 8, 1 do
         if bot:GetItemInSlot(i) == nil then
-            slot = i
-            break
+            return i
         end
     end
-    return slot
+    return -1
 end
 
 function U.HaveTeleportation(npcBot)
@@ -1492,23 +1559,23 @@ function U.CourierThink(npcBot)
     setHeroVar("LastCourierThink", newTime)
 
     local courier = GetCourier(0)
-    --if GetCourierState(courier) ~= COURIER_STATE_AT_BASE and GetCourierState(courier) ~= COURIER_STATE_DEAD and GetCourierState(courier) ~= COURIER_STATE_IDLE then
-    --    npcBot:Action_Courier(GetCourier(0), COURIER_ACTION_BURST)
-    --end
-
-    if npcBot:IsAlive() and (npcBot:GetStashValue() > 500 or npcBot:GetCourierValue() > 0 or U.HasImportantItem()) and GetCourierState(courier) == COURIER_STATE_AT_BASE then
-        npcBot:Action_Courier(courier, COURIER_ACTION_TAKE_AND_TRANSFER_ITEMS)
+    if GetCourierState(courier) ~= COURIER_STATE_DEAD and GetCourierState(courier) ~= COURIER_STATE_MOVING and GetCourierState(courier) ~= COURIER_STATE_AT_BASE then
+        npcBot:Action_Courier(courier, COURIER_ACTION_RETURN)
         return
     end
-
-    if GetCourierState(courier) ~= COURIER_STATE_DEAD and GetCourierState(courier) == COURIER_STATE_IDLE then
-        npcBot:Action_Courier(courier, COURIER_ACTION_RETURN)
+    
+    if npcBot:IsAlive() and (npcBot:GetStashValue() > 500 or npcBot:GetCourierValue() > 0 or U.HasImportantItem()) and GetCourierState(courier) == COURIER_STATE_AT_BASE then
+        npcBot:Action_Courier(courier, COURIER_ACTION_TAKE_AND_TRANSFER_ITEMS)
         return
     end
 
     if GetCourierState(courier) ~= COURIER_STATE_DEAD and GetCourierState(courier) == COURIER_STATE_AT_BASE and
         (not npcBot:IsAlive()) and npcBot:GetCourierValue() > 0 then
         npcBot:Action_Courier(courier, COURIER_ACTION_RETURN_STASH_ITEMS)
+    end
+    
+    if GetCourierState(courier) == COURIER_STATE_DELIVERING_ITEMS or GetCourierState(courier) == COURIER_STATE_RETURNING_TO_BASE then
+        npcBot:Action_Courier(GetCourier(0), COURIER_ACTION_BURST)
     end
 end
 

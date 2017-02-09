@@ -35,6 +35,31 @@ function nearBuilding(unitLoc, building)
     return utils.GetDistance(unitLoc, building) <= 500
 end
 
+function numEnemiesNearBuilding(building)
+    local num = 0
+    for k, enemy in pairs(enemyData) do
+        if type(k) == "number" then
+            local eLoc = enemy.LocExtra1
+            if utils.ValidTarget(enemy) then
+                eLoc = enemy.Obj:GetLocation()
+            end
+            
+            if eLoc == nil then return 0 end
+            
+            if building > 0 then
+                if nearBuilding(eLoc, buildings_status.GetLocation(GetTeam(), building)) then
+                    num = num + 1
+                end
+            else
+                if nearBuilding(eLoc, GetAncient(GetTeam()):GetLocation()) then
+                    num = num + 1
+                end
+            end
+        end
+    end
+    return num
+end
+
 -- Detect if a tower is being pushed
 function DetectEnemyPushMid()
     local building = 0
@@ -49,20 +74,7 @@ function DetectEnemyPushMid()
     else building = 0 
     end
     
-    local num = 0
-    for k, enemy in pairs(enemyData) do
-        if type(k) == "number" and enemy.Location ~= nil then
-            if building > 0 then
-                if nearBuilding(enemy.Location, GetLocation(GetTeam(), building)) then
-                    num = num + 1
-                end
-            else
-                if nearBuilding(enemy.Location, GetAncient(GetTeam()):GetLocation()) then
-                    num = num + 1
-                end
-            end
-        end
-    end
+    local num = numEnemiesNearBuilding(building)
     
     return num, building
 end
@@ -80,20 +92,7 @@ function DetectEnemyPushTop()
     else building = 0 
     end
     
-    local num = 0
-    for k, enemy in pairs(enemyData) do
-        if type(k) == "number" and enemy.Location ~= nil then
-            if building > 0 then
-                if nearBuilding(enemy.Location, GetLocation(GetTeam(), building)) then
-                    num = num + 1
-                end
-            else
-                if nearBuilding(enemy.Location, GetAncient(GetTeam()):GetLocation()) then
-                    num = num + 1
-                end
-            end
-        end
-    end
+    local num = numEnemiesNearBuilding(building)
     
     return num, building
 end
@@ -111,20 +110,7 @@ function DetectEnemyPushBot()
     else building = 0 
     end
     
-    local num = 0
-    for k, enemy in pairs(enemyData) do
-        if type(k) == "number" and enemy.Location ~= nil then
-            if building > 0 then
-                if nearBuilding(enemy.Location, GetLocation(GetTeam(), building)) then
-                    num = num + 1
-                end
-            else
-                if nearBuilding(enemy.Location, GetAncient(GetTeam()):GetLocation()) then
-                    num = num + 1
-                end
-            end
-        end
-    end
+    local num = numEnemiesNearBuilding(building)
     
     return num, building
 end
@@ -163,9 +149,12 @@ function GlobalFightDetermination()
     
     local eyeRange = 1200
     local listAllies = GetUnitList(UNIT_LIST_ALLIED_HEROES)
-    for _, ally in ipairs(listAllies) do
+    for _, ally in pairs(listAllies) do
         if ally:IsAlive() and ally:GetHealth()/ally:GetMaxHealth() > 0.4 and 
             gHero.HasID(ally:GetPlayerID()) and gHero.GetVar(ally:GetPlayerID(), "Target").Id == 0 then
+            
+            local totalNukeDmg = 0
+            
             for k, enemy in pairs(enemyData) do
                 -- get a valid enemyData enemy 
                 if type(k) == "number" and enemy.Alive then
@@ -184,12 +173,14 @@ function GlobalFightDetermination()
                         end
                     end
                     local timeToReach = distance/ally:GetCurrentMovementSpeed()
+                    local myNukeDmg, myActionQueue, myCastTime, myStun, mySlow = gHero.GetVar(ally:GetPlayerID(), "Self"):GetNukeDamage( ally, enemy.Obj )
+                    
+                    -- update our total nuke damage
+                    totalNukeDmg = totalNukeDmg + myNukeDmg
                     
                     if distance <= eyeRange then
                         --utils.myPrint(utils.GetHeroName(ally), " sees "..enemy.Name.." ", distance, " units away. Time to reach: ", timeToReach)
                         
-                        local myStun = ally:GetStunDuration(true)
-                        local mySlow = ally:GetSlowDuration(true)
                         local allAllyStun = 0
                         local allAllySlow = 0
                         local myTimeToKillTarget = 0.0
@@ -203,7 +194,7 @@ function GlobalFightDetermination()
                         
                         local participatingAllyIDs = {}
                         local listAllies2 = GetUnitList(UNIT_LIST_ALLIED_HEROES)
-                        for _, ally2 in ipairs(listAllies2) do
+                        for _, ally2 in pairs(listAllies2) do
                             if ally2:IsAlive() and not gHero.HasID(ally2:GetPlayerID()) then
                                 local distToEnemy = 100000
                                 if enemy.Obj then
@@ -242,12 +233,16 @@ function GlobalFightDetermination()
                                     end
                                 end
                                 local allyTimeToReach = distToEnemy/ally2:GetCurrentMovementSpeed()
+                                local allyNukeDmg, allyActionQueue, allyCastTime, allyStun, allySlow = gHero.GetVar(ally2:GetPlayerID(), "Self"):GetNukeDamage( ally2, enemy.Obj )
                                 
-                                if distToEnemy <= 2*eyeRange then
+                                -- update our total nuke damage
+                                totalNukeDmg = totalNukeDmg + allyNukeDmg
+                                
+                                if allyTimeToReach <= 6.0 then
                                     --utils.myPrint("ally ", utils.GetHeroName(ally2), " is ", distToEnemy, " units away. Time to reach: ", allyTimeToReach)
                                     
-                                    allAllyStun = allAllyStun + ally2:GetStunDuration(true)
-                                    allAllySlow = allAllySlow + ally2:GetSlowDuration(true)
+                                    allAllyStun = allAllyStun + allyStun
+                                    allAllySlow = allAllySlow + allySlow
                                     local allyTimeToKillTarget = 0.0
                                     if utils.ValidTarget(enemy) then
                                         allyTimeToKillTarget = fight_simul.estimateTimeToKill(ally2, enemy.Obj)
@@ -266,15 +261,33 @@ function GlobalFightDetermination()
                         local totalSlow = mySlow + allAllySlow
                         local timeToKillBonus = numAttackers*(totalStun + 0.5*totalSlow)
                         
-                        if utils.ValidTarget(enemy) and (anticipatedTimeToKill - timeToKillBonus) < 6.0 then
-                            utils.myPrint(#participatingAllyIDs+1, " of us can Stun for: ", totalStun, " and Slow for: ", totalSlow, ". AnticipatedTimeToKill ", enemy.Name ,": ", anticipatedTimeToKill)
-                            utils.myPrint(utils.GetHeroName(ally), " - Engaging! Anticipated Time to kill: ", anticipatedTimeToKill)
-                            gHero.SetVar(ally:GetPlayerID(), "Target", {Obj=enemy.Obj, Id=k})
-                            gHero.GetVar(ally:GetPlayerID(), "Self"):AddAction(constants.ACTION_FIGHT)
-                            for _, v in pairs(participatingAllyIDs) do
-                                if gHero.GetVar(v, "GankTarget").Id == 0 then
-                                    gHero.SetVar(v, "Target", {Obj=enemy.Obj, Id=k})
-                                    gHero.GetVar(v, "Self"):AddAction(constants.ACTION_FIGHT)
+                        if utils.ValidTarget(enemy) then
+                            if (anticipatedTimeToKill - timeToKillBonus) < 6.0 then
+                                utils.myPrint(#participatingAllyIDs+1, " of us can Stun for: ", totalStun, " and Slow for: ", totalSlow, ". AnticipatedTimeToKill ", enemy.Name ,": ", anticipatedTimeToKill)
+                                utils.myPrint(utils.GetHeroName(ally), " - Engaging! Anticipated Time to kill: ", anticipatedTimeToKill)
+                                gHero.SetVar(ally:GetPlayerID(), "Target", {Obj=enemy.Obj, Id=k})
+                                gHero.GetVar(ally:GetPlayerID(), "Self"):AddAction(constants.ACTION_FIGHT)
+                                for _, v in pairs(participatingAllyIDs) do
+                                    if gHero.GetVar(v, "GankTarget").Id == 0 then
+                                        gHero.SetVar(v, "Target", {Obj=enemy.Obj, Id=k})
+                                        gHero.GetVar(v, "Self"):AddAction(constants.ACTION_FIGHT)
+                                    end
+                                end
+                            elseif totalNukeDmg >= enemy.Obj:GetHealth() then
+                                utils.myPrint(#participatingAllyIDs+1, " of us can Nuke ", enemy.Name)
+                                utils.myPrint(utils.GetHeroName(ally), " - Engaging!")
+                                
+                                local allyID = ally:GetPlayerID()
+                                gHero.SetVar(allyID, "Target", {Obj=enemy.Obj, Id=k})
+                                gHero.GetVar(allyID, "Self"):AddAction(constants.ACTION_FIGHT)
+                                --ally:SetActionQueueing(true)
+                                --gHero.SetVar(allyID, "Queued", true)
+                                
+                                for _, v in pairs(participatingAllyIDs) do
+                                    if gHero.GetVar(v, "GankTarget").Id == 0 then
+                                        gHero.SetVar(v, "Target", {Obj=enemy.Obj, Id=k})
+                                        gHero.GetVar(v, "Self"):AddAction(constants.ACTION_FIGHT)
+                                    end
                                 end
                             end
                         end

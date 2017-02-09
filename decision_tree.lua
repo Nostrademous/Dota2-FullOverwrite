@@ -213,6 +213,7 @@ function X:Think(bot)
     if ( GetGameState() == GAME_STATE_PRE_GAME ) then
         if not self.Init then
             self:DoInit(bot)
+            return
         end
     end
 
@@ -332,7 +333,7 @@ function X:Think(bot)
     
     --SHOULD WE USE GLYPH
     if ( self:Determine_ShouldUseGlyph(bot) ) then
-        bot:Action_Glyph()
+        --FIXME: Valve broke it in 7.02... uncomment when fixed-- bot:Action_Glyph()
     end
 
     --AM I ALIVE
@@ -356,7 +357,13 @@ function X:Think(bot)
             bot:Action_ClearActions(true)
             self:setHeroVar("Queued", false)
         else
-            return
+            if not utils.ValidTarget(target) then
+                bot:SetActionQueueing(false)
+                bot:Action_ClearActions(true)
+                self:setHeroVar("Queued", false)
+            else
+                return
+            end
         end
     end
     
@@ -454,7 +461,7 @@ function X:Think(bot)
     end
 
     local lane, building, numEnemies = self:Determine_ShouldIDefendLane(bot)
-    if ( lane ) then
+    if lane then
         local bRet = self:DoDefendLane(bot, lane, building, numEnemies)
         if bRet then return end
     end
@@ -510,11 +517,16 @@ function X:DoWhileDead(bot)
             table.remove(as, i)
         end
     end
+    
+    self:setHeroVar("Queued", false)
+    self:setHeroVar("Target", NoTarget)
+    self:setHeroVar("GankTarget", NoTarget)
+    bot:SetActionQueueing(false)
 
-    self:MoveItemsFromStashToInventory(bot);
-    local bb = self:ConsiderBuyback(bot);
+    self:MoveItemsFromStashToInventory(bot)
+    local bb = self:ConsiderBuyback(bot)
     if (bb) then
-        bot:Action_Buyback();
+        bot:Action_Buyback()
     end
     return true
 end
@@ -526,6 +538,7 @@ end
 
 function X:ConsiderBuyback(bot)
     -- FIXME: Write Buyback logic here
+    -- GetBuybackCooldown(), GetBuybackCost()
     if ( bot:HasBuyback() ) then
         return false -- FIXME: for now always return false
     end
@@ -560,17 +573,17 @@ end
 
 function X:Determine_ShouldIRetreat(bot)
     if bot:GetHealth()/bot:GetMaxHealth() > 0.9 and bot:GetMana()/bot:GetMaxMana() > 0.5 then
-        if utils.IsTowerAttackingMe() then
+        if utils.IsTowerAttackingMe() and not self:GetAction() == ACTION_FIGHT then
             return constants.RETREAT_TOWER
         end
         return nil
     end
 
     if bot:GetHealth()/bot:GetMaxHealth() > 0.65 and bot:GetMana()/bot:GetMaxMana() > 0.6 and GetUnitToLocationDistance(bot, GetLocationAlongLane(self:getHeroVar("CurLane"), 0)) > 6000 then
-        if utils.IsTowerAttackingMe() then
+        if utils.IsTowerAttackingMe() and not self:GetAction() == ACTION_FIGHT then
             return constants.RETREAT_TOWER
         end
-        if utils.IsCreepAttackingMe() then
+        if utils.IsCreepAttackingMe() and not self:GetAction() == ACTION_FIGHT then
             local pushing = self:getHeroVar("ShouldPush")
             if self:getHeroVar("Target").Obj == nil or pushing == nil or pushing == false then
                 return constants.RETREAT_CREEP
@@ -580,10 +593,10 @@ function X:Determine_ShouldIRetreat(bot)
     end
 
     if bot:GetHealth()/bot:GetMaxHealth() > 0.8 and bot:GetMana()/bot:GetMaxMana() > 0.36 and GetUnitToLocationDistance(bot, GetLocationAlongLane(self:getHeroVar("CurLane"), 0)) > 6000 then
-        if utils.IsTowerAttackingMe() then
+        if utils.IsTowerAttackingMe() and not self:GetAction() == ACTION_FIGHT then
             return constants.RETREAT_TOWER
         end
-        if utils.IsCreepAttackingMe() then
+        if utils.IsCreepAttackingMe() and not self:GetAction() == ACTION_FIGHT then
             local pushing = self:getHeroVar("ShouldPush")
             if self:getHeroVar("Target").Obj == nil or pushing == nil or pushing == false then
                 return constants.RETREAT_CREEP
@@ -640,6 +653,12 @@ function X:Determine_ShouldIRetreat(bot)
     end
 
     if utils.IsTowerAttackingMe() then
+        if #nearbyEnemyTowers == 1 then
+            local eTower = nearbyEnemyTowers[1]
+            if eTower:GetHealth()/eTower:GetMaxHealth() < 0.1 and not eTower:HasModifier("modifier_fountain_glyph") then
+                return nil
+            end
+        end
         return constants.RETREAT_TOWER
     end
     if utils.IsCreepAttackingMe() then
@@ -893,12 +912,22 @@ function X:Determine_ShouldWard(bot)
         if ward then
             local alliedMapWards = GetUnitList(UNIT_LIST_ALLIED_WARDS)
             if #alliedMapWards < 2 then --FIXME: don't hardcode.. you get more wards then you can use this way
-                local wardLoc = utils.GetWardingSpot(self:getHeroVar("CurLane"))
+                local wardLocs = utils.GetWardingSpot(self:getHeroVar("CurLane"))
                 
-                for _, value in ipairs(alliedMapWards) do
-                    -- FIXME: Consider ward expiration time
-                    if wardLoc ~= nil and value:GetLocation() == wardLoc then
-                        return false
+                if #wardLocs == 0 then return false end
+                
+                -- FIXME: Consider ward expiration time
+                local wardLoc = nil
+                for _, wl in ipairs(wardLocs) do
+                    local bGoodLoc = true
+                    for _, value in ipairs(alliedMapWards) do
+                        if utils.GetDistance(value:GetLocation(), wl) < 1600 then
+                            bGoodLoc = false
+                        end
+                    end
+                    if bGoodLoc then
+                        wardLoc = wl
+                        break
                     end
                 end
                 
@@ -906,7 +935,7 @@ function X:Determine_ShouldWard(bot)
                     self:setHeroVar("WardLocation", wardLoc)
                     utils.InitPath()
                     if self:HasAction(ACTION_WARD) == false then
-                        utils.myPrint("Going to place an Observer Ward")
+                        --utils.myPrint("Going to place an Observer Ward")
                         self:AddAction(ACTION_WARD)
                     end
                     return true
@@ -1193,14 +1222,31 @@ end
 function X:DoDefendLane(bot, lane, building, numEnemies)
     utils.myPrint("Need to defend lane: ", lane, ", building: ", building, " against numEnemies: ", numEnemies)
     -- calculate num of bots that can defend
-    local numAlliesCanReachBuilding = 0
+    local listAlliesCanReachBuilding = {}
+    local listAlliesCanTPToBuildling = {}
     local listAllies = GetUnitList(UNIT_LIST_ALLIED_HEROES)
     local hBuilding = buildings_status.GetHandle(GetTeam(), building)
-    for _, ally in ipairs(listAllies) do
+    for _, ally in pairs(listAllies) do
         --FIXME - Implement
         local distFromBuilding = GetUnitToUnitDistance(ally, hBuilding)
+        local timeToReachBuilding = distFromBuilding/ally:GetCurrentMovementSpeed()
+        
+        if timeToReachBuilding <= 5.0 then
+            table.insert(listAlliesCanReachBuilding, ally)
+        else
+            local haveTP = utils.HaveItem(ally, "item_tpscroll")
+            if haveTP and haveTP:IsFullyCastable() then
+                table.insert(listAlliesCanTPToBuildling, ally)
+            end
+        end
     end
-    return numAlliesCanReachBuilding >= (numEnemies - 1)
+    
+    if (#listAlliesCanReachBuilding + #listAlliesCanTPToBuildling) >= (numEnemies - 1) then
+        utils.myPrint("FIXME: We Could Defend this building!!! Need to implement logic")
+        --FIXME self:setHeroVar("DoDefend", true)
+    end
+    
+    return false
 end
 
 function X:DoGank(bot)
@@ -1426,6 +1472,11 @@ end
 
 function X:DoHandleIllusions(bot)
     return bot:IsIllusion()
+end
+
+-- completely virtual, needs to be implemented for each hero
+function X:GetNukeDamage( hHero, hTarget )
+    return 0, {}, 0, 0, 0
 end
 
 return X;

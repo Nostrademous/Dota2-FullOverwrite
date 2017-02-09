@@ -28,10 +28,13 @@ local Abilities ={
     "drow_ranger_marksmanship"
 }
 
-local function UseQ(bot)
-    local ability = bot:GetAbilityByName(Abilities[1])
+local abilityQ = ""
+local abilityW = ""
+local abilityE = ""
+local abilityR = ""
 
-    if not ability:IsFullyCastable() then
+local function UseQ(bot)
+    if not abilityQ:IsFullyCastable() then
         return false
     end
 
@@ -43,9 +46,9 @@ local function UseQ(bot)
     -- if target is magic immune or invulnerable and is crowd controlled, return
     if utils.IsTargetMagicImmune(target.Obj) and utils.IsCrowdControlled(target.Obj) then return false end
 
-    if GetUnitToUnitDistance(bot, target.Obj) < (ability:GetCastRange() + 100) then
+    if GetUnitToUnitDistance(bot, target.Obj) < (abilityQ:GetCastRange() + 100) then
         utils.TreadCycle(bot, constants.INTELLIGENCE)
-        bot:Action_UseAbilityOnEntity(ability, target.Obj)
+        bot:Action_UseAbilityOnEntity(abilityQ, target.Obj)
         return true
     end
 
@@ -53,34 +56,33 @@ local function UseQ(bot)
 end
 
 local function UseW(bot, nearbyEnemyHeroes)
-    local gust = bot:GetAbilityByName(Abilities[2])
-
-    if not gust:IsFullyCastable() then
+    if not abilityW:IsFullyCastable() then
         return false
     end
 
     if #nearbyEnemyHeroes == 0 then return false end
 
-    local enemy = nearbyEnemyHeroes[1]
-    local wave_speed = gust:GetSpecialValueFloat("wave_speed")
-    local delay = gust:GetCastPoint() + GetUnitToUnitDistance(bot, enemy)/wave_speed
-
+    local wave_speed = abilityW:GetSpecialValueFloat("wave_speed")
+    
     if #nearbyEnemyHeroes == 1 then
+        local enemy = nearbyEnemyHeroes[1]
+        local delay = abilityW:GetCastPoint() + GetUnitToUnitDistance(bot, enemy)/wave_speed
         local enemyHasStun = enemy:GetStunDuration(true) > 0
         if not utils.IsTargetMagicImmune(enemy) or not utils.IsCrowdControlled(enemy) 
-        or (not enemy:IsSilenced()) or enemy:IsChanneling() 
-        and (GetUnitToUnitDistance(bot, enemy) < 450 or (enemyHasStun and enemy:IsUsingAbility())) then 
+            or (not enemy:IsSilenced()) or enemy:IsChanneling() 
+            and (GetUnitToUnitDistance(bot, enemy) < 150) then -- or (enemyHasStun and enemy:IsUsingAbility())) then 
             utils.TreadCycle(bot, constants.INTELLIGENCE)
-            bot:Action_UseAbilityOnLocation(gust, enemy:GetExtrapolatedLocation(delay))
+            bot:Action_UseAbilityOnLocation(abilityW, enemy:GetExtrapolatedLocation(delay))
             return true
         end
     else
+        --Use gust to break channeling spells
         for _, enemy in pairs( nearbyEnemyHeroes ) do
-            if GetUnitToUnitDistance(bot, enemy) < gust:GetCastRange() and enemy:IsChanneling() then
+            if GetUnitToUnitDistance(bot, enemy) < abilityW:GetCastRange() and enemy:IsChanneling() then
                 if not enemy:IsMagicImmune() then
-                    local gustDelay = gust:GetCastPoint() + GetUnitToUnitDistance(bot, enemy)/wave_speed
+                    local gustDelay = abilityW:GetCastPoint() + GetUnitToUnitDistance(bot, enemy)/wave_speed
                     utils.TreadCycle(bot, constants.INTELLIGENCE)
-                    bot:Action_UseAbilityOnLocation(gust, enemy:GetExtrapolatedLocation(gustDelay))
+                    bot:Action_UseAbilityOnLocation(abilityW, enemy:GetExtrapolatedLocation(gustDelay))
                     return true
                 end
             end
@@ -89,30 +91,30 @@ local function UseW(bot, nearbyEnemyHeroes)
         --Use Gust as a Defensive skill to fend off chasing enemies
         if getHeroVar("IsRetreating") and (bot:GetHealth()/bot:GetMaxHealth()) < 0.5 then
             for _, enemy in pairs( nearbyEnemyHeroes ) do
-                if GetUnitToUnitDistance(bot, enemy) < gust:GetCastRange() and (not enemy:IsMagicImmune()) then
-                    local gustDelay = gust:GetCastPoint() + GetUnitToUnitDistance(bot, enemy)/wave_speed
+                if GetUnitToUnitDistance(bot, enemy) < 150 and (not enemy:IsMagicImmune()) then
+                    local gustDelay = abilityW:GetCastPoint() + GetUnitToUnitDistance(bot, enemy)/wave_speed
                     utils.TreadCycle(bot, constants.INTELLIGENCE)
-                    bot:Action_UseAbilityOnLocation(gust, enemy:GetExtrapolatedLocation(gustDelay))
+                    bot:Action_UseAbilityOnLocation(abilityW, enemy:GetExtrapolatedLocation(gustDelay))
                     return true
                 end
             end
         end
 
+        --[[ THIS JUST SPAMS IT
         local center = utils.GetCenter(nearbyEnemyHeroes)
         if center ~= nil then
             utils.TreadCycle(bot, constants.INTELLIGENCE)
-            bot:Action_UseAbilityOnLocation(gust, center)
+            bot:Action_UseAbilityOnLocation(abilityW, center)
             return true
         end
+        --]]
     end
 
     return false
 end
 
 local function UseE(bot, nearbyEnemyTowers, nearbyAlliedCreep)
-    local trueshot = bot:GetAbilityByName(Abilities[3])
-
-    if not trueshot:IsFullyCastable() then
+    if not abilityE:IsFullyCastable() then
         return false
     end
     -- TODO: use GetAttackTarget() to check if drow is attacking a tower before using trueshot not sure which is better
@@ -127,7 +129,7 @@ local function UseE(bot, nearbyEnemyTowers, nearbyAlliedCreep)
     end
 
     if #nearbyEnemyTowers > 0 and rangedCnt > 3 then
-        bot:Action_UseAbility(trueshot)
+        bot:Action_UseAbility(abilityE)
         return true
     end
 
@@ -138,6 +140,12 @@ function AbilityUsageThink(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCre
     if ( GetGameState() ~= GAME_STATE_GAME_IN_PROGRESS and GetGameState() ~= GAME_STATE_PRE_GAME ) then return false end
 
     local bot = GetBot()
+    
+    if abilityQ == "" then abilityQ = bot:GetAbilityByName( Abilities[1] ) end
+    if abilityW == "" then abilityW = bot:GetAbilityByName( Abilities[2] ) end
+    if abilityE == "" then abilityE = bot:GetAbilityByName( Abilities[3] ) end
+    if abilityR == "" then abilityR = bot:GetAbilityByName( Abilities[4] ) end
+    
     if not bot:IsAlive() then return false end
 
     -- Check if we're already using an ability

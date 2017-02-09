@@ -28,7 +28,7 @@ local SKILL_R = "venomancer_poison_nova"
 
 local ABILITY1 = "special_bonus_exp_boost_20"
 local ABILITY2 = "special_bonus_movement_speed_20"
-local ABILITY3 = "special_bonus_hp_175"
+local ABILITY3 = "special_bonus_hp_200"
 local ABILITY4 = "special_bonus_cast_range_150"
 local ABILITY5 = "special_bonus_attack_damage_75"
 local ABILITY6 = "special_bonus_magic_resistance_15"

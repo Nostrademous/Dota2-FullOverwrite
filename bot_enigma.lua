@@ -20,7 +20,7 @@ local ENIGMA_ABILITY2 = "special_bonus_magic_resistance_12"
 local ENIGMA_ABILITY3 = "special_bonus_cooldown_reduction_15"
 local ENIGMA_ABILITY4 = "special_bonus_gold_income_20"
 local ENIGMA_ABILITY5 = "special_bonus_hp_300"
-local ENIGMA_ABILITY6 = "special_bonus_respawn_reduction_30"
+local ENIGMA_ABILITY6 = "special_bonus_respawn_reduction_40"
 local ENIGMA_ABILITY7 = "special_bonus_armor_12"
 local ENIGMA_ABILITY8 = "special_bonus_unique_enigma"
 

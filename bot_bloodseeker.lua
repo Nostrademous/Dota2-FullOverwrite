@@ -28,11 +28,11 @@ local BLOODSEEKER_SKILL_W = "bloodseeker_blood_bath";
 local BLOODSEEKER_SKILL_E = "bloodseeker_thirst";
 local BLOODSEEKER_SKILL_R = "bloodseeker_rupture";
 
-local BLOODSEEKER_ABILITY1 = "special_bonus_armor_5"
-local BLOODSEEKER_ABILITY2 = "special_bonus_attack_damage_25"
+local BLOODSEEKER_ABILITY1 = "special_bonus_attack_damage_25"
+local BLOODSEEKER_ABILITY2 = "special_bonus_hp_200"
 local BLOODSEEKER_ABILITY3 = "special_bonus_attack_speed_30"
-local BLOODSEEKER_ABILITY4 = "special_bonus_hp_250"
-local BLOODSEEKER_ABILITY5 = "special_bonus_respawn_reduction_30"
+local BLOODSEEKER_ABILITY4 = "special_bonus_unique_bloodseeker_2"
+local BLOODSEEKER_ABILITY5 = "special_bonus_unique_bloodseeker_3"
 local BLOODSEEKER_ABILITY6 = "special_bonus_all_stats_10"
 local BLOODSEEKER_ABILITY7 = "special_bonus_unique_bloodseeker"
 local BLOODSEEKER_ABILITY8 = "special_bonus_lifesteal_30"
@@ -40,7 +40,7 @@ local BLOODSEEKER_ABILITY8 = "special_bonus_lifesteal_30"
 local BloodseekerAbilityPriority = {
     BLOODSEEKER_SKILL_Q,    BLOODSEEKER_SKILL_E,    BLOODSEEKER_SKILL_Q,    BLOODSEEKER_SKILL_E,    BLOODSEEKER_SKILL_Q,
     BLOODSEEKER_SKILL_R,    BLOODSEEKER_SKILL_W,    BLOODSEEKER_SKILL_E,    BLOODSEEKER_SKILL_Q,    BLOODSEEKER_ABILITY2,
-    BLOODSEEKER_SKILL_W,    BLOODSEEKER_SKILL_R,    BLOODSEEKER_SKILL_W,    BLOODSEEKER_SKILL_W,    BLOODSEEKER_ABILITY3,
+    BLOODSEEKER_SKILL_W,    BLOODSEEKER_SKILL_R,    BLOODSEEKER_SKILL_W,    BLOODSEEKER_SKILL_W,    BLOODSEEKER_ABILITY4,
     BLOODSEEKER_SKILL_E,    BLOODSEEKER_SKILL_R,    BLOODSEEKER_ABILITY5,   BLOODSEEKER_ABILITY8
 };
 

@@ -15,9 +15,9 @@ local LINA_SKILL_W = "lina_light_strike_array";
 local LINA_SKILL_E = "lina_fiery_soul";
 local LINA_SKILL_R = "lina_laguna_blade";
 
-local LINA_ABILITY1 = "special_bonus_mp_250"
-local LINA_ABILITY2 = "special_bonus_attack_damage_20"
-local LINA_ABILITY3 = "special_bonus_respawn_reduction_30"
+local LINA_ABILITY1 = "special_bonus_unique_lina_3"
+local LINA_ABILITY2 = "special_bonus_respawn_reduction_25"
+local LINA_ABILITY3 = "special_bonus_attack_damage_40"
 local LINA_ABILITY4 = "special_bonus_cast_range_125"
 local LINA_ABILITY5 = "special_bonus_spell_amplify_6"
 local LINA_ABILITY6 = "special_bonus_attack_range_150"
@@ -52,6 +52,10 @@ end
 
 function linaBot:ConsiderAbilityUse(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCreep, nearbyAlliedCreep, nearbyEnemyTowers, nearbyAlliedTowers)
     return ability_usage_lina.AbilityUsageThink(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCreep, nearbyAlliedCreep, nearbyEnemyTowers, nearbyAlliedTowers)
+end
+
+function linaBot:GetNukeDamage(bot, target)
+    return ability_usage_lina.nukeDamage( bot, target )
 end
 
 function Think()

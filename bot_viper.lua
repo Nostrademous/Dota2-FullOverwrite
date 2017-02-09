@@ -15,7 +15,7 @@ local SKILL_E = "viper_corrosive_skin";
 local SKILL_R = "viper_viper_strike";
 
 local ABILITY1 = "special_bonus_attack_damage_15"
-local ABILITY2 = "special_bonus_hp_125"
+local ABILITY2 = "special_bonus_hp_150"
 local ABILITY3 = "special_bonus_strength_7"
 local ABILITY4 = "special_bonus_agility_14"
 local ABILITY5 = "special_bonus_armor_7"

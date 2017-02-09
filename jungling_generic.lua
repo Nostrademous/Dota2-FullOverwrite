@@ -24,15 +24,7 @@ function getHeroVar(var)
 end
 ----------
 
-local CurLane = nil;
-local EyeRange=1200;
-local BaseDamage=50;
-local AttackRange=150;
-local AttackSpeed=0.6;
-local LastTiltTime=0.0;
-
-local DamageThreshold=1.0;
-local MoveThreshold=1.0;
+local EyeRange = 1200
 
 local JunglingStates={
     FindCamp=0,

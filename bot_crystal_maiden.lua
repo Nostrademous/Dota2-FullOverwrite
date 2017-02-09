@@ -27,9 +27,9 @@ local SKILL_E = "crystal_maiden_brilliance_aura"
 local SKILL_R = "crystal_maiden_freezing_field"
 
 local ABILITY1 = "special_bonus_magic_resistance_15"
-local ABILITY2 = "special_bonus_attack_damage_50"
+local ABILITY2 = "special_bonus_attack_damage_60"
 local ABILITY3 = "special_bonus_cast_range_125"
-local ABILITY4 = "special_bonus_hp_200"
+local ABILITY4 = "special_bonus_hp_250"
 local ABILITY5 = "special_bonus_gold_income_20"
 local ABILITY6 = "special_bonus_respawn_reduction_35"
 local ABILITY7 = "special_bonus_unique_crystal_maiden_1"
@@ -38,7 +38,7 @@ local ABILITY8 = "special_bonus_unique_crystal_maiden_2"
 local AbilityPriority = {
     SKILL_W,    SKILL_E,    SKILL_E,    SKILL_Q,    SKILL_Q,
     SKILL_R,    SKILL_Q,    SKILL_Q,    SKILL_E,    ABILITY2,
-    SKILL_E,    SKILL_R,    SKILL_W,    SKILL_W,    ABILITY3,
+    SKILL_E,    SKILL_R,    SKILL_W,    SKILL_W,    ABILITY4,
     SKILL_W,    SKILL_R,    ABILITY6,   ABILITY7
 }
 

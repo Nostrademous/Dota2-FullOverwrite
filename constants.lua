@@ -69,8 +69,8 @@ DIRE_MID_ANCIENT    = Vector(-846.801514, 2274.023438, 384.000000)
 DIRE_SAFE_MEDIUM    = Vector(-1832.490112, 4078.956055, 256.000000)
 DIRE_SAFE_EASY      = Vector(-2911.948730, 4905.840332, 384.000000)
 DIRE_SAFE_HARD      = Vector(-4329.099609, 3678.822021, 256.000000)
-DIRE_OFF_ANCIENT    = Vector(2703.443359, 107.946167, 384.000000)
-DIRE_OFF_MEDIUM     = Vector(3765.490234, -674.424194, 256.000000)
+DIRE_OFF_ANCIENT    = Vector(3765.490234, -674.424194, 256.000000)
+DIRE_OFF_MEDIUM     = Vector(2703.443359, 107.946167, 384.000000)
 DIRE_OFF_HARD       = Vector(4296.825684, 796.566528, 384.000000)
 
 --time to pull for a stack
@@ -164,9 +164,9 @@ WARD_DURATION_SENTRY    = 240
 -------------------------------------------------------------------------------
 -- STAT ATTRIBUTES
 -------------------------------------------------------------------------------
-STRENGTH        = 0
-AGILITY         = 1
-INTELLIGENCE    = 2
+STRENGTH        = ATTRIBUTE_STRENGTH
+AGILITY         = ATTRIBUTE_AGILITY
+INTELLIGENCE    = ATTRIBUTE_INTELLECT
 -------------------------------------------------------------------------------
 
 for k,v in pairs( constants ) do _G._savedEnv[k] = v end

@@ -58,6 +58,10 @@ function linaBot:GetNukeDamage(bot, target)
     return ability_usage_lina.nukeDamage( bot, target )
 end
 
+function linaBot:QueueNuke(bot, target, actionQueue)
+    return ability_usage_lina.queueNuke( bot, target, actionQueue )
+end
+
 function Think()
     local npcBot = GetBot()
     

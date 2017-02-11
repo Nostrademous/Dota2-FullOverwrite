@@ -357,10 +357,10 @@ function UseTP(lane)
         local savedValue = npcBot:GetNextItemPurchaseValue()
         backPackSlot = utils.GetFreeSlotInBackPack(npcBot)
         if utils.NumberOfItems(npcBot) == 6 and backPackSlot > 0 then 
-            npcBot:Action_SwapItems(0, backPackSlot)
+            npcBot:ActionImmediate_SwapItems(0, backPackSlot)
             tpSwap = true
         end
-        npcBot:Action_PurchaseItem( "item_tpscroll" )
+        npcBot:ActionImmediate_PurchaseItem( "item_tpscroll" )
         tp = utils.HaveItem(npcBot, "item_tpscroll")
         npcBot:SetNextItemPurchaseValue(savedValue)
     end
@@ -371,7 +371,7 @@ function UseTP(lane)
         if GetUnitToLocationDistance(npcBot, dest) > 3000 and npcBot:DistanceFromFountain() < 200 then
             npcBot:Action_UseAbilityOnLocation(tp, dest);
             if tpSwap then 
-                npcBot:Action_SwapItems(0, backPackSlot)
+                npcBot:ActionImmediate_SwapItems(0, backPackSlot)
             end
         end
     end
@@ -494,7 +494,7 @@ function considerDropItems()
             for j = 1, 5, 1 do
                 local item = npcBot:GetItemInSlot(j)
                 if item ~= nil and item:GetName() == "item_branches" and bItem:GetName() ~= "item_branches" then
-                    npcBot:Action_SwapItems(i, j)
+                    npcBot:ActionImmediate_SwapItems(i, j)
                 end
             end
         end
@@ -509,7 +509,7 @@ function swapBackpackIntoInventory()
                 for j = 1, 5, 1 do
                     local item = npcBot:GetItemInSlot(j)
                     if item == nil then
-                        npcBot:Action_SwapItems(i, j)
+                        npcBot:ActionImmediate_SwapItems(i, j)
                     end
                 end
             end

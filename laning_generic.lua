@@ -58,7 +58,7 @@ function OnStart(bot)
 
     if not utils.HaveTeleportation(bot) then
         if DotaTime() > 10 and bot:GetGold() > 50 and GetUnitToLocationDistance(bot,GetLocationAlongLane(getHeroVar("CurLane"),0.0))<700 and utils.NumberOfItems(bot) <= 5 then
-            bot:Action_PurchaseItem("item_tpscroll")
+            bot:ActionImmediate_PurchaseItem("item_tpscroll")
             return
         end
     end
@@ -91,14 +91,14 @@ end
 
 local function Start(bot)
     if CurLane == LANE_MID then
-        bot:Action_MoveToLocation(GetRuneSpawnLocation(RUNE_BOUNTY_2))
+        bot:ActionPush_MoveToLocation(GetRuneSpawnLocation(RUNE_BOUNTY_2))
     elseif CurLane == LANE_TOP then
-        bot:Action_MoveToLocation(GetRuneSpawnLocation(RUNE_BOUNTY_2)+Vector(-250, 1000))
+        bot:ActionPush_MoveToLocation(GetRuneSpawnLocation(RUNE_BOUNTY_2)+Vector(-250, 1000))
     elseif CurLane == LANE_BOT then
         if IsCore then
-            bot:Action_MoveToLocation(GetRuneSpawnLocation(RUNE_BOUNTY_1))
+            bot:ActionPush_MoveToLocation(GetRuneSpawnLocation(RUNE_BOUNTY_1))
         else
-            bot:Action_MoveToLocation(GetRuneSpawnLocation(RUNE_BOUNTY_1)+Vector(-250, -250))
+            bot:ActionPush_MoveToLocation(GetRuneSpawnLocation(RUNE_BOUNTY_1)+Vector(-250, -250))
         end
     end
 

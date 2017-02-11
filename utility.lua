@@ -406,6 +406,10 @@ end
 -- Math Functions
 -------------------------------------------------------------------------------
 
+function U.CheckFlag(value, flag)
+    return ((value/flag) % 2) >= 1
+end
+
 function U.GetDistance(s, t)
     --print("S1: "..s[1]..", S2: "..s[2].." :: T1: "..t[1]..", T2: "..t[2]);
     return math.sqrt((s[1]-t[1])*(s[1]-t[1]) + (s[2]-t[2])*(s[2]-t[2]));
@@ -630,12 +634,12 @@ end
 
 function U.PartyChat(msg)
     local bot = GetBot()
-    bot:Action_Chat(msg, false)
+    bot:ActionImmediate_Chat(msg, false)
 end
 
 function U.AllChat(msg)
     local bot = GetBot()
-    bot:Action_Chat(msg, true)
+    bot:ActionImmediate_Chat(msg, true)
 end
 
 function U.ValidTarget(target)
@@ -664,7 +668,7 @@ function U.TimePassed(prevTime, amount)
 end
 
 function U.LevelUp(bot, AbilityPriority)
-    if ( GetGameState() ~= GAME_STATE_GAME_IN_PROGRESS and GetGameState() ~= GAME_STATE_PRE_GAME ) then return end;
+    if ( GetGameState() ~= GAME_STATE_GAME_IN_PROGRESS and GetGameState() ~= GAME_STATE_PRE_GAME ) then return end
 
     local ability = bot:GetAbilityByName(AbilityPriority[1])
 
@@ -675,7 +679,7 @@ function U.LevelUp(bot, AbilityPriority)
     end
 
     if ( ability:CanAbilityBeUpgraded() and ability:GetLevel() < ability:GetMaxLevel() ) then
-        bot:Action_LevelAbility(AbilityPriority[1])
+        bot:ActionImmediate_LevelAbility(AbilityPriority[1])
         U.myPrint( " Leveling " .. ability:GetName() )
         table.remove( AbilityPriority, 1 )
     end
@@ -907,7 +911,6 @@ function U.EnemiesNearLocation(bot, loc, dist)
     for _, enemy in pairs(listEnemies) do
         local eID = enemy:GetPlayerID()
         if U.ValidTarget(enemy) and IsHeroAlive(eID) and U.GetDistance(enemy:GetLocation(), loc) <= dist then
-            --and U.GetDistance(GetHeroLastSeenInfo(eID).location, loc) <= dist and GetHeroLastSeenInfo(enemy:GetPlayerID()).time < 30 then
             num = num + 1
         end
     end
@@ -1292,8 +1295,8 @@ end
 
 -- takes a "RANGE", returns hero handle and health value of that hero
 -- FIXME - make it handle heroes that went invisible if we have detection
-function U.GetWeakestHero(bot, r)
-    local EnemyHeroes = bot:GetNearbyHeroes(r, true, BOT_MODE_NONE)
+function U.GetWeakestHero(bot, r, heroList)
+    local EnemyHeroes = heroList or bot:GetNearbyHeroes(r, true, BOT_MODE_NONE)
 
     if EnemyHeroes == nil or #EnemyHeroes == 0 then
         return nil, 10000
@@ -1303,7 +1306,7 @@ function U.GetWeakestHero(bot, r)
     local LowestHealth = 10000
 
     for _, hero in ipairs(EnemyHeroes) do
-        if hero ~= nil and hero:IsAlive() then
+        if GetUnitToUnitDistance(bot, hero) <= r and hero:IsAlive() then
             if hero:GetHealth() < LowestHealth then
                 LowestHealth = hero:GetHealth()
                 WeakestHero = hero
@@ -1438,14 +1441,14 @@ function U.MoveItemsFromBackpackToInventory(bot, bpSlot)
     if U.NumberOfItems(bot) < 6 then
         for i = 0, 5, 1 do
             if bot:GetItemInSlot(i) == nil then
-                bot:Action_SwapItems(i, bpSlot)
+                bot:ActionImmediate_SwapItems(i, bpSlot)
                 return bot:GetItemInSlot(i)
             end
         end
     else
         local bpItem = bot:GetItemInSlot(bpSlot)
         if bpItem:GetName() == "item_tpscroll" or bpItem:GetName() == "item_tome_of_knowledge" then
-            bot:Action_SwapItems(5, bpSlot)
+            bot:ActionImmediate_SwapItems(5, bpSlot)
             return bot:GetItemInSlot(5)
         else
             U.myPrint("FIXME: Implement swapping BACKPACK to MAIN INVENTORY of item: ", bpItem:GetName())
@@ -1464,7 +1467,7 @@ function U.MoveItemsFromStashToInventory(bot)
             for j = 9, 14, 1 do
                 local item = bot:GetItemInSlot(j)
                 if item ~= nil then
-                    bot:Action_SwapItems(i, j)
+                    bot:ActionImmediate_SwapItems(i, j)
                 end
             end
         end
@@ -1475,7 +1478,7 @@ function U.MoveItemsFromStashToInventory(bot)
             for j = 9, 14, 1 do
                 local item = bot:GetItemInSlot(j)
                 if item ~= nil then
-                    bot:Action_SwapItems(i, j)
+                    bot:ActionImmediate_SwapItems(i, j)
                 end
             end
         end
@@ -1560,22 +1563,22 @@ function U.CourierThink(npcBot)
 
     local courier = GetCourier(0)
     if GetCourierState(courier) ~= COURIER_STATE_DEAD and GetCourierState(courier) ~= COURIER_STATE_MOVING and GetCourierState(courier) ~= COURIER_STATE_AT_BASE then
-        npcBot:Action_Courier(courier, COURIER_ACTION_RETURN)
+        npcBot:ActionImmediate_Courier(courier, COURIER_ACTION_RETURN)
         return
     end
     
     if npcBot:IsAlive() and (npcBot:GetStashValue() > 500 or npcBot:GetCourierValue() > 0 or U.HasImportantItem()) and GetCourierState(courier) == COURIER_STATE_AT_BASE then
-        npcBot:Action_Courier(courier, COURIER_ACTION_TAKE_AND_TRANSFER_ITEMS)
+        npcBot:ActionImmediate_Courier(courier, COURIER_ACTION_TAKE_AND_TRANSFER_ITEMS)
         return
     end
 
     if GetCourierState(courier) ~= COURIER_STATE_DEAD and GetCourierState(courier) == COURIER_STATE_AT_BASE and
         (not npcBot:IsAlive()) and npcBot:GetCourierValue() > 0 then
-        npcBot:Action_Courier(courier, COURIER_ACTION_RETURN_STASH_ITEMS)
+        npcBot:ActionImmediate_Courier(courier, COURIER_ACTION_RETURN_STASH_ITEMS)
     end
     
     if GetCourierState(courier) == COURIER_STATE_DELIVERING_ITEMS or GetCourierState(courier) == COURIER_STATE_RETURNING_TO_BASE then
-        npcBot:Action_Courier(GetCourier(0), COURIER_ACTION_BURST)
+        npcBot:ActionImmediate_Courier(GetCourier(0), COURIER_ACTION_BURST)
     end
 end
 

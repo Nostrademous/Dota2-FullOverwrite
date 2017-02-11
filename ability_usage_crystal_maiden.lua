@@ -34,6 +34,107 @@ local abilityW = ""
 local abilityE = ""
 local abilityR = ""
 
+function nukeDamage( bot, enemy )
+    if enemy == nil or not utils.ValidTarget(enemy) then return 0, {}, 0, 0, 0 end
+    
+    local comboQueue = {}
+    local manaAvailable = bot:GetMana()
+    local dmgTotal = 0
+    local castTime = 0
+    local stunTime = 0
+    local slowTime = 0
+    
+    local magicImmune = utils.IsTargetMagicImmune(enemy)
+    
+    -- Check Crystal Nova
+    if abilityQ:IsFullyCastable() then
+        local manaCostQ = abilityQ:GetManaCost()
+        if manaCostQ <= manaAvailable then
+            if not magicImmune then
+                manaAvailable = manaAvailable - manaCostQ
+                dmgTotal = dmgTotal + enemy:GetActualIncomingDamage(abilityQ:GetSpecialValueInt("nova_damage"), DAMAGE_TYPE_MAGICAL)
+                castTime = castTime + abilityQ:GetCastPoint()
+                slowTime = slowTime + abilityQ:GetSpecialValueFloat("duration")
+                table.insert(comboQueue, 1, abilityQ)
+            end
+        end
+    end
+    
+    -- Check Frostbite
+    if abilityW:IsFullyCastable() then
+        local manaCostW = abilityW:GetManaCost()
+        if manaCostW <= manaAvailable then
+            if not magicImmune then
+                manaAvailable = manaAvailable - manaCostW
+                dmgTotal = dmgTotal + enemy:GetActualIncomingDamage(abilityW:GetSpecialValueInt("hero_damage_tooltip"), DAMAGE_TYPE_MAGICAL)
+                castTime = castTime + abilityW:GetCastPoint()
+                stunTime = stunTime + abilityW:GetSpecialValueFloat("duration")
+                table.insert(comboQueue, 1, abilityW)
+            end
+        end
+    end
+    
+    -- Check Freezing Field
+    if abilityR:IsFullyCastable() then
+        local manaCostR = abilityR:GetManaCost()
+        if manaCostR <= manaAvailable then
+            if not magicImmune then
+                manaAvailable = manaAvailable - manaCostR
+                
+                local distToEdgeOfField = 835 - GetUnitToUnitDistance(bot, enemy)
+                -- "movespeed_slow"	"-30"
+                local timeInField = 0
+                if distToEdgeOfField > 0 then timeInField = math.min(distToEdgeOfField/(enemy:GetCurrentMovementSpeed()-30), 10) end
+                if timeInField < 0 then timeInField = 0 end
+                
+                dmgTotal = dmgTotal + enemy:GetActualIncomingDamage(abilityR:GetSpecialValueInt("damage")*timeInField, DAMAGE_TYPE_MAGICAL)
+                castTime = castTime + abilityR:GetCastPoint()
+                slowTime = slowTime + abilityR:GetSpecialValueFloat("slow_duration")
+                table.insert(comboQueue, abilityR)
+            end
+        end
+    end
+    
+    return dmgTotal, comboQueue, castTime, stunTime, slowTime
+end
+
+function queueNuke(bot, enemy, castQueue)
+    local nRadius = abilityQ:GetSpecialValueInt( "radius" )
+    local nCastRange = abilityQ:GetCastRange()
+    local dist = GetUnitToUnitDistance(bot, enemy)
+    
+    bot:Action_ClearActions()
+    -- if out of range, attack move for one hit to get in range
+    if dist > (nCastRange + nRadius) then
+        bot:ActionPush_AttackUnit( enemy, true )
+    end
+
+    utils.AllChat("Killing "..utils.GetHeroName(enemy).." softly with my song")
+    for _, skill in ipairs(castQueue) do
+        local behaviorFlag = skill:GetBehavior()
+        
+        utils.myPrint(" - skill '", skill:GetName(), "' has BehaviorFlag: ", behaviorFlag)
+        
+        if skill:GetName() == Abilities[1] then
+            if utils.IsCrowdControlled(enemy) then
+                bot:ActionQueue_UseAbilityOnLocation(skill, enemy:GetLocation())
+            else
+                bot:ActionQueue_UseAbilityOnLocation(skill, enemy:GetExtrapolatedLocation(0.95))
+            end
+        elseif skill:GetName() == Abilities[2] then
+            if utils.IsCrowdControlled(enemy) then
+                bot:ActionQueue_UseAbilityOnLocation(skill, enemy:GetLocation())
+            else
+                -- account for 0.45 cast point and speed of wave (1200) needed to travel the distance between us
+                bot:ActionQueue_UseAbilityOnLocation(skill, enemy:GetExtrapolatedLocation(0.45 + dist/1200))
+            end
+        elseif skill:GetName() == Abilities[4] then
+            bot:ActionQueue_UseAbilityOnEntity(skill, enemy)
+        end
+    end
+    bot:ActionQueue_AttackUnit( enemy, false )
+end
+
 function AbilityUsageThink(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCreep, nearbyAlliedCreep, nearbyEnemyTowers, nearbyAlliedTowers)
     if ( GetGameState() ~= GAME_STATE_GAME_IN_PROGRESS and GetGameState() ~= GAME_STATE_PRE_GAME ) then return false end
 
@@ -48,6 +149,28 @@ function AbilityUsageThink(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCre
 
     -- Check if we're already using an ability
     if bot:IsUsingAbility() or bot:IsChanneling() then return false end
+    
+    if ( #nearbyEnemyHeroes == 0 and #nearbyEnemyCreep == 0 ) then return false end
+
+    if #nearbyEnemyHeroes >= 1 then
+        --FIXME: in the future we probably want to target a hero that has a disable to my ult, rather than weakest
+        local enemy, enemyHealth = utils.GetWeakestHero(bot, r, nearbyEnemyHeroes)
+        local dmg, castQueue, castTime, stunTime, slowTime = nukeDamage( bot, enemy )
+        
+        local rightClickTime = stunTime + 0.5*slowTime
+        if rightClickTime > 0.5 then
+            dmg = dmg + fight_simul.estimateRightClickDamage( bot, enemy, rightClickTime )
+        end
+        
+        -- magic immunity is already accounted for by nukeDamage()
+        if dmg > enemyHealth then
+            setHeroVar("Target", {Obj=enemy, Id=enemy:GetPlayerID()})
+            
+            queueNuke(bot, enemy, castQueue)
+
+            return true
+        end
+    end
 
     if UseUlt(bot, nearbyEnemyHeroes) or UseW(bot, nearbyEnemyHeroes) or UseQ(bot, nearbyEnemyHeroes, nearbyAlliedHeroes) then return true end
     
@@ -200,7 +323,7 @@ function UseUlt(bot, nearbyEnemyHeroes)
     end
     
     ------------ DEFEND TOWER ----------------
-    if getHeroVar("ShouldDefend") and #enemiesInRange >= 2 then
+    if getHeroVar("ShouldDefend") and #enemiesInRange >= 1 then
         bot:Action_UseAbility(abilityR)
         return true
     end
@@ -208,7 +331,7 @@ function UseUlt(bot, nearbyEnemyHeroes)
     --------- CHASING --------------------------------
     local target = getHeroVar("Target")
     -- if we don't have a valid target
-    if utils.ValidTarget(target) and (#enemiesInRange >= 3 or numSlowStun > 1) then
+    if utils.ValidTarget(target) or #enemiesInRange >= 2 or numSlowStun >= 1 then
         bot:Action_UseAbility(abilityR)
         return true
     end

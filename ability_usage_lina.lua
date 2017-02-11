@@ -39,16 +39,16 @@ local castLBDesire  = 0
 
 function nukeDamage( bot, enemy )
     if enemy == nil or not utils.ValidTarget(enemy) then return 0, {}, 0, 0, 0 end
-    
+
     local comboQueue = {}
     local manaAvailable = bot:GetMana()
     local dmgTotal = 0
     local castTime = 0
     local stunTime = 0
     local slowTime = 0
-    
+
     local magicImmune = utils.IsTargetMagicImmune(enemy)
-    
+
     -- Check Laguna Blade
     if abilityR:IsFullyCastable() then
         local manaCostR = abilityR:GetManaCost()
@@ -68,7 +68,7 @@ function nukeDamage( bot, enemy )
             end
         end
     end
-    
+
     -- Check Dragon Slave
     if abilityW:IsFullyCastable() then
         local manaCostW = abilityW:GetManaCost()
@@ -81,7 +81,7 @@ function nukeDamage( bot, enemy )
             end
         end
     end
-    
+
     -- Check Light Strike Array
     if abilityQ:IsFullyCastable() then
         local manaCostQ = abilityQ:GetManaCost()
@@ -95,58 +95,57 @@ function nukeDamage( bot, enemy )
             end
         end
     end
-    
+
     return dmgTotal, comboQueue, castTime, stunTime, slowTime
 end
 
-function queueNuke(bot, castQueue)
+function queueNuke(bot, enemy, castQueue)
     local nRadius = abilityQ:GetSpecialValueInt( "light_strike_array_aoe" )
     local nCastRange = abilityQ:GetCastRange()
     local dist = GetUnitToUnitDistance(bot, enemy)
 
-    setHeroVar("Queued", true)
-    bot:SetActionQueueing(true)
-    
+    bot:Action_ClearActions()
     -- if out of range, attack move for one hit to get in range
     if dist > (nCastRange + nRadius) then
-        bot:Action_AttackUnit( enemy, true )
+        bot:ActionPush_AttackUnit( enemy, true )
     end
 
     utils.AllChat("Killing "..utils.GetHeroName(enemy).." softly with my song")
     for _, skill in ipairs(castQueue) do
         local behaviorFlag = skill:GetBehavior()
+
         utils.myPrint(" - skill '", skill:GetName(), "' has BehaviorFlag: ", behaviorFlag)
-        
+
         if skill:GetName() == Abilities[1] then
             if utils.IsCrowdControlled(enemy) then
-                bot:Action_UseAbilityOnLocation(skill, enemy:GetLocation())
+                bot:ActionQueue_UseAbilityOnLocation(skill, enemy:GetLocation())
             else
-                bot:Action_UseAbilityOnLocation(skill, enemy:GetExtrapolatedLocation(0.95))
+                bot:ActionQueue_UseAbilityOnLocation(skill, enemy:GetExtrapolatedLocation(0.95))
             end
         elseif skill:GetName() == Abilities[2] then
             if utils.IsCrowdControlled(enemy) then
-                bot:Action_UseAbilityOnLocation(skill, enemy:GetLocation())
+                bot:ActionQueue_UseAbilityOnLocation(skill, enemy:GetLocation())
             else
                 -- account for 0.45 cast point and speed of wave (1200) needed to travel the distance between us
-                bot:Action_UseAbilityOnLocation(skill, enemy:GetExtrapolatedLocation(0.45 + dist/1200))
+                bot:ActionQueue_UseAbilityOnLocation(skill, enemy:GetExtrapolatedLocation(0.45 + dist/1200))
             end
         elseif skill:GetName() == Abilities[4] then
-            bot:Action_UseAbilityOnEntity(skill, enemy)
+            bot:ActionQueue_UseAbilityOnEntity(skill, enemy)
         end
     end
-    bot:Action_AttackUnit( enemy, false )
+    bot:ActionQueue_AttackUnit( enemy, false )
 end
 
 function AbilityUsageThink(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCreep, nearbyAlliedCreep, nearbyEnemyTowers, nearbyAlliedTowers)
     if ( GetGameState() ~= GAME_STATE_GAME_IN_PROGRESS and GetGameState() ~= GAME_STATE_PRE_GAME ) then return false end
 
     local bot = GetBot()
-    
+
     if abilityQ == "" then abilityQ = bot:GetAbilityByName( Abilities[1] ) end
     if abilityW == "" then abilityW = bot:GetAbilityByName( Abilities[2] ) end
     if abilityE == "" then abilityE = bot:GetAbilityByName( Abilities[3] ) end
     if abilityR == "" then abilityR = bot:GetAbilityByName( Abilities[4] ) end
-    
+
     if not bot:IsAlive() then return false end
 
     -- Check if we're already using an ability
@@ -157,27 +156,27 @@ function AbilityUsageThink(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCre
     if #nearbyEnemyHeroes == 1 and nearbyEnemyHeroes[1]:GetHealth() > 0 then
         local enemy = nearbyEnemyHeroes[1]
         local dmg, castQueue, castTime, stunTime, slowTime = nukeDamage( bot, enemy )
-        
+
         local rightClickTime = stunTime + 0.5*slowTime
         if rightClickTime > 0.5 then
             dmg = dmg + fight_simul.estimateRightClickDamage( bot, enemy, rightClickTime )
         end
-        
+
         -- magic immunity is already accounted for by nukeDamage()
         if dmg > enemy:GetHealth() then
             setHeroVar("Target", {Obj=enemy, Id=enemy:GetPlayerID()})
-            
-            queueNuke(bot, castQueue)
+
+            queueNuke(bot, enemy, castQueue)
 
             return true
         end
     end
-    
+
     -- Consider using each ability
     castLBDesire, castLBTarget = ConsiderLagunaBlade(nearbyEnemyHeroes)
 
     local target = getHeroVar("Target")
-    
+
     if utils.ValidTarget(target) then
         castLSADesire, castLSALocation = ConsiderLightStrikeArrayFighting(target.Obj)
     else

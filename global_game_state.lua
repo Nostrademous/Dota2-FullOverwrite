@@ -150,8 +150,8 @@ function GlobalFightDetermination()
     local eyeRange = 1200
     local listAllies = GetUnitList(UNIT_LIST_ALLIED_HEROES)
     for _, ally in pairs(listAllies) do
-        if ally:IsAlive() and ally:GetHealth()/ally:GetMaxHealth() > 0.4 and 
-            gHero.HasID(ally:GetPlayerID()) and gHero.GetVar(ally:GetPlayerID(), "Target").Id == 0 then
+        if ally:IsAlive() and ally:GetHealth()/ally:GetMaxHealth() > 0.4 and not ally:IsIllusion()
+            and gHero.HasID(ally:GetPlayerID()) and gHero.GetVar(ally:GetPlayerID(), "Target").Id == 0 then
             
             local totalNukeDmg = 0
             
@@ -162,7 +162,7 @@ function GlobalFightDetermination()
                     if enemy.Obj then
                         distance = GetUnitToUnitDistance(ally, enemy.Obj)
                     else
-                        if GetHeroLastSeenInfo(k) == nil then break end
+                        if GetHeroLastSeenInfo(k).time == -1 then break end
                         
                         if GetHeroLastSeenInfo(k).time <= 0.5 then
                             distance = GetUnitToLocationDistance(ally, enemy.LocExtra1)
@@ -192,10 +192,9 @@ function GlobalFightDetermination()
                         
                         local totalTimeToKillTarget = myTimeToKillTarget
                         
-                        local participatingAllyIDs = {}
-                        local listAllies2 = GetUnitList(UNIT_LIST_ALLIED_HEROES)
-                        for _, ally2 in pairs(listAllies2) do
-                            if ally2:IsAlive() and not gHero.HasID(ally2:GetPlayerID()) then
+                        local participatingAllies = {}
+                        for _, ally2 in pairs(listAllies) do
+                            if ally2:IsAlive() and not ally2:IsIllusion() and not gHero.HasID(ally2:GetPlayerID()) then
                                 local distToEnemy = 100000
                                 if enemy.Obj then
                                     distToEnemy = GetUnitToUnitDistance(ally2, enemy.Obj)
@@ -215,10 +214,10 @@ function GlobalFightDetermination()
                                 if distToEnemy <= 2*eyeRange then
                                     --utils.myPrint("ally ", utils.GetHeroName(ally2), " is ", distToEnemy, " units away. Time to reach: ", allyTimeToReach)
                                     totalTimeToKillTarget = totalTimeToKillTarget + 8.0
-                                    table.insert(participatingAllyIDs, ally2:GetPlayerID())
+                                    table.insert(participatingAllies, {ally2, {}})
                                 end
                                 
-                            elseif ally2:IsAlive() and ally2:GetPlayerID() ~= ally:GetPlayerID() and gHero.GetVar(ally2:GetPlayerID(), "Target").Id == 0 
+                            elseif ally2:IsAlive() and not ally2:IsIllusion() and ally2:GetPlayerID() ~= ally:GetPlayerID() and gHero.GetVar(ally2:GetPlayerID(), "Target").Id == 0 
                                 and (gHero.GetVar(ally2:GetPlayerID(), "GankTarget").Id == 0 or gHero.GetVar(ally2:GetPlayerID(), "GankTarget").Id == k) then
                                 local distToEnemy = 100000
                                 if enemy.Obj then
@@ -250,12 +249,12 @@ function GlobalFightDetermination()
                                         allyTimeToKillTarget = enemy.Health /(ally2:GetAttackDamage()/ally2:GetSecondsPerAttack())/0.75
                                     end
                                     totalTimeToKillTarget = totalTimeToKillTarget + allyTimeToKillTarget
-                                    table.insert(participatingAllyIDs, ally2:GetPlayerID())
+                                    table.insert(participatingAllies, {ally2, allyActionQueue})
                                 end
                             end
                         end
                         
-                        local numAttackers = #participatingAllyIDs+1
+                        local numAttackers = #participatingAllies+1
                         local anticipatedTimeToKill = totalTimeToKillTarget/numAttackers
                         local totalStun = myStun + allAllyStun
                         local totalSlow = mySlow + allAllySlow
@@ -263,30 +262,32 @@ function GlobalFightDetermination()
                         
                         if utils.ValidTarget(enemy) then
                             if (anticipatedTimeToKill - timeToKillBonus) < 6.0 then
-                                utils.myPrint(#participatingAllyIDs+1, " of us can Stun for: ", totalStun, " and Slow for: ", totalSlow, ". AnticipatedTimeToKill ", enemy.Name ,": ", anticipatedTimeToKill)
+                                utils.myPrint(#participatingAllies+1, " of us can Stun for: ", totalStun, " and Slow for: ", totalSlow, ". AnticipatedTimeToKill ", enemy.Name ,": ", anticipatedTimeToKill)
                                 utils.myPrint(utils.GetHeroName(ally), " - Engaging! Anticipated Time to kill: ", anticipatedTimeToKill)
                                 gHero.SetVar(ally:GetPlayerID(), "Target", {Obj=enemy.Obj, Id=k})
                                 gHero.GetVar(ally:GetPlayerID(), "Self"):AddAction(constants.ACTION_FIGHT)
-                                for _, v in pairs(participatingAllyIDs) do
-                                    if gHero.GetVar(v, "GankTarget").Id == 0 then
-                                        gHero.SetVar(v, "Target", {Obj=enemy.Obj, Id=k})
-                                        gHero.GetVar(v, "Self"):AddAction(constants.ACTION_FIGHT)
+                                for _, v in pairs(participatingAllies) do
+                                    if gHero.GetVar(v[1]:GetPlayerID(), "GankTarget").Id == 0 then
+                                        gHero.SetVar(v[1]:GetPlayerID(), "Target", {Obj=enemy.Obj, Id=k})
+                                        gHero.GetVar(v[1]:GetPlayerID(), "Self"):AddAction(constants.ACTION_FIGHT)
                                     end
                                 end
                             elseif totalNukeDmg >= enemy.Obj:GetHealth() then
-                                utils.myPrint(#participatingAllyIDs+1, " of us can Nuke ", enemy.Name)
+                                utils.myPrint(#participatingAllies+1, " of us can Nuke ", enemy.Name)
                                 utils.myPrint(utils.GetHeroName(ally), " - Engaging!")
                                 
                                 local allyID = ally:GetPlayerID()
                                 gHero.SetVar(allyID, "Target", {Obj=enemy.Obj, Id=k})
                                 gHero.GetVar(allyID, "Self"):AddAction(constants.ACTION_FIGHT)
-                                --ally:SetActionQueueing(true)
-                                --gHero.SetVar(allyID, "Queued", true)
+                                gHero.GetVar(allyID, "Self"):QueueNuke(ally, enemy.Obj, myActionQueue)
                                 
-                                for _, v in pairs(participatingAllyIDs) do
-                                    if gHero.GetVar(v, "GankTarget").Id == 0 then
-                                        gHero.SetVar(v, "Target", {Obj=enemy.Obj, Id=k})
-                                        gHero.GetVar(v, "Self"):AddAction(constants.ACTION_FIGHT)
+                                for _, v in pairs(participatingAllies) do
+                                    if gHero.GetVar(v[1]:GetPlayerID(), "GankTarget").Id == 0 then
+                                        gHero.SetVar(v[1]:GetPlayerID(), "Target", {Obj=enemy.Obj, Id=k})
+                                        gHero.GetVar(v[1]:GetPlayerID(), "Self"):AddAction(constants.ACTION_FIGHT)
+                                        if #v[2] > 0 then
+                                            gHero.GetVar(v[1]:GetPlayerID(), "Self"):QueueNuke(v, enemy.Obj, v[2])
+                                        end
                                     end
                                 end
                             end

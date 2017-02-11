@@ -242,7 +242,7 @@ X["item_radiance"] = { "item_relic", "item_recipe_radiance" }
 
 X["item_rapier"] = { "item_demon_edge", "item_relic" }
 
-X["item_ring_of_basilius"] = {	"item_ring_of_protection", "item_sobi_mask"	}
+X["item_ring_of_basilius"] = {  "item_ring_of_protection", "item_sobi_mask" }
 
 X["item_rod_of_atos"] = { "item_vitality_booster", "item_staff_of_wizardry", "item_staff_of_wizardry" }
 
@@ -350,27 +350,27 @@ X["item_bloodthorn"] = { X["item_orchid"], X["item_crystalys"], "item_recipe_blo
 --------------------------------------------------------------------------------------------
 
 function X:GetItemValueNumber(item)
-	if item == "item_ward_observer" then
-		return 10000
-	elseif item == "item_dust" then
-		return 10000
-	elseif item == "item_ward_sentry" then
-		return 10000
-	elseif item ==  "item_smoke_of_deceit" then
-		return 10000
-	elseif item == "item_cheese" then
-		return 10000
-	elseif item == "item_tpscroll" then
-		return 1000000
-	elseif item == "item_gem" then
-		return 10000
-	elseif item == "item_courier" then
-		return 10000
-	elseif item == "item_flying_courier" then
-		return 10000
-	else
-		return GetItemCost(item)
-	end
+    if item == "item_ward_observer" then
+        return 10000
+    elseif item == "item_dust" then
+        return 10000
+    elseif item == "item_ward_sentry" then
+        return 10000
+    elseif item ==  "item_smoke_of_deceit" then
+        return 10000
+    elseif item == "item_cheese" then
+        return 10000
+    elseif item == "item_tpscroll" then
+        return 1000000
+    elseif item == "item_gem" then
+        return 10000
+    elseif item == "item_courier" then
+        return 10000
+    elseif item == "item_flying_courier" then
+        return 10000
+    else
+        return GetItemCost(item)
+    end
 end
 
 function X:GetItemsTable(output, input)
@@ -378,7 +378,7 @@ function X:GetItemsTable(output, input)
   if type(input) == 'table' then
     input_map = {}
     for i = 1, #input do
-			input_map[#input_map+1] = self:GetItemsTable(output, input[i])
+            input_map[#input_map+1] = self:GetItemsTable(output, input[i])
     end
   else
     input_map = #output + 1

@@ -193,7 +193,7 @@ function X:Think(npcBot)
                     end
                 else
                     me:RemoveAction(constants.ACTION_SPECIALSHOP)
-                    npcBot:Action_PurchaseItem(sNextItem)
+                    npcBot:ActionImmediate_PurchaseItem(sNextItem)
                     table.remove(self.PurchaseOrder, 1)
                     npcBot:SetNextItemPurchaseValue(0)
                 end
@@ -515,7 +515,7 @@ function X:ConsiderSellingItems(bot)
 		-- Sell if we found an item to sell
 		if ItemToSell ~= nil then
 			local pos = bot:FindItemSlot(ItemToSell)
-			bot:Action_SellItem(bot:GetItemInSlot(pos))
+			bot:ActionImmediate_SellItem(bot:GetItemInSlot(pos))
 		end
 	end
 end

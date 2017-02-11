@@ -85,7 +85,7 @@ function ThinkSecretShop( NextItem )
 
     if GetUnitToLocationDistance(npcBot, secLoc) < constants.SHOP_USE_DISTANCE then
         if npcBot:GetGold() >= GetItemCost( NextItem ) then
-            npcBot:Action_PurchaseItem( NextItem )
+            npcBot:ActionImmediate_PurchaseItem( NextItem )
             utils.InitPath()
             return true
         else
@@ -115,7 +115,7 @@ function ThinkSideShop( NextItem )
 
     if GetUnitToLocationDistance(npcBot, sideLoc) < constants.SHOP_USE_DISTANCE then
         if npcBot:GetGold() >= GetItemCost( NextItem ) then
-            npcBot:Action_PurchaseItem( NextItem )
+            npcBot:ActionImmediate_PurchaseItem( NextItem )
             utils.InitPath()
             return true
         else

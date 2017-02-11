@@ -61,6 +61,14 @@ function cmBot:ConsiderAbilityUse(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyE
     ability_usage_crystal_maiden.AbilityUsageThink(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCreep, nearbyAlliedCreep, nearbyEnemyTowers, nearbyAlliedTowers)
 end
 
+function cmBot:GetNukeDamage(bot, target)
+    return ability_usage_crystal_maiden.nukeDamage( bot, target )
+end
+
+function cmBot:QueueNuke(bot, target, actionQueue)
+    return ability_usage_crystal_maiden.queueNuke( bot, target, actionQueue )
+end
+
 function Think()
     local npcBot = GetBot()
 

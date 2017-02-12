@@ -111,26 +111,27 @@ function queueNuke(bot, enemy, castQueue)
     end
 
     utils.AllChat("Killing "..utils.GetHeroName(enemy).." softly with my song")
-    for _, skill in ipairs(castQueue) do
+    for i = #castQueue, 1, -1 do
+        local skill = castQueue[i]
         local behaviorFlag = skill:GetBehavior()
 
         utils.myPrint(" - skill '", skill:GetName(), "' has BehaviorFlag: ", behaviorFlag)
 
         if skill:GetName() == Abilities[1] then
             if utils.IsCrowdControlled(enemy) then
-                bot:ActionQueue_UseAbilityOnLocation(skill, enemy:GetLocation())
+                gHeroVar.HeroPushUseAbilityOnLocation(bot, skill, enemy:GetLocation())
             else
-                bot:ActionQueue_UseAbilityOnLocation(skill, enemy:GetExtrapolatedLocation(0.95))
+                gHeroVar.HeroPushUseAbilityOnLocation(bot, skill, enemy:GetExtrapolatedLocation(0.95))
             end
         elseif skill:GetName() == Abilities[2] then
             if utils.IsCrowdControlled(enemy) then
-                bot:ActionQueue_UseAbilityOnLocation(skill, enemy:GetLocation())
+                gHeroVar.HeroPushUseAbilityOnLocation(bot, skill, enemy:GetLocation())
             else
                 -- account for 0.45 cast point and speed of wave (1200) needed to travel the distance between us
-                bot:ActionQueue_UseAbilityOnLocation(skill, enemy:GetExtrapolatedLocation(0.45 + dist/1200))
+                gHeroVar.HeroPushUseAbilityOnLocation(bot, skill, enemy:GetExtrapolatedLocation(0.45 + dist/1200))
             end
         elseif skill:GetName() == Abilities[4] then
-            bot:ActionQueue_UseAbilityOnEntity(skill, enemy)
+            bot:ActionPush_UseAbilityOnEntity(skill, enemy)
         end
     end
     bot:ActionQueue_AttackUnit( enemy, false )

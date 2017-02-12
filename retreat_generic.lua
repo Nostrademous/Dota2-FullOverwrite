@@ -21,18 +21,18 @@ function getHeroVar(var)
     return gHeroVar.GetVar(bot:GetPlayerID(), var)
 end
 
-function OnStart(npcBot)
+function OnStart(bot)
     utils.IsInLane()
 end
 
-local function Updates(npcBot)
+local function Updates(bot)
     if getHeroVar("IsInLane") then
-        setHeroVar("RetreatPos", utils.PositionAlongLane(npcBot, getHeroVar("RetreatLane")))
+        setHeroVar("RetreatPos", utils.PositionAlongLane(bot, getHeroVar("RetreatLane")))
     end
 end
 
-function Think(npcBot, loc)
-    Updates(npcBot)
+function Think(bot, loc)
+    Updates(bot)
 
     local nextmove = nil
     if loc ~= nil then
@@ -49,30 +49,30 @@ function Think(npcBot, loc)
     if retreatAbility ~= nil and retreatAbility:IsFullyCastable() then
         -- same name for bot AM and QoP, "tooltip_range" for "riki_blink_strike"
         local value = 0.03
-        if (utils.GetHeroName(npcBot) == "antimage" or utils.GetHeroName(npcBot) == "queen_of_pain") then
+        if (utils.GetHeroName(bot) == "antimage" or utils.GetHeroName(bot) == "queen_of_pain") then
             value = retreatAbility:GetSpecialValueInt("blink_range")
             -- below I test how far in units is a single 0.01 move in terms of GetLocationAlongLane()
             local scale = utils.GetDistance(GetLocationAlongLane(getHeroVar("RetreatLane"), 0.5), GetLocationAlongLane(getHeroVar("RetreatLane"), 0.49))
             value = ((value - 15) / scale)*0.01 -- we subtract 15 to give ourselves a little rounding wiggle room
             nextmove = GetLocationAlongLane(getHeroVar("RetreatLane"), Max(getHeroVar("RetreatPos")-value, 0.0))
-            npcBot:Action_UseAbilityOnLocation(retreatAbility, nextmove)
-        elseif utils.GetHeroName(npcBot) == "riki" then
+            bot:Action_UseAbilityOnLocation(retreatAbility, nextmove)
+        elseif utils.GetHeroName(bot) == "riki" then
             value = retreatAbility:GetSpecialValueInt("tooltip_range")
             -- below I test how far in units is a single 0.01 move in terms of GetLocationAlongLane()
             local scale = utils.GetDistance(GetLocationAlongLane(getHeroVar("RetreatLane"), 0.5), GetLocationAlongLane(getHeroVar("RetreatLane"), 0.49))
             value = ((value - 15) / scale)*0.01 -- we subtract 15 to give ourselves a little rounding wiggle room
             nextmove = GetLocationAlongLane(getHeroVar("RetreatLane"), Max(getHeroVar("RetreatPos")-value, 0.0))
-            --FIXME: UseAbilityOnEntity() not Location() npcBot:Action_UseAbilityOnLocation(retreatAbility, nextmove)
+            --FIXME: UseAbilityOnEntity() not Location() bot:Action_UseAbilityOnLocation(retreatAbility, nextmove)
         end
     end
 
     item_usage.UseMovementItems(nextmove)
     if getHeroVar("IsInLane") then
         --utils.myPrint("generic retreat - in Lane")
-        npcBot:Action_MoveToLocation(nextmove)
+        gHeroVar.HeroMoveToLocation(bot, nextmove)
     else
         --utils.myPrint("generic retreat - not in Lane")
-        utils.MoveSafelyToLocation(npcBot, nextmove)
+        utils.MoveSafelyToLocation(bot, nextmove)
     end
 end
 

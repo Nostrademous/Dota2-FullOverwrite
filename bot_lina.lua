@@ -9,6 +9,7 @@ require ( GetScriptDirectory().."/ability_usage_lina" )
 
 local utils = require( GetScriptDirectory().."/utility" )
 local dt = require( GetScriptDirectory().."/decision_tree" )
+local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
 
 local LINA_SKILL_Q = "lina_dragon_slave";
 local LINA_SKILL_W = "lina_light_strike_array";
@@ -31,7 +32,7 @@ local LinaAbilityPriority = {
     LINA_SKILL_W,    LINA_SKILL_R,    LINA_ABILITY5,   LINA_ABILITY7
 };
 
-local linaActionStack = { [1] = constants.ACTION_NONE }
+local linaModeStack = { [1] = constants.MODE_NONE }
 
 LinaBot = dt:new()
 
@@ -42,7 +43,7 @@ function LinaBot:new(o)
     return o
 end
 
-linaBot = LinaBot:new{actionStack = linaActionStack, abilityPriority = LinaAbilityPriority}
+linaBot = LinaBot:new{modeStack = linaModeStack, abilityPriority = LinaAbilityPriority}
 --linaBot:printInfo();
 
 linaBot.Init = false
@@ -63,7 +64,12 @@ function linaBot:QueueNuke(bot, target, actionQueue)
 end
 
 function Think()
-    local npcBot = GetBot()
+    local bot = GetBot()
     
-    linaBot:Think(npcBot)
+    linaBot:Think(bot)
+    
+    -- if we are initialized, do the rest
+    if linaBot.Init then
+        gHeroVar.ExecuteHeroActionQueue(bot)
+    end
 end

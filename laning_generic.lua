@@ -91,14 +91,14 @@ end
 
 local function Start(bot)
     if CurLane == LANE_MID then
-        bot:ActionPush_MoveToLocation(GetRuneSpawnLocation(RUNE_BOUNTY_2))
+        gHeroVar.HeroMoveToLocation(bot, GetRuneSpawnLocation(RUNE_BOUNTY_2))
     elseif CurLane == LANE_TOP then
-        bot:ActionPush_MoveToLocation(GetRuneSpawnLocation(RUNE_BOUNTY_2)+Vector(-250, 1000))
+        gHeroVar.HeroMoveToLocation(bot, GetRuneSpawnLocation(RUNE_BOUNTY_2)+Vector(-250, 1000))
     elseif CurLane == LANE_BOT then
         if IsCore then
-            bot:ActionPush_MoveToLocation(GetRuneSpawnLocation(RUNE_BOUNTY_1))
+            gHeroVar.HeroMoveToLocation(bot, GetRuneSpawnLocation(RUNE_BOUNTY_1))
         else
-            bot:ActionPush_MoveToLocation(GetRuneSpawnLocation(RUNE_BOUNTY_1)+Vector(-250, -250))
+            gHeroVar.HeroMoveToLocation(bot, GetRuneSpawnLocation(RUNE_BOUNTY_1)+Vector(-250, -250))
         end
     end
 
@@ -120,10 +120,10 @@ local function Moving(bot)
     if frontier >= LanePos and (noTower or ShouldPush) then
         local target = GetLocationAlongLane(CurLane, Min(1.0, LanePos+0.03))
         --print( " Going Forward :: MyLoc: ", bot:GetLocation()[1], ",", bot:GetLocation()[2], " TARGET: ", target[1], ",", target[2])
-        bot:Action_MoveToLocation(target)
+        gHeroVar.HeroMoveToLocation(bot, target)
     else
         local target = GetLocationAlongLane(CurLane, Min(1.0, LanePos-0.03))
-        bot:Action_MoveToLocation(target)
+        gHeroVar.HeroMoveToLocation(bot, target)
     end
 
     if #listEnemyCreep > 0 then
@@ -157,7 +157,7 @@ local function MovingToPos(bot)
 
     dest = dest + rndtilt
 
-    bot:Action_MoveToLocation(dest)
+    gHeroVar.HeroMoveToLocation(bot, dest)
 
     LaningState = LaningStates.CSing
 end
@@ -168,7 +168,7 @@ local function GettingBack(bot)
         return
     end
 
-    bot:Action_MoveToLocation(GetLocationAlongLane(CurLane, Max(LanePos-0.03, 0.0)))
+    gHeroVar.HeroMoveToLocation(bot, GetLocationAlongLane(CurLane, Max(LanePos-0.03, 0.0)))
 end
 
 local function DenyNearbyCreeps(bot)
@@ -199,7 +199,7 @@ local function DenyNearbyCreeps(bot)
 
     if damage > WeakestCreep:GetHealth() and utils.GetDistance(bot:GetLocation(),WeakestCreep:GetLocation()) < AttackRange then
         utils.TreadCycle(bot, constants.AGILITY)
-        bot:Action_AttackUnit(WeakestCreep, true)
+        gHeroVar.HeroAttackUnit(bot, WeakestCreep, true)
         return true
     end
 
@@ -210,7 +210,7 @@ local function DenyNearbyCreeps(bot)
 
     if WeakestCreepHealth < approachScalar*damage and utils.GetDistance(bot:GetLocation(),WeakestCreep:GetLocation()) > bot:GetAttackRange() then
         local dest = utils.VectorTowards(WeakestCreep:GetLocation(),GetLocationAlongLane(CurLane,LanePos-0.03), AttackRange - 20 )
-        bot:Action_MoveToLocation(dest)
+        gHeroVar.HeroMoveToLocation(bot, dest)
         return true
     end
 
@@ -222,9 +222,9 @@ local function PushCS(bot, WeakestCreep, nAc, damage, AS)
     if WeakestCreep:GetHealth() > damage and WeakestCreep:GetHealth() < (damage + 17*nAc*AS) and nAc > 1 then
         if #listEnemyCreep > 1 then
             if listEnemyCreep[1] ~= WeakestCreep then
-                bot:Action_AttackUnit(listEnemyCreep[1], false)
+                gHeroVar.HeroAttackUnit(bot, listEnemyCreep[1], false)
             else
-                bot:Action_AttackUnit(listEnemyCreep[2], false)
+                gHeroVar.HeroAttackUnit(bot, listEnemyCreep[2], false)
             end
             return true
         else
@@ -232,7 +232,7 @@ local function PushCS(bot, WeakestCreep, nAc, damage, AS)
         end
     end
 
-    bot:Action_AttackUnit(WeakestCreep, false)
+    gHeroVar.HeroAttackUnit(bot, WeakestCreep, false)
     return true
 end
 
@@ -292,7 +292,7 @@ local function CSing(bot)
 
         if WeakestCreep ~= nil and WeakestCreepHealth < damage then
             utils.TreadCycle(bot, constants.AGILITY)
-            bot:Action_AttackUnit(WeakestCreep, true)
+            gHeroVar.HeroAttackUnit(bot, WeakestCreep, true)
             return
         end
 
@@ -308,7 +308,7 @@ local function CSing(bot)
                 if (not utils.UseOrbEffect(bot, listEnemies[1])) then
                     if GetUnitToUnitDistance(bot, listEnemies[1]) < (AttackRange+listEnemies[1]:GetBoundingRadius()) then
                         utils.TreadCycle(bot, constants.AGILITY)
-                        bot:Action_AttackUnit(listEnemies[1], true)
+                        gHeroVar.HeroAttackUnit(bot, listEnemies[1], true)
                         return
                     end
                 else
@@ -324,7 +324,7 @@ local function CSing(bot)
 
         if (not ShouldPush) and WeakestCreepHealth < damage*approachScalar and GetUnitToUnitDistance(bot,WeakestCreep) > AttackRange and EnemyTowers == nil then
             local dest = utils.VectorTowards(WeakestCreep:GetLocation(),GetLocationAlongLane(CurLane,LanePos-0.03), AttackRange-20)
-            bot:Action_MoveToLocation(dest)
+            gHeroVar.HeroMoveToLocation(bot, dest)
             return
         end
 
@@ -437,7 +437,7 @@ local function StayBack(bot)
     if utils.IsMelee(bot) then
         BackPos = GetLocationAlongLane(getHeroVar("CurLane"), Min(LaneFront, LaneEnemyFront+0.03)) + RandomVector(200)
     end
-    bot:Action_MoveToLocation(BackPos)
+    gHeroVar.HeroMoveToLocation(bot, BackPos)
 end
 
 local function LaningStatePrint(state)

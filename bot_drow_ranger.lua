@@ -43,7 +43,7 @@ local DrowRangerAbilityPriority = {
     SKILL_W,    SKILL_R,    ABILITY5,   ABILITY8
 };
 
-local drowRangerActionStack = { [1] = constants.ACTION_NONE }
+local drowRangerModeStack = { [1] = constants.MODE_NONE }
 
 botDrow = dt:new()
 
@@ -54,7 +54,7 @@ function botDrow:new(o)
     return o
 end
 
-drowRangerBot = botDrow:new{actionStack = drowRangerActionStack, abilityPriority = DrowRangerAbilityPriority}
+drowRangerBot = botDrow:new{modeStack = drowRangerModeStack, abilityPriority = DrowRangerAbilityPriority}
 --drowRangerBot:printInfo()
 
 drowRangerBot.Init = false
@@ -75,6 +75,8 @@ function Think()
     -- if we are initialized, do the rest
     if drowRangerBot.Init then
         drowRangerBot:Determine_ShouldJungle(bot)
+        
+        gHeroVar.ExecuteHeroActionQueue(bot)
     end
 end
 
@@ -83,17 +85,17 @@ function drowRangerBot:DoRetreat(bot, reason)
     -- if we got creep damage and are a JUNGLER do special stuff
     local pushing = getHeroVar("ShouldPush")
 	local healthThreshold = math.max(bot:GetMaxHealth()*0.15, 100)
-    if reason == constants.RETREAT_CREEP and (self:GetAction() ~= constants.ACTION_LANING or pushing) then
+    if reason == constants.RETREAT_CREEP and (self:GetMode() ~= constants.MODE_LANING or pushing) then
         -- if our health is lower than maximum( 15% health, 100 health )
         if bot:GetHealth() < healthThreshold then
             setHeroVar("RetreatReason", constants.RETREAT_FOUNTAIN)
-            if ( self:HasAction(constants.ACTION_RETREAT) == false ) then
-                self:AddAction(constants.ACTION_RETREAT)
+            if ( self:HasMode(constants.MODE_RETREAT) == false ) then
+                self:AddMode(constants.MODE_RETREAT)
                 setHeroVar("IsInLane", false)
             end
         end
         -- if we are retreating - piggyback on retreat logic movement code
-        if self:GetAction() == constants.ACTION_RETREAT then
+        if self:GetMode() == constants.MODE_RETREAT then
             -- we use '.' instead of ':' and pass 'self' so it is the correct self
             return dt.DoRetreat(self, bot, getHeroVar("RetreatReason"))
         end
@@ -144,7 +146,7 @@ function drowRangerBot:DoCleanCamp(bot, neutrals)
             bot:Action_UseAbilityOnEntity(frostArrow, neutral);
         end
 
-        bot:Action_AttackUnit(neutral, true)
+        gHeroVar.HeroAttackUnit(bot, neutral, true)
         break
     end
 end
@@ -156,12 +158,12 @@ function drowRangerBot:Determine_ShouldJungle(bot)
             local jungleMultiplier = (timeInMinutes /120) + 0.50
             local goJungle = bot:GetNextItemPurchaseValue() - bot:GetGold() < math.max(bot:GetNextItemPurchaseValue() - bot:GetNextItemPurchaseValue() * jungleMultiplier, 300)
             if (goJungle and bot:GetNextItemPurchaseValue() > 590 and  getHeroVar("ShouldPush") ~= true) then
-                if drowRangerBot:HasAction(constants.ACTION_JUNGLING) == false then
-                    drowRangerBot:AddAction(constants.ACTION_JUNGLING)
+                if drowRangerBot:HasMode(constants.MODE_JUNGLING) == false then
+                    drowRangerBot:AddMode(constants.MODE_JUNGLING)
                     jungling_generic.OnStart(bot)
                 end
             else
-                drowRangerBot:RemoveAction(constants.ACTION_JUNGLING)
+                drowRangerBot:RemoveMode(constants.MODE_JUNGLING)
             end
         end
 end

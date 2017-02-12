@@ -10,6 +10,7 @@ require( GetScriptDirectory().."/ability_usage_shredder" )
 
 local utils = require( GetScriptDirectory().."/utility" )
 local dt = require( GetScriptDirectory().."/decision_tree" )
+local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
 
 local SKILL_Q   = "shredder_whirling_death"
 local SKILL_W   = "shredder_timber_chain"
@@ -32,7 +33,7 @@ local TimberAbilityPriority = {
     SKILL_Q,    SKILL_R,    ABILITY5,   ABIILTY8
 };
 
-local timberActionStack = { [1] = constants.ACTION_NONE }
+local timberModeStack = { [1] = constants.MODE_NONE }
 
 TimberBot = dt:new()
 
@@ -43,7 +44,7 @@ function TimberBot:new(o)
     return o
 end
 
-timberBot = TimberBot:new{actionStack = timberActionStack, abilityPriority = TimberAbilityPriority}
+timberBot = TimberBot:new{modeStack = timberModeStack, abilityPriority = TimberAbilityPriority}
 
 timberBot.Init = false
 
@@ -52,7 +53,12 @@ function timberBot:ConsiderAbilityUse(nearbyEnemyHeroes, nearbyAlliedHeroes, nea
 end
 
 function Think()
-    local npcBot = GetBot()
+    local bot = GetBot()
 
-    timberBot:Think(npcBot)
+    timberBot:Think(bot)
+    
+    -- if we are initialized, do the rest
+    if timberBot.Init then
+        gHeroVar.ExecuteHeroActionQueue(bot)
+    end
 end

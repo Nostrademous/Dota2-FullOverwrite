@@ -6,6 +6,7 @@
 require( GetScriptDirectory().."/constants" )
 require ( GetScriptDirectory().."/ability_usage_antimage" )
 local dt = require( GetScriptDirectory().."/decision_tree" )
+local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
 
 local SKILL_Q = "antimage_mana_break";
 local SKILL_W = "antimage_blink";
@@ -28,7 +29,7 @@ local AntimageAbilityPriority = {
     SKILL_E,    SKILL_R,    ABILITY6,   ABILITY8
 };
 
-local antimageActionStack = { [1] = constants.ACTION_NONE }
+local antimageModeStack = { [1] = constants.MODE_NONE }
 
 AMBot = dt:new()
 
@@ -39,7 +40,7 @@ function AMBot:new(o)
     return o
 end
 
-amBot = AMBot:new{actionStack = antimageActionStack, abilityPriority = AntimageAbilityPriority}
+amBot = AMBot:new{modeStack = antimageModeStack, abilityPriority = AntimageAbilityPriority}
 --AMBot:printInfo();
 
 amBot.Init = false
@@ -54,7 +55,12 @@ function amBot:DoHeroSpecificInit(bot)
 end
 
 function Think()
-    local npcBot = GetBot()
+    local bot = GetBot()
 
-    amBot:Think(npcBot)
+    amBot:Think(bot)
+    
+    -- if we are initialized, do the rest
+    if amBot.Init then
+        gHeroVar.ExecuteHeroActionQueue(bot)
+    end
 end

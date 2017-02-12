@@ -265,11 +265,11 @@ function GlobalFightDetermination()
                                 utils.myPrint(#participatingAllies+1, " of us can Stun for: ", totalStun, " and Slow for: ", totalSlow, ". AnticipatedTimeToKill ", enemy.Name ,": ", anticipatedTimeToKill)
                                 utils.myPrint(utils.GetHeroName(ally), " - Engaging! Anticipated Time to kill: ", anticipatedTimeToKill)
                                 gHero.SetVar(ally:GetPlayerID(), "Target", {Obj=enemy.Obj, Id=k})
-                                gHero.GetVar(ally:GetPlayerID(), "Self"):AddAction(constants.ACTION_FIGHT)
+                                gHero.GetVar(ally:GetPlayerID(), "Self"):AddMode(constants.MODE_FIGHT)
                                 for _, v in pairs(participatingAllies) do
                                     if gHero.GetVar(v[1]:GetPlayerID(), "GankTarget").Id == 0 then
                                         gHero.SetVar(v[1]:GetPlayerID(), "Target", {Obj=enemy.Obj, Id=k})
-                                        gHero.GetVar(v[1]:GetPlayerID(), "Self"):AddAction(constants.ACTION_FIGHT)
+                                        gHero.GetVar(v[1]:GetPlayerID(), "Self"):AddMode(constants.MODE_FIGHT)
                                     end
                                 end
                             elseif totalNukeDmg >= enemy.Obj:GetHealth() then
@@ -278,13 +278,13 @@ function GlobalFightDetermination()
                                 
                                 local allyID = ally:GetPlayerID()
                                 gHero.SetVar(allyID, "Target", {Obj=enemy.Obj, Id=k})
-                                gHero.GetVar(allyID, "Self"):AddAction(constants.ACTION_FIGHT)
+                                gHero.GetVar(allyID, "Self"):AddMode(constants.MODE_FIGHT)
                                 gHero.GetVar(allyID, "Self"):QueueNuke(ally, enemy.Obj, myActionQueue)
                                 
                                 for _, v in pairs(participatingAllies) do
                                     if gHero.GetVar(v[1]:GetPlayerID(), "GankTarget").Id == 0 then
                                         gHero.SetVar(v[1]:GetPlayerID(), "Target", {Obj=enemy.Obj, Id=k})
-                                        gHero.GetVar(v[1]:GetPlayerID(), "Self"):AddAction(constants.ACTION_FIGHT)
+                                        gHero.GetVar(v[1]:GetPlayerID(), "Self"):AddMode(constants.MODE_FIGHT)
                                         if #v[2] > 0 then
                                             gHero.GetVar(v[1]:GetPlayerID(), "Self"):QueueNuke(v, enemy.Obj, v[2])
                                         end

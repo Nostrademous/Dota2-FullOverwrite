@@ -97,7 +97,7 @@ local function MoveToCamp(bot)
         else
             setHeroVar("move_ticks", ticks + 1)
         end
-        bot:Action_MoveToLocation(getHeroVar("currentCamp")[constants.VECTOR])
+        gHeroVar.HeroMoveToLocation(bot, getHeroVar("currentCamp")[constants.VECTOR])
         return
     end
     local neutrals = bot:GetNearbyNeutralCreeps(EyeRange)
@@ -131,7 +131,7 @@ end
 
 local function WaitForSpawn(bot)
     if DotaTime() < getHeroVar("waituntil") then
-        bot:Action_MoveToLocation(getHeroVar("currentCamp")[constants.STACK_VECTOR]) -- TODO: use a vector that is closer to the camp
+        gHeroVar.HeroMoveToLocation(bot, getHeroVar("currentCamp")[constants.STACK_VECTOR]) -- TODO: use a vector that is closer to the camp
         return
     end
     setHeroVar("JunglingState", JunglingStates.MoveToCamp)
@@ -139,7 +139,7 @@ end
 
 local function Stack(bot)
     if DotaTime() < getHeroVar("waituntil") then
-        bot:Action_MoveToLocation(getHeroVar("currentCamp")[constants.STACK_VECTOR])
+        gHeroVar.HeroMoveToLocation(bot, getHeroVar("currentCamp")[constants.STACK_VECTOR])
         return
     end
     setHeroVar("JunglingState", JunglingStates.FindCamp)
@@ -209,7 +209,7 @@ local States = {
 function Think(npcBot)
     --[[
     local me = getHeroVar("Self")
-    if me:getPrevAction() ~= ACTION_JUNGLING then
+    if me:getPrevMode() ~= MODE_JUNGLING then
         OnResume(npcBot)
     end
     --]]

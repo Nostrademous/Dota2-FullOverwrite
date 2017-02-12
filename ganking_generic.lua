@@ -37,7 +37,7 @@ local MinRating = 1.0
 function FindTarget(bot)
     local me = getHeroVar("Self")
     if me:IsReadyToGank(bot) == false then
-        me:RemoveAction(constants.ACTION_GANKING)
+        me:RemoveMode(constants.MODE_GANKING)
         return false
     end
 
@@ -112,7 +112,7 @@ function ApproachTarget(bot, target)
 
     if not me:IsReadyToGank(bot) then
         utils.myPrint("[ApproachTarget()] - not read to gank!")
-        me:RemoveAction(constants.ACTION_GANKING)
+        me:RemoveMode(constants.MODE_GANKING)
         setHeroVar("GankTarget", {Obj=nil, Id=0})
         return false
     end
@@ -125,12 +125,12 @@ function ApproachTarget(bot, target)
             
             if timeUntilEscaped <= timeToIntercept then
                 utils.myPrint("GankTarget[ID: "..target.Id.."] will escape before I can kill him :(")
-                me:RemoveAction(constants.ACTION_GANKING)
+                me:RemoveMode(constants.MODE_GANKING)
                 setHeroVar("GankTarget", {Obj=nil, Id=0})
                 return false
             end
             
-            if distFromTarget < 1000 and target:CanBeSeen() then
+            if distFromTarget < 1000 and target.Obj:CanBeSeen() then
                 return true
             else
                 --[[ FIXME: need to teach bots not to use abilities from afar when invis
@@ -149,14 +149,14 @@ function ApproachTarget(bot, target)
             utils.myPrint("Target not visible... estimating location. Time: ", timeSinceSeen)
             if timeSinceSeen > 3.0 then
                 utils.myPrint("Lost Sight of GankTarget["..target.Id.."] for over 3.0 seconds - abandoning")
-                me:RemoveAction(constants.ACTION_GANKING)
+                me:RemoveMode(constants.MODE_GANKING)
                 setHeroVar("GankTarget", {Obj=nil, Id=0})
                 return false
             else
                 local pLoc = enemyData.PredictedLocation(target.Id, timeSinceSeen)
                 if pLoc then
                     item_usage.UseMovementItems()
-                    bot:Action_MoveToLocation(pLoc)
+                    gHeroVar.HeroMoveToLocation(bot, pLoc)
                 else
                     utils.myPrint("didn't get a valid predicted location")
                 end
@@ -165,7 +165,7 @@ function ApproachTarget(bot, target)
         end
     else
         utils.myPrint("GankTarget[ID: "..target.Id.."] is dead!!!")
-        me:RemoveAction(constants.ACTION_GANKING)
+        me:RemoveMode(constants.MODE_GANKING)
         setHeroVar("GankTarget", {Obj=nil, Id=0})
         return false
     end
@@ -178,7 +178,7 @@ function KillTarget(bot, target)
         if utils.ValidTarget(target) then
             setHeroVar("Target", target)
             utils.myPrint("killing target :: ", utils.GetHeroName(target.Obj))
-            bot:Action_AttackUnit(target.Obj, false)
+            gHeroVar.HeroAttackUnit(bot, target.Obj, false)
             return true
         end
     end

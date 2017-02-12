@@ -42,7 +42,7 @@ local AbilityPriority = {
     SKILL_W,    SKILL_R,    ABILITY6,   ABILITY7
 }
 
-local cmActionStack = { [1] = constants.ACTION_NONE }
+local cmModeStack = { [1] = constants.MODE_NONE }
 
 botCM = dt:new()
 
@@ -53,7 +53,7 @@ function botCM:new(o)
     return o
 end
 
-cmBot = botCM:new{actionStack = cmActionStack, abilityPriority = AbilityPriority}
+cmBot = botCM:new{modeStack = cmModeStack, abilityPriority = AbilityPriority}
 
 cmBot.Init = false
 
@@ -70,7 +70,12 @@ function cmBot:QueueNuke(bot, target, actionQueue)
 end
 
 function Think()
-    local npcBot = GetBot()
+    local bot = GetBot()
 
-    cmBot:Think(npcBot)
+    cmBot:Think(bot)
+    
+    -- if we are initialized, do the rest
+    if cmBot.Init then
+        gHeroVar.ExecuteHeroActionQueue(bot)
+    end
 end

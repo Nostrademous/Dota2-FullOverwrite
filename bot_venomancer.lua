@@ -42,7 +42,7 @@ local AbilityPriority = {
     SKILL_Q,    SKILL_R,    ABILITY5,   ABILITY8
 }
 
-local vmActionStack = { [1] = constants.ACTION_NONE }
+local vmModeStack = { [1] = constants.MODE_NONE }
 
 botVM = dt:new()
 
@@ -53,7 +53,7 @@ function botVM:new(o)
     return o
 end
 
-vmBot = botVM:new{actionStack = vmActionStack, abilityPriority = AbilityPriority}
+vmBot = botVM:new{modeStack = vmModeStack, abilityPriority = AbilityPriority}
 
 vmBot.Init = false
 
@@ -62,7 +62,12 @@ function vmBot:ConsiderAbilityUse(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyE
 end
 
 function Think()
-    local npcBot = GetBot()
+    local bot = GetBot()
 
-    vmBot:Think(npcBot)
+    vmBot:Think(bot)
+    
+    -- if we are initialized, do the rest
+    if vmBot.Init then
+        gHeroVar.ExecuteHeroActionQueue(bot)
+    end
 end

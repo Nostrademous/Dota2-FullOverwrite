@@ -8,6 +8,7 @@ require ( GetScriptDirectory().."/ability_usage_viper" )
 
 local utils = require( GetScriptDirectory().."/utility" )
 local dt = require( GetScriptDirectory().."/decision_tree" )
+local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
 
 local SKILL_Q = "viper_poison_attack";
 local SKILL_W = "viper_nethertoxin";
@@ -30,7 +31,7 @@ local ViperAbilityPriority = {
     SKILL_E,    SKILL_R,    ABILITY6,   ABILITY8
 };
 
-local viperActionStack = { [1] = constants.ACTION_NONE }
+local viperModeStack = { [1] = constants.MODE_NONE }
 
 ViperBot = dt:new()
 
@@ -41,7 +42,7 @@ function ViperBot:new(o)
     return o
 end
 
-viperBot = ViperBot:new{actionStack = viperActionStack, abilityPriority = ViperAbilityPriority}
+viperBot = ViperBot:new{modeStack = viperModeStack, abilityPriority = ViperAbilityPriority}
 --viperBot:printInfo();
 
 viperBot.Init = false
@@ -55,7 +56,12 @@ function viperBot:ConsiderAbilityUse(nearbyEnemyHeroes, nearbyAlliedHeroes, near
 end
 
 function Think()
-    local npcBot = GetBot()
+    local bot = GetBot()
 
-    viperBot:Think(npcBot)
+    viperBot:Think(bot)
+    
+    -- if we are initialized, do the rest
+    if viperBot.Init then
+        gHeroVar.ExecuteHeroActionQueue(bot)
+    end
 end

@@ -9,6 +9,7 @@ require ( GetScriptDirectory().."/ability_usage_enigma" )
 
 local utils = require( GetScriptDirectory().."/utility" )
 local dt = require( GetScriptDirectory().."/decision_tree" )
+local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
 
 local ENIGMA_SKILL_Q = "enigma_malefice";
 local ENIGMA_SKILL_W = "enigma_demonic_conversion";
@@ -31,7 +32,7 @@ local EnigmaAbilityPriority = {
     ENIGMA_SKILL_E,    ENIGMA_SKILL_R,    ENIGMA_ABILITY6,   ENIGMA_ABILITY7
 };
 
-local enigmaActionQueue = { [1] = constants.ACTION_NONE }
+local enigmaActionQueue = { [1] = constants.MODE_NONE }
 
 enigmaBot = dt:new()
 
@@ -52,7 +53,12 @@ function enigmaBot:ConsiderAbilityUse(nearbyEnemyHeroes, nearbyAlliedHeroes, nea
 end
 
 function Think()
-    local npcBot = GetBot()
+    local bot = GetBot()
 
-    enigmaBot:Think(npcBot)
+    enigmaBot:Think(bot)
+    
+    -- if we are initialized, do the rest
+    if enigmaBot.Init then
+        gHeroVar.ExecuteHeroActionQueue(bot)
+    end
 end

@@ -401,13 +401,13 @@ function UseItems()
 
     local courier = utils.IsItemAvailable("item_courier")
     if courier ~= nil then
-        npcBot:Action_UseAbility(courier)
+        npcBot:ActionPush_UseAbility(courier)
         return nil
     end
 
     local flyingCourier = utils.IsItemAvailable("item_flying_courier")
     if flyingCourier ~= nil then
-        npcBot:Action_UseAbility(flyingCourier)
+        npcBot:ActionPush_UseAbility(flyingCourier)
         return nil
     end
 

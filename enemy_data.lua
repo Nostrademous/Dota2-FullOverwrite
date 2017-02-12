@@ -22,6 +22,7 @@ function EnemyData.CheckAlive()
         if EnemyData[id] == nil then
             EnemyData[id] = {  Name = "", Time1 = -100, Time2 = -100, Obj = nil, Level = 1,
                                Alive = true, Health = -1, MaxHealth = -1, Mana = -1, Items = {},
+                               LocExtra1 = Vector(0,0), LocExtra2 = Vector(0,0),
                                PhysDmg2 = {}, MagicDmg2 = {}, PureDmg2 = {}, AllDmg2 = {},
                                PhysDmg10 = {}, MagicDmg10 = {}, PureDmg10 = {}, AllDmg10 = {}
                             }

@@ -162,9 +162,9 @@ function X:Think(npcBot)
 
                 local me = getHeroVar("Self")
                 if bInSide then
-                    if me:GetAction() ~= constants.ACTION_SPECIALSHOP then
-                        if ( me:HasAction(constants.ACTION_SPECIALSHOP) == false ) then
-                            me:AddAction(constants.ACTION_SPECIALSHOP)
+                    if me:GetMode() ~= constants.MODE_SPECIALSHOP then
+                        if ( me:HasMode(constants.MODE_SPECIALSHOP) == false ) then
+                            me:AddMode(constants.MODE_SPECIALSHOP)
                             utils.myPrint(" STARTING TO HEAD TO SIDE SHOP ")
                             special_shop_generic.OnStart()
                         end
@@ -172,14 +172,14 @@ function X:Think(npcBot)
 
                     local bDone = special_shop_generic.ThinkSideShop(sNextItem)
                     if bDone then
-                        me:RemoveAction(constants.ACTION_SPECIALSHOP)
+                        me:RemoveMode(constants.MODE_SPECIALSHOP)
                         table.remove(self.PurchaseOrder, 1 )
                         npcBot:SetNextItemPurchaseValue( 0 )
                     end
                 elseif bInSecret then
-                    if me:GetAction() ~= constants.ACTION_SPECIALSHOP then
-                        if ( me:HasAction(constants.ACTION_SPECIALSHOP) == false ) then
-                            me:AddAction(constants.ACTION_SPECIALSHOP)
+                    if me:GetMode() ~= constants.MODE_SPECIALSHOP then
+                        if ( me:HasMode(constants.MODE_SPECIALSHOP) == false ) then
+                            me:AddMode(constants.MODE_SPECIALSHOP)
                             utils.myPrint(" STARTING TO HEAD TO SECRET SHOP ")
                             special_shop_generic.OnStart()
                         end
@@ -187,12 +187,12 @@ function X:Think(npcBot)
 
                     local bDone = special_shop_generic.ThinkSecretShop(sNextItem)
                     if bDone then
-                        me:RemoveAction(constants.ACTION_SPECIALSHOP)
+                        me:RemoveMode(constants.MODE_SPECIALSHOP)
                         table.remove(self.PurchaseOrder, 1 )
                         npcBot:SetNextItemPurchaseValue( 0 )
                     end
                 else
-                    me:RemoveAction(constants.ACTION_SPECIALSHOP)
+                    me:RemoveMode(constants.MODE_SPECIALSHOP)
                     npcBot:ActionImmediate_PurchaseItem(sNextItem)
                     table.remove(self.PurchaseOrder, 1)
                     npcBot:SetNextItemPurchaseValue(0)

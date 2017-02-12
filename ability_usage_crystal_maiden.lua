@@ -110,26 +110,27 @@ function queueNuke(bot, enemy, castQueue)
     end
 
     utils.AllChat("Killing "..utils.GetHeroName(enemy).." softly with my song")
-    for _, skill in ipairs(castQueue) do
+    for i = #castQueue, 1, -2 do
+        local skill = castQueue[i]
         local behaviorFlag = skill:GetBehavior()
         
         utils.myPrint(" - skill '", skill:GetName(), "' has BehaviorFlag: ", behaviorFlag)
         
         if skill:GetName() == Abilities[1] then
             if utils.IsCrowdControlled(enemy) then
-                bot:ActionQueue_UseAbilityOnLocation(skill, enemy:GetLocation())
+                gHeroVar.HeroPushUseAbilityOnLocation(bot, skill, enemy:GetLocation())
             else
-                bot:ActionQueue_UseAbilityOnLocation(skill, enemy:GetExtrapolatedLocation(0.95))
+                gHeroVar.HeroPushUseAbilityOnLocation(bot, skill, enemy:GetExtrapolatedLocation(0.95))
             end
         elseif skill:GetName() == Abilities[2] then
             if utils.IsCrowdControlled(enemy) then
-                bot:ActionQueue_UseAbilityOnLocation(skill, enemy:GetLocation())
+                gHeroVar.HeroPushUseAbilityOnLocation(bot, skill, enemy:GetLocation())
             else
                 -- account for 0.45 cast point and speed of wave (1200) needed to travel the distance between us
-                bot:ActionQueue_UseAbilityOnLocation(skill, enemy:GetExtrapolatedLocation(0.45 + dist/1200))
+                gHeroVar.HeroPushUseAbilityOnLocation(bot, skill, enemy:GetExtrapolatedLocation(0.45 + dist/1200))
             end
         elseif skill:GetName() == Abilities[4] then
-            bot:ActionQueue_UseAbilityOnEntity(skill, enemy)
+            bot:ActionPush_UseAbilityOnEntity(skill, enemy)
         end
     end
     bot:ActionQueue_AttackUnit( enemy, false )
@@ -153,8 +154,11 @@ function AbilityUsageThink(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCre
     if ( #nearbyEnemyHeroes == 0 and #nearbyEnemyCreep == 0 ) then return false end
 
     if #nearbyEnemyHeroes >= 1 then
+        local nRadius = abilityQ:GetSpecialValueInt( "radius" )
+        local nCastRange = abilityQ:GetCastRange()
+    
         --FIXME: in the future we probably want to target a hero that has a disable to my ult, rather than weakest
-        local enemy, enemyHealth = utils.GetWeakestHero(bot, r, nearbyEnemyHeroes)
+        local enemy, enemyHealth = utils.GetWeakestHero(bot, nRadius + nCastRange, nearbyEnemyHeroes)
         local dmg, castQueue, castTime, stunTime, slowTime = nukeDamage( bot, enemy )
         
         local rightClickTime = stunTime + 0.5*slowTime

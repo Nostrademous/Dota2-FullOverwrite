@@ -44,7 +44,7 @@ local BloodseekerAbilityPriority = {
     BLOODSEEKER_SKILL_E,    BLOODSEEKER_SKILL_R,    BLOODSEEKER_ABILITY5,   BLOODSEEKER_ABILITY8
 };
 
-local bloodseekerActionStack = { [1] = constants.ACTION_NONE }
+local bloodseekerModeStack = { [1] = constants.MODE_NONE }
 
 botBS = dt:new()
 
@@ -55,7 +55,7 @@ function botBS:new(o)
     return o
 end
 
-bloodseekerBot = botBS:new{actionStack = bloodseekerActionStack, abilityPriority = BloodseekerAbilityPriority}
+bloodseekerBot = botBS:new{modeStack = bloodseekerModeStack, abilityPriority = BloodseekerAbilityPriority}
 --bloodseekerBot:printInfo()
 
 bloodseekerBot.Init = false
@@ -65,17 +65,19 @@ function bloodseekerBot:ConsiderAbilityUse(nearbyEnemyHeroes, nearbyAlliedHeroes
 end
 
 function Think()
-    local npcBot = GetBot()
+    local bot = GetBot()
 
-    bloodseekerBot:Think(npcBot)
+    bloodseekerBot:Think(bot)
 
     -- if we are initialized, do the rest
     if bloodseekerBot.Init then
-        if npcBot:GetLevel() >= 20 and getHeroVar("Role") ~= constants.ROLE_HARDCARRY then
-            bloodseekerBot:RemoveAction(constants.ACTION_JUNGLING)
+        if bot:GetLevel() >= 20 and getHeroVar("Role") ~= constants.ROLE_HARDCARRY then
+            bloodseekerBot:RemoveMode(constants.MODE_JUNGLING)
             setHeroVar("Role", constants.ROLE_HARDCARRY)
             setHeroVar("CurLane", LANE_BOT) --FIXME: don't hardcode this
         end
+        
+        gHeroVar.ExecuteHeroActionQueue(bot)
     end
 end
 
@@ -90,7 +92,7 @@ function bloodseekerBot:DoRetreat(bot, reason)
     local neutrals = bot:GetNearbyCreeps(700,true)
     if #neutrals == 0 then
         -- if we are retreating - piggyback on retreat logic movement code
-        if self:GetAction() == constants.ACTION_RETREAT then
+        if self:GetMode() == constants.MODE_RETREAT then
             -- we use '.' instead of ':' and pass 'self' so it is the correct self
             return dt.DoRetreat(self, bot, getHeroVar("RetreatReason"))
         end
@@ -103,7 +105,7 @@ function bloodseekerBot:DoRetreat(bot, reason)
     local bloodrageHeal = bloodragePct * neutrals[1]:GetMaxHealth()
     local healthThreshold = math.max(bot:GetMaxHealth()*0.15, 100)
 
-    if reason == constants.RETREAT_CREEP and (self:GetAction() ~= constants.ACTION_LANING or pushing) then
+    if reason == constants.RETREAT_CREEP and (self:GetMode() ~= constants.MODE_LANING or pushing) then
         -- if our health is lower than maximum( 15% health, 100 health )
         if bot:GetHealth() < healthThreshold then
             local totalCreepDamage = 0
@@ -116,8 +118,8 @@ function bloodseekerBot:DoRetreat(bot, reason)
             if (estimatedDamage < neutrals[1]:GetHealth()) and (bot:GetHealth() + bloodrageHeal) < healthThreshold
             and (bot:GetHealth() < totalCreepDamage) then
                 setHeroVar("RetreatReason", constants.RETREAT_FOUNTAIN)
-                if ( self:HasAction(constants.ACTION_RETREAT) == false ) then
-                    self:AddAction(constants.ACTION_RETREAT)
+                if ( self:HasMode(constants.MODE_RETREAT) == false ) then
+                    self:AddMode(constants.MODE_RETREAT)
                     setHeroVar("IsInLane", false)
                 end
             else
@@ -125,7 +127,7 @@ function bloodseekerBot:DoRetreat(bot, reason)
             end
         end
         -- if we are retreating - piggyback on retreat logic movement code
-        if self:GetAction() == constants.ACTION_RETREAT then
+        if self:GetMode() == constants.MODE_RETREAT then
             -- we use '.' instead of ':' and pass 'self' so it is the correct self
             return dt.DoRetreat(self, bot, getHeroVar("RetreatReason"))
         end
@@ -179,14 +181,14 @@ function bloodseekerBot:DoCleanCamp(bot, neutrals)
     for i, neutral in ipairs(neutrals) do
         -- kill the Ghost first as they slow down our DPS tremendously by being around
         if string.find(neutral:GetUnitName(), "ghost") ~= nil and bloodraged then
-            bot:Action_AttackUnit(neutral, true)
+            gHeroVar.HeroAttackUnit(bot, neutral, true)
             return
         end
     end
     for i, neutral in ipairs(neutrals) do
         local eDamage = bot:GetEstimatedDamageToTarget(true, neutral, bot:GetAttackSpeed(), DAMAGE_TYPE_PHYSICAL)
         if (eDamage < neutral:GetHealth() or bloodraged) then -- make sure we lasthit with bloodrage on
-            bot:Action_AttackUnit(neutral, true)
+            gHeroVar.HeroAttackUnit(bot, neutral, true)
             break
         end
     end

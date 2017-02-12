@@ -406,8 +406,8 @@ end
 -- Math Functions
 -------------------------------------------------------------------------------
 
-function U.CheckFlag(value, flag)
-    return ((value/flag) % 2) >= 1
+function U.CheckFlag(bitfield, flag)
+    return ((bitfield/flag) % 2) >= 1
 end
 
 function U.GetDistance(s, t)
@@ -763,7 +763,7 @@ function U.MoveSafelyToLocation(npcBot, dest)
     local ti=-1;
     local mindisT=100000;
 
-    local CurLoc = npcBot:GetLocation();
+    local CurLoc = npcBot:GetLocation()
 
     for i,spot in pairs(safeSpots) do
         if U.GetDistance(spot,CurLoc)<mindisS then
@@ -781,18 +781,18 @@ function U.MoveSafelyToLocation(npcBot, dest)
 
     if s==nil or t==nil then
         U.AllChat('Something is wrong with path finding.')
-        return;
+        return
     end
 
     if GetUnitToLocationDistance(npcBot,dest)<safeDist or getHeroVar("FinalHop") or mindisS+mindisT>GetUnitToLocationDistance(npcBot,dest) then
-        npcBot:Action_MoveToLocation(dest)
+        gHeroVar.HeroMoveToLocation(npcBot, dest)
         setHeroVar("FinalHop", true)
         return;
     end
 
     if si==ti then
         setHeroVar("FinalHop", true)
-        npcBot:Action_MoveToLocation(dest)
+        gHeroVar.HeroMoveToLocation(npcBot, dest)
         return;
     end
 
@@ -801,8 +801,8 @@ function U.MoveSafelyToLocation(npcBot, dest)
     end
 
     if mindisS>safeDist or getHeroVar("LastHop")==nil then
-        npcBot:Action_MoveToLocation(s);
-        return;
+        gHeroVar.HeroMoveToLocation(npcBot, s)
+        return
     end
 
     if GetUnitToLocationDistance(npcBot,safeSpots[getHeroVar("NextHop")[getHeroVar("LastHop")][ti]])<500 then
@@ -811,7 +811,7 @@ function U.MoveSafelyToLocation(npcBot, dest)
 
     local newT = getHeroVar("NextHop")[getHeroVar("LastHop")][ti]
 
-    npcBot:Action_MoveToLocation(safeSpots[newT]);
+    gHeroVar.HeroMoveToLocation(npcBot, safeSpots[newT])
 end
 
 function U.InitPathFinding(npcBot)

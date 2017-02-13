@@ -43,19 +43,20 @@ function HasActiveDOTDebuff(bot)
     local botModifierCount = bot:NumModifiers()
     if botModifierCount == 0 then return false end
 
-    for i = 1, botModifierCount do
+    --NOTE: I don't know why, but this one is 0 indexed
+    for i = 0, botModifierCount-1, 1 do
         local modName = bot:GetModifierName(i)
         if utils.InTable(DoTModifiers, modName) then
             return true
         end
     end
-    
+
     --[[
     for i = 1, #DoTModifiers do
         if bot:HasModifier(DoTModifiers[i]) then return true end
     end
     --]]
-    
+
     return false
 end
 

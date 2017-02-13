@@ -66,15 +66,16 @@ function Think(bot, loc)
         end
     end
 
-    item_usage.UseMovementItems(nextmove)
+    if item_usage.UseMovementItems(nextmove) then return end
+    
     if getHeroVar("IsInLane") then
-        --utils.myPrint("generic retreat - in Lane")
+        --utils.myPrint("generic retreat - in Lane - loc <", nextmove[1], ", ", nextmove[2], ">")
         gHeroVar.HeroMoveToLocation(bot, nextmove)
     else
-        --utils.myPrint("generic retreat - not in Lane")
+        --utils.myPrint("generic retreat - not in Lane - loc <", nextmove[1], ", ", nextmove[2], ">")
         utils.MoveSafelyToLocation(bot, nextmove)
     end
 end
 
 --------
-for k,v in pairs( retreat_generic ) do  _G._savedEnv[k] = v end
+for k,v in pairs( retreat_generic ) do _G._savedEnv[k] = v end

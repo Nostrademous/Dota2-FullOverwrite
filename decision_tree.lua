@@ -233,7 +233,7 @@ function X:Think(bot)
         nearbyAlliedTowers  = bot:GetNearbyTowers(EyeRange, false)
 
         local setTarget = self:getHeroVar("Target")
-        if setTarget.Id > 0 and not utils.ValidTarget(setTarget) then
+        if setTarget.Id > 0 and (not utils.ValidTarget(setTarget) or not setTarget.Obj:IsAlive()) then
             for id, v in pairs(nearbyEnemyHeroes) do
                 if setTarget.Id == v:GetPlayerID() then
                     if IsHeroAlive(setTarget.Id) then
@@ -250,7 +250,7 @@ function X:Think(bot)
         end
 
         local gankTarget = self:getHeroVar("GankTarget")
-        if gankTarget.Id > 0 and not utils.ValidTarget(gankTarget) then
+        if gankTarget.Id > 0 and (not utils.ValidTarget(gankTarget) or not gankTarget.Obj:IsAlive()) then
             for id, v in pairs(nearbyEnemyHeroes) do
                 if gankTarget.Id == v:GetPlayerID() then
                     if IsHeroAlive(gankTarget.Id) then
@@ -352,6 +352,24 @@ function X:Think(bot)
     end
 
     --ACTIONS QUEUED? DO THEM OR UNSET
+    if self:getHeroVar("Queued") then
+        if bot:GetCurrentActionType() == BOT_ACTION_TYPE_USE_ABILITY or bot:GetCurrentActionType() == BOT_ACTION_TYPE_ATTACK then
+            local target = self:getHeroVar("Target")
+            if target.Id == 0 or (target.Id > 0 and not IsHeroAlive( target.Id )) then
+                bot:Action_ClearActions(true)
+                self:setHeroVar("Queued", false)
+            else
+                if not utils.ValidTarget(target) then
+                    bot:Action_ClearActions(true)
+                    self:setHeroVar("Queued", false)
+                else
+                    return
+                end
+            end
+        else
+            self:setHeroVar("Queued", false)
+        end
+    end
     --local cat = bot:GetCurrentActionType()
     --if cat ~= BOT_ACTION_TYPE_NONE and cat ~= BOT_ACTION_TYPE_IDLE then return end
     --if bot:NumQueuedActions() >= 1 then
@@ -359,8 +377,7 @@ function X:Think(bot)
     --end
 
     --USE ITEMS
-    local bRet = self:ConsiderItemUse()
-    if bRet then return end
+    if self:ConsiderItemUse() then return end
 
     --STUCK CHECK
     --[[
@@ -548,8 +565,7 @@ end
 -------------------------------------------------
 
 function X:ConsiderItemUse()
-    local bRet = item_usage.UseItems()
-    return bRet
+    if item_usage.UseItems() then return true end
 end
 
 function X:Determine_ShouldUseGlyph(bot)
@@ -1084,10 +1100,9 @@ function X:DoFight(bot)
 
     if target.Id > 0 and IsHeroAlive(target.Id) then
         if utils.ValidTarget(target) then
-            local Towers = bot:GetNearbyTowers(750, true)
-            if Towers ~= nil and #Towers == 0 then
+            if #nearbyEnemyTowers == 0 then
                 if target.Obj:IsAttackImmune() or (bot:GetLastAttackTime() + bot:GetSecondsPerAttack()) > GameTime() then
-                    item_usage.UseMovementItems()
+                    if item_usage.UseMovementItems() then return true end
                     bot:Action_MoveToUnit(target.Obj)
                 else
                     gHeroVar.HeroAttackUnit(bot, target.Obj, true)
@@ -1096,7 +1111,7 @@ function X:DoFight(bot)
             else
                 local towerDmgToMe = 0
                 local myDmgToTarget = bot:GetEstimatedDamageToTarget( true, target.Obj, 5.0, DAMAGE_TYPE_ALL )
-                for _, tow in pairs(Towers) do
+                for _, tow in pairs(nearbyEnemyTowers) do
                     if GetUnitToLocationDistance( bot, tow:GetLocation() ) < 750 then
                         towerDmgToMe = towerDmgToMe + tow:GetEstimatedDamageToTarget( false, bot, 5.0, DAMAGE_TYPE_PHYSICAL )
                     end
@@ -1124,7 +1139,7 @@ function X:DoFight(bot)
             else
                 local pLoc = enemyData.PredictedLocation(target.Id, timeSinceSeen)
                 if pLoc then
-                    item_usage.UseMovementItems()
+                    if item_usage.UseMovementItems() then return true end
                     gHeroVar.HeroMoveToLocation(bot, pLoc)
                     return true
                 else

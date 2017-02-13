@@ -105,6 +105,7 @@ function queueNuke(bot, enemy, castQueue)
     local dist = GetUnitToUnitDistance(bot, enemy)
 
     bot:Action_ClearActions()
+    setHeroVar("Queued", true)
     -- if out of range, attack move for one hit to get in range
     if dist > (nCastRange + nRadius) then
         bot:ActionPush_AttackUnit( enemy, true )

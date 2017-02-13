@@ -69,7 +69,7 @@ function Think()
     linaBot:Think(bot)
     
     -- if we are initialized, do the rest
-    if linaBot.Init then
+    if linaBot.Init then        
         gHeroVar.ExecuteHeroActionQueue(bot)
     end
 end

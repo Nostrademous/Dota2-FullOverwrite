@@ -85,7 +85,7 @@ function X.HeroMoveToLocation(bot, loc)
     
     if checkSleep(bot, ca) then return end
     
-    if #ca == 0 or not (ca[1] == "MoveToLocation" and ca[2] == loc) then
+    if #ca == 0 or not (ca[1] == "MoveToLocation" and ca[2][1] == loc[1] and ca[2][2] == loc[2]) then
         if DEFAULT_METHOD then
             bot:Action_MoveToLocation(loc)
         else
@@ -105,7 +105,7 @@ function X.HeroQueueMoveToLocation(bot, loc)
     local la = {}
     if aqSize > 0 then la = X[pID].actionQueue[aqSize] end
     
-    if #la == 0 or not (la[1] == "MoveToLocation" and la[2] == loc) then
+    if #la == 0 or not (la[1] == "MoveToLocation" and la[2][1] == loc[1] and la[2][2] == loc[2]) then
         if DEFAULT_METHOD then
             bot:ActionQueue_MoveToLocation(loc)
         else

@@ -26,11 +26,11 @@ function UseRegenItems()
     local npcBot = GetBot()
 
     if npcBot:IsChanneling() or npcBot:IsUsingAbility() then
-        return nil
+        return false
     end
     
     -- if we are full health and full mana, exit early
-    if npcBot:GetHealth() == npcBot:GetMaxHealth() and npcBot:GetMana() == npcBot:GetMaxMana() then return nil end
+    if npcBot:GetHealth() == npcBot:GetMaxHealth() and npcBot:GetMana() == npcBot:GetMaxMana() then return false end
     
     local Enemies = npcBot:GetNearbyHeroes(850, true, BOT_MODE_NONE)
 
@@ -39,15 +39,15 @@ function UseRegenItems()
         and not npcBot:HasModifier("modifier_clarity_potion") and not npcBot:HasModifier("modifier_flask_healing") then
 
         if (not (npcBot:GetHealth() == npcBot:GetMaxHealth() and npcBot:GetMaxMana() == npcBot:GetMana())) and npcBot:HasModifier("modifier_fountain_aura_buff") then
-            npcBot:Action_UseAbilityOnEntity(bottle, npcBot)
-            return nil
+            npcBot:ActionPush_UseAbilityOnEntity(bottle, npcBot)
+            return true
         end
 
         if Enemies == nil or #Enemies == 0 then
             if ((npcBot:GetMaxHealth()-npcBot:GetHealth()) >= 100 and (npcBot:GetMaxMana()-npcBot:GetMana()) >= 60) or
                 (npcBot:GetHealth() < 300 or npcBot:GetMana() < 200) then
-                npcBot:Action_UseAbilityOnEntity(bottle, npcBot)
-                return nil
+                npcBot:ActionPush_UseAbilityOnEntity(bottle, npcBot)
+                return true
             end
         end
     end
@@ -58,14 +58,14 @@ function UseRegenItems()
         local Allies = npcBot:GetNearbyHeroes(900, false, BOT_MODE_NONE)
         if mekansm ~= nil and mekansm:IsFullyCastable() then
             if (npcBot:GetHealth()/npcBot:GetMaxHealth()) < 0.15 then
-                npcBot:Action_UseAbility(mekansm)
-                return nil
+                npcBot:ActionPush_UseAbility(mekansm)
+                return true
             end
             if #Allies > 1 then
                 for _, ally in pairs(Allies) do
                     if (ally:GetHealth()/ally:GetMaxHealth()) < 0.15 then
-                        npcBot:Action_UseAbility(mekansm)
-                        return nil
+                        npcBot:ActionPush_UseAbility(mekansm)
+                        return true
                     end
                 end
             end
@@ -75,8 +75,8 @@ function UseRegenItems()
         if clarity ~= nil then
             if (Enemies == nil or #Enemies == 0) then
                 if (npcBot:GetMaxMana()-npcBot:GetMana()) > 200 and not npcBot:HasModifier("modifier_clarity_potion") and not modifiers.HasActiveDOTDebuff(npcBot)  then
-                    npcBot:Action_UseAbilityOnEntity(clarity, npcBot)
-                    return nil
+                    npcBot:ActionPush_UseAbilityOnEntity(clarity, npcBot)
+                    return true
                 end
             end
         end
@@ -85,8 +85,8 @@ function UseRegenItems()
         if flask ~= nil then
             if (Enemies == nil or #Enemies == 0) then
                 if (npcBot:GetMaxHealth()-npcBot:GetHealth()) > 400 and not npcBot:HasModifier("modifier_flask_healing") and not modifiers.HasActiveDOTDebuff(npcBot)  then
-                    npcBot:Action_UseAbilityOnEntity(flask, npcBot)
-                    return nil
+                    npcBot:ActionPush_UseAbilityOnEntity(flask, npcBot)
+                    return true
                 end
             end
         end
@@ -95,8 +95,8 @@ function UseRegenItems()
         if urn ~= nil and urn:GetCurrentCharges() > 0 then
 		    if (Enemies == nil or #Enemies == 0) then
                 if (npcBot:GetMaxHealth()-npcBot:GetHealth()) > 400 and not npcBot:HasModifier("modifier_item_urn_heal") and not modifiers.HasActiveDOTDebuff(npcBot)  then
-                    npcBot:Action_UseAbilityOnEntity(urn, npcBot)
-                    return nil
+                    npcBot:ActionPush_UseAbilityOnEntity(urn, npcBot)
+                    return true
                 end
             end
         end
@@ -104,8 +104,8 @@ function UseRegenItems()
         local faerie = utils.HaveItem(npcBot, "item_faerie_fire");
         if faerie ~= nil then
             if (npcBot:GetHealth()/npcBot:GetMaxHealth()) < 0.15 and (utils.IsTowerAttackingMe(2.0) or utils.IsAnyHeroAttackingMe(1.0)) then
-                npcBot:Action_UseAbility(faerie)
-                return nil
+                npcBot:ActionPush_UseAbility(faerie)
+                return true
             end
         end
 
@@ -132,14 +132,14 @@ function UseRegenItems()
         end
     end
 
-    return nil
+    return false
 end
 
 function UseRegenItemsOnAlly()
     local npcBot = GetBot()
 
     if npcBot:IsChanneling() or npcBot:IsUsingAbility() then
-        return nil
+        return false
     end
     
     local Enemies = npcBot:GetNearbyHeroes(850, true, BOT_MODE_NONE)
@@ -170,15 +170,15 @@ function UseRegenItemsOnAlly()
         and (not utils.HaveItem(bottleTargetAlly, "item_bottle"))   then
 
         if (not (bottleTargetAlly:GetHealth() == bottleTargetAlly:GetMaxHealth() and bottleTargetAlly:GetMaxMana() == bottleTargetAlly:GetMana())) and bottleTargetAlly:HasModifier("modifier_fountain_aura_buff") then
-            npcBot:Action_UseAbilityOnEntity(bottle, bottleTargetAlly)
-            return nil
+            npcBot:ActionPush_UseAbilityOnEntity(bottle, bottleTargetAlly)
+            return true
         end
 
         if Enemies == nil or #Enemies == 0 then
             if ((bottleTargetAlly:GetMaxHealth()-bottleTargetAlly:GetHealth()) >= 100 and (bottleTargetAlly:GetMaxMana()-bottleTargetAlly:GetMana()) >= 60) or
                 (bottleTargetAlly:GetHealth() < 300 or bottleTargetAlly:GetMana() < 200) then
-                npcBot:Action_UseAbilityOnEntity(bottle, bottleTargetAlly)
-                return nil
+                npcBot:ActionPush_UseAbilityOnEntity(bottle, bottleTargetAlly)
+                return true
             end
         end
     end
@@ -189,8 +189,8 @@ function UseRegenItemsOnAlly()
         if clarity ~= nil and (not utils.HaveItem(lowestManaAlly, "item_clarity")) then
             if (Enemies == nil or #Enemies == 0) then
                 if (lowestManaAlly:GetMaxMana()-lowestManaAlly:GetMana()) > 200 and not lowestManaAlly:HasModifier("modifier_clarity_potion") and not modifiers.HasActiveDOTDebuff(lowestManaAlly)  then
-                    npcBot:Action_UseAbilityOnEntity(clarity, lowestManaAlly)
-                    return nil
+                    npcBot:ActionPush_UseAbilityOnEntity(clarity, lowestManaAlly)
+                    return true
                 end
             end
         end
@@ -201,8 +201,8 @@ function UseRegenItemsOnAlly()
         if flask ~= nil and (not utils.HaveItem(lowestHealthAlly, "item_flask")) then
             if (Enemies == nil or #Enemies == 0) then
                 if (lowestHealthAlly:GetMaxHealth()-lowestHealthAlly:GetHealth()) > 400 and not lowestHealthAlly:HasModifier("modifier_flask_healing") and not modifiers.HasActiveDOTDebuff(lowestHealthAlly)  then
-                    npcBot:Action_UseAbilityOnEntity(flask, lowestHealthAlly)
-                    return nil
+                    npcBot:ActionPush_UseAbilityOnEntity(flask, lowestHealthAlly)
+                    return true
                 end
             end
         end
@@ -212,7 +212,7 @@ function UseRegenItemsOnAlly()
             if (lowestHealthAlly:GetMaxHealth()-lowestHealthAlly:GetHealth()) > 200 and not lowestHealthAlly:HasModifier("modifier_tango_heal") then
                 local tree = utils.GetNearestTree(npcBot)
                 if tree ~= nil then
-                    npcBot:Action_UseAbilityOnEntity(tango, lowestHealthAlly)
+                    npcBot:ActionPush_UseAbilityOnEntity(tango, lowestHealthAlly)
                     return true
                 end
             end
@@ -222,21 +222,21 @@ function UseRegenItemsOnAlly()
         if urn ~= nil and urn:GetCurrentCharges() > 0 then
 		    if (Enemies == nil or #Enemies == 0) then
                 if (lowestHealthAlly:GetMaxHealth()-lowestHealthAlly:GetHealth()) > 400 and not lowestHealthAlly:HasModifier("modifier_item_urn_heal") and not modifiers.HasActiveDOTDebuff(lowestHealthAlly)  then
-                    npcBot:Action_UseAbilityOnEntity(urn, lowestHealthAlly)
-                    return nil
+                    npcBot:ActionPush_UseAbilityOnEntity(urn, lowestHealthAlly)
+                    return true
                 end
             end
         end
     end
 
-    return nil
+    return false
 end
 
 function UseTeamItems()
     local npcBot = GetBot()
 
     if npcBot:IsChanneling() or npcBot:IsUsingAbility() then
-        return nil
+        return false
     end
 
     if not npcBot:HasModifier("modifier_fountain_aura_buff") then
@@ -244,14 +244,14 @@ function UseTeamItems()
         local Allies = npcBot:GetNearbyHeroes(900, false, BOT_MODE_NONE)
         if mekansm ~= nil and mekansm:IsFullyCastable() then
             if (npcBot:GetHealth()/npcBot:GetMaxHealth()) < 0.15 then
-                npcBot:Action_UseAbility(mekansm)
-                return nil
+                npcBot:ActionPush_UseAbility(mekansm)
+                return true
             end
             if #Allies > 1 then
                 for _, ally in pairs(Allies) do
                     if (ally:GetHealth()/ally:GetMaxHealth()) < 0.15 then
-                        npcBot:Action_UseAbility(mekansm)
-                        return nil
+                        npcBot:ActionPush_UseAbility(mekansm)
+                        return true
                     end
                 end
             end
@@ -260,11 +260,13 @@ function UseTeamItems()
         local arcane = utils.HaveItem(npcBot, "item_arcane_boots")
         if arcane ~= nil and arcane:IsFullyCastable() then
             if (npcBot:GetMaxMana() - npcBot:GetMana()) > 160 then
-                npcBot:Action_UseAbility(arcane)
-                return nil
+                npcBot:ActionPush_UseAbility(arcane)
+                return true
             end
         end
     end
+    
+    return false
 end
 
 function UseMovementItems(location)
@@ -272,31 +274,30 @@ function UseMovementItems(location)
     local location = location or npcBot:GetLocation()
 
     if npcBot:IsChanneling() then
-        return nil
+        return false
     end
 
     local pb = utils.HaveItem(npcBot, "item_phase_boots")
     if pb ~= nil and pb:IsFullyCastable() then
-        npcBot:Action_UseAbility(pb)
-        return nil
+        npcBot:ActionPush_UseAbility(pb)
+        return true
     end
 
     local force = utils.HaveItem(npcBot, "item_force_staff")
     if force ~= nil and utils.IsFacingLocation(npcBot, location, 25) then
-        npcBot:Action_UseAbilityOnEntity(force, npcBot)
-        return nil
+        npcBot:ActionPush_UseAbilityOnEntity(force, npcBot)
+        return true
     end
 
     local hp = utils.HaveItem(npcBot, "item_hurricane_pike")
     if hp ~= nil and utils.IsFacingLocation(npcBot, location, 25) then
-        npcBot:Action_UseAbilityOnEntity(hp, npcBot)
-        return nil
+        npcBot:ActionPush_UseAbilityOnEntity(hp, npcBot)
+        return true
     end
 
-    UseSilverEdge()
-    
-    UseShadowBlade()
+    if UseSilverEdge() or UseShadowBlade() then return true end
 
+    return false
 end
 
 function UseDefensiveItems(enemy, triggerDistance)
@@ -304,13 +305,13 @@ function UseDefensiveItems(enemy, triggerDistance)
     local location = location or npcBot:GetLocation()
 
     if npcBot:IsChanneling() then
-        return nil
+        return false
     end
 
     local hp = utils.HaveItem(npcBot, "item_hurricane_pike")
     if hp ~= nil and GetUnitToUnitDistance(npcBot, enemy) < triggerDistance then
-        npcBot:Action_UseAbilityOnEntity(hp, enemy)
-        return nil
+        npcBot:ActionPush_UseAbilityOnEntity(hp, enemy)
+        return false
     end
 end
 
@@ -318,10 +319,12 @@ function UseBuffItems()
     local npcBot = GetBot()
 
     if npcBot:IsChanneling() or npcBot:IsUsingAbility() then
-        return nil
+        return false
     end
     
     UseTomeOfKnowledge()
+    
+    return false
 end
 
 function UseTP(lane)
@@ -330,10 +333,10 @@ function UseTP(lane)
     local tpSwap = false
     local backPackSlot = 0
     
-    if DotaTime() < 10 then return nil end
+    if DotaTime() < 10 then return false end
 
     if npcBot:IsChanneling() or npcBot:IsUsingAbility() then
-        return nil
+        return false
     end
 
     local tp = utils.HaveItem(npcBot, "item_tpscroll")
@@ -373,47 +376,47 @@ function UseTP(lane)
             if tpSwap then 
                 npcBot:ActionImmediate_SwapItems(0, backPackSlot)
             end
+            return true
         end
     end
+    
+    return false
 end
 
 function UseItems()
-    if ( GetGameState() ~= GAME_STATE_GAME_IN_PROGRESS and GetGameState() ~= GAME_STATE_PRE_GAME ) then return nil end
+    if ( GetGameState() ~= GAME_STATE_GAME_IN_PROGRESS and GetGameState() ~= GAME_STATE_PRE_GAME ) then return false end
 
     local npcBot = GetBot()
 
     if npcBot:IsChanneling() or npcBot:IsUsingAbility() then
-        return nil
+        return false
     end
 
-    UseBuffItems()
+    if UseBuffItems() then return true end
     
-    local bRet = UseRegenItems()
-    if bRet then return true end
-	
-    local bRetOnAlly = UseRegenItemsOnAlly()
-	if bRetOnAlly then return true end
-    
-    UseTeamItems()
-    
-    UseTP()
-    
+    if UseRegenItems() then return true end
 
+    if UseRegenItemsOnAlly() then return true end
+    
+    if UseTeamItems() then return true end
+    
+    if UseTP() then return true end
+    
     local courier = utils.IsItemAvailable("item_courier")
     if courier ~= nil then
         npcBot:ActionPush_UseAbility(courier)
-        return nil
+        return false
     end
 
     local flyingCourier = utils.IsItemAvailable("item_flying_courier")
     if flyingCourier ~= nil then
         npcBot:ActionPush_UseAbility(flyingCourier)
-        return nil
+        return false
     end
 
     considerDropItems()
 
-    return nil
+    return false
 end
 
 -------------------------------------------------------------------------------
@@ -425,8 +428,9 @@ function UseShadowBlade()
     local sb = utils.HaveItem(bot, "item_invis_sword")
     if sb ~= nil and sb:IsFullyCastable() then
         bot:Action_UseAbility(sb)
-        return nil
+        return true
     end
+    return false
 end
 
 function UseSilverEdge()
@@ -434,8 +438,9 @@ function UseSilverEdge()
     local se = utils.HaveItem(bot, "item_silver_edge")
     if se ~= nil and se:IsFullyCastable() then
         bot:Action_UseAbility(se)
-        return nil
+        return true
     end
+    return false
 end
 
 function UseTomeOfKnowledge()
@@ -443,8 +448,9 @@ function UseTomeOfKnowledge()
     local tok = utils.HaveItem(bot, "item_tome_of_knowledge")
     if tok ~= nil then
         bot:Action_UseAbility(tok)
-        return nil
+        return true
     end
+    return false
 end
 
 function UseGlimmerCape(target)
@@ -453,7 +459,9 @@ function UseGlimmerCape(target)
     local gc = utils.HaveItem(bot, "item_glimmer_cape")
     if gc ~= nil and target ~= nil then
         bot:Action_UseAbilityOnEntity(gc, target)
+        return true
     end
+    return false
 end
 
 -- will return a handle to the ward or nil if we don't have it, checks both

@@ -27,7 +27,8 @@ roles = {
 };
 
 local listHC = {
---comments by "ByBurton":	I define Hardcarries as heroes that need a lot of money - position 1; usually in safelane and with 1 or 2 supports that help him.
+--comments by "ByBurton":	I define Hardcarries as heroes that need a lot of money - position 1; usually in safelane and with 1 or 2 supports that help him
+--comments by "PaulM":		I would add: Mostly physical damage, really bad early and maybe mid game, but scary lategame. Prime example: Anti-Mage
 	"npc_dota_hero_alchemist",
 	"npc_dota_hero_antimage",
 	"npc_dota_hero_arc_warden",
@@ -67,7 +68,7 @@ local listHC = {
 
 local listMID = {
 --comments by "ByBurton":	I define Mid as Semicarries. Heroes that need exp and some gold early on, that can easily win lanes 1 vs 1 through skill spamming or harrassing - position 2; always in mid.
---Have skills that scale bad in early and good into lategame - mostly physical dmg.
+--Have skills that allow them to gank efficiently, so they need early levels (mid). Scale well into mid to lategame.
 	"npc_dota_hero_abyssal_underlord",
 	"npc_dota_hero_alchemist",
 	"npc_dota_hero_arc_warden",

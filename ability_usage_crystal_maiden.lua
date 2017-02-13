@@ -330,7 +330,7 @@ function UseUlt(bot, nearbyEnemyHeroes)
     
     ------------ DEFEND TOWER ----------------
     if getHeroVar("ShouldDefend") and #enemiesInRange >= 1 then
-        bot:Action_UseAbility(abilityR)
+        gHeroVar.HeroUseAbility(bot, abilityR)
         return true
     end
     
@@ -338,7 +338,7 @@ function UseUlt(bot, nearbyEnemyHeroes)
     local target = getHeroVar("Target")
     -- if we don't have a valid target
     if utils.ValidTarget(target) or #enemiesInRange >= 2 or numSlowStun >= 1 then
-        bot:Action_UseAbility(abilityR)
+        gHeroVar.HeroUseAbility(bot, abilityR)
         return true
     end
     

@@ -64,8 +64,8 @@ function X.SetHeroCurrentAction(pID, action)
     X[pID].currentAction = {unpack(action)}
 end
 
-local function checkSleep(bot, ca)
-    if #ca > 0 and ca[1] == "Sleep" then
+local function checkSleepAttack(bot, ca)
+    if #ca > 0 and ca[1] == "SleepAttack" then
         local pID = bot:GetPlayerID()
         if GameTime() < ca[2] then
             return true
@@ -83,7 +83,7 @@ function X.HeroMoveToLocation(bot, loc)
     local pID = bot:GetPlayerID()
     local ca = X.GetHeroCurrentAction(pID)
     
-    if checkSleep(bot, ca) then return end
+    if checkSleepAttack(bot, ca) then return end
     
     if (#ca == 0 or not (ca[1] == "MoveToLocation" and ca[2] == loc)) and GetUnitToLocationDistance(bot, loc) > 5.0 then
         if DEFAULT_METHOD then
@@ -103,7 +103,7 @@ function X.HeroPushMoveToLocation(bot, loc)
     local pID = bot:GetPlayerID()
     local ca = X.GetHeroCurrentAction(pID)
     
-    if checkSleep(bot, ca) then return end
+    if checkSleepAttack(bot, ca) then return end
     
     if (#ca == 0 or not (ca[1] == "MoveToLocation" and ca[2] == loc)) and GetUnitToLocationDistance(bot, loc) > 5.0 then
         if DEFAULT_METHOD then
@@ -139,16 +139,34 @@ function X.HeroAttackUnit(bot, hTarget, bOnce)
     local bOnce = bOnce or true
     local ca = X.GetHeroCurrentAction(pID)
 
-    if checkSleep(bot, ca) then return end
+    if checkSleepAttack(bot, ca) then return end
     
     if #ca == 0 or not (ca[1] == "AttackUnit" and ca[2] == hTarget and ca[3] == bOnce) then
         if DEFAULT_METHOD then
-            X[pID].currentAction = {[1]="Sleep", [2]=GameTime()+bot:GetAttackPoint()}
+            X[pID].currentAction = {[1]="SleepAttack", [2]=GameTime()+bot:GetAttackPoint()}
             bot:Action_AttackUnit(hTarget, bOnce)
         else
             X[pID].prevAction = {unpack(X[pID].currentAction)}
             X[pID].currentAction = {}
-            X[pID].actionQueue = {{[1]="AttackUnit", [2]=hTarget, [3]=bOnce}}
+            X[pID].actionQueue = {{[1]="AttackUnit", [2]=hTarget, [3]=bOnce}, {[1]="SleepAttack", [2]=GameTime()+bot:GetAttackPoint()}}
+        end
+    end
+end
+
+function X.HeroUseAbility(bot, ability)
+    if bDisableActions then return end
+    
+    local pID = bot:GetPlayerID()
+    local ca = X.GetHeroCurrentAction(pID)
+    
+    if #ca == 0 or not (ca[1] == "UseAbility" and ca[2] == ability) then
+        if DEFAULT_METHOD then
+            bot:Action_UseAbility(ability)
+        else
+            --print(pID .. " set UseAbilityOnLocation: " .. loc[1] .. ", " .. loc[2])
+            X[pID].prevAction = {unpack(X[pID].currentAction)}
+            X[pID].currentAction = {}
+            X[pID].actionQueue = {{[1]="UseAbility", [2]=ability}}
         end
     end
 end
@@ -159,8 +177,6 @@ function X.HeroUseAbilityOnLocation(bot, ability, loc, range)
     local pID = bot:GetPlayerID()
     local range = range or 0
     local ca = X.GetHeroCurrentAction(pID)
-    
-    --if checkSleep(bot, ca) then return end
     
     if #ca == 0 or not (ca[1] == "UseAbilityOnLocation" and ca[2] == ability and ca[3] == loc) then
         if DEFAULT_METHOD then
@@ -180,8 +196,6 @@ function X.HeroPushUseAbilityOnLocation(bot, ability, loc, range)
     local pID = bot:GetPlayerID()
     local range = range or 0
     local ca = X.GetHeroCurrentAction(pID)
-    
-    --if checkSleep(bot, ca) then return end
     
     if #ca == 0 or not (ca[1] == "UseAbilityOnLocation" and ca[2] == ability and ca[3] == loc) then
         if DEFAULT_METHOD then
@@ -233,7 +247,9 @@ function X.ExecuteHeroActionQueue(bot)
         table.remove(X[pID].actionQueue, 1)
 
         if ca[1] == "MoveToLocation" then
-            bot:Action_MoveToLocation(ca[2])    
+            bot:Action_MoveToLocation(ca[2])   
+        elseif ca[1] == "UseAbility" then
+            bot:Action_UseAbility(ca[2])
         elseif ca[1] == "UseAbilityOnLocation" then
             bot:Action_UseAbilityOnLocation(ca[2], ca[3])
         elseif ca[1] == "AttackUnit" then
@@ -247,6 +263,9 @@ function X.ExecuteHeroActionQueue(bot)
                 X.SetHeroPrevAction(pID, ca)
                 X[pID].currentAction = {}
             end
+        elseif ca[1] == "UseAbility" then
+            X.SetHeroPrevAction(pID, ca)
+            X[pID].currentAction = {}
         elseif ca[1] == "UseAbilityOnLocation" then
             if ca[4] > 0 and GetUnitToLocationDistance(bot, ca[3]) < ca[4] then
                 X.SetHeroPrevAction(pID, ca)

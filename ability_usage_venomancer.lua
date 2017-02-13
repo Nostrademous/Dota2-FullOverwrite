@@ -72,7 +72,7 @@ function AbilityUsageThink(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCre
     castVGDesire, castVGLocation = ConsiderVenomGale(bot, abilityVG, nearbyEnemyHeroes, nearbyEnemyCreep)
 
     if castPNDesire > castPWDesire and castPNDesire > castVGDesire then
-        bot:Action_UseAbility( abilityPN )
+        gHeroVar.HeroUseAbility(bot,  abilityPN )
         return true
     end
 

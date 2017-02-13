@@ -218,7 +218,9 @@ function X:Think(bot)
     end
 
     if ( GetGameState() ~= GAME_STATE_GAME_IN_PROGRESS and GetGameState() ~= GAME_STATE_PRE_GAME ) then return end
-
+    
+    --FIXME need to DoInit() for illusions
+    
     -- UPDATE GLOBAL INFO --
     enemyData.UpdateEnemyInfo()
 
@@ -376,6 +378,8 @@ function X:Think(bot)
     --   return
     --end
 
+    if bot:IsUsingAbility() then return end
+    
     --USE ITEMS
     if self:ConsiderItemUse() then return end
 
@@ -623,45 +627,33 @@ function X:Determine_ShouldIRetreat(bot)
         return constants.RETREAT_FOUNTAIN
     end
 
-    if #nearbyAlliedHeroes < 2 then
-        local MaxStun = 0
+    local MaxStun = 0
+    for _,enemy in pairs(nearbyEnemyHeroes) do
+        if utils.NotNilOrDead(enemy) and enemy:GetHealth()/enemy:GetMaxHealth() > 0.25 then
+            local bEscape = self:getHeroVar("HasEscape")
+            local enemyManaRatio = enemy:GetMana()/enemy:GetMaxMana()
 
-        --enemyData.GetEnemyTeamSlowDuration()/2.0
-
-        for _,enemy in pairs(nearbyEnemyHeroes) do
-            if utils.NotNilOrDead(enemy) and enemy:GetHealth()/enemy:GetMaxHealth() > 0.4 then
-                local bEscape = self:getHeroVar("HasEscape")
-                local enemyManaRatio = enemy:GetMana()/enemy:GetMaxMana()
-
-                if enemyManaRatio > (0.35 + enemy:GetLevel()/100.0) then
-                    if bEscape ~= nil and bEscape ~= false then
-                        MaxStun = MaxStun + enemy:GetStunDuration(true)
-                    else
-                        MaxStun = MaxStun + Max(enemy:GetStunDuration(true), enemy:GetSlowDuration(true)/1.5)
-                    end
-                end
+            if bEscape then
+                MaxStun = MaxStun + enemy:GetStunDuration(true)
+            else
+                MaxStun = MaxStun + enemy:GetStunDuration(true) + 0.5*enemy:GetSlowDuration(true)
             end
         end
+    end
 
-        local enemyDamage = 0
-        for _, enemy in pairs(nearbyEnemyHeroes) do
-            if utils.NotNilOrDead(enemy) and enemy:GetHealth()/enemy:GetMaxHealth() > 0.4 then
-                local enemyManaRatio = enemy:GetMana()/enemy:GetMaxMana()
-                local pDamage = enemy:GetEstimatedDamageToTarget(true, bot, MaxStun, DAMAGE_TYPE_PHYSICAL)
-                local mDamage = enemy:GetEstimatedDamageToTarget(true, bot, MaxStun, DAMAGE_TYPE_MAGICAL)
-                if enemyManaRatio < ( 0.5 - enemy:GetLevel()/100.0) then
-                    enemyDamage = enemyDamage + pDamage + 0.5*mDamage + 0.5*enemy:GetEstimatedDamageToTarget(true, bot, MaxStun, DAMAGE_TYPE_PURE)
-                else
-                    enemyDamage = enemyDamage + pDamage + mDamage + enemy:GetEstimatedDamageToTarget(true, bot, MaxStun, DAMAGE_TYPE_PURE)
-                end
-            end
+    local enemyDamage = 0
+    for _, enemy in pairs(nearbyEnemyHeroes) do
+        if utils.NotNilOrDead(enemy) and enemy:GetHealth()/enemy:GetMaxHealth() > 0.4 then
+            local pDamage = enemy:GetEstimatedDamageToTarget(true, bot, MaxStun, DAMAGE_TYPE_PHYSICAL)
+            local mDamage = enemy:GetEstimatedDamageToTarget(true, bot, MaxStun, DAMAGE_TYPE_MAGICAL)
+            enemyDamage = enemyDamage + pDamage + mDamage + enemy:GetEstimatedDamageToTarget(true, bot, MaxStun, DAMAGE_TYPE_PURE)
         end
+    end
 
-        if enemyDamage > bot:GetHealth() then
-            utils.myPrint(" - Retreating - could die in perfect stun/slow overlap")
-            self:setHeroVar("IsRetreating", true)
-            return constants.RETREAT_DANGER
-        end
+    if enemyDamage > bot:GetHealth() then
+        utils.myPrint(" - Retreating - could die in perfect stun/slow overlap")
+        self:setHeroVar("IsRetreating", true)
+        return constants.RETREAT_DANGER
     end
 
     if utils.IsTowerAttackingMe() then
@@ -1403,6 +1395,7 @@ function X:AnalyzeLanes(nLane)
         utils.myPrint("Switching to lane: ", LANE_MID)
         self:setHeroVar("CurLane", LANE_MID)
     end
+    self:setHeroVar("LaningState", 1) -- 1 is LaningState.Moving
     return false
 end
 

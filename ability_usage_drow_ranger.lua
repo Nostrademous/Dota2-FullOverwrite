@@ -129,7 +129,7 @@ local function UseE(bot, nearbyEnemyTowers, nearbyAlliedCreep)
     end
 
     if #nearbyEnemyTowers > 0 and rangedCnt > 3 then
-        bot:Action_UseAbility(abilityE)
+        gHeroVar.HeroUseAbility(bot, abilityE)
         return true
     end
 

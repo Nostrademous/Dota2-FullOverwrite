@@ -702,7 +702,7 @@ function U.TreadCycle(bot, stat)
         for i = 0, 2, 1 do
             activeStat = powerTreads:GetPowerTreadsStat()
             if activeStat == stat then return end
-            bot:Action_UseAbility(powerTreads)
+            gHeroVar.HeroUseAbility(bot, powerTreads)
         end
     end
     --]]

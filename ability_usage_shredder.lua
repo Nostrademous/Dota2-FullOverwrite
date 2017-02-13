@@ -32,30 +32,30 @@ local Abilities = {
 local UltRetTimer = -10000
 
 local function UseQ()
-	local npcBot = GetBot()
+	local bot = GetBot()
 	
-	local ability = npcBot:GetAbilityByName(Abilities[1])
+	local ability = bot:GetAbilityByName(Abilities[1])
 	
 	if ability == nil or not ability:IsFullyCastable() then
 		return
 	end
 	
-	local Enemies = npcBot:GetNearbyHeroes(290, true, BOT_MODE_NONE);
-	if Enemies~=nil and #Enemies > 0 and npcBot:GetMana() > (100 + ability:GetManaCost()) then
-		npcBot:Action_UseAbility(ability)
+	local Enemies = bot:GetNearbyHeroes(290, true, BOT_MODE_NONE);
+	if Enemies~=nil and #Enemies > 0 and bot:GetMana() > (100 + ability:GetManaCost()) then
+		gHeroVar.HeroUseAbility(bot, ability)
 		return
 	end
 end
 
 local function UseW(Enemy)
-	local npcBot = GetBot()
+	local bot = GetBot()
 
-	local ability = npcBot:GetAbilityByName(Abilities[2])
+	local ability = bot:GetAbilityByName(Abilities[2])
 	if ability == nil or not ability:IsFullyCastable() then
 		return false
 	end
 	
-	if GetUnitToUnitDistance(npcBot, Enemy) > ability:GetCastRange() then
+	if GetUnitToUnitDistance(bot, Enemy) > ability:GetCastRange() then
 		return false
 	end
 	
@@ -63,7 +63,7 @@ local function UseW(Enemy)
 	
 	local enemy = Enemy
 	
-	if GetUnitToUnitDistance(npcBot, enemy) > ability:GetCastRange() then
+	if GetUnitToUnitDistance(bot, enemy) > ability:GetCastRange() then
 		return false
 	end
 	
@@ -75,11 +75,11 @@ local function UseW(Enemy)
 	local bestTree = nil
 	local mindis = 10000
 
-	local trees = npcBot:GetNearbyTrees(ability:GetCastRange())
+	local trees = bot:GetNearbyTrees(ability:GetCastRange())
 	
 	for _,tree in pairs(trees) do
 		local x = GetTreeLocation(tree)
-		local y = npcBot:GetLocation()
+		local y = bot:GetLocation()
 		local z = enemy:GetLocation()
 		
 		if x ~= y then
@@ -96,7 +96,7 @@ local function UseW(Enemy)
 			end
 		
 			local d = math.abs((a*z.x+b*z.y+c)/math.sqrt(a*a+b*b))
-			if d <= hitRadios and mindis > GetUnitToLocationDistance(enemy, x) and (GetUnitToLocationDistance(enemy, x) <= GetUnitToLocationDistance(npcBot, x)) then
+			if d <= hitRadios and mindis > GetUnitToLocationDistance(enemy, x) and (GetUnitToLocationDistance(enemy, x) <= GetUnitToLocationDistance(bot, x)) then
 				bestTree = tree
 				mindis = GetUnitToLocationDistance(enemy, x)
 			end
@@ -104,7 +104,7 @@ local function UseW(Enemy)
 	end
 	
 	if bestTree ~= nil then
-		npcBot:Action_UseAbilityOnLocation(ability, GetTreeLocation(bestTree))
+		bot:Action_UseAbilityOnLocation(ability, GetTreeLocation(bestTree))
 		return true
 	end
 	
@@ -112,10 +112,10 @@ local function UseW(Enemy)
 end
 
 local function UseUlt(Enemy)
-	local npcBot = GetBot()
+	local bot = GetBot()
 	
 	local enemy = Enemy
-	local ability = npcBot:GetAbilityByName(Abilities[4])
+	local ability = bot:GetAbilityByName(Abilities[4])
 		
 	if getHeroVar("Ulted") then
 		return false;
@@ -125,7 +125,7 @@ local function UseUlt(Enemy)
 		return false
 	end
 	
-	if GetUnitToUnitDistance(enemy, npcBot) > ability:GetCastRange() then
+	if GetUnitToUnitDistance(enemy, bot) > ability:GetCastRange() then
 		return false
 	end
 	
@@ -135,7 +135,7 @@ local function UseUlt(Enemy)
 		v = (v / sv) * enemy:GetCurrentMovementSpeed()
 	end
 	
-	local x = npcBot:GetLocation()
+	local x = bot:GetLocation()
 	local y = enemy:GetLocation()
 	
 	local s = ability:GetSpecialValueFloat("speed")
@@ -148,7 +148,7 @@ local function UseUlt(Enemy)
 	
 	local dest = (t+0.35)*v + y
 	
-	if GetUnitToLocationDistance(npcBot, dest) > ability:GetCastRange() or npcBot:GetMana() < (100+ability:GetManaCost()) then
+	if GetUnitToLocationDistance(bot, dest) > ability:GetCastRange() or bot:GetMana() < (100+ability:GetManaCost()) then
 		return false
 	end
 	
@@ -157,12 +157,12 @@ local function UseUlt(Enemy)
 	end
 	
 	local rod = utils.IsItemAvailable("item_rod_of_atos")
-	if rod ~= nil and rod:IsFullyCastable() and rod:GetCastRange() < GetUnitToUnitDistance(npcBot, enemy) then
+	if rod ~= nil and rod:IsFullyCastable() and rod:GetCastRange() < GetUnitToUnitDistance(bot, enemy) then
 		dest = enemy:GetLocation()
-		npcBot:Action_UseAbilityOnEntity(rod, enemy);
+		bot:Action_UseAbilityOnEntity(rod, enemy);
 	end
 	
-	npcBot:Action_UseAbilityOnLocation(ability, dest);
+	bot:Action_UseAbilityOnLocation(ability, dest);
 	
 	setHerovar("UltTimer", DotaTime())
 	setHeroVar("Ulted", true)
@@ -172,7 +172,7 @@ local function UseUlt(Enemy)
 end
 
 local function RetUlt()
-	local npcBot = GetBot();
+	local bot = GetBot();
 	
 	if getHeroVar("Ulted") == nil then
 		return false
@@ -180,9 +180,9 @@ local function RetUlt()
 	
 	if not getHeroVar("Ulted") and DotaTime() - UltRetTimer > 1 then
 		UltRetTimer = DotaTime()
-		local ret = npcBot:GetAbilityByName(Abilities[5])
+		local ret = bot:GetAbilityByName(Abilities[5])
 		if ret:IsFullyCastable() then
-			npcBot:Action_UseAbility(ret)
+			gHeroVar.HeroUseAbility(bot, ret)
 		end
 		return false;
 	end
@@ -191,7 +191,7 @@ local function RetUlt()
 		return false
 	end
 	
-	local Enemies = npcBot:GetNearbyHeroes(1600, true, BOT_MODE_NONE)
+	local Enemies = bot:GetNearbyHeroes(1600, true, BOT_MODE_NONE)
 	
 	if getHeroVar("Ulted") then
 		local nEn = 0
@@ -200,10 +200,10 @@ local function RetUlt()
 				nEn= nEn + 1
 			end
 		end
-		if nEn == 0 or npcBot:GetMana() < 100 then
-			local ret = npcBot:GetAbilityByName(Abilities[5]);
-			if ret ~= nil and ret:IsFullyCastable() and (not npcBot:IsChanneling()) and (not npcBot:IsUsingAbility()) and (not npcBot:IsSilenced()) and (not npcBot:IsStunned()) then
-				npcBot:Action_UseAbility(ret);
+		if nEn == 0 or bot:GetMana() < 100 then
+			local ret = bot:GetAbilityByName(Abilities[5]);
+			if ret ~= nil and ret:IsFullyCastable() and (not bot:IsChanneling()) and (not bot:IsUsingAbility()) and (not bot:IsSilenced()) and (not bot:IsStunned()) then
+				gHeroVar.HeroUseAbility(bot, ret);
 				setHeroVar("Ulted", false)
 				setHeroVar("UltTimer", -10000)
 				setHeroVar("UltLocation", nil)
@@ -230,11 +230,11 @@ function AbilityUsageThink(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCre
 	local nEn = #nearbyEnemyHeroes
 	local nAl = #nearbyAlliedHeroes
 
-	local EnemyCreeps = npcBot:GetNearbyCreeps(1000, false)
+	local EnemyCreeps = bot:GetNearbyCreeps(1000, false)
 	
-	if (npcBot:GetMana()/npcBot:GetMaxMana()>0.65 or npcBot:GetMana()>700 or ((EnemyCreeps==nil or #EnemyCreeps==0) and npcBot:GetMana()/npcBot:GetMaxMana()>0.4)) 
-		and npcBot:GetHealth()/npcBot:GetMaxHealth()>0.65 and Enemies~=nil and nEn-nAl<2 then
-		local enemy, health = utils.GetWeakestHero(npcBot, 1200)
+	if (bot:GetMana()/bot:GetMaxMana()>0.65 or bot:GetMana()>700 or ((EnemyCreeps==nil or #EnemyCreeps==0) and bot:GetMana()/bot:GetMaxMana()>0.4)) 
+		and bot:GetHealth()/bot:GetMaxHealth()>0.65 and Enemies~=nil and nEn-nAl<2 then
+		local enemy, health = utils.GetWeakestHero(bot, 1200)
 		if enemy ~= nil then
 			if not UseUlt(enemy) then
 				UseW(enemy)

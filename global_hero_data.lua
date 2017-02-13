@@ -85,7 +85,7 @@ function X.HeroMoveToLocation(bot, loc)
     
     if checkSleep(bot, ca) then return end
     
-    if #ca == 0 or not (ca[1] == "MoveToLocation" and ca[2][1] == loc[1] and ca[2][2] == loc[2]) then
+    if (#ca == 0 or not (ca[1] == "MoveToLocation" and ca[2] == loc)) and GetUnitToLocationDistance(bot, loc) > 5.0 then
         if DEFAULT_METHOD then
             bot:Action_MoveToLocation(loc)
         else
@@ -93,6 +93,24 @@ function X.HeroMoveToLocation(bot, loc)
             X[pID].prevAction = {unpack(X[pID].currentAction)}
             X[pID].currentAction = {}
             X[pID].actionQueue = {{[1]="MoveToLocation", [2]=loc}}
+        end
+    end
+end
+
+function X.HeroPushMoveToLocation(bot, loc)
+    if bDisableActions then return end
+    
+    local pID = bot:GetPlayerID()
+    local ca = X.GetHeroCurrentAction(pID)
+    
+    if checkSleep(bot, ca) then return end
+    
+    if (#ca == 0 or not (ca[1] == "MoveToLocation" and ca[2] == loc)) and GetUnitToLocationDistance(bot, loc) > 5.0 then
+        if DEFAULT_METHOD then
+            bot:ActionPush_MoveToLocation(loc)
+        else
+            X[pID].currentAction = {}
+            table.insert(X[pID].actionQueue, 1, {[1]="MoveToLocation", [2]=loc})
         end
     end
 end
@@ -105,7 +123,7 @@ function X.HeroQueueMoveToLocation(bot, loc)
     local la = {}
     if aqSize > 0 then la = X[pID].actionQueue[aqSize] end
     
-    if #la == 0 or not (la[1] == "MoveToLocation" and la[2][1] == loc[1] and la[2][2] == loc[2]) then
+    if #la == 0 or not (la[1] == "MoveToLocation" and la[2] == loc) then
         if DEFAULT_METHOD then
             bot:ActionQueue_MoveToLocation(loc)
         else
@@ -225,7 +243,7 @@ function X.ExecuteHeroActionQueue(bot)
     
     if #ca > 1 then
         if ca[1] == "MoveToLocation" then
-            if GetUnitToLocationDistance(bot, ca[2]) < 1.0 then
+            if GetUnitToLocationDistance(bot, ca[2]) <= 5.0 then
                 X.SetHeroPrevAction(pID, ca)
                 X[pID].currentAction = {}
             end

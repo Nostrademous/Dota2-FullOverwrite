@@ -874,7 +874,7 @@ function X:Determine_ShouldTeamRoshan(bot)
 
     local isRoshanAlive = DotaTime() - GetRoshanKillTime() > 660 -- max 11 minutes respawn time of roshan
 
-    if (numAlive < 3 and (GetRoshanKillTime == 0 or isRoshanAlive)) then -- FIXME: Implement
+    if (numAlive < 3 and (GetRoshanKillTime() == 0 or isRoshanAlive)) then -- FIXME: Implement
         if self:HasMode(MODE_ROSHAN) == false then
             utils.myPrint(" - Going to Fight Roshan")
             self:AddMode(MODE_ROSHAN)

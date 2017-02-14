@@ -85,7 +85,7 @@ function X.HeroMoveToLocation(bot, loc)
     
     if checkSleepAttack(bot, ca) then return end
     
-    if (#ca == 0 or not (ca[1] == "MoveToLocation" and ca[2] == loc)) and GetUnitToLocationDistance(bot, loc) > 5.0 then
+    if (#ca == 0 or not (ca[1] == "MoveToLocation" and ca[2] == loc)) and GetUnitToLocationDistance(bot, loc) > 6.0 then
         if DEFAULT_METHOD then
             bot:Action_MoveToLocation(loc)
         else
@@ -105,7 +105,7 @@ function X.HeroPushMoveToLocation(bot, loc)
     
     if checkSleepAttack(bot, ca) then return end
     
-    if (#ca == 0 or not (ca[1] == "MoveToLocation" and ca[2] == loc)) and GetUnitToLocationDistance(bot, loc) > 5.0 then
+    if (#ca == 0 or not (ca[1] == "MoveToLocation" and ca[2] == loc)) and GetUnitToLocationDistance(bot, loc) > 6.0 then
         if DEFAULT_METHOD then
             bot:ActionPush_MoveToLocation(loc)
         else
@@ -259,7 +259,7 @@ function X.ExecuteHeroActionQueue(bot)
     
     if #ca > 1 then
         if ca[1] == "MoveToLocation" then
-            if GetUnitToLocationDistance(bot, ca[2]) <= 5.0 then
+            if GetUnitToLocationDistance(bot, ca[2]) <= 6.0 then
                 X.SetHeroPrevAction(pID, ca)
                 X[pID].currentAction = {}
             end

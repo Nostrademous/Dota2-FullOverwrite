@@ -212,7 +212,7 @@ U.MapSafeSpots = {
     Vector(-3560, 2460),
     Vector(1521, 4209),
     Vector(2843, 3738),
-    Vector(2104, 3646), 
+    Vector(2104, 3646),
     Vector(1817, 2787),
     Vector(1039, 2342),
     Vector(3990, 2831),
@@ -440,13 +440,6 @@ function U.GetHeightDiff(hUnit1, hUnit2)
 end
 
 function U.EnemyDistanceFromTheirAncient( hEnemy )
-    --[[
-    local locAncient = Vector(5527, 4997)
-    if GetTeam() == TEAM_DIRE then
-        locAncient = Vector(-5846, -5332)
-    end
-    --]]
-    
     local locAncient = GetAncient(U.GetOtherTeam()):GetLocation()
     if U.ValidTarget( hEnemy ) then
         return U.GetDistance( locAncient, hEnemy.Obj:GetLocation() )
@@ -712,22 +705,37 @@ end
 -- Hero Movement Functions
 -------------------------------------------------------------------------------
 
-function U.PositionAlongLane(npcBot, lane)
-    local bestPos = 0.0
+function U.PositionAlongLane(bot, lane)
+    --[[
+    local botPos = bot:GetLocation()
+    U.myPrint("Lane: ", lane, ", Loc: <", botPos[1], ", ", botPos[2], ">")
+    local fAmount = GetAmountAlongLane(lane, botPos)
+    U.myPrint(fAmount)
+    --]]
+
+    local fAmount = 0.0
     local pos = 0.0
     local lastDist = 0.0
     local dist = 20000.0
 
     while pos < 1.0 do
         local thisPos = GetLocationAlongLane(lane, pos)
-        if U.GetDistance(thisPos, npcBot:GetLocation()) < dist then
-            dist = U.GetDistance(thisPos, npcBot:GetLocation())
-            bestPos = pos
+        if U.GetDistance(thisPos, bot:GetLocation()) < dist then
+            dist = U.GetDistance(thisPos, bot:GetLocation())
+            fAmount = pos
         end
         pos = pos + 0.01
     end
 
-    return bestPos
+    local perpendicularDist = U.GetDistance(GetLocationAlongLane( lane, fAmount ), bot:GetLocation())
+
+    local bInLane = false
+    if perpendicularDist <= 1600 then
+        bInLane = true
+    end
+    setHeroVar("IsInLane", bInLane)
+
+    return fAmount
 end
 
 -- CONTRIBUTOR: Function below was coded by Platinum_dota2
@@ -875,26 +883,19 @@ function U.InitPath(npcBot)
 end
 
 function U.IsInLane()
-    local npcBot = GetBot()
+    local bot = GetBot()
 
-    local mindis = 10000
     setHeroVar("RetreatLane", getHeroVar("CurLane"))
     setHeroVar("RetreatPos", getHeroVar("LanePos"))
 
-    for i = 1, 3, 1 do
-        local thisl = U.PositionAlongLane(npcBot, U.Lanes[i])
-        local thisdis = U.GetDistance(GetLocationAlongLane(U.Lanes[i], thisl), npcBot:GetLocation())
-        if thisdis < mindis then
+    for i = 1, #U.Lanes, 1 do
+        local this = U.PositionAlongLane(bot, U.Lanes[i])
+
+        if getHeroVar("IsInLane") then
             setHeroVar("RetreatLane", U.Lanes[i])
             setHeroVar("RetreatPos", thisl)
-            mindis = thisdis
+            break
         end
-    end
-
-    if mindis > 1500 then
-        setHeroVar("IsInLane", false)
-    else
-        setHeroVar("IsInLane", true)
     end
 
     return getHeroVar("IsInLane"), getHeroVar("RetreatLane")
@@ -1319,7 +1320,7 @@ end
 
 function U.EnemyHasBreakableBuff(enemy)
     if enemy:IsNull() then return false end
-    
+
     if enemy:HasModifier("modifier_clarity_potion") or
         enemy:HasModifier("modifier_flask_healing") or
         enemy:HasModifier("modifier_bottle_regeneration") then
@@ -1556,6 +1557,8 @@ end
 function U.CourierThink(npcBot)
     if GetNumCouriers() == 0 then return end
 
+    if npcBot:IsIllusion() then return end
+
     local checkLevel, newTime = U.TimePassed(getHeroVar("LastCourierThink"), 1.0)
 
     if not checkLevel then return end
@@ -1566,7 +1569,7 @@ function U.CourierThink(npcBot)
         npcBot:ActionImmediate_Courier(courier, COURIER_ACTION_RETURN)
         return
     end
-    
+
     if npcBot:IsAlive() and (npcBot:GetStashValue() > 500 or npcBot:GetCourierValue() > 0 or U.HasImportantItem()) and GetCourierState(courier) == COURIER_STATE_AT_BASE then
         npcBot:ActionImmediate_Courier(courier, COURIER_ACTION_TAKE_AND_TRANSFER_ITEMS)
         return
@@ -1576,7 +1579,7 @@ function U.CourierThink(npcBot)
         (not npcBot:IsAlive()) and npcBot:GetCourierValue() > 0 then
         npcBot:ActionImmediate_Courier(courier, COURIER_ACTION_RETURN_STASH_ITEMS)
     end
-    
+
     if GetCourierState(courier) == COURIER_STATE_DELIVERING_ITEMS or GetCourierState(courier) == COURIER_STATE_RETURNING_TO_BASE then
         npcBot:ActionImmediate_Courier(GetCourier(0), COURIER_ACTION_BURST)
     end

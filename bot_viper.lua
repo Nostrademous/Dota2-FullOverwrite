@@ -25,9 +25,9 @@ local ABILITY7 = "special_bonus_unique_viper_1"
 local ABILITY8 = "special_bonus_unique_viper_2"
 
 local ViperAbilityPriority = {
-    SKILL_Q,    SKILL_W,    SKILL_W,    SKILL_E,    SKILL_W,
-    SKILL_R,    SKILL_W,    SKILL_Q,    SKILL_Q,    ABILITY2,
-    SKILL_Q,    SKILL_R,    SKILL_E,    SKILL_E,    ABILITY4,
+    SKILL_Q,    SKILL_E,    SKILL_W,    SKILL_E,    SKILL_W,
+    SKILL_R,    SKILL_W,    SKILL_W,    SKILL_Q,    ABILITY2,
+    SKILL_Q,    SKILL_R,    SKILL_Q,    SKILL_E,    ABILITY4,
     SKILL_E,    SKILL_R,    ABILITY6,   ABILITY8
 };
 

@@ -89,6 +89,7 @@ local function MoveToCamp(bot)
         setHeroVar("JunglingState", JunglingStates.FindCamp)
         return
     end
+    
     if GetUnitToLocationDistance(bot, getHeroVar("currentCamp")[constants.VECTOR]) > 200 then
         local ticks = getHeroVar("move_ticks")
         if ticks > 50 then -- don't do this every frame
@@ -100,7 +101,7 @@ local function MoveToCamp(bot)
         gHeroVar.HeroMoveToLocation(bot, getHeroVar("currentCamp")[constants.VECTOR])
         return
     end
-    local neutrals = bot:GetNearbyNeutralCreeps(EyeRange)
+
     --[[
     local allNeutrals = GetUnitList(UNIT_LIST_NEUTRAL_CREEPS)
     for _, n in ipairs(allNeutrals) do
@@ -109,7 +110,7 @@ local function MoveToCamp(bot)
         end
     end
     --]]
-    
+    local neutrals = bot:GetNearbyNeutralCreeps(EyeRange)
     if #neutrals == 0 then -- no creeps here
         local jungle = jungle_status.GetJungle(GetTeam()) or {}
         jungle = FindCampsByMaxDifficulty(jungle, getHeroVar("Self"):GetMaxClearableCampLevel(bot))
@@ -178,7 +179,7 @@ local function CleanCamp(bot)
         utils.myPrint("finds camp")
         setHeroVar("JunglingState", JunglingStates.FindCamp)
     else
-        getHeroVar("Self"):DoCleanCamp(bot, neutrals)
+        getHeroVar("Self"):DoCleanCamp(bot, neutrals, getHeroVar("currentCamp").difficulty)
     end
 end
 

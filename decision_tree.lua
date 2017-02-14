@@ -149,9 +149,9 @@ end
 -------------------------------------------------------------------------------
 -- MAIN THINK FUNCTION - DO NOT OVER-LOAD
 -------------------------------------------------------------------------------
+local NoTarget = { Obj = nil, Id = 0 }
 
 function X:DoInit(bot)
-    gHeroVar.SetGlobalVar("PrevEnemyUpdateTime", -1000.0)
     gHeroVar.SetGlobalVar("PrevEnemyDataDump", -1000.0)
 
     --print( "Initializing PlayerID: ", bot:GetPlayerID() )
@@ -163,15 +163,14 @@ function X:DoInit(bot)
 
     self:setHeroVar("Self", self)
     self:setHeroVar("Name", utils.GetHeroName(bot))
-    self:setHeroVar("WorldUpdateTime", -1000.0)
     self:setHeroVar("LastCourierThink", -1000.0)
     self:setHeroVar("LastLevelUpThink", -1000.0)
     self:setHeroVar("LastStuckCheck", -1000.0)
     self:setHeroVar("StuckCounter", 0)
     self:setHeroVar("LastLocation", Vector(0, 0, 0))
     self:setHeroVar("LaneChangeTimer", -1000.0)
-    self:setHeroVar("Target", {Obj=nil, Id=0})
-    self:setHeroVar("GankTarget", {Obj=nil, Id=0})
+    self:setHeroVar("Target", NoTarget)
+    self:setHeroVar("GankTarget", NoTarget)
 
     role.GetRoles()
     if role.RolesFilled() then
@@ -192,11 +191,27 @@ function X:DoInit(bot)
     self:DoHeroSpecificInit(bot)
 end
 
+function X:DoIllusionInit(bot)
+    self:setHeroVar("IllusionInit", true)
+    local allyList = GetUnitList(UNIT_LIST_ALLIED_HEROES)
+    for _, ally in pairs(allyList) do
+        if bot:GetPlayerID() == ally:GetPlayerID() and not ally:IsIllusion() then
+            self:setHeroVar("Name", utils.GetHeroName(bot))
+            self:setHeroVar("LastLevelUpThink", ally:getHeroVar("LastLevelUpThink"))
+            self:setHeroVar("LastLocation", bot:GetLocation())
+            self:setHeroVar("LaneChangeTimer", ally:getHeroVar("LaneChangeTimer"))
+            self:setHeroVar("LastLocation", bot:GetLocation())
+            self:setHeroVar("Target", ally:getHeroVar("Target"))
+            self:setHeroVar("GankTarget", ally:getHeroVar("GankTarget"))
+            self:setHeroVar("CurLane", ally:getHeroVar("CurLane"))
+            self:setHeroVar("Role", ally:getHeroVar("Role"))
+        end
+    end
+end
+
 function X:DoHeroSpecificInit(bot)
     return
 end
-
-local NoTarget = { Obj = nil, Id = 0 }
 
 -- LOCAL VARIABLES THAT WE WILL NEED FOR THIS FRAME
 local updateFrequency    = 0.03
@@ -219,55 +234,55 @@ function X:Think(bot)
 
     if ( GetGameState() ~= GAME_STATE_GAME_IN_PROGRESS and GetGameState() ~= GAME_STATE_PRE_GAME ) then return end
     
-    --FIXME need to DoInit() for illusions
+    --DoInit() for illusions
+    if bot:IsIllusion() and not self:getHeroVar("IllusionInit") then
+        self:DoIllusionInit(bot)
+    end
     
     -- UPDATE GLOBAL INFO --
     enemyData.UpdateEnemyInfo()
 
-    --local bUpdate, newTime = utils.TimePassed(self:getHeroVar("WorldUpdateTime"), updateFrequency)
-    --if bUpdate then
-        --self:setHeroVar("WorldUpdateTime", newTime)
-        nearbyEnemyHeroes   = bot:GetNearbyHeroes(EyeRange, true, BOT_MODE_NONE)
-        nearbyAlliedHeroes  = bot:GetNearbyHeroes(EyeRange, false, BOT_MODE_NONE)
-        nearbyEnemyCreep    = bot:GetNearbyLaneCreeps(EyeRange, true)
-        nearbyAlliedCreep   = bot:GetNearbyLaneCreeps(EyeRange, false)
-        nearbyEnemyTowers   = bot:GetNearbyTowers(EyeRange, true)
-        nearbyAlliedTowers  = bot:GetNearbyTowers(EyeRange, false)
+    nearbyEnemyHeroes   = bot:GetNearbyHeroes(EyeRange, true, BOT_MODE_NONE)
+    nearbyAlliedHeroes  = bot:GetNearbyHeroes(EyeRange, false, BOT_MODE_NONE)
+    nearbyEnemyCreep    = bot:GetNearbyLaneCreeps(EyeRange, true)
+    nearbyAlliedCreep   = bot:GetNearbyLaneCreeps(EyeRange, false)
+    nearbyEnemyTowers   = bot:GetNearbyTowers(EyeRange, true)
+    nearbyAlliedTowers  = bot:GetNearbyTowers(EyeRange, false)
 
-        local setTarget = self:getHeroVar("Target")
-        if setTarget.Id > 0 and (not utils.ValidTarget(setTarget) or not setTarget.Obj:IsAlive()) then
-            for id, v in pairs(nearbyEnemyHeroes) do
-                if setTarget.Id == v:GetPlayerID() then
-                    if IsHeroAlive(setTarget.Id) then
-                        utils.myPrint("Updated my Target after re-aquire")
-                        self:setHeroVar("Target", {Obj=v, Id=setTarget.Id})
-                        break
-                    else
-                        utils.myPrint("Target is dead, clearing")
-                        self:setHeroVar("Target", NoTarget)
-                        break
-                    end
+    local setTarget = self:getHeroVar("Target")
+    if setTarget.Id > 0 and (not utils.ValidTarget(setTarget) or not setTarget.Obj:IsAlive()) then
+        for id, v in pairs(nearbyEnemyHeroes) do
+            if setTarget.Id == v:GetPlayerID() then
+                if IsHeroAlive(setTarget.Id) then
+                    utils.myPrint("Updated my Target after re-aquire")
+                    self:setHeroVar("Target", {Obj=v, Id=setTarget.Id})
+                    break
+                else
+                    utils.myPrint("Target is dead, clearing")
+                    self:setHeroVar("Target", NoTarget)
+                    break
                 end
             end
         end
+    end
 
-        local gankTarget = self:getHeroVar("GankTarget")
-        if gankTarget.Id > 0 and (not utils.ValidTarget(gankTarget) or not gankTarget.Obj:IsAlive()) then
-            for id, v in pairs(nearbyEnemyHeroes) do
-                if gankTarget.Id == v:GetPlayerID() then
-                    if IsHeroAlive(gankTarget.Id) then
-                        utils.myPrint("Updated my GankTarget after re-aquire")
-                        self:setHeroVar("GankTarget", {Obj=v, Id=gankTarget.Id})
-                        break
-                    else
-                        utils.myPrint("GankTarget is dead, clearing")
-                        self:setHeroVar("GankTarget", NoTarget)
-                        break
-                    end
+    local gankTarget = self:getHeroVar("GankTarget")
+    if gankTarget.Id > 0 and (not utils.ValidTarget(gankTarget) or not gankTarget.Obj:IsAlive()) then
+        for id, v in pairs(nearbyEnemyHeroes) do
+            if gankTarget.Id == v:GetPlayerID() then
+                if IsHeroAlive(gankTarget.Id) then
+                    utils.myPrint("Updated my GankTarget after re-aquire")
+                    self:setHeroVar("GankTarget", {Obj=v, Id=gankTarget.Id})
+                    break
+                else
+                    utils.myPrint("GankTarget is dead, clearing")
+                    self:setHeroVar("GankTarget", NoTarget)
+                    break
                 end
             end
         end
-    --end
+    end
+
 
     -- TEST STUFF
     --[[
@@ -354,6 +369,7 @@ function X:Think(bot)
     end
 
     --ACTIONS QUEUED? DO THEM OR UNSET
+    --[[
     if self:getHeroVar("Queued") then
         if bot:GetCurrentActionType() == BOT_ACTION_TYPE_USE_ABILITY or bot:GetCurrentActionType() == BOT_ACTION_TYPE_ATTACK then
             local target = self:getHeroVar("Target")
@@ -372,11 +388,15 @@ function X:Think(bot)
             self:setHeroVar("Queued", false)
         end
     end
+    --]]
     --local cat = bot:GetCurrentActionType()
     --if cat ~= BOT_ACTION_TYPE_NONE and cat ~= BOT_ACTION_TYPE_IDLE then return end
-    --if bot:NumQueuedActions() >= 1 then
-    --   return
-    --end
+    if bot:NumQueuedActions() > 0 then
+        for i = 0, bot:NumQueuedActions()-1, 1 do
+            utils.myPrint("["..i.."] Queued Action Type: ", bot:GetQueuedActionType(i))
+        end
+        return
+    end
 
     if bot:IsUsingAbility() then return end
     

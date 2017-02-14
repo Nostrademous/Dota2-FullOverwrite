@@ -340,14 +340,14 @@ function UseTP(lane)
     end
     
     -- if we are in fountain, don't TP out until we have full health & mana
-    if bot:HasModifier("modifier_fountain_aura_buff") and 
-        (bot:GetHealth() ~= bot:GetMaxHealth() and bot:GetMana() ~= bot:GetMaxMana()) then
+    if bot:DistanceFromFountain() < 200 and 
+        not (bot:GetHealth() == bot:GetMaxHealth() and bot:GetMana() == bot:GetMaxMana()) then
         return false
     end
 
     local tp = utils.HaveItem(bot, "item_tpscroll")
     if tp ~= nil and (utils.HaveItem(bot, "item_travel_boots_1") or utils.HaveItem(bot, "item_travel_boots_2")) 
-        and bot:DistanceFromFountain() < 200 then
+        and (bot:DistanceFromFountain() < 200 or bot:DistanceFromSideShop() < 200 or bot:DistanceFromSecretShop() < 200) then
         bot:SellItem(tp)
         tp = nil
     end
@@ -359,7 +359,7 @@ function UseTP(lane)
         end
     end
 
-    local dest = GetLocationAlongLane(lane, 0.5) -- 0.5 is basically 1/2 way down our lane
+    local dest = GetLocationAlongLane(lane, GetLaneFrontAmount(GetTeam(), lane, false))
     if tp == nil and GetUnitToLocationDistance(bot, dest) > 3000
         and bot:DistanceFromFountain() < 200
         and bot:GetGold() > 50 then

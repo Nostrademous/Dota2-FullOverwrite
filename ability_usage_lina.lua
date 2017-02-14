@@ -22,8 +22,8 @@ function getHeroVar(var)
 end
 
 local Abilities =   {
-    "lina_light_strike_array",
     "lina_dragon_slave",
+    "lina_light_strike_array",
     "lina_fiery_soul",
     "lina_laguna_blade"
 }
@@ -70,19 +70,6 @@ function nukeDamage( bot, enemy )
     end
 
     -- Check Dragon Slave
-    if abilityW:IsFullyCastable() then
-        local manaCostW = abilityW:GetManaCost()
-        if manaCostW <= manaAvailable then
-            if not magicImmune then
-                manaAvailable = manaAvailable - manaCostW
-                dmgTotal = dmgTotal + enemy:GetActualIncomingDamage(abilityW:GetAbilityDamage(), DAMAGE_TYPE_MAGICAL)
-                castTime = castTime + abilityW:GetCastPoint()
-                table.insert(comboQueue, 1, abilityW)
-            end
-        end
-    end
-
-    -- Check Light Strike Array
     if abilityQ:IsFullyCastable() then
         local manaCostQ = abilityQ:GetManaCost()
         if manaCostQ <= manaAvailable then
@@ -90,8 +77,21 @@ function nukeDamage( bot, enemy )
                 manaAvailable = manaAvailable - manaCostQ
                 dmgTotal = dmgTotal + enemy:GetActualIncomingDamage(abilityQ:GetAbilityDamage(), DAMAGE_TYPE_MAGICAL)
                 castTime = castTime + abilityQ:GetCastPoint()
-                stunTime = stunTime + abilityQ:GetSpecialValueFloat("light_strike_array_stun_duration")
                 table.insert(comboQueue, 1, abilityQ)
+            end
+        end
+    end
+
+    -- Check Light Strike Array
+    if abilityW:IsFullyCastable() then
+        local manaCostW = abilityW:GetManaCost()
+        if manaCostW <= manaAvailable then
+            if not magicImmune then
+                manaAvailable = manaAvailable - manaCostW
+                dmgTotal = dmgTotal + enemy:GetActualIncomingDamage(abilityW:GetAbilityDamage(), DAMAGE_TYPE_MAGICAL)
+                castTime = castTime + abilityW:GetCastPoint()
+                stunTime = stunTime + abilityW:GetSpecialValueFloat("light_strike_array_stun_duration")
+                table.insert(comboQueue, 1, abilityW)
             end
         end
     end
@@ -100,12 +100,12 @@ function nukeDamage( bot, enemy )
 end
 
 function queueNuke(bot, enemy, castQueue)
-    local nRadius = abilityQ:GetSpecialValueInt( "light_strike_array_aoe" )
-    local nCastRange = abilityQ:GetCastRange()
+    local nRadius = abilityW:GetSpecialValueInt( "light_strike_array_aoe" )
+    local nCastRange = abilityW:GetCastRange()
     local dist = GetUnitToUnitDistance(bot, enemy)
 
     bot:Action_ClearActions()
-    setHeroVar("Queued", true)
+    --setHeroVar("Queued", true)
     -- if out of range, attack move for one hit to get in range
     if dist > (nCastRange + nRadius) then
         bot:ActionPush_AttackUnit( enemy, true )
@@ -149,7 +149,7 @@ function AbilityUsageThink(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCre
     if abilityR == "" then abilityR = bot:GetAbilityByName( Abilities[4] ) end
 
     if not bot:IsAlive() then return false end
-
+    
     -- Check if we're already using an ability
     if ( bot:IsUsingAbility() or bot:IsChanneling() ) then return false end
 
@@ -199,13 +199,13 @@ function AbilityUsageThink(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCre
 
     if castLSADesire > 0 then
         print ( "I Desired a LSA Hit" )
-        bot:Action_UseAbilityOnLocation( abilityQ, castLSALocation )
+        bot:Action_UseAbilityOnLocation( abilityW, castLSALocation )
         return true
     end
 
     if castDSDesire > 0 then
         print ( "I Desired a DS Hit" )
-        bot:Action_UseAbilityOnLocation( abilityW, castDSLocation )
+        bot:Action_UseAbilityOnLocation( abilityQ, castDSLocation )
         return true
     end
 
@@ -227,12 +227,12 @@ end
 function ConsiderLightStrikeArrayFighting(enemy)
     local npcBot = GetBot()
 
-    if not abilityQ:IsFullyCastable() then
+    if not abilityW:IsFullyCastable() then
         return BOT_ACTION_DESIRE_NONE, 0
-    end;
+    end
 
-    local nRadius = abilityQ:GetSpecialValueInt( "light_strike_array_aoe" )
-    local nCastRange = abilityQ:GetCastRange()
+    local nRadius = abilityW:GetSpecialValueInt( "light_strike_array_aoe" )
+    local nCastRange = abilityW:GetCastRange()
 
     -- NOTE: LSA cast point is 0.45, hit delay is 0.50
     local locDelta = enemy:GetExtrapolatedLocation(0.95)
@@ -255,14 +255,14 @@ function ConsiderLightStrikeArray(nearbyEnemyHeroes)
     local npcBot = GetBot()
 
     -- Make sure it's castable
-    if not abilityQ:IsFullyCastable() then
+    if not abilityW:IsFullyCastable() then
         return BOT_ACTION_DESIRE_NONE, 0
     end
 
     -- Get some of its values
-    local nRadius = abilityQ:GetSpecialValueInt( "light_strike_array_aoe" )
-    local nCastRange = abilityQ:GetCastRange()
-    local nDamage = abilityQ:GetAbilityDamage()
+    local nRadius = abilityW:GetSpecialValueInt( "light_strike_array_aoe" )
+    local nCastRange = abilityW:GetCastRange()
+    local nDamage = abilityW:GetAbilityDamage()
 
     --------------------------------------
     -- Global high-priorty usage
@@ -282,7 +282,7 @@ function ConsiderLightStrikeArray(nearbyEnemyHeroes)
     --------------------------------------
 
     -- If we're farming and can kill 3+ creeps with LSA
-    local locationAoE = npcBot:FindAoELocation( true, false, npcBot:GetLocation(), nCastRange, nRadius, abilityQ:GetCastPoint(), nDamage )
+    local locationAoE = npcBot:FindAoELocation( true, false, npcBot:GetLocation(), nCastRange, nRadius, abilityW:GetCastPoint(), nDamage )
 
     if ( locationAoE.count >= 3 ) then
         return BOT_ACTION_DESIRE_LOW, locationAoE.targetloc
@@ -294,7 +294,7 @@ function ConsiderLightStrikeArray(nearbyEnemyHeroes)
             -- FIXME: This logic will fail against Heartstopper Aura or Radiance probably making us LSA all the time
             --        as we take damage and are below 50% health
             if npcBot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) and (npcBot:GetHealth()/npcBot:GetMaxHealth()) < 0.5 then
-                if CanCastLightStrikeArrayOnTarget( npcEnemy ) and abilityQ:GetCastRange() > GetUnitToUnitDistance(npcBot, npcEnemy) then
+                if CanCastLightStrikeArrayOnTarget( npcEnemy ) and abilityW:GetCastRange() > GetUnitToUnitDistance(npcBot, npcEnemy) then
                     -- NOTE: LSA cast point is 0.45, hit delay is 0.50
                     local locDelta = npcEnemy:GetExtrapolatedLocation(0.95)
                     return BOT_ACTION_DESIRE_MODERATE, locDelta
@@ -311,11 +311,11 @@ end
 function ConsiderDragonSlaveFighting(enemy)
     local npcBot = GetBot()
 
-    if not abilityW:IsFullyCastable() then
+    if not abilityQ:IsFullyCastable() then
         return BOT_ACTION_DESIRE_NONE, 0
-    end;
+    end
 
-    local nCastRange = abilityW:GetCastRange()
+    local nCastRange = abilityQ:GetCastRange()
     local d = GetUnitToUnitDistance(npcBot, enemy)
 
     if d < nCastRange and not utils.IsTargetMagicImmune( enemy ) then
@@ -335,14 +335,14 @@ function ConsiderDragonSlave()
 
     local npcBot = GetBot()
 
-    if not abilityW:IsFullyCastable() then
+    if not abilityQ:IsFullyCastable() then
         return BOT_ACTION_DESIRE_NONE, 0
     end
 
     -- Get some of its values
-    local nRadius = abilityW:GetSpecialValueInt( "dragon_slave_width_end" )
-    local nCastRange = abilityW:GetCastRange()
-    local nDamage = abilityW:GetAbilityDamage()
+    local nRadius = abilityQ:GetSpecialValueInt( "dragon_slave_width_end" )
+    local nCastRange = abilityQ:GetCastRange()
+    local nDamage = abilityQ:GetAbilityDamage()
     --print("dragon_slave damage:" .. nDamage)
 
     -- If we're farming and can kill 2+ creeps with LSA when we have plenty mana

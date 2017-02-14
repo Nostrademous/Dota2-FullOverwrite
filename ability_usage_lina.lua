@@ -112,19 +112,20 @@ function queueNuke(bot, enemy, castQueue)
     end
 
     utils.AllChat("Killing "..utils.GetHeroName(enemy).." softly with my song")
+    utils.myPrint("Queue Nuke Damage: ", utils.GetHeroName(enemy))
     for i = #castQueue, 1, -1 do
         local skill = castQueue[i]
         local behaviorFlag = skill:GetBehavior()
 
         utils.myPrint(" - skill '", skill:GetName(), "' has BehaviorFlag: ", behaviorFlag)
 
-        if skill:GetName() == Abilities[1] then
+        if skill:GetName() == Abilities[2] then
             if utils.IsCrowdControlled(enemy) then
                 gHeroVar.HeroPushUseAbilityOnLocation(bot, skill, enemy:GetLocation())
             else
                 gHeroVar.HeroPushUseAbilityOnLocation(bot, skill, enemy:GetExtrapolatedLocation(0.95))
             end
-        elseif skill:GetName() == Abilities[2] then
+        elseif skill:GetName() == Abilities[1] then
             if utils.IsCrowdControlled(enemy) then
                 gHeroVar.HeroPushUseAbilityOnLocation(bot, skill, enemy:GetLocation())
             else

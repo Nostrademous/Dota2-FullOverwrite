@@ -112,6 +112,7 @@ function queueNuke(bot, enemy, castQueue)
     end
 
     utils.AllChat("Killing "..utils.GetHeroName(enemy).." softly with my song")
+    utils.myPrint("Queue Nuke Damage: ", utils.GetHeroName(enemy))
     for i = #castQueue, 1, -2 do
         local skill = castQueue[i]
         local behaviorFlag = skill:GetBehavior()
@@ -235,7 +236,7 @@ function UseQ(bot, nearbyEnemyHeroes, nearbyAlliedHeroes)
     --------- CHASING --------------------------------
     local target = getHeroVar("Target")
     if utils.ValidTarget(target) then
-        if bot:GetMana() >= (abilityQ:GetMana() + abilityW:GetMana()) then
+        if bot:GetMana() >= (abilityQ:GetManaCost() + abilityW:GetManaCost()) then
             bot:Action_UseAbilityOnLocation(abilityQ, target.Obj:GetLocation())
         end
     end

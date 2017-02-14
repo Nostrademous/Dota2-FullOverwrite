@@ -193,9 +193,10 @@ end
 
 function X:DoIllusionInit(bot)
     self:setHeroVar("IllusionInit", true)
+    self.pID = bot:GetPlayerID()
     local allyList = GetUnitList(UNIT_LIST_ALLIED_HEROES)
     for _, ally in pairs(allyList) do
-        if bot:GetPlayerID() == ally:GetPlayerID() and not ally:IsIllusion() then
+        if bot:GetUnitName() == ally:GetUnitName() and not ally:IsIllusion() then
             self:setHeroVar("Name", utils.GetHeroName(bot))
             self:setHeroVar("LastLevelUpThink", ally:getHeroVar("LastLevelUpThink"))
             self:setHeroVar("LastLocation", bot:GetLocation())
@@ -235,7 +236,7 @@ function X:Think(bot)
     if ( GetGameState() ~= GAME_STATE_GAME_IN_PROGRESS and GetGameState() ~= GAME_STATE_PRE_GAME ) then return end
     
     --DoInit() for illusions
-    if bot:IsIllusion() and not self:getHeroVar("IllusionInit") then
+    if bot:IsIllusion() and (not gHeroVar.HasID(bot:GetPlayerID()) or not self:getHeroVar("IllusionInit")) then
         self:DoIllusionInit(bot)
     end
     
@@ -392,6 +393,7 @@ function X:Think(bot)
     --local cat = bot:GetCurrentActionType()
     --if cat ~= BOT_ACTION_TYPE_NONE and cat ~= BOT_ACTION_TYPE_IDLE then return end
     if bot:NumQueuedActions() > 0 then
+        utils.myPrint("Current Action Type: ", bot:GetCurrentActionType())
         for i = 0, bot:NumQueuedActions()-1, 1 do
             utils.myPrint("["..i.."] Queued Action Type: ", bot:GetQueuedActionType(i))
         end
@@ -450,8 +452,8 @@ function X:Think(bot)
     if bot:GetHealthRegen() < 100 or bot:HasModifier("modifier_fountain_aura_buff") then
         if ( self:GetMode() == MODE_RETREAT ) then
             --FIXME: Uncomment once Shrines are fixed
-            --local bRet = self:DoUseShrine(bot)
-            --if bRet then return end
+            --local bShrine = self:DoUseShrine(bot)
+            --if bShrine then return end
             
             local bRet = self:DoRetreat(bot, self:getHeroVar("RetreatReason"))
             if bRet then return end
@@ -887,10 +889,10 @@ function X:Determine_ShouldTeamRoshan(bot)
     local isRoshanAlive = DotaTime() - GetRoshanKillTime() > 660 -- max 11 minutes respawn time of roshan
 
     if (numAlive < 3 and (GetRoshanKillTime() == 0 or isRoshanAlive)) then -- FIXME: Implement
-        if self:HasMode(MODE_ROSHAN) == false then
-            utils.myPrint(" - Going to Fight Roshan")
-            self:AddMode(MODE_ROSHAN)
-        end
+        --if self:HasMode(MODE_ROSHAN) == false then
+        --    utils.myPrint(" - Going to Fight Roshan")
+        --    self:AddMode(MODE_ROSHAN)
+        --end
     end
     return false
 end

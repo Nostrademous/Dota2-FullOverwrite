@@ -33,6 +33,10 @@ files to only over-load those decision_tree.lua functions that they want the
 specific hero to handle differently, while keeping other aspects of bot 
 behavior untouched.
 
+**Getting Going:**
+------------
+To get going please visit https://github.com/Nostrademous/Dota2-FullOverwrite/wiki/Workflow-for-Debugging-Bots and the wiki in general
+
 Current Files:
 --------------
 

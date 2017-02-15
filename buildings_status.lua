@@ -49,10 +49,8 @@ local function Initialize()
     tableBuildings[TEAM_DIRE] = {}
     local team = GetTeam()
     for i, building in ipairs(buildings) do
-        local building_radiant = {}
-        local building_dire = {}
-        tableBuildings[TEAM_RADIANT][i] = building_radiant
-        tableBuildings[TEAM_DIRE][i] = building_dire
+        tableBuildings[TEAM_RADIANT][i] = {}
+        tableBuildings[TEAM_DIRE][i] = {}
         local health = 0
         local pos_radiant = nil
         local pos_dire = nil
@@ -81,16 +79,16 @@ local function Initialize()
             pos_radiant = GetAncient(TEAM_RADIANT):GetLocation()
             pos_dire = GetAncient(TEAM_DIRE):GetLocation()
         end
-        building_radiant.ApiID = building.ApiID
-        building_radiant.Type = building.Type
-        building_radiant.MaxHealth = health
-        building_radiant.LastSeenHealth = health
-        building_radiant.Vector = pos_radiant
-        building_dire.ApiID = building.ApiID
-        building_dire.Type = building.Type
-        building_dire.MaxHealth = health
-        building_dire.LastSeenHealth = health
-        building_dire.Vector = pos_dire
+        tableBuildings[TEAM_RADIANT][i].ApiID = building.ApiID
+        tableBuildings[TEAM_RADIANT][i].Type = building.Type
+        tableBuildings[TEAM_RADIANT][i].MaxHealth = health
+        tableBuildings[TEAM_RADIANT][i].LastSeenHealth = health
+        tableBuildings[TEAM_RADIANT][i].Vector = pos_radiant
+        tableBuildings[TEAM_DIRE][i].ApiID = building.ApiID
+        tableBuildings[TEAM_DIRE][i].Type = building.Type
+        tableBuildings[TEAM_DIRE][i].MaxHealth = health
+        tableBuildings[TEAM_DIRE][i].LastSeenHealth = health
+        tableBuildings[TEAM_DIRE][i].Vector = pos_dire
     end
 end
 

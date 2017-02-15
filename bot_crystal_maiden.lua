@@ -69,6 +69,10 @@ function cmBot:QueueNuke(bot, target, actionQueue)
     return ability_usage_crystal_maiden.queueNuke( bot, target, actionQueue )
 end
 
+function cmBot:DoHeroSpecificInit(bot)
+    setHeroVar("HasStun",  {{[1]=bot:GetAbilityByName("crystal_maiden_frostbite"), [2]=0.3}})
+end
+
 function Think()
     local bot = GetBot()
 

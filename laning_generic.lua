@@ -335,9 +335,32 @@ local function CSing(bot)
         end
     end
 
-    utils.UseOrbEffect(bot)
+    if utils.UseOrbEffect(bot) then return end
+    
+    for _, enemy in pairs(listEnemies) do
+        for _, myTower in pairs(listAlliedTowers) do
+            if GetUnitToUnitDistance(myTower, enemy) < 600 then
+                local stunAbilities = gHeroVar.GetVar(bot:GetPlayerID(),"HasStun")
+                for _, stun in pairs(stunAbilities) do
+                    if not enemy:IsStunned() and stun[1]:IsFullyCastable() then
+                        local behaviorFlag = stun[1]:GetBehavior()
+                        if utils.CheckFlag(behaviorFlag, ABILITY_BEHAVIOR_UNIT_TARGET) then
+                            bot:Action_UseAbilityOnEntity(stun[1], enemy)
+                        elseif utils.CheckFlag(behaviorFlag, ABILITY_BEHAVIOR_POINT) then
+                            bot:Action_UseAbilityOnLocation(stun[1], enemy:GetExtrapolatedLocation(stun[2]))
+                        end
+                    end
+                end
+                gHeroVar.HeroAttackUnit(bot, enemy, true)
+            end
+        end
+    end
+    
+    if #listEnemies == 1 and #listEnemyCreep == 0 then
+        gHeroVar.HeroAttackUnit(bot, listEnemies[1], true)
+    end
 
-    LaningState = LaningStates.MovingToPos;
+    LaningState = LaningStates.MovingToPos
 end
 
 --------------------------------

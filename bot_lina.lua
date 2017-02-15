@@ -11,10 +11,20 @@ local utils = require( GetScriptDirectory().."/utility" )
 local dt = require( GetScriptDirectory().."/decision_tree" )
 local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
 
-local LINA_SKILL_Q = "lina_dragon_slave";
-local LINA_SKILL_W = "lina_light_strike_array";
-local LINA_SKILL_E = "lina_fiery_soul";
-local LINA_SKILL_R = "lina_laguna_blade";
+function setHeroVar(var, value)
+    local bot = GetBot()
+    gHeroVar.SetVar(bot:GetPlayerID(), var, value)
+end
+
+function getHeroVar(var)
+    local bot = GetBot()
+    return gHeroVar.GetVar(bot:GetPlayerID(), var)
+end
+
+local LINA_SKILL_Q = "lina_dragon_slave"
+local LINA_SKILL_W = "lina_light_strike_array"
+local LINA_SKILL_E = "lina_fiery_soul"
+local LINA_SKILL_R = "lina_laguna_blade"
 
 local LINA_ABILITY1 = "special_bonus_unique_lina_3"
 local LINA_ABILITY2 = "special_bonus_respawn_reduction_25"
@@ -49,6 +59,7 @@ linaBot = LinaBot:new{modeStack = linaModeStack, abilityPriority = LinaAbilityPr
 linaBot.Init = false
 
 function linaBot:DoHeroSpecificInit(bot)
+    setHeroVar("HasStun",  {{[1]=bot:GetAbilityByName("lina_light_strike_array"), [2]=0.95}})
 end
 
 function linaBot:ConsiderAbilityUse(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCreep, nearbyAlliedCreep, nearbyEnemyTowers, nearbyAlliedTowers)

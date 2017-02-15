@@ -304,9 +304,7 @@ function UseDefensiveItems(enemy, triggerDistance)
     local bot = GetBot()
     local location = location or bot:GetLocation()
 
-    if bot:IsChanneling() then
-        return false
-    end
+    if bot:IsChanneling() or bot:IsUsingAbility() then return false end
 
     local hp = utils.HaveItem(bot, "item_hurricane_pike")
     if hp ~= nil and GetUnitToUnitDistance(bot, enemy) < triggerDistance then
@@ -318,11 +316,11 @@ end
 function UseBuffItems()
     local bot = GetBot()
 
-    if bot:IsChanneling() or bot:IsUsingAbility() then
-        return false
-    end
+    if bot:IsChanneling() or bot:IsUsingAbility() then return false end
     
     UseTomeOfKnowledge()
+    
+    if UseMidas() then return true end
     
     return false
 end
@@ -335,9 +333,7 @@ function UseTP(lane)
     
     if DotaTime() < 10 then return false end
 
-    if bot:IsChanneling() or bot:IsUsingAbility() then
-        return false
-    end
+    if bot:IsChanneling() or bot:IsUsingAbility() then return false end
     
     -- if we are in fountain, don't TP out until we have full health & mana
     if bot:DistanceFromFountain() < 200 and 
@@ -394,9 +390,7 @@ function UseItems()
 
     local bot = GetBot()
 
-    if bot:IsChanneling() or bot:IsUsingAbility() then
-        return false
-    end
+    if bot:IsChanneling() or bot:IsUsingAbility() then return false end
 
     if UseBuffItems() then return true end
     
@@ -455,6 +449,23 @@ function UseTomeOfKnowledge()
     if tok ~= nil then
         gHeroVar.HeroUseAbility(bot, tok)
         return true
+    end
+    return false
+end
+
+function UseMidas()
+    local bot = GetBot()
+    local midas = utils.HaveItem(bot, "item_hand_of_midas")
+    if midas ~= nil and midas:IsFullyCastable() then
+        local creeps = bot:GetNearbyCreeps(600, true)
+        if #creeps > 1 then
+            table.sort(creeps, function(n1, n2) return n1:GetHealth() > n2:GetHealth() end)
+            bot:Action_UseAbilityOnEntity(midas, creeps[1])
+            return true
+        elseif #creeps == 1 then
+            bot:Action_UseAbilityOnEntity(midas, creeps[1])
+            return true
+        end
     end
     return false
 end

@@ -706,36 +706,15 @@ end
 -------------------------------------------------------------------------------
 
 function U.PositionAlongLane(bot, lane)
-    --[[
     local botPos = bot:GetLocation()
-    U.myPrint("Lane: ", lane, ", Loc: <", botPos[1], ", ", botPos[2], ">")
     local fAmount = GetAmountAlongLane(lane, botPos)
-    U.myPrint(fAmount)
-    --]]
-
-    local fAmount = 0.0
-    local pos = 0.0
-    local lastDist = 0.0
-    local dist = 20000.0
-
-    while pos < 1.0 do
-        local thisPos = GetLocationAlongLane(lane, pos)
-        if U.GetDistance(thisPos, bot:GetLocation()) < dist then
-            dist = U.GetDistance(thisPos, bot:GetLocation())
-            fAmount = pos
-        end
-        pos = pos + 0.01
-    end
-
-    local perpendicularDist = U.GetDistance(GetLocationAlongLane( lane, fAmount ), bot:GetLocation())
-
     local bInLane = false
-    if perpendicularDist <= 1600 then
+    if fAmount.distance <= 1600 then
         bInLane = true
     end
     setHeroVar("IsInLane", bInLane)
 
-    return fAmount
+    return fAmount.amount
 end
 
 -- CONTRIBUTOR: Function below was coded by Platinum_dota2
@@ -1336,7 +1315,7 @@ function U.UseOrbEffect(bot, enemy)
         local ability = bot:GetAbilityByName(orb)
         if ability ~= nil and ability:IsFullyCastable() then
             if enemy == nil then
-                enemy, _ = U.GetWeakestHero(bot, ability:GetCastRange())
+                enemy, _ = U.GetWeakestHero(bot, ability:GetCastRange()+100)
             end
 
             if enemy ~= nil then
@@ -1607,7 +1586,7 @@ function U.myPrint(...)
         msg = msg .. tostring(v)
     end
     --uncomment to only see messages by bots mentioned underneath
-    --if botname == "drow_ranger" then --or botname == "viper" then
+    --if botname == "invoker" then --or botname == "viper" then
       print(msg)
     --end
 end

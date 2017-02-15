@@ -193,7 +193,10 @@ function GlobalFightDetermination()
                         local totalTimeToKillTarget = myTimeToKillTarget
                         
                         local participatingAllies = {}
+                        local globalAllies = {}
+                        
                         for _, ally2 in pairs(listAllies) do
+                            -- this 'if' is for non-implemented bot heroes that are on our team
                             if ally2:IsAlive() and not ally2:IsIllusion() and not gHero.HasID(ally2:GetPlayerID()) then
                                 local distToEnemy = 100000
                                 if enemy.Obj then
@@ -211,12 +214,16 @@ function GlobalFightDetermination()
                                 end
                                 local allyTimeToReach = distToEnemy/ally2:GetCurrentMovementSpeed()
                                 
+                                local globalAbility = gHero.GetVar(ally2:GetPlayerID(), "HasGlobal")
+                                
                                 if distToEnemy <= 2*eyeRange then
                                     --utils.myPrint("ally ", utils.GetHeroName(ally2), " is ", distToEnemy, " units away. Time to reach: ", allyTimeToReach)
                                     totalTimeToKillTarget = totalTimeToKillTarget + 8.0
                                     table.insert(participatingAllies, {ally2, {}})
+                                elseif globalAbility and globalAbility[1]:IsFullyCastable() then
+                                    table.insert(globalAllies, {ally2, globalAbility})
                                 end
-                                
+                            -- this 'elseif' is for implemented bot heroes on our team
                             elseif ally2:IsAlive() and not ally2:IsIllusion() and ally2:GetPlayerID() ~= ally:GetPlayerID() and gHero.GetVar(ally2:GetPlayerID(), "Target").Id == 0 
                                 and (gHero.GetVar(ally2:GetPlayerID(), "GankTarget").Id == 0 or gHero.GetVar(ally2:GetPlayerID(), "GankTarget").Id == k) then
                                 local distToEnemy = 100000
@@ -228,7 +235,8 @@ function GlobalFightDetermination()
                                     elseif GetHeroLastSeenInfo(k).time <= 3.0 then
                                         distToEnemy = GetUnitToLocationDistance(ally2, enemy.LocExtra2)
                                     else
-                                        distToEnemy = GetUnitToLocationDistance(ally2, GetHeroLastSeenInfo(k).location)
+                                        --distToEnemy = GetUnitToLocationDistance(ally2, GetHeroLastSeenInfo(k).location)
+                                        break
                                     end
                                 end
                                 local allyTimeToReach = distToEnemy/ally2:GetCurrentMovementSpeed()
@@ -237,6 +245,7 @@ function GlobalFightDetermination()
                                 -- update our total nuke damage
                                 totalNukeDmg = totalNukeDmg + allyNukeDmg
                                 
+                                local globalAbility = gHero.GetVar(ally2:GetPlayerID(), "HasGlobal")
                                 if allyTimeToReach <= 6.0 then
                                     --utils.myPrint("ally ", utils.GetHeroName(ally2), " is ", distToEnemy, " units away. Time to reach: ", allyTimeToReach)
                                     
@@ -250,19 +259,21 @@ function GlobalFightDetermination()
                                     end
                                     totalTimeToKillTarget = totalTimeToKillTarget + allyTimeToKillTarget
                                     table.insert(participatingAllies, {ally2, allyActionQueue})
+                                elseif globalAbility and globalAbility[1]:IsFullyCastable() then
+                                    table.insert(globalAllies, {ally2, globalAbility})
                                 end
                             end
                         end
                         
                         local numAttackers = #participatingAllies+1
-                        local anticipatedTimeToKill = totalTimeToKillTarget/numAttackers
+                        local anticipatedTimeToKill = (totalTimeToKillTarget/numAttackers) - 2*#globalAllies
                         local totalStun = myStun + allAllyStun
                         local totalSlow = mySlow + allAllySlow
                         local timeToKillBonus = numAttackers*(totalStun + 0.5*totalSlow)
                         
                         if utils.ValidTarget(enemy) then
                             if (anticipatedTimeToKill - timeToKillBonus) < 6.0 then
-                                utils.myPrint(#participatingAllies+1, " of us can Stun for: ", totalStun, " and Slow for: ", totalSlow, ". AnticipatedTimeToKill ", enemy.Name ,": ", anticipatedTimeToKill)
+                                utils.myPrint(#participatingAllies+#globalAllies+1, " of us can Stun for: ", totalStun, " and Slow for: ", totalSlow, ". AnticipatedTimeToKill ", enemy.Name ,": ", anticipatedTimeToKill)
                                 utils.myPrint(utils.GetHeroName(ally), " - Engaging! Anticipated Time to kill: ", anticipatedTimeToKill)
                                 gHero.SetVar(ally:GetPlayerID(), "Target", {Obj=enemy.Obj, Id=k})
                                 gHero.GetVar(ally:GetPlayerID(), "Self"):AddMode(constants.MODE_FIGHT)
@@ -289,6 +300,10 @@ function GlobalFightDetermination()
                                             gHero.GetVar(v[1]:GetPlayerID(), "Self"):QueueNuke(v, enemy.Obj, v[2])
                                         end
                                     end
+                                end
+                                
+                                for _, v in pairs(globalAllies) do
+                                    gHero.HeroUseAbilityOnLocation(gHero.GetVar(v[1]:GetPlayerID(), "Self"), v[2][1], enemy.Obj:GetExtrapolatedLocation(v[2][2]), 100000)
                                 end
                             end
                         end

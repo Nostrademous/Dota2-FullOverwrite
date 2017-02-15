@@ -370,37 +370,20 @@ function X:Think(bot)
     end
 
     --ACTIONS QUEUED? DO THEM OR UNSET
-    --[[
-    if self:getHeroVar("Queued") then
-        if bot:GetCurrentActionType() == BOT_ACTION_TYPE_USE_ABILITY or bot:GetCurrentActionType() == BOT_ACTION_TYPE_ATTACK then
-            local target = self:getHeroVar("Target")
-            if target.Id == 0 or (target.Id > 0 and not IsHeroAlive( target.Id )) then
-                bot:Action_ClearActions(true)
-                self:setHeroVar("Queued", false)
-            else
-                if not utils.ValidTarget(target) then
-                    bot:Action_ClearActions(true)
-                    self:setHeroVar("Queued", false)
-                else
-                    return
-                end
-            end
-        else
-            self:setHeroVar("Queued", false)
-        end
-    end
-    --]]
-    --local cat = bot:GetCurrentActionType()
-    --if cat ~= BOT_ACTION_TYPE_NONE and cat ~= BOT_ACTION_TYPE_IDLE then return end
     if bot:NumQueuedActions() > 0 then
-        utils.myPrint("Current Action Type: ", bot:GetCurrentActionType())
-        for i = 0, bot:NumQueuedActions()-1, 1 do
-            utils.myPrint("["..i.."] Queued Action Type: ", bot:GetQueuedActionType(i))
-        end
+        --utils.myPrint("Current Action Type: ", bot:GetCurrentActionType())
+        --for i = 0, bot:NumQueuedActions()-1, 1 do
+        --    utils.myPrint("["..i.."] Queued Action Type: ", bot:GetQueuedActionType(i))
+        --end
         return
     end
 
-    if bot:IsUsingAbility() then return end
+    -- ARE WE USING ABILITIES
+    if bot:IsUsingAbility() then return
+    else
+        local bRet = self:ConsiderAbilityUse(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCreep, nearbyAlliedCreep, nearbyEnemyTowers, nearbyAlliedTowers)
+        if bRet then return end
+    end
     
     --USE ITEMS
     if self:ConsiderItemUse() then return end
@@ -452,8 +435,8 @@ function X:Think(bot)
     if bot:GetHealthRegen() < 100 or bot:HasModifier("modifier_fountain_aura_buff") then
         if ( self:GetMode() == MODE_RETREAT ) then
             --FIXME: Uncomment once Shrines are fixed
-            --local bShrine = self:DoUseShrine(bot)
-            --if bShrine then return end
+            local bShrine = self:DoUseShrine(bot)
+            if bShrine or bot:HasModifier("modifier_filler_heal") then return end
             
             local bRet = self:DoRetreat(bot, self:getHeroVar("RetreatReason"))
             if bRet then return end
@@ -465,14 +448,6 @@ function X:Think(bot)
             local bRet = self:DoRetreat(bot, safe)
             if bRet then return end
         end
-    end
-
-    -- ARE WE USING ABILITIES
-    if bot:IsUsingAbility() then
-        return
-    else
-        local bRet = self:ConsiderAbilityUse(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCreep, nearbyAlliedCreep, nearbyEnemyTowers, nearbyAlliedTowers)
-        if bRet then return end
     end
 
     -- NOTE: Unlike many others, we should re-evalute need to fight every time and
@@ -729,34 +704,6 @@ function X:Determine_ShouldIFight2(bot)
         myTarget.Obj = nil
         myTarget.Id = 0
     end
-
-    --[[
-    if U.ValidTarget(myTarget) then
-        local Allies = GetUnitList(UNIT_LIST_ALLIED_HEROES)
-        local nFriend = 0
-        for _, friend in pairs(Allies) do
-            local friendID = friend:GetPlayerID()
-            if gHeroVar.HasID(friendID) and myTarget.Id == gHeroVar.GetVar(friendID, "Target").Id then
-                if (GameTime() - friend:GetLastAttackTime()) < 5.0 and myTarget.Obj:GetCurrentMovementSpeed() < friend:GetCurrentMovementSpeed() then
-                    nFriend = nFriend + 1
-                end
-            end
-        end
-
-        -- none of us can catch them
-        if nFriends == 0 then
-            for _, friend in pairs(Allies) do
-                local friendID = friend:GetPlayerID()
-                if gHeroVar.HasID(friendID) and myTarget.Id == gHeroVar.GetVar(friendID, "Target").Id then
-                    utils.myPrint("abandoning chase of ", utils.GetHeroName(myTarget.Obj))
-                    gHeroVar.SetVar(friendID, "Target", NoTarget)
-                end
-            end
-            myTarget = NoTarget
-            self:setHeroVar("Target", NoTarget)
-        end
-    end
-    --]]
 
     -- if I have a target, set by me or by team fighting function
     if myTarget.Id > 0 and IsHeroAlive(myTarget.Id) then
@@ -1187,43 +1134,43 @@ function X:DoUseShrine(bot)
 
     local Team = GetTeam()
     local SJ1 = GetShrine(Team, SHRINE_JUNGLE_1)
-    if SJ1 and SJ1:GetHealth() > 0 and GetUnitToUnitDistance(SJ1 , bot) < 1000 and GetShrineCooldown(SJ1) < 1 then
+    if SJ1 and SJ1:GetHealth() > 0 and GetUnitToUnitDistance(SJ1 , bot) < 1600 and GetShrineCooldown(SJ1) < 1 then
         utils.myPrint("using Shrine Jungle 1")
         bot:ActionPush_UseShrine(SJ1)
         return true
     end
     local SJ2 = GetShrine(Team, SHRINE_JUNGLE_2)
-    if SJ2 and SJ2:GetHealth() > 0 and GetUnitToUnitDistance(SJ2 , bot) < 1000 and GetShrineCooldown(SJ2) < 1 then
+    if SJ2 and SJ2:GetHealth() > 0 and GetUnitToUnitDistance(SJ2 , bot) < 1600 and GetShrineCooldown(SJ2) < 1 then
         utils.myPrint("using Shrine Jungle 2")
         bot:ActionPush_UseShrine(SJ2)
         return true
     end
     local SB1 = GetShrine(Team, SHRINE_BASE_1)
-    if SB1 and SB1:GetHealth() > 0 and GetUnitToUnitDistance(SB1 , bot) < 1000 and GetShrineCooldown(SB1) < 1 then
+    if SB1 and SB1:GetHealth() > 0 and GetUnitToUnitDistance(SB1 , bot) < 1600 and GetShrineCooldown(SB1) < 1 then
         utils.myPrint("using Shrine Base 1")
         bot:ActionPush_UseShrine(SB1)
         return true
     end
     local SB2 = GetShrine(Team, SHRINE_BASE_2)
-    if SB2 and SB2:GetHealth() > 0 and GetUnitToUnitDistance(SB2 , bot) < 1000 and GetShrineCooldown(SB2) < 1 then
+    if SB2 and SB2:GetHealth() > 0 and GetUnitToUnitDistance(SB2 , bot) < 1600 and GetShrineCooldown(SB2) < 1 then
         utils.myPrint("using Shrine Base 2")
         bot:ActionPush_UseShrine(SB2)
         return true
     end
     local SB3 = GetShrine(Team, SHRINE_BASE_3)
-    if SB3 and SB3:GetHealth() > 0 and GetUnitToUnitDistance(SB3 , bot) < 1000 and GetShrineCooldown(SB3) < 1 then
+    if SB3 and SB3:GetHealth() > 0 and GetUnitToUnitDistance(SB3 , bot) < 1600 and GetShrineCooldown(SB3) < 1 then
         utils.myPrint("using Shrine Base 3")
         bot:ActionPush_UseShrine(SB3)
         return true
     end
     local SB4 = GetShrine(Team, SHRINE_BASE_4)
-    if SB4 and SB4:GetHealth() > 0 and GetUnitToUnitDistance(SB4 , bot) < 1000 and GetShrineCooldown(SB4) < 1 then
+    if SB4 and SB4:GetHealth() > 0 and GetUnitToUnitDistance(SB4 , bot) < 1600 and GetShrineCooldown(SB4) < 1 then
         utils.myPrint("using Shrine Base 4")
         bot:ActionPush_UseShrine(SB4)
         return true
     end
     local SB5 = GetShrine(Team, SHRINE_BASE_5)
-    if SB5 and SB5:GetHealth() > 0 and GetUnitToUnitDistance(SB5 , bot) < 1000 and GetShrineCooldown(SB5) < 1 then
+    if SB5 and SB5:GetHealth() > 0 and GetUnitToUnitDistance(SB5 , bot) < 1600 and GetShrineCooldown(SB5) < 1 then
         utils.myPrint("using Shrine Base 5")
         bot:ActionPush_UseShrine(SB5)
         return true
@@ -1241,9 +1188,8 @@ function X:DoPushLane(bot)
     local Ancient = GetAncient(utils.GetOtherTeam())
 
     if #nearbyEnemyTowers == 0 and #Shrines == 0 and #Barracks == 0 then
-        if utils.NotNilOrDead(Ancient) and GetUnitToLocationDistance(bot, Ancient:GetLocation()) < bot:GetAttackRange() and
-            (not Ancient:HasModifier("modifier_fountain_glyph")) then
-            gHeroVar.HeroAttackUnit(bot, Ancient, true)
+        if utils.NotNilOrDead(Ancient) and not Ancient:HasModifier("modifier_fountain_glyph") then
+            gHeroVar.HeroAttackUnit(bot, Ancient, false)
             return true
         end
         return false
@@ -1256,11 +1202,7 @@ function X:DoPushLane(bot)
     if #nearbyEnemyTowers > 0 then
         for _, tower in ipairs(nearbyEnemyTowers) do
             if utils.NotNilOrDead(tower) and (not tower:HasModifier("modifier_fountain_glyph")) then
-                if GetUnitToUnitDistance(tower, bot) < bot:GetAttackRange() then
-                    gHeroVar.HeroAttackUnit(bot, tower, true)
-                else
-                    bot:Action_MoveToUnit(tower)
-                end
+                gHeroVar.HeroAttackUnit(bot, tower, false)
                 return true
             end
         end
@@ -1269,11 +1211,7 @@ function X:DoPushLane(bot)
     if #Barracks > 0 then
         for _, barrack in ipairs(Barracks) do
             if utils.NotNilOrDead(barrack) and (not barrack:HasModifier("modifier_fountain_glyph")) then
-                if GetUnitToUnitDistance(barrack, bot) < bot:GetAttackRange() then
-                    gHeroVar.HeroAttackUnit(bot, barrack, true)
-                else
-                    bot:Action_MoveToUnit(barrack)
-                end
+                gHeroVar.HeroAttackUnit(bot, barrack, false)
                 return true
             end
         end
@@ -1282,11 +1220,7 @@ function X:DoPushLane(bot)
     if #Shrines > 0 then
         for _, shrine in ipairs(Shrines) do
             if utils.NotNilOrDead(shrine) and (not shrine:HasModifier("modifier_fountain_glyph")) then
-                if GetUnitToUnitDistance(shrine, bot) < bot:GetAttackRange() then
-                    gHeroVar.HeroAttackUnit(bot, shrine, true)
-                else
-                    bot:Action_MoveToUnit(shrine)
-                end
+                gHeroVar.HeroAttackUnit(bot, shrine, false)
                 return true
             end
         end

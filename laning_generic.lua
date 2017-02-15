@@ -104,6 +104,10 @@ local function Moving(bot)
     local frontier = GetLaneFrontAmount(GetTeam(), CurLane, true)
     local enemyFrontier = GetLaneFrontAmount(utils.GetOtherTeam(), CurLane, false)
     frontier = Min(frontier, enemyFrontier)
+    
+    if ShouldPush then
+        frontier = 1.0
+    end
 
     local noTower = true
     if #listEnemyTowers > 0 and GetUnitToUnitDistance(bot, listEnemyTowers[1]) > 750 then
@@ -255,6 +259,11 @@ local function CSing(bot)
     if ShouldPush and (#listEnemies > 0 or DotaTime() < (60*3)) then
         ShouldPush = false
     end
+    
+    local enemyFrontier = GetLaneFrontAmount(utils.GetOtherTeam(), CurLane, false)
+    if enemyFrontier < 0.18 then
+        ShouldPush = true
+    end
 
     if IsCore or (NoCoreAround and #listEnemies < 2) then
         local WeakestCreep, WeakestCreepHealth = utils.GetWeakestCreep(listEnemyCreep)
@@ -341,13 +350,15 @@ local function CSing(bot)
         for _, myTower in pairs(listAlliedTowers) do
             if GetUnitToUnitDistance(myTower, enemy) < 600 then
                 local stunAbilities = gHeroVar.GetVar(bot:GetPlayerID(),"HasStun")
-                for _, stun in pairs(stunAbilities) do
-                    if not enemy:IsStunned() and stun[1]:IsFullyCastable() then
-                        local behaviorFlag = stun[1]:GetBehavior()
-                        if utils.CheckFlag(behaviorFlag, ABILITY_BEHAVIOR_UNIT_TARGET) then
-                            bot:Action_UseAbilityOnEntity(stun[1], enemy)
-                        elseif utils.CheckFlag(behaviorFlag, ABILITY_BEHAVIOR_POINT) then
-                            bot:Action_UseAbilityOnLocation(stun[1], enemy:GetExtrapolatedLocation(stun[2]))
+                if stunAbilities then
+                    for _, stun in pairs(stunAbilities) do
+                        if not enemy:IsStunned() and stun[1]:IsFullyCastable() then
+                            local behaviorFlag = stun[1]:GetBehavior()
+                            if utils.CheckFlag(behaviorFlag, ABILITY_BEHAVIOR_UNIT_TARGET) then
+                                bot:Action_UseAbilityOnEntity(stun[1], enemy)
+                            elseif utils.CheckFlag(behaviorFlag, ABILITY_BEHAVIOR_POINT) then
+                                bot:Action_UseAbilityOnLocation(stun[1], enemy:GetExtrapolatedLocation(stun[2]))
+                            end
                         end
                     end
                 end

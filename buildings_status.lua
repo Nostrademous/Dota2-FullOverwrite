@@ -134,6 +134,8 @@ end
 
 function GetHandle(team, id)
     local building = tableBuildings[team][id]
+    if building == nil then return nil end
+    
     if building.Type == TYPE_TOWER then
         return GetTower(team, building.ApiID)
     elseif building.Type == TYPE_MELEE then

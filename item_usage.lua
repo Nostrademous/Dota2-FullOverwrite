@@ -325,58 +325,62 @@ function UseBuffItems()
     return false
 end
 
-function UseTP(lane)
+function UseTP(hero, loc, lane)
+    local loc = loc or nil
     local lane = lane or getHeroVar("CurLane")
-    local bot = GetBot()
     local tpSwap = false
     local backPackSlot = 0
     
     if DotaTime() < 10 then return false end
 
-    if bot:IsChanneling() or bot:IsUsingAbility() then return false end
+    if hero:IsChanneling() or hero:IsUsingAbility() then return false end
     
     -- if we are in fountain, don't TP out until we have full health & mana
-    if bot:DistanceFromFountain() < 200 and 
-        not (bot:GetHealth() == bot:GetMaxHealth() and bot:GetMana() == bot:GetMaxMana()) then
+    if hero:DistanceFromFountain() < 200 and 
+        not (hero:GetHealth() == hero:GetMaxHealth() and hero:GetMana() == hero:GetMaxMana()) then
         return false
     end
 
-    local tp = utils.HaveItem(bot, "item_tpscroll")
-    if tp ~= nil and (utils.HaveItem(bot, "item_travel_boots_1") or utils.HaveItem(bot, "item_travel_boots_2")) 
-        and (bot:DistanceFromFountain() < 200 or bot:DistanceFromSideShop() < 200 or bot:DistanceFromSecretShop() < 200) then
-        bot:SellItem(tp)
+    local tp = utils.HaveItem(hero, "item_tpscroll")
+    if tp ~= nil and (utils.HaveItem(hero, "item_travel_boots_1") or utils.HaveItem(hero, "item_travel_boots_2")) 
+        and (hero:DistanceFromFountain() < 200 or hero:DistanceFromSideShop() < 200 or hero:DistanceFromSecretShop() < 200) then
+        hero:SellItem(tp)
         tp = nil
     end
 
-    if tp == nil and utils.HaveTeleportation(bot) then
-        tp = utils.HaveItem(bot, "item_travel_boots_1")
+    if tp == nil and utils.HaveTeleportation(hero) then
+        tp = utils.HaveItem(hero, "item_travel_boots_1")
         if tp == nil then
-            tp = utils.HaveItem(bot, "item_travel_boots_2")
+            tp = utils.HaveItem(hero, "item_travel_boots_2")
         end
     end
 
-    local dest = GetLocationAlongLane(lane, GetLaneFrontAmount(GetTeam(), lane, false))
-    if tp == nil and GetUnitToLocationDistance(bot, dest) > 3000
-        and bot:DistanceFromFountain() < 200
-        and bot:GetGold() > 50 then
-        local savedValue = bot:GetNextItemPurchaseValue()
-        backPackSlot = utils.GetFreeSlotInBackPack(bot)
-        if utils.NumberOfItems(bot) == 6 and backPackSlot > 0 then 
-            bot:ActionImmediate_SwapItems(0, backPackSlot)
+    local dest = loc
+    if dest == nil then
+        dest = GetLocationAlongLane(lane, GetLaneFrontAmount(GetTeam(), lane, false))
+    end
+    
+    if tp == nil and GetUnitToLocationDistance(hero, dest) > 3000
+        and hero:DistanceFromFountain() < 200
+        and hero:GetGold() > 50 then
+        local savedValue = hero:GetNextItemPurchaseValue()
+        backPackSlot = utils.GetFreeSlotInBackPack(hero)
+        if utils.NumberOfItems(hero) == 6 and backPackSlot > 0 then 
+            hero:ActionImmediate_SwapItems(0, backPackSlot)
             tpSwap = true
         end
-        bot:ActionImmediate_PurchaseItem( "item_tpscroll" )
-        tp = utils.HaveItem(bot, "item_tpscroll")
-        bot:SetNextItemPurchaseValue(savedValue)
+        hero:ActionImmediate_PurchaseItem( "item_tpscroll" )
+        tp = utils.HaveItem(hero, "item_tpscroll")
+        hero:SetNextItemPurchaseValue(savedValue)
     end
 
     if tp ~= nil and tp:IsFullyCastable() then
         -- dest (below) should find farthest away tower to TP to in our assigned lane, even if tower is dead it will
         -- just default to closest location we can TP to in that direction
-        if GetUnitToLocationDistance(bot, dest) > 3000 and bot:DistanceFromFountain() < 200 then
-            bot:Action_UseAbilityOnLocation(tp, dest)
+        if GetUnitToLocationDistance(hero, dest) > 3000 and hero:DistanceFromFountain() < 200 then
+            hero:Action_UseAbilityOnLocation(tp, dest)
             if tpSwap then 
-                bot:ActionImmediate_SwapItems(0, backPackSlot)
+                hero:ActionImmediate_SwapItems(0, backPackSlot)
             end
             return true
         end
@@ -400,7 +404,7 @@ function UseItems()
     
     if UseTeamItems() then return true end
     
-    if UseTP() then return true end
+    if UseTP(bot) then return true end
     
     local courier = utils.IsItemAvailable("item_courier")
     if courier ~= nil then

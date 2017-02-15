@@ -263,6 +263,8 @@ function X:Think(bot)
                     self:setHeroVar("Target", NoTarget)
                     break
                 end
+                enemyData[setTarget.Id].Time1 = -100.0
+                enemyData[setTarget.Id].Time2 = -100.0
             end
         end
     end
@@ -281,6 +283,8 @@ function X:Think(bot)
                     break
                 end
             end
+            enemyData[gankTarget.Id].Time1 = -100.0
+            enemyData[gankTarget.Id].Time2 = -100.0
         end
     end
 
@@ -480,6 +484,11 @@ function X:Think(bot)
     if lane then
         local bRet = self:DoDefendLane(bot, lane, building, numEnemies)
         if bRet then return end
+    elseif self:getHeroVar("DoDefend") then
+        local hBuilding = buildings_status.GetHandle(GetTeam(), building)
+        if hBuilding == nil or hBuilding:TimeSinceDamagedByAnyHero() > 5.0 then
+            self:setHeroVar("DoDefend", false)
+        end
     end
 
     if ( self:GetMode() == MODE_GANKING or self:Determine_ShouldGank(bot) ) then
@@ -1237,23 +1246,38 @@ function X:DoDefendLane(bot, lane, building, numEnemies)
     local listAllies = GetUnitList(UNIT_LIST_ALLIED_HEROES)
     local hBuilding = buildings_status.GetHandle(GetTeam(), building)
     for _, ally in pairs(listAllies) do
-        --FIXME - Implement
-        local distFromBuilding = GetUnitToUnitDistance(ally, hBuilding)
-        local timeToReachBuilding = distFromBuilding/ally:GetCurrentMovementSpeed()
+        if not ally:IsIllusion() then
+            local distFromBuilding = GetUnitToUnitDistance(ally, hBuilding)
+            local timeToReachBuilding = distFromBuilding/ally:GetCurrentMovementSpeed()
 
-        if timeToReachBuilding <= 5.0 then
-            table.insert(listAlliesCanReachBuilding, ally)
-        else
-            local haveTP = utils.HaveItem(ally, "item_tpscroll")
-            if haveTP and haveTP:IsFullyCastable() then
-                table.insert(listAlliesCanTPToBuildling, ally)
+            if timeToReachBuilding <= 5.0 then
+                table.insert(listAlliesCanReachBuilding, ally)
+            else
+                local haveTP = utils.HaveItem(ally, "item_tpscroll")
+                if haveTP and haveTP:IsFullyCastable() then
+                    table.insert(listAlliesCanTPToBuildling, ally)
+                end
             end
         end
     end
 
     if (#listAlliesCanReachBuilding + #listAlliesCanTPToBuildling) >= (numEnemies - 1) then
         utils.myPrint("FIXME: We Could Defend this building!!! Need to implement logic")
-        --FIXME self:setHeroVar("DoDefend", true)
+        local numGoing = 0
+        for _, ally in pairs(listAlliesCanReachBuilding) do
+            gHeroVar.SetVar(ally:GetPlayerID(), "DoDefend", true)
+            gHeroVar.HeroMoveToLocation(ally, hBuilding:GetLocation())
+            numGoing = numGoing + 1
+            
+            if numGoing >= (numEnemies - 1) then break end
+        end
+        for _, ally in pairs(listAlliesCanTPToBuildling) do
+            gHeroVar.SetVar(ally:GetPlayerID(), "DoDefend", true)
+            item_usage.UseTP(ally, hBuilding:GetLocation())
+            numGoing = numGoing + 1
+            
+            if numGoing >= (numEnemies - 1) then break end
+        end
     end
 
     return false

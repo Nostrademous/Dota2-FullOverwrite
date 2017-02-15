@@ -74,9 +74,12 @@ function DetectEnemyPushMid()
     else building = 0 
     end
     
-    local num = numEnemiesNearBuilding(building)
-    
-    return num, building
+    local hBuilding = buildings_status.GetHandle(GetTeam(), building)
+    if hBuilding and hBuilding:TimeSinceDamagedByAnyHero() < 1.5 then
+        local num = numEnemiesNearBuilding(building)
+        return num, building
+    end
+    return 0, building
 end
 
 function DetectEnemyPushTop()
@@ -92,9 +95,12 @@ function DetectEnemyPushTop()
     else building = 0 
     end
     
-    local num = numEnemiesNearBuilding(building)
-    
-    return num, building
+    local hBuilding = buildings_status.GetHandle(GetTeam(), building)
+    if hBuilding and hBuilding:TimeSinceDamagedByAnyHero() < 1.5 then
+        local num = numEnemiesNearBuilding(building)
+        return num, building
+    end
+    return 0, building
 end
 
 function DetectEnemyPushBot()
@@ -110,9 +116,12 @@ function DetectEnemyPushBot()
     else building = 0 
     end
     
-    local num = numEnemiesNearBuilding(building)
-    
-    return num, building
+    local hBuilding = buildings_status.GetHandle(GetTeam(), building)
+    if hBuilding and hBuilding:TimeSinceDamagedByAnyHero() < 1.5 then
+        local num = numEnemiesNearBuilding(building)
+        return num, building
+    end
+    return 0, building
 end
 
 local lastPushCheck = -1000.0
@@ -122,9 +131,9 @@ function DetectEnemyPush()
         local numMid, midBuilding = DetectEnemyPushMid()
         local numTop, topBuilding = DetectEnemyPushTop()
         local numBot, botBuildign = DetectEnemyPushBot()
-        if numMid >= 3 then return LANE_MID, midBuilding, numMid
-        elseif numTop >= 3 then return LANE_TOP, topBuilding, numTop
-        elseif numBot >= 3 then return LANE_BOT, botBuilding, numBot
+        if numMid > 0 then return LANE_MID, midBuilding, numMid
+        elseif numTop > 0 then return LANE_TOP, topBuilding, numTop
+        elseif numBot > 0 then return LANE_BOT, botBuilding, numBot
         end
         lastPushCheck = newTime
     end

@@ -69,6 +69,7 @@ function nukeDamage( bot, enemy )
         local mainDamage = abilityCM:GetSpecialValueFloat("main_damage")
         
         local manaCostCM = abilityCM:GetManaCost()
+        if abilityCM:IsHidden() then manaCostCM = manaCostCM + abilityR:GetManaCost()
         if manaCostCM <= manaAvailable then
             if not magicImmune then
                 manaAvailable = manaAvailable - manaCostCM
@@ -82,7 +83,9 @@ function nukeDamage( bot, enemy )
     -- Check Sun Strike
     if abilitySS:IsFullyCastable() then
         local ssDmg = abilitySS:GetSpecialValueFloat("damage")
+        
         local manaCostSS = abilitySS:GetManaCost()
+        if abilitySS:IsHidden() then manaCostCM = manaCostCM + abilityR:GetManaCost()
         if manaCostSS <= manaAvailable then
             manaAvailable = manaAvailable - manaCostSS
             dmgTotal = dmgTotal + ssDmg

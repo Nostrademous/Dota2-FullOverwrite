@@ -40,6 +40,7 @@ local listHC = {
 	"npc_dota_hero_faceless_void",
 	"npc_dota_hero_gyrocopter",
 	"npc_dota_hero_huskar",
+    --"npc_dota_hero_invoker",
 	"npc_dota_hero_juggernaut",
 	"npc_dota_hero_lone_druid",
 	"npc_dota_hero_luna",

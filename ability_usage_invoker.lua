@@ -326,20 +326,20 @@ function AbilityUsageThink(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCre
         
         -- Determine what orbs we want
         local bRet = ConsiderOrbs(bot)
-        if bRet then return end
+        if bRet then return true end
         
         bRet = ConsiderShowUp(bot, nearbyEnemyHeroes)
-        if bRet then return end
+        if bRet then return true end
     end
     
     -- Initial invokes at low levels
     if bot:GetLevel() == 1 and abilitySS:IsHidden() then
         invokeSunStrike(bot)
-        return
+        return true
     elseif bot:GetLevel() == 2 and abilityCM:IsHidden() then
         tripleExortBuff(bot) -- this is first since we are pushing, not queueing
         invokeChaosMeteor(bot)
-        return
+        return true
     end
     
     return false
@@ -538,7 +538,9 @@ function tripleExortBuff(bot)
         bot:ActionPush_UseAbility( abilityE )
         bot:ActionPush_UseAbility( abilityE )
         bot:ActionPush_UseAbility( abilityE )
+        return true
     end
+    return false
 end
 
 function tripleQuasBuff(bot)
@@ -546,7 +548,9 @@ function tripleQuasBuff(bot)
         bot:ActionPush_UseAbility( abilityQ )
         bot:ActionPush_UseAbility( abilityQ )
         bot:ActionPush_UseAbility( abilityQ )
+        return true
     end
+    return false
 end
 
 function tripleWexBuff(bot)
@@ -554,7 +558,9 @@ function tripleWexBuff(bot)
         bot:ActionPush_UseAbility( abilityW )
         bot:ActionPush_UseAbility( abilityW )
         bot:ActionPush_UseAbility( abilityW )
+        return true
     end
+    return false
 end
 
 function ConsiderOrbs(bot)
@@ -579,18 +585,15 @@ function ConsiderOrbs(bot)
     
     if getHeroVar("IsRetreating") or me:GetMode() == constants.MODE_RETREAT then
         if nWex < 3 then 
-            tripleWexBuff(bot)
-            return true
+            return tripleWexBuff(bot)
         end
     elseif bot:GetHealth()/bot:GetMaxHealth() < 0.75 then
         if nQuas < 3 then
-            tripleQuasBuff(bot)
-            return true
+            return tripleQuasBuff(bot)
         end
     else
         if nExort < 3 then
-            tripleExortBuff(bot)
-            return true
+            return tripleExortBuff(bot)
         end
     end
     

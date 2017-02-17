@@ -262,7 +262,9 @@ U.MapSafeSpots = {
     Vector(4486, -5033),
     Vector(5972, -4964),
     Vector(7354, -4144),
-    Vector(7467, -3149)
+    Vector(7467, -3149),
+    Vector(-3992, 3886),
+    Vector(-5444, 3999)
 }
 
 U.RadiantSafeSpots = {unpack(U.MapSafeSpots)}
@@ -1586,7 +1588,7 @@ function U.myPrint(...)
         msg = msg .. tostring(v)
     end
     --uncomment to only see messages by bots mentioned underneath
-    --if botname == "invoker" then --or botname == "viper" then
+    --if botname == "drow_ranger" then --or botname == "viper" then
       print(msg)
     --end
 end

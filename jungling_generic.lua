@@ -27,14 +27,14 @@ end
 local EyeRange = 1200
 
 local JunglingStates={
-    FindCamp=0,
-    MoveToCamp=1,
-    WaitForSpawn=2,
-    Stack=3,
-    CleanCamp=4
+    FindCamp    = 0,
+    MoveToCamp  = 1,
+    WaitForSpawn= 2,
+    Stack       = 3,
+    CleanCamp   = 4
 }
 
-function OnStart(npcBot)
+function OnStart(bot)
     setHeroVar("JunglingState", JunglingStates.FindCamp)
     setHeroVar("move_ticks", 0)
     -- TODO: if there are camps, consider tp'ing to the jungle
@@ -207,16 +207,14 @@ local States = {
 
 ----------------------------------
 
-function Think(npcBot)
-    --[[
-    local me = getHeroVar("Self")
-    if me:getPrevMode() ~= MODE_JUNGLING then
-        OnResume(npcBot)
+function Think(bot)
+    if getHeroVar("JunglingState") == nil then
+        OnStart(bot)
     end
-    --]]
-    if npcBot:IsUsingAbility() then return end
+    
+    if bot:IsUsingAbility() or bot:IsChanneling() then return end
 
-    States[getHeroVar("JunglingState")](npcBot)
+    States[getHeroVar("JunglingState")](bot)
 end
 
 

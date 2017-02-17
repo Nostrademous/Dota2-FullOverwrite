@@ -44,7 +44,7 @@ local BloodseekerAbilityPriority = {
     BLOODSEEKER_SKILL_E,    BLOODSEEKER_SKILL_R,    BLOODSEEKER_ABILITY5,   BLOODSEEKER_ABILITY8
 };
 
-local bloodseekerModeStack = { [1] = constants.MODE_NONE }
+local bloodseekerModeStack = { [1] = {constants.MODE_NONE, BOT_ACTION_DESIRE_NONE} }
 
 botBS = dt:new()
 

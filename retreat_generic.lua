@@ -32,6 +32,8 @@ local function Updates(bot)
 end
 
 function Think(bot, loc)
+    if getHeroVar("RetreatLane") == nil then OnStart(bot) end
+    
     Updates(bot)
 
     local nextmove = nil
@@ -46,24 +48,15 @@ function Think(bot, loc)
     end
 
     local retreatAbility = getHeroVar("HasMovementAbility")
-    if retreatAbility ~= nil and retreatAbility:IsFullyCastable() then
+    if retreatAbility ~= nil and retreatAbility[1]:IsFullyCastable() then
         -- same name for bot AM and QoP, "tooltip_range" for "riki_blink_strike"
-        local value = 0.03
-        if (utils.GetHeroName(bot) == "antimage" or utils.GetHeroName(bot) == "queen_of_pain") then
-            value = retreatAbility:GetSpecialValueInt("blink_range")
-            -- below I test how far in units is a single 0.01 move in terms of GetLocationAlongLane()
-            local scale = utils.GetDistance(GetLocationAlongLane(getHeroVar("RetreatLane"), 0.5), GetLocationAlongLane(getHeroVar("RetreatLane"), 0.49))
-            value = ((value - 15) / scale)*0.01 -- we subtract 15 to give ourselves a little rounding wiggle room
-            nextmove = GetLocationAlongLane(getHeroVar("RetreatLane"), Max(getHeroVar("RetreatPos")-value, 0.0))
-            bot:Action_UseAbilityOnLocation(retreatAbility, nextmove)
-        elseif utils.GetHeroName(bot) == "riki" then
-            value = retreatAbility:GetSpecialValueInt("tooltip_range")
-            -- below I test how far in units is a single 0.01 move in terms of GetLocationAlongLane()
-            local scale = utils.GetDistance(GetLocationAlongLane(getHeroVar("RetreatLane"), 0.5), GetLocationAlongLane(getHeroVar("RetreatLane"), 0.49))
-            value = ((value - 15) / scale)*0.01 -- we subtract 15 to give ourselves a little rounding wiggle room
-            nextmove = GetLocationAlongLane(getHeroVar("RetreatLane"), Max(getHeroVar("RetreatPos")-value, 0.0))
-            --FIXME: UseAbilityOnEntity() not Location() bot:Action_UseAbilityOnLocation(retreatAbility, nextmove)
-        end
+        local value = retreatAbility[2]
+        -- below I test how far in units is a single 0.01 move in terms of GetLocationAlongLane()
+        local scale = utils.GetDistance(GetLocationAlongLane(getHeroVar("RetreatLane"), 0.5), GetLocationAlongLane(getHeroVar("RetreatLane"), 0.49))
+        value = ((value - 15) / scale)*0.01 -- we subtract 15 to give ourselves a little rounding wiggle room
+        nextmove = GetLocationAlongLane(getHeroVar("RetreatLane"), Max(getHeroVar("RetreatPos")-value, 0.0))
+        bot:Action_UseAbilityOnLocation(retreatAbility[1], nextmove)
+        return
     end
 
     if item_usage.UseMovementItems(nextmove) then return end

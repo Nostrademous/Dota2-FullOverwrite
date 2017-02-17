@@ -42,7 +42,7 @@ function AbilityUsageThink(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCre
 
     local target = getHeroVar("Target")
     if not utils.ValidTarget(target) then
-        target, _ = utils.GetWeakestHero(bot, bot:GetAttackRange()+200)
+        target, _ = utils.GetWeakestHero(bot, bot:GetAttackRange()+200, nearbyEnemyHeroes)
         if target ~= nil then
             local totalDmgPerSec = (CalcRightClickDmg(bot, target) + DoTdpsUlt + DoTdpsQ)/bot:GetSecondsPerAttack()
             if totalDmgPerSec*5.1 > target:GetHealth() and HasUlt(bot) then
@@ -51,12 +51,12 @@ function AbilityUsageThink(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCre
         end
     end
 
-    if UseUlt(bot) or UseQ(bot) then return true end
+    if UseUlt(bot) or UseQ(bot, nearbyEnemyHeroes) then return true end
     
     return false
 end
 
-function UseQ(bot)
+function UseQ(bot, nearbyEnemyHeroes)
     local ability = bot:GetAbilityByName(Abilities[1])
 
     if (ability == nil) or (not ability:IsFullyCastable()) then
@@ -75,15 +75,20 @@ function UseQ(bot)
     if target.Obj:IsMagicImmune() or target.Obj:IsInvulnerable() then return false end
 
     DoTdpsQ = target.Obj:GetActualIncomingDamage(DoTdpsQ, DAMAGE_TYPE_MAGICAL)
-
-    if GetUnitToUnitDistance(bot, target.Obj) < (ability:GetCastRange() + 100) then
+    if GetUnitToUnitDistance(bot, target.Obj) < (ability:GetCastRange() + bot:GetBoundingRadius()) then
         utils.TreadCycle(bot, constants.INTELLIGENCE)
         bot:Action_UseAbilityOnEntity(ability, target.Obj)
         return true
     end
 
     -- harassment code when in lane
-    -- DON'T DO THIS HERE - IT'S HANDLED in laning_generic.lua UseOrbEffect()
+    local manaRatio = bot:GetMana()/bot:GetMaxMana()
+    target, _ = utils.GetWeakestHero(bot, bot:GetAttackRange()+bot:GetBoundingRadius(), nearbyEnemyHeroes)
+    if manaRatio > 0.4 and GetUnitToUnitDistance(bot, target) then
+        utils.TreadCycle(bot, constants.INTELLIGENCE)
+        bot:Action_UseAbilityOnEntity(ability, target)
+        return true
+    end
     return false
 end
 

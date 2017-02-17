@@ -42,7 +42,7 @@ local LinaAbilityPriority = {
     LINA_SKILL_W,    LINA_SKILL_R,    LINA_ABILITY5,   LINA_ABILITY7
 };
 
-local linaModeStack = { [1] = constants.MODE_NONE }
+local linaModeStack = { [1] = {constants.MODE_NONE, BOT_ACTION_DESIRE_NONE} }
 
 LinaBot = dt:new()
 

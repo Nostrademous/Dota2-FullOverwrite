@@ -29,7 +29,7 @@ local AntimageAbilityPriority = {
     SKILL_E,    SKILL_R,    ABILITY6,   ABILITY8
 };
 
-local antimageModeStack = { [1] = constants.MODE_NONE }
+local antimageModeStack = { [1] = {constants.MODE_NONE, BOT_ACTION_DESIRE_NONE} }
 
 AMBot = dt:new()
 
@@ -50,8 +50,9 @@ function amBot:ConsiderAbilityUse(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyE
 end
 
 function amBot:DoHeroSpecificInit(bot)
-    self:setHeroVar("HasMovementAbility", bot:GetAbilityByName(SKILL_W))
-    self:setHeroVar("HasEscape", bot:GetAbilityByName(SKILL_W))
+    local mvAbility = bot:GetAbilityByName(SKILL_W)
+    self:setHeroVar("HasMovementAbility", {mvAbility, mvAbility:GetSpecialValueInt("blink_range")})
+    self:setHeroVar("HasEscape", {mvAbility, mvAbility:GetSpecialValueInt("blink_range")})
 end
 
 function Think()

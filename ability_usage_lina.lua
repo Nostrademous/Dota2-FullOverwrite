@@ -193,19 +193,19 @@ function AbilityUsageThink(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCre
     end
 
     if castLBDesire > castLSADesire and castLBDesire > castDSDesire then
-        print ( "I Desired a LB Hit" )
+        utils.myPrint( "I Desired a LB Hit" )
         bot:Action_UseAbilityOnEntity( abilityR, castLBTarget )
         return true
     end
 
     if castLSADesire > 0 then
-        print ( "I Desired a LSA Hit" )
+        utils.myPrint( "I Desired a LSA Hit" )
         bot:Action_UseAbilityOnLocation( abilityW, castLSALocation )
         return true
     end
 
     if castDSDesire > 0 then
-        print ( "I Desired a DS Hit" )
+        utils.myPrint( "I Desired a DS Hit" )
         bot:Action_UseAbilityOnLocation( abilityQ, castDSLocation )
         return true
     end

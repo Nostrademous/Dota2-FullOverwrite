@@ -43,10 +43,11 @@ local function UseQ(bot)
     -- if we don't have a valid target, return
     if not utils.ValidTarget(target) then return false end
 
-    -- if target is magic immune or invulnerable and is crowd controlled, return
-    if utils.IsTargetMagicImmune(target.Obj) and utils.IsCrowdControlled(target.Obj) then return false end
+    -- if target is magic immune or invulnerable return
+    if utils.IsTargetMagicImmune(target.Obj) then return false end
 
-    if GetUnitToUnitDistance(bot, target.Obj) < (abilityQ:GetCastRange() + 100) then
+    local manaRatio = bot:GetMana()/bot:GetMaxMana()
+    if manaRatio > 0.4 and GetUnitToUnitDistance(bot, target.Obj) < (abilityQ:GetCastRange() + bot:GetBoundingRadius()) then
         utils.TreadCycle(bot, constants.INTELLIGENCE)
         bot:Action_UseAbilityOnEntity(abilityQ, target.Obj)
         return true
@@ -149,13 +150,13 @@ function AbilityUsageThink(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCre
     if not bot:IsAlive() then return false end
 
     -- Check if we're already using an ability
-    if ( bot:IsUsingAbility() or bot:IsChanneling() ) then return false end
+    if bot:IsUsingAbility() or bot:IsChanneling() then return false end
 
     if UseE(bot, nearbyEnemyTowers, nearbyAlliedCreep) then return true end
 
-    if UseW(bot, nearbyEnemyHeroes) then return true end
+    --if UseW(bot, nearbyEnemyHeroes) then return true end
     
-    --if UseQ(bot) then return true end
+    if UseQ(bot) then return true end
     
     return false
 end

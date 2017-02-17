@@ -42,7 +42,7 @@ local AbilityPriority = {
     SKILL_W,    SKILL_R,    ABILITY6,   ABILITY7
 }
 
-local cmModeStack = { [1] = constants.MODE_NONE }
+local cmModeStack = { [1] = {constants.MODE_NONE, BOT_ACTION_DESIRE_NONE} }
 
 botCM = dt:new()
 

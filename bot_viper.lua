@@ -31,7 +31,7 @@ local ViperAbilityPriority = {
     SKILL_E,    SKILL_R,    ABILITY6,   ABILITY8
 };
 
-local viperModeStack = { [1] = constants.MODE_NONE }
+local viperModeStack = { [1] = {constants.MODE_NONE, BOT_ACTION_DESIRE_NONE} }
 
 ViperBot = dt:new()
 

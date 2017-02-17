@@ -43,7 +43,7 @@ local DrowRangerAbilityPriority = {
     SKILL_W,    SKILL_R,    ABILITY5,   ABILITY8
 };
 
-local drowRangerModeStack = { [1] = constants.MODE_NONE }
+local drowRangerModeStack = { [1] = {constants.MODE_NONE, BOT_ACTION_DESIRE_NONE} }
 
 botDrow = dt:new()
 

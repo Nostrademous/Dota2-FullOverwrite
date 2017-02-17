@@ -32,6 +32,9 @@ function UseRegenItems()
     -- if we are full health and full mana, exit early
     if bot:GetHealth() == bot:GetMaxHealth() and bot:GetMana() == bot:GetMaxMana() then return false end
     
+    -- if we are under effect of a shrine, exit early
+    if bot:HasModifier("modifier_filler_heal") then return false end
+    
     local Enemies = bot:GetNearbyHeroes(850, true, BOT_MODE_NONE)
 
     local bottle = utils.HaveItem(bot, "item_bottle")
@@ -141,6 +144,9 @@ function UseRegenItemsOnAlly()
     if bot:IsChanneling() or bot:IsUsingAbility() then
         return false
     end
+    
+    -- if we are under effect of a shrine, exit early
+    if bot:HasModifier("modifier_filler_heal") then return false end
     
     local Enemies = bot:GetNearbyHeroes(850, true, BOT_MODE_NONE)
 	local Allies = bot:GetNearbyHeroes(850, false,  BOT_MODE_NONE)

@@ -32,7 +32,7 @@ local EnigmaAbilityPriority = {
     ENIGMA_SKILL_E,    ENIGMA_SKILL_R,    ENIGMA_ABILITY6,   ENIGMA_ABILITY7
 };
 
-local enigmaActionQueue = { [1] = constants.MODE_NONE }
+local enigmaActionQueue = { [1] = {constants.MODE_NONE, BOT_ACTION_DESIRE_NONE} }
 
 enigmaBot = dt:new()
 

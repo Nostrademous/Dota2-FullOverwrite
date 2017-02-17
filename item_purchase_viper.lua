@@ -132,11 +132,13 @@ vpBuy.ItemsToBuyAsRoamer = ItemsToBuyAsRoamer
 ----------------------------------------------------------------------------------------------------
 
 function ItemPurchaseThink()
+    if GetGameState() == GAME_STATE_PRE_GAME and DotaTime() < -89 then return end
+    
 	local npcBot = GetBot()
 
 	if not init then
-			-- init the tables
-			init = vpBuy:InitTable()
+        -- init the tables
+        init = vpBuy:InitTable()
 	end
 
 	vpBuy:Think(npcBot)

@@ -56,10 +56,6 @@ local LaningState = LaningStates.Start
 function OnStart(bot)
     setHeroVar("BackTimerGen", -1000)
 
-    if bot:IsChanneling() or bot:IsUsingAbility() then
-        return
-    end
-
     local dest = GetLocationAlongLane(getHeroVar("CurLane"), GetLaneFrontAmount(GetTeam(), getHeroVar("CurLane"), true)-0.04)
     if GetUnitToLocationDistance(bot, dest) > 1500 then
         utils.InitPath(bot)
@@ -109,19 +105,16 @@ local function Moving(bot)
         frontier = 1.0
     end
 
+    --[[
     local noTower = true
     if #listEnemyTowers > 0 and GetUnitToUnitDistance(bot, listEnemyTowers[1]) > 750 then
         noTower = false
     end
+    --]]
 
-    if frontier >= LanePos and (noTower or ShouldPush) then
-        local target = GetLocationAlongLane(CurLane, Min(1.0, LanePos+0.03))
-        --print( " Going Forward :: MyLoc: ", bot:GetLocation()[1], ",", bot:GetLocation()[2], " TARGET: ", target[1], ",", target[2])
-        gHeroVar.HeroMoveToLocation(bot, target)
-    else
-        local target = GetLocationAlongLane(CurLane, Min(1.0, LanePos-0.03))
-        gHeroVar.HeroMoveToLocation(bot, target)
-    end
+    local target = GetLocationAlongLane(CurLane, Min(1.0, frontier))
+    --utils.myPrint( "Lane: ", CurLane, " Going Forward :: MyLanePos:  ", LanePos, " TARGET: ", target[1], ",", target[2])
+    utils.MoveSafelyToLocation(bot, target)
 
     if #listEnemyCreep > 0 then
         LaningState = LaningStates.MovingToPos
@@ -131,10 +124,11 @@ end
 local function MovingToPos(bot)
 
     local bNeedToGoHigher = false
+    local higherDest = nil
     for _, eCreep in ipairs(listEnemyCreep) do
         if eCreep:GetHealth()/eCreep:GetMaxHealth() <= 0.5 and utils.GetHeightDiff(bot, eCreep) < 0 then
             bNeedToGoHigher = true
-            --utils.myPrint("Would be nice to go to high ground to ensure no miss-chance")
+            higherDest = eCreep:GetLocation()
             break
         end
     end
@@ -146,11 +140,11 @@ local function MovingToPos(bot)
     local bpos = GetLocationAlongLane(CurLane, LanePos-0.02)
 
     local dest = utils.VectorTowards(cpos, bpos, 500)
-    if utils.IsMelee(bot) then
-        dest = utils.VectorTowards(cpos, bpos, 1000)
+    if bNeedToGoHigher and  #listAlliedCreep > 0 then
+        dest = higherDest
     end
 
-    local rndtilt = RandomVector(150)
+    local rndtilt = RandomVector(75)
 
     dest = dest + rndtilt
 
@@ -344,7 +338,7 @@ local function CSing(bot)
         end
     end
 
-    if utils.UseOrbEffect(bot) then return end
+    --if utils.UseOrbEffect(bot) then return end
     
     for _, enemy in pairs(listEnemies) do
         for _, myTower in pairs(listAlliedTowers) do
@@ -479,8 +473,12 @@ local function LaningStatePrint(state)
 end
 
 function Think(bot, listEnemies, listAllies, listEnemyCreep, listAlliedCreep, listEnemyTowers, listAlliedTowers)
+    if getHeroVar("BackTimerGen") == nil then
+        OnStart(bot)
+    end
+    
     Updates(bot, listEnemies, listAllies, listEnemyCreep, listAlliedCreep, listEnemyTowers, listAlliedTowers)
-
+    
     if bot:IsUsingAbility() or bot:IsChanneling() then
         return
     end

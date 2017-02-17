@@ -88,11 +88,13 @@ amBuy.ItemsToBuyAsRoamer = ItemsToBuyAsRoamer
 ----------------------------------------------------------------------------------------------------
 
 function ItemPurchaseThink()
+    if GetGameState() == GAME_STATE_PRE_GAME and DotaTime() < -89 then return end
+    
 	local npcBot = GetBot()
 
 	if not init then
-			-- init the tables
-			init = amBuy:InitTable()
+        -- init the tables
+        init = amBuy:InitTable()
 	end
 
 	amBuy:Think(npcBot)

@@ -79,12 +79,15 @@ function EnemyData.UpdateEnemyInfo(timeFreq)
 
             if (RealTime() - EnemyData[pid].Time2) >= UpdateFreq2 then
                 EnemyData[pid].Time2 = RealTime()
+                
+                --[[
                 for i = 0, 5, 1 do
                     local item = enemy:GetItemInSlot(i)
                     if item ~= nil then
                         EnemyData[pid].Items[i] = item:GetName()
                     end
                 end
+                --]]
 
                 EnemyData[pid].SlowDur = enemy:GetSlowDuration(false) -- FIXME: does this count abilities only, or Items too?
                 EnemyData[pid].StunDur = enemy:GetStunDuration(false) -- FIXME: does this count abilities only, or Items too?

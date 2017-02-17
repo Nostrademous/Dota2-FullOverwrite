@@ -33,7 +33,7 @@ local TimberAbilityPriority = {
     SKILL_Q,    SKILL_R,    ABILITY5,   ABIILTY8
 };
 
-local timberModeStack = { [1] = constants.MODE_NONE }
+local timberModeStack = { [1] = {constants.MODE_NONE, BOT_ACTION_DESIRE_NONE} }
 
 TimberBot = dt:new()
 

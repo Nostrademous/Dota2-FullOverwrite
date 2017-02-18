@@ -59,42 +59,45 @@ end
 function UseQ(bot, nearbyEnemyHeroes)
     local ability = bot:GetAbilityByName(Abilities[1])
 
-    if (ability == nil) or (not ability:IsFullyCastable()) then
+    if not ability:IsFullyCastable() then
         return false
     end
-    
-    -- set our local var
-    DoTdpsQ = ability:GetSpecialValueInt("damage")
-    
-    local target = getHeroVar("Target")
 
+    -- harassment code when in lane
+    --[[
+    local manaRatio = bot:GetMana()/bot:GetMaxMana()
+    local target, _ = utils.GetWeakestHero(bot, bot:GetAttackRange()+bot:GetBoundingRadius(), nearbyEnemyHeroes)
+    if target ~= nil and manaRatio > 0.4 and GetUnitToUnitDistance(bot, target) then
+        utils.TreadCycle(bot, constants.INTELLIGENCE)
+        bot:Action_UseAbilityOnEntity(ability, target)
+        return true
+    end
+    --]]
+    
+    target = getHeroVar("Target")
+    
     -- if we don't have a valid target, return
     if not utils.ValidTarget(target) then return false end
 
     -- if target is magic immune or invulnerable, return
-    if target.Obj:IsMagicImmune() or target.Obj:IsInvulnerable() then return false end
+    if utils.IsTargetMagicImmune(target.Obj) then return false end
 
+    -- set our local var
+    DoTdpsQ = ability:GetSpecialValueInt("damage")
     DoTdpsQ = target.Obj:GetActualIncomingDamage(DoTdpsQ, DAMAGE_TYPE_MAGICAL)
+    
     if GetUnitToUnitDistance(bot, target.Obj) < (ability:GetCastRange() + bot:GetBoundingRadius()) then
         utils.TreadCycle(bot, constants.INTELLIGENCE)
         bot:Action_UseAbilityOnEntity(ability, target.Obj)
         return true
     end
 
-    -- harassment code when in lane
-    local manaRatio = bot:GetMana()/bot:GetMaxMana()
-    target, _ = utils.GetWeakestHero(bot, bot:GetAttackRange()+bot:GetBoundingRadius(), nearbyEnemyHeroes)
-    if manaRatio > 0.4 and GetUnitToUnitDistance(bot, target) then
-        utils.TreadCycle(bot, constants.INTELLIGENCE)
-        bot:Action_UseAbilityOnEntity(ability, target)
-        return true
-    end
     return false
 end
 
 function HasUlt(bot)
     local ability = bot:GetAbilityByName(Abilities[4])
-    if ability == nil or not ability:IsFullyCastable() then
+    if not ability:IsFullyCastable() then
         return false
     end
     

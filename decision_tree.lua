@@ -227,27 +227,6 @@ function X:ReAquireTargets(nearbyEnemyHeroes)
     end
 end
 
-function X:DoIllusionInit(bot)
-    utils.myPrint("Illusion PID: ", bot:GetPlayerID())
-    self.pID = bot:GetPlayerID()
-    self:setHeroVar("IllusionInit", true)
-    local allyList = GetUnitList(UNIT_LIST_ALLIED_HEROES)
-    for _, ally in pairs(allyList) do
-        if bot:GetUnitName() == ally:GetUnitName() and not ally:IsIllusion() then
-            local apID = ally:GetPlayerID()
-            self:setHeroVar("Name", utils.GetHeroName(bot))
-            self:setHeroVar("LastLevelUpThink", gHeroVar.GetVar(apID, "LastLevelUpThink"))
-            self:setHeroVar("LastLocation", bot:GetLocation())
-            self:setHeroVar("LaneChangeTimer", gHeroVar.GetVar(apID, "LaneChangeTimer"))
-            self:setHeroVar("LastLocation", bot:GetLocation())
-            self:setHeroVar("Target", gHeroVar.GetVar(apID, "Target"))
-            self:setHeroVar("GankTarget", gHeroVar.GetVar(apID, "GankTarget"))
-            self:setHeroVar("CurLane", gHeroVar.GetVar(apID, "CurLane"))
-            self:setHeroVar("Role", gHeroVar.GetVar(apID, "Role"))
-        end
-    end
-end
-
 function X:DoHeroSpecificInit(bot)
     return
 end
@@ -264,19 +243,17 @@ local nearbyEnemyTowers  = {}
 local nearbyAlliedTowers = {}
 
 function X:Think(bot)
-    if GetGameState() == GAME_STATE_PRE_GAME and not self.Init then self:DoInit(bot) return end
+    if GetGameState() == GAME_STATE_PRE_GAME and not self.Init then
+        self:DoInit(bot)
+        return
+    elseif GetGameState() == GAME_STATE_PRE_GAME and DotaTime() < -85.0 then
+        return
+    end
 
     if GetGameState() ~= GAME_STATE_GAME_IN_PROGRESS and GetGameState() ~= GAME_STATE_PRE_GAME then return end
     
-    -- DoInit() for illusions
-    if bot:IsIllusion() then
-        if not gHeroVar.GetVar(bot:GetPlayerID(), "IllusionInit") then
-            self:DoIllusionInit(bot)
-        end
-    end
-    
     -- handle any illusions
-    --if self:DoHandleIllusions(bot) then return end
+    if self:DoHandleIllusions(bot) then return end
     
     -- level up abilities if time
     local checkLevel, newTime = utils.TimePassed(self:getHeroVar("LastLevelUpThink"), 2.0)
@@ -294,7 +271,10 @@ function X:Think(bot)
     buildings_status.Update()
     
     -- check if I am alive, if not, short-circuit most stuff
-    if not bot:IsAlive() then return self:DoWhileDead(bot) end
+    if not bot:IsAlive() then
+        local bRet = self:DoWhileDead(bot)
+        if bRet then return end
+    end
     
     -- use courier if needed (TO BE REPLACED BY TEAM LEVEL COURIER CONTROLS)
     utils.CourierThink(bot)
@@ -324,15 +304,24 @@ function X:Think(bot)
     
     --if self:getCurrentMode() == constants.MODE_EVADE then
     if self:getCurrentMode() == constants.MODE_FIGHT then
-        return self:DoFight(bot)
+        --utils.myPrint("FIGHT")
+        local bRet = self:DoFight(bot)
+        if bRet then return end
     end
     
     -- check if I am channeling an ability/item (i.e. TP Scroll, Ultimate, etc.)
     -- and don't interrupt if true
-    if bot:IsChanneling() then return self:DoWhileChanneling(bot) end
+    if bot:IsChanneling() then
+        --utils.myPrint("Channeling")
+        local bRet = self:DoWhileChanneling(bot)
+        if bRet then return end
+    end
     
     -- if we are using an ability/item, return to let it complete
-    if bot:IsUsingAbility() then return end
+    if bot:IsUsingAbility() then
+        --utils.myPrint("Using Ability")
+        return
+    end
     
     -- if we have queued actions, do them as anything below this can clear them
     if bot:NumQueuedActions() > 0 then
@@ -348,7 +337,7 @@ function X:Think(bot)
     
     -- consider using an item
     if self:ConsiderItemUse() then 
-        utils.myPrint("using item")
+        --utils.myPrint("using item")
         return 
     end
     
@@ -374,19 +363,6 @@ function X:Think(bot)
 end
 
 function X:Think2(bot)
-  
-
-    -- NOTE: Unlike many others, we should re-evalute need to fight every time and
-    --       not check if GetMode == MODE_FIGHT
-    if ( self:Determine_ShouldIFight(bot) ) then
-        local bRet = self:DoFight(bot)
-        if bRet then return end
-    end
-
-    if ( self:GetMode() == MODE_RUNEPICKUP or self:Determine_ShouldGetRune(bot) ) then
-        local bRet = self:DoGetRune(bot)
-        if bRet then return end
-    end
 
     if ( self:GetMode() == MODE_SPECIALSHOP ) then
         return
@@ -900,16 +876,15 @@ function X:DoRetreat(bot, reason)
 
         if self:getHeroVar("IsRetreating") then
             if bot:TimeSinceDamagedByAnyHero() < 3.0 then
-                retreat_generic.Think(bot)
-                return true
-            elseif bot:DistanceFromFountain() < 5000 and (bot:GetHealth()/bot:GetMaxHealth()) < 1.0 then
-                retreat_generic.Think(bot)
-                return true
-            elseif bot:DistanceFromFountain() >= 5000 and (bot:GetHealth()/bot:GetMaxHealth()) < 0.6 then
-                retreat_generic.Think(bot)
-                return true
-            else
-                self:setHeroVar("IsRetreating", false)
+                if bot:DistanceFromFountain() < 5000 and (bot:GetHealth()/bot:GetMaxHealth()) < 1.0 then
+                    retreat_generic.Think(bot)
+                    return true
+                elseif bot:DistanceFromFountain() >= 5000 and (bot:GetHealth()/bot:GetMaxHealth()) < 0.6 then
+                    retreat_generic.Think(bot)
+                    return true
+                else
+                    self:setHeroVar("IsRetreating", false)
+                end
             end
         end
         --utils.myPrint("DoRetreat - RETREAT DANGER End".." - DfF: "..bot:DistanceFromFountain()..", H: "..bot:GetHealth())
@@ -974,8 +949,8 @@ function X:DoRetreat(bot, reason)
         end
 
         local rLoc = self:getHeroVar("TargetOfRunAwayFromCreepOrTower")
-        --utils.myPrint("Creep Retreat - Destination - <",rLoc[1],", ",rLoc[2],">")
         local d = GetUnitToLocationDistance(bot, rLoc)
+        --utils.myPrint("Creep Retreat - Destination - <",rLoc[1],", ",rLoc[2],"> Dist: ", d)
         if d > 50 and utils.IsCreepAttackingMe(2.0) then
             if utils.IsInLane(bot) then
                 gHeroVar.HeroMoveToLocation(bot, rLoc)

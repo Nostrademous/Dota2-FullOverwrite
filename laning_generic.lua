@@ -337,8 +337,9 @@ local function CSing(bot)
             end
         end
     end
-
-    --if utils.UseOrbEffect(bot) then return end
+    
+    -- if we got here we decided there are no creeps to kill/deny
+    LaningState = LaningStates.MovingToPos
     
     for _, enemy in pairs(listEnemies) do
         for _, myTower in pairs(listAlliedTowers) do
@@ -350,22 +351,27 @@ local function CSing(bot)
                             local behaviorFlag = stun[1]:GetBehavior()
                             if utils.CheckFlag(behaviorFlag, ABILITY_BEHAVIOR_UNIT_TARGET) then
                                 bot:Action_UseAbilityOnEntity(stun[1], enemy)
+                                return
                             elseif utils.CheckFlag(behaviorFlag, ABILITY_BEHAVIOR_POINT) then
                                 bot:Action_UseAbilityOnLocation(stun[1], enemy:GetExtrapolatedLocation(stun[2]))
+                                return
                             end
                         end
                     end
                 end
                 gHeroVar.HeroAttackUnit(bot, enemy, true)
+                return
             end
         end
     end
     
-    if #listEnemies == 1 and #listEnemyCreep == 0 then
+    if utils.UseOrbEffect(bot) then return end
+    
+    if #listEnemies == 1 and #listEnemyCreep == 0 and 
+        GetUnitToUnitDistance(bot, listEnemies[1]) < bot:GetAttackRange() then
         gHeroVar.HeroAttackUnit(bot, listEnemies[1], true)
+        return
     end
-
-    LaningState = LaningStates.MovingToPos
 end
 
 --------------------------------

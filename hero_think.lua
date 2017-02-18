@@ -27,6 +27,15 @@ end
 function ConsiderEvading(bot)
     local listProjectiles = GetLinearProjectiles()
     local listAOEAreas = GetAvoidanceZones()
+    
+    -- NOTE: a projectile will be a table with { "location", "ability", "velocity", "radius" }
+    for _, projectile in pairs(listProjectiles) do
+    end
+    
+    -- NOTE: an aoe will be table with { "location", "ability", "caster", "radius" }.
+    for _, aoes in pairs(listAOEAreas) do
+    end
+    
     return BOT_ACTION_DESIRE_NONE
 end
 

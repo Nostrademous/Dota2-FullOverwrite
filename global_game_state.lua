@@ -164,6 +164,9 @@ function GlobalFightDetermination()
             
             local totalNukeDmg = 0
             
+            local numEnemiesThatCanAttackMe = 0
+            local numAlliesThatCanHelpMe = 0
+            
             for k, enemy in pairs(enemyData) do
                 -- get a valid enemyData enemy 
                 if type(k) == "number" and enemy.Alive then
@@ -181,6 +184,9 @@ function GlobalFightDetermination()
                             break --distance = GetUnitToLocationDistance(ally, GetHeroLastSeenInfo(k).location)
                         end
                     end
+                    
+                    local theirTimeToReachMe = distance/enemy.MoveSpeed
+                    
                     local timeToReach = distance/ally:GetCurrentMovementSpeed()
                     local myNukeDmg, myActionQueue, myCastTime, myStun, mySlow = gHero.GetVar(ally:GetPlayerID(), "Self"):GetNukeDamage( ally, enemy.Obj )
                     
@@ -188,6 +194,7 @@ function GlobalFightDetermination()
                     totalNukeDmg = totalNukeDmg + myNukeDmg
                     
                     if distance <= eyeRange then
+                        numEnemiesThatCanAttackMe = numEnemiesThatCanAttackMe + 1
                         --utils.myPrint(utils.GetHeroName(ally), " sees "..enemy.Name.." ", distance, " units away. Time to reach: ", timeToReach)
                         
                         local allAllyStun = 0
@@ -248,6 +255,11 @@ function GlobalFightDetermination()
                                         break
                                     end
                                 end
+                                
+                                if GetUnitToUnitDistance(ally, ally2) < eyeRange then
+                                    numAlliesThatCanHelpMe = numAlliesThatCanHelpMe + 1
+                                end
+                                
                                 local allyTimeToReach = distToEnemy/ally2:GetCurrentMovementSpeed()
                                 local allyNukeDmg, allyActionQueue, allyCastTime, allyStun, allySlow = gHero.GetVar(ally2:GetPlayerID(), "Self"):GetNukeDamage( ally2, enemy.Obj )
                                 
@@ -318,6 +330,11 @@ function GlobalFightDetermination()
                         end
                     end
                 end
+            end
+            
+            if numEnemiesThatCanAttackMe > numAlliesThatCanHelpMe then
+                --utils.myPrint(utils.GetHeroName(ally), "This is a bad idea")
+                --ally:Action_ClearActions(false)
             end
         end
     end

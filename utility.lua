@@ -722,13 +722,13 @@ end
 -- CONTRIBUTOR: Function below was coded by Platinum_dota2
 function U.MoveSafelyToLocation(npcBot, dest)
     if getHeroVar("NextHop")==nil or #getHeroVar("NextHop")==0 or getHeroVar("PathfindingWasInitiated")==nil or (not getHeroVar("PathfindingWasInitiated")) then
-        U.InitPathFinding(npcBot)
-        U.myPrint("Path finding has been initiated")
+        U.InitPathFinding()
+        U.myPrint("Path finding for all heroes has been initiated")
     end
 
     local safeSpots = nil
     local safeDist = 2000
-    if dest==nil then
+    if dest == nil then
         U.myPrint("PathFinding: No destination was specified")
         return
     end
@@ -803,25 +803,20 @@ function U.MoveSafelyToLocation(npcBot, dest)
     gHeroVar.HeroMoveToLocation(npcBot, safeSpots[newT])
 end
 
-function U.InitPathFinding(npcBot)
-
-    -- keeps the path for my pathfinding
-    setHeroVar("NextHop", {})
-    setHeroVar("PathfindingWasInitiated", false)
+function U.InitPathFinding()
     -- creating the graph
-
-    local SafeDist=2000;
-    local safeSpots={};
-    if GetTeam()==TEAM_RADIANT then
-        safeSpots=U.RadiantSafeSpots;
+    local SafeDist = 2000
+    local safeSpots = {}
+    if GetTeam() == TEAM_RADIANT then
+        safeSpots = U.RadiantSafeSpots
     else
-        safeSpots=U.DireSafeSpots;
+        safeSpots = U.DireSafeSpots
     end
 
     --initialization
-    local inf=100000
-    local dist={}
-    local NextHop={}
+    local inf = 100000
+    local dist = {}
+    local NextHop = {}
 
     U.myPrint("Inits are done")
     for u,uv in pairs(safeSpots) do
@@ -854,8 +849,11 @@ function U.InitPathFinding(npcBot)
         end
     end
 
-    setHeroVar("NextHop", NextHop)
-    setHeroVar("PathfindingWasInitiated", true)
+    local allyList = GetUnitList(UNIT_LIST_ALLIED_HEROES)
+    for _, ally in pairs(allyList) do
+        gHeroVar.SetVar(ally:GetPlayerID(), "NextHop", NextHop)
+        gHeroVar.SetVar(ally:GetPlayerID(), "PathfindingWasInitiated", true)
+    end
 end
 
 function U.InitPath(npcBot)
@@ -1257,6 +1255,15 @@ function U.IsCreepAttackingMe(fTime)
     return false
 end
 
+--[[
+function U.EnemiesThatCanAttackMe(bot, nearbyEnemies)
+    local listEnemies = {}
+    for _, enemy in pairs(nearbyEnemies) do
+        
+    end
+end
+--]]
+
 -- returns a VECTOR() with location being the center point of provided hero array
 function U.GetCenter(Heroes)
     if Heroes == nil or #Heroes == 0 then
@@ -1317,10 +1324,10 @@ function U.UseOrbEffect(bot, enemy)
         local ability = bot:GetAbilityByName(orb)
         if ability ~= nil and ability:IsFullyCastable() then
             if enemy == nil then
-                enemy, _ = U.GetWeakestHero(bot, ability:GetCastRange()+100)
+                enemy, _ = U.GetWeakestHero(bot, ability:GetCastRange()+bot:GetBoundingRadius()-50)
             end
 
-            if enemy ~= nil then
+            if enemy ~= nil and GetUnitToUnitDistance(bot, enemy) < (ability:GetCastRange()+bot:GetBoundingRadius()+100) then
                 U.TreadCycle(bot, constants.INTELLIGENCE)
                 bot:Action_UseAbilityOnEntity(ability, enemy)
                 return true
@@ -1588,7 +1595,7 @@ function U.myPrint(...)
         msg = msg .. tostring(v)
     end
     --uncomment to only see messages by bots mentioned underneath
-    --if botname == "drow_ranger" then --or botname == "viper" then
+    --if botname == "viper" then --or botname == "viper" then
       print(msg)
     --end
 end

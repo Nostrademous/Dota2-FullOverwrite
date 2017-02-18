@@ -38,7 +38,18 @@ local function UseQ(bot)
         return false
     end
 
-    local target = getHeroVar("Target")
+    -- harassment code when in lane
+    --[[
+    local manaRatio = bot:GetMana()/bot:GetMaxMana()
+    local target, _ = utils.GetWeakestHero(bot, bot:GetAttackRange()+bot:GetBoundingRadius(), nearbyEnemyHeroes)
+    if target ~= nil and manaRatio > 0.4 and GetUnitToUnitDistance(bot, target) then
+        utils.TreadCycle(bot, constants.INTELLIGENCE)
+        bot:Action_UseAbilityOnEntity(ability, target)
+        return true
+    end
+    --]]
+
+    target = getHeroVar("Target")
 
     -- if we don't have a valid target, return
     if not utils.ValidTarget(target) then return false end
@@ -46,8 +57,7 @@ local function UseQ(bot)
     -- if target is magic immune or invulnerable return
     if utils.IsTargetMagicImmune(target.Obj) then return false end
 
-    local manaRatio = bot:GetMana()/bot:GetMaxMana()
-    if manaRatio > 0.4 and GetUnitToUnitDistance(bot, target.Obj) < (abilityQ:GetCastRange() + bot:GetBoundingRadius()) then
+    if GetUnitToUnitDistance(bot, target.Obj) < (abilityQ:GetCastRange() + bot:GetBoundingRadius()) then
         utils.TreadCycle(bot, constants.INTELLIGENCE)
         bot:Action_UseAbilityOnEntity(abilityQ, target.Obj)
         return true
@@ -64,51 +74,29 @@ local function UseW(bot, nearbyEnemyHeroes)
     if #nearbyEnemyHeroes == 0 then return false end
 
     local wave_speed = abilityW:GetSpecialValueFloat("wave_speed")
-    
-    if #nearbyEnemyHeroes == 1 then
-        local enemy = nearbyEnemyHeroes[1]
-        local delay = abilityW:GetCastPoint() + GetUnitToUnitDistance(bot, enemy)/wave_speed
-        local enemyHasStun = enemy:GetStunDuration(true) > 0
-        if not utils.IsTargetMagicImmune(enemy) or not utils.IsCrowdControlled(enemy) 
-            or (not enemy:IsSilenced()) or enemy:IsChanneling() 
-            and (GetUnitToUnitDistance(bot, enemy) < 150) then -- or (enemyHasStun and enemy:IsUsingAbility())) then 
-            utils.TreadCycle(bot, constants.INTELLIGENCE)
-            bot:Action_UseAbilityOnLocation(abilityW, enemy:GetExtrapolatedLocation(delay))
-            return true
+
+    --Use gust to break channeling spells
+    for _, enemy in pairs( nearbyEnemyHeroes ) do
+        if GetUnitToUnitDistance(bot, enemy) < abilityW:GetCastRange() and enemy:IsChanneling() then
+            if not enemy:IsMagicImmune() then
+                local gustDelay = abilityW:GetCastPoint() + GetUnitToUnitDistance(bot, enemy)/wave_speed
+                utils.TreadCycle(bot, constants.INTELLIGENCE)
+                bot:Action_UseAbilityOnLocation(abilityW, enemy:GetExtrapolatedLocation(gustDelay))
+                return true
+            end
         end
-    else
-        --Use gust to break channeling spells
+    end
+
+    --Use Gust as a Defensive skill to fend off chasing enemies
+    if getHeroVar("IsRetreating") and (bot:GetHealth()/bot:GetMaxHealth()) < 0.5 then
         for _, enemy in pairs( nearbyEnemyHeroes ) do
-            if GetUnitToUnitDistance(bot, enemy) < abilityW:GetCastRange() and enemy:IsChanneling() then
-                if not enemy:IsMagicImmune() then
-                    local gustDelay = abilityW:GetCastPoint() + GetUnitToUnitDistance(bot, enemy)/wave_speed
-                    utils.TreadCycle(bot, constants.INTELLIGENCE)
-                    bot:Action_UseAbilityOnLocation(abilityW, enemy:GetExtrapolatedLocation(gustDelay))
-                    return true
-                end
+            if GetUnitToUnitDistance(bot, enemy) < 150 and (not enemy:IsMagicImmune()) then
+                local gustDelay = abilityW:GetCastPoint() + GetUnitToUnitDistance(bot, enemy)/wave_speed
+                utils.TreadCycle(bot, constants.INTELLIGENCE)
+                bot:Action_UseAbilityOnLocation(abilityW, enemy:GetExtrapolatedLocation(gustDelay))
+                return true
             end
         end
-
-        --Use Gust as a Defensive skill to fend off chasing enemies
-        if getHeroVar("IsRetreating") and (bot:GetHealth()/bot:GetMaxHealth()) < 0.5 then
-            for _, enemy in pairs( nearbyEnemyHeroes ) do
-                if GetUnitToUnitDistance(bot, enemy) < 150 and (not enemy:IsMagicImmune()) then
-                    local gustDelay = abilityW:GetCastPoint() + GetUnitToUnitDistance(bot, enemy)/wave_speed
-                    utils.TreadCycle(bot, constants.INTELLIGENCE)
-                    bot:Action_UseAbilityOnLocation(abilityW, enemy:GetExtrapolatedLocation(gustDelay))
-                    return true
-                end
-            end
-        end
-
-        --[[ THIS JUST SPAMS IT
-        local center = utils.GetCenter(nearbyEnemyHeroes)
-        if center ~= nil then
-            utils.TreadCycle(bot, constants.INTELLIGENCE)
-            bot:Action_UseAbilityOnLocation(abilityW, center)
-            return true
-        end
-        --]]
     end
 
     return false
@@ -141,12 +129,12 @@ function AbilityUsageThink(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCre
     if ( GetGameState() ~= GAME_STATE_GAME_IN_PROGRESS and GetGameState() ~= GAME_STATE_PRE_GAME ) then return false end
 
     local bot = GetBot()
-    
+
     if abilityQ == "" then abilityQ = bot:GetAbilityByName( Abilities[1] ) end
     if abilityW == "" then abilityW = bot:GetAbilityByName( Abilities[2] ) end
     if abilityE == "" then abilityE = bot:GetAbilityByName( Abilities[3] ) end
     if abilityR == "" then abilityR = bot:GetAbilityByName( Abilities[4] ) end
-    
+
     if not bot:IsAlive() then return false end
 
     -- Check if we're already using an ability
@@ -154,10 +142,10 @@ function AbilityUsageThink(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCre
 
     if UseE(bot, nearbyEnemyTowers, nearbyAlliedCreep) then return true end
 
-    --if UseW(bot, nearbyEnemyHeroes) then return true end
-    
-    if UseQ(bot) then return true end
-    
+    if UseW(bot, nearbyEnemyHeroes) then return true end
+
+    if UseQ(bot, nearbyEnemyHeroes) then return true end
+
     return false
 end
 

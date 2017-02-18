@@ -347,7 +347,9 @@ function X:Think(bot)
         return
     end
     
-    if self:getCurrentMode() == constants.MODE_SHRINE then
+    if self:getCurrentMode() == constants.MODE_SPECIALSHOP then
+        return
+    elseif self:getCurrentMode() == constants.MODE_SHRINE then
         return self:DoUseShrine(bot)
     elseif self:getCurrentMode() == constants.MODE_RETREAT then
         return self:DoRetreat(bot, self:getHeroVar("RetreatReason"))

@@ -1553,6 +1553,12 @@ function U.CourierThink(npcBot)
     setHeroVar("LastCourierThink", newTime)
 
     local courier = GetCourier(0)
+    if courier:GetMaxHealth() >= 150 then
+        if GetCourierState(courier) == COURIER_STATE_DELIVERING_ITEMS or GetCourierState(courier) == COURIER_STATE_RETURNING_TO_BASE then
+            npcBot:ActionImmediate_Courier(courier, COURIER_ACTION_BURST)
+        end
+    end
+    
     if GetCourierState(courier) ~= COURIER_STATE_DEAD and GetCourierState(courier) ~= COURIER_STATE_MOVING and GetCourierState(courier) ~= COURIER_STATE_AT_BASE then
         npcBot:ActionImmediate_Courier(courier, COURIER_ACTION_RETURN)
         return
@@ -1566,12 +1572,6 @@ function U.CourierThink(npcBot)
     if GetCourierState(courier) ~= COURIER_STATE_DEAD and GetCourierState(courier) == COURIER_STATE_AT_BASE and
         (not npcBot:IsAlive()) and npcBot:GetCourierValue() > 0 then
         npcBot:ActionImmediate_Courier(courier, COURIER_ACTION_RETURN_STASH_ITEMS)
-    end
-
-    if courier:GetMaxHealth() >= 150 then
-        if GetCourierState(courier) == COURIER_STATE_DELIVERING_ITEMS or GetCourierState(courier) == COURIER_STATE_RETURNING_TO_BASE then
-            npcBot:ActionImmediate_Courier(courier, COURIER_ACTION_BURST)
-        end
     end
 end
 
@@ -1597,9 +1597,9 @@ function U.myPrint(...)
         msg = msg .. tostring(v)
     end
     --uncomment to only see messages by bots mentioned underneath
-    if botname == "drow_ranger" then --or botname == "viper" then
+    --if botname == "drow_ranger" then --or botname == "viper" then
       print(msg)
-    end
+    --end
 end
 
 return U;

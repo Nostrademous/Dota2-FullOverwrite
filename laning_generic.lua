@@ -148,6 +148,7 @@ local function Moving(bot)
 end
 
 local function MovingToPos(bot)
+    if HarassEnemy(bot) then return true end
 
     local bNeedToGoHigher = false
     local higherDest = nil
@@ -159,22 +160,23 @@ local function MovingToPos(bot)
         end
     end
 
-    --FIXME: implement "generic" (as in utility.lua file) function for
-    --       selecting proper location for higher ground when necessary
-
-    local cpos = GetLocationAlongLane(CurLane, GetLaneFrontAmount(utils.GetOtherTeam(),CurLane, false))
+    local cpos = LanePos
+    if #listEnemyTowers == 0 then
+        cpos = GetLocationAlongLane(CurLane, GetLaneFrontAmount(utils.GetOtherTeam(),CurLane, false))
+    else
+        cpos = GetLocationAlongLane(CurLane, GetLaneFrontAmount(utils.GetOtherTeam(),CurLane, false) - 0.05)
+    end
+    
     local bpos = GetLocationAlongLane(CurLane, LanePos-0.02)
 
     local dest = utils.VectorTowards(cpos, bpos, 500)
-    if bNeedToGoHigher and  #listAlliedCreep > 0 then
+    if bNeedToGoHigher and #listAlliedCreep > 0 then
         dest = higherDest
     end
 
     local rndtilt = RandomVector(75)
 
     dest = dest + rndtilt
-    
-    if HarassEnemy(bot) then return true end
 
     gHeroVar.HeroMoveToLocation(bot, dest)
 

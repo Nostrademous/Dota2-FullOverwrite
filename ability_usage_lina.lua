@@ -288,6 +288,15 @@ function ConsiderLightStrikeArray(nearbyEnemyHeroes)
     if ( locationAoE.count >= 3 ) then
         return BOT_ACTION_DESIRE_LOW, locationAoE.targetloc
     end
+    
+    local me = getHeroVar("Self")
+    if me:getCurrentMode() == constants.MODE_PUSHLANE and ( npcBot:GetMana() / npcBot:GetMaxMana() >= 0.4 ) then
+        local locationAoE = npcBot:FindAoELocation( true, false, npcBot:GetLocation(), nCastRange, nRadius, abilityW:GetCastPoint(), 0 )
+
+        if ( locationAoE.count >= 2 ) then
+            return BOT_ACTION_DESIRE_MEDIUM, locationAoE.targetloc
+        end
+    end
 
     -- If we're seriously retreating, see if we can land a stun on someone who's damaged us recently
     for _,npcEnemy in pairs( nearbyEnemyHeroes ) do
@@ -355,7 +364,9 @@ function ConsiderDragonSlave()
 
     -- If we're pushing or defending a lane and can hit 4+ creeps, go for it
     -- wasting mana banned!
-    if getHeroVar("ShouldDefend") == true or (getHeroVar("ShouldPush") == true and ( npcBot:GetMana() / npcBot:GetMaxMana() >= 0.4 )) then
+    local me = getHeroVar("Self")
+    if me:getCurrentMode() == constants.MODE_DEFENDLANE or 
+        (me:getCurrentMode() == constants.MODE_PUSHLANE and ( npcBot:GetMana() / npcBot:GetMaxMana() >= 0.4 )) then
         local locationAoE = npcBot:FindAoELocation( true, false, npcBot:GetLocation(), nCastRange, nRadius, 0, 0 )
 
         if ( locationAoE.count >= 4 )

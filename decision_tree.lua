@@ -213,11 +213,9 @@ function X:ReAquireTargets(nearbyEnemyHeroes)
                 if IsHeroAlive(setTarget.Id) then
                     utils.myPrint("Updated my Target after re-aquire")
                     self:setHeroVar("Target", {Obj=v, Id=setTarget.Id})
-                    break
                 else
                     utils.myPrint("Target is dead, clearing")
                     self:setHeroVar("Target", NoTarget)
-                    break
                 end
                 enemyData[setTarget.Id].Time1 = -100.0
                 enemyData[setTarget.Id].Time2 = -100.0
@@ -232,11 +230,9 @@ function X:ReAquireTargets(nearbyEnemyHeroes)
                 if IsHeroAlive(gankTarget.Id) then
                     utils.myPrint("Updated my GankTarget after re-aquire")
                     self:setHeroVar("GankTarget", {Obj=v, Id=gankTarget.Id})
-                    break
                 else
                     utils.myPrint("GankTarget is dead, clearing")
                     self:setHeroVar("GankTarget", NoTarget)
-                    break
                 end
             end
             enemyData[gankTarget.Id].Time1 = -100.0
@@ -308,6 +304,26 @@ function X:Think(bot)
     nearbyEnemyTowers   = bot:GetNearbyTowers(EyeRange, true)
     nearbyAlliedTowers  = bot:GetNearbyTowers(EyeRange, false)
     
+    -- clear our target info if they are dead
+    local target = self:getHeroVar("Target")
+    if target.Id > 0 and not IsHeroAlive(target.Id) then
+        utils.myPrint("Clearing Target: ", target.Id)
+        self:setHeroVar("Target", NoTarget)
+        self:RemoveMode(constants.MODE_FIGHT)
+        enemyData.PurgeEnemy(target.Id)
+        bot:Action_ClearActions(true)
+        return
+    end
+    local target = self:getHeroVar("GankTarget")
+    if target.Id > 0 and not IsHeroAlive(target.Id) then
+        utils.myPrint("Clearing Target: ", target.Id)
+        self:setHeroVar("GankTarget", NoTarget)
+        self:RemoveMode(constants.MODE_GANKING)
+        enemyData.PurgeEnemy(target.Id)
+        bot:Action_ClearActions(true)
+        return
+    end
+    
     -- require targets if we have lost them or we killed illusions
     self:ReAquireTargets(nearbyEnemyHeroes)
 
@@ -344,7 +360,7 @@ function X:Think(bot)
     
     -- if we have queued actions, do them as anything below this can clear them
     if bot:NumQueuedActions() > 0 then
-        --utils.myPrint("has "..bot:NumQueuedActions().." queued actions")
+        utils.myPrint("has "..bot:NumQueuedActions().." queued actions")
         --utils.myPrint("current action is: ", bot:GetCurrentActionType())
         --utils.myPrint("top queued action is: ", bot:GetQueuedActionType(0))
         return
@@ -361,9 +377,11 @@ function X:Think(bot)
     end
     
     -- consider casting any of our abilities
-    if self:ConsiderAbilityUse(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCreep, 
-                               nearbyAlliedCreep, nearbyEnemyTowers, nearbyAlliedTowers) then
-        return
+    if not (bot:IsSilenced() or bot:IsHexed()) then
+        if self:ConsiderAbilityUse(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCreep, 
+                                   nearbyAlliedCreep, nearbyEnemyTowers, nearbyAlliedTowers) then
+            return
+        end
     end
     
     if self:getCurrentMode() == constants.MODE_SPECIALSHOP then
@@ -511,7 +529,6 @@ end
 
 
 function X:DoRetreat(bot, reason)
-    --utils.myPrint("DoRetreat reason: ", reason)
     if reason == constants.RETREAT_FOUNTAIN then
         if getHeroVar("RetreatLane") == nil then
             utils.myPrint("DoRetreat - STARTING TO RETREAT TO FOUNTAIN")
@@ -568,7 +585,8 @@ function X:DoRetreat(bot, reason)
             --set the target to go back
             local bInLane, cLane = utils.IsInLane()
             if bInLane then
-                rLoc = GetLocationAlongLane(cLane,Max(utils.PositionAlongLane(bot, cLane)-0.05, 0.0))
+                local enemyFrontier = GetLaneFrontAmount(utils.GetOtherTeam(), cLane, false) - 0.05
+                rLoc = GetLocationAlongLane(cLane, enemyFrontier)
             else
                 rLoc = utils.VectorTowards(mypos, utils.Fountain(GetTeam()), 300)
             end
@@ -589,7 +607,8 @@ function X:DoRetreat(bot, reason)
             local bInLane, cLane = utils.IsInLane()
             if bInLane then
                 --utils.myPrint("Creep Retreat - InLane: ", cLane)
-                rLoc = GetLocationAlongLane(cLane, Max(utils.PositionAlongLane(bot, cLane)-0.04, 0.0))
+                local enemyFrontier = GetLaneFrontAmount(utils.GetOtherTeam(), cLane, false) - 0.05
+                rLoc = GetLocationAlongLane(cLane, enemyFrontier)
             else
                 --utils.myPrint("Creep Retreat - Not InLane")
                 rLoc = utils.VectorTowards(mypos, utils.Fountain(GetTeam()), 300)
@@ -757,8 +776,16 @@ function X:DoPushLane(bot)
     end
     
     if #nearbyEnemyCreep > 0 then
-        self:RemoveMode(constants.MODE_PUSHLANE)
-        return false
+        if #nearbyAlliedCreep > 0 then
+            creep, _ = utils.GetWeakestCreep(nearbyEnemyCreep)
+            if creep then
+                gHeroVar.HeroAttackUnit(bot, creep, true)
+                return true
+            end
+        else
+            self:RemoveMode(constants.MODE_PUSHLANE)
+            return false
+        end
     end
 
     if #nearbyEnemyTowers > 0 then

@@ -33,6 +33,76 @@ local abilityW = ""
 local abilityE = ""
 local abilityR = ""
 
+function nukeDamage( bot, enemy )
+    if enemy == nil or not utils.ValidTarget(enemy) then return 0, {}, 0, 0, 0 end
+
+    local comboQueue = {}
+    local manaAvailable = bot:GetMana()
+    local dmgTotal = 0
+    local castTime = 0
+    local stunTime = 0
+    local slowTime = 0
+    
+    local magicImmune = utils.IsTargetMagicImmune(enemy)
+    
+    -- Check Frost Arrows
+    if abilityQ:IsFullyCastable() then
+        if not magicImmune then
+            local manaCostQ = abilityQ:GetManaCost()
+            local speedReduction = abilityQ:GetSpecialValueInt("frost_arrows_movement_speed")
+            local numCasts = 1
+            
+            local dist = GetUnitToUnitDistance(bot, enemy)
+            if dist < (bot:GetAttackRange() + bot:GetBoundingRadius() + enemy:GetBoundingRadius()) then
+                if bot:GetCurrentMovementSpeed() > (enemy:GetCurrentMovementSpeed() + speedReduction) then
+                    numCasts = Min(10, math.floor(manaAvailable/12))
+                else
+                    local distToEscape = (bot:GetAttackRange() + bot:GetBoundingRadius() + enemy:GetBoundingRadius()) - dist
+                    local timeToEscape = distToEscape/(enemy:GetCurrentMovementSpeed() + speedReduction - bot:GetCurrentMovementSpeed())
+                    numCasts = Min(math.floor(timeToEscape/bot:GetSecondsPerAttack()), math.floor(manaAvailable/12))
+                end
+            end
+            
+            for i = 1, numCasts, 1 do
+                if manaCostQ <= manaAvailable then
+                    manaAvailable = manaAvailable - manaCostQ
+                    dmgTotal = dmgTotal + enemy:GetActualIncomingDamage(bot:GetAttackDamage(), DAMAGE_TYPE_PHYSICAL)
+                    castTime = castTime + abilityQ:GetAttackPoint()
+                    slowTime = slowTime + 1.5
+                    table.insert(comboQueue, abilityQ)
+                end
+            end
+        end
+    end
+    
+    return dmgTotal, comboQueue, castTime, stunTime, slowTime
+end
+
+function queueNuke(bot, enemy, castQueue)
+    local nCastRange = bot:GetAttackRange() + bot:GetBoundingRadius() + enemy:GetBoundingRadius()
+    local dist = GetUnitToUnitDistance(bot, enemy)
+
+    bot:Action_ClearActions()
+
+    -- if out of range, attack move for one hit to get in range
+    if dist > nCastRange then
+        bot:ActionPush_AttackUnit( enemy, true )
+    end
+
+    utils.AllChat("Killing "..utils.GetHeroName(enemy).." softly with my song")
+    utils.myPrint("Queue Nuke Damage: ", utils.GetHeroName(enemy))
+    for i = #castQueue, 1, -1 do
+        local skill = castQueue[i]
+
+        if skill:GetName() == Abilities[1] then
+            bot:Action_UseAbilityOnEntity(skill, enemy)
+        elseif skill:GetName() == Abilities[2] then
+            gHeroVar.HeroPushUseAbilityOnLocation(skill, enemy)
+        end
+    end
+    bot:ActionQueue_AttackUnit( enemy, false )
+end
+
 local function UseQ(bot)
     if not abilityQ:IsFullyCastable() then
         return false
@@ -139,6 +209,24 @@ function AbilityUsageThink(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCre
 
     -- Check if we're already using an ability
     if bot:IsUsingAbility() or bot:IsChanneling() then return false end
+    
+    if ( #nearbyEnemyHeroes == 0 and #nearbyEnemyCreep == 0 ) then return false end
+    
+    local target = getHeroVar("Target")
+    if not utils.ValidTarget(target) then
+        if #nearbyEnemyHeroes == 1 then
+            target = nearbyEnemyHeroes[1]
+            if GetUnitToUnitDistance(bot, target) < (bot:GetAttackRange() + bot:GetBoundingRadius() + target:GetBoundingRadius()) then
+                local dmg, castQueue, castTime, stunTime, slowTime = nukeDamage( bot, target )
+
+                if dmg > target:GetHealth() then
+                    setHeroVar("Target", {Obj=target, Id=target:GetPlayerID()})
+                    queueNuke(bot, target, castQueue)
+                    return true
+                end
+            end
+        end
+    end
 
     if UseE(bot, nearbyEnemyTowers, nearbyAlliedCreep) then return true end
 

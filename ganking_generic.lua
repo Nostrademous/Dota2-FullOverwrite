@@ -80,14 +80,14 @@ function FindTarget(bot)
         end
         ratings[#ratings+1] = {r, e}
     end
-      if #ratings == 0 then
-          return false
-      end
+    if #ratings == 0 then return false end
+    
     table.sort(ratings, function(a, b) return a[1] > b[1] end) -- sort by rating, descending
-        local rating = ratings[1][1]
-        if rating < MinRating then -- not worth
-            return false
-        end
+    local rating = ratings[1][1]
+    if rating < MinRating then -- not worth
+        return false
+    end
+    
     local target = ratings[1][2]
 
     -- Determine if we can kill the target

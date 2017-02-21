@@ -110,7 +110,7 @@ local function MoveToCamp(bot)
         end
     end
     --]]
-    local neutrals = bot:GetNearbyNeutralCreeps(EyeRange)
+    local neutrals = bot:GetNearbyCreeps(EyeRange, true)
     if #neutrals == 0 then -- no creeps here
         local jungle = jungle_status.GetJungle(GetTeam()) or {}
         jungle = FindCampsByMaxDifficulty(jungle, getHeroVar("Self"):GetMaxClearableCampLevel(bot))

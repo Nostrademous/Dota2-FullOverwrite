@@ -11,6 +11,7 @@ require( GetScriptDirectory().."/global_game_state" )
 
 local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
 local utils = require( GetScriptDirectory().."/utility" )
+local enemyData = require( GetScriptDirectory().."/enemy_data" )
 
 local function setHeroVar(id, var, value)
     gHeroVar.SetVar(id, var, value)
@@ -74,6 +75,49 @@ end
 -- Determine which lanes should be defended and which Heroes should
 -- be part of the defense.
 function ConsiderTeamLaneDefense()
+    local lane, building, numEnemies = global_game_state.DetectEnemyPush()
+    
+    if lane == nil or building == nil or numEnemies == nil then return end
+    
+    local hBuilding = buildings_status.GetHandle(GetTeam(), building)
+    
+    local listAlliesCanReachBuilding = {}
+    local listAlliesCanTPToBuildling = {}
+    
+    local listAlly = GetUnitList(UNIT_LIST_ALLIED_HEROES)
+    for _, ally in pairs(listAlly) do
+        if not ally:IsIllusion() then
+            if lane and (not hBuilding == nil or hBuilding:TimeSinceDamagedByAnyHero() > 5.0) then
+                if ally:GetHealth()/ally:GetMaxHealth() >= 0.5 then
+                    local distFromBuilding = GetUnitToUnitDistance(ally, hBuilding)
+                    local timeToReachBuilding = distFromBuilding/ally:GetCurrentMovementSpeed()
+
+                    if timeToReachBuilding <= 5.0 then
+                        table.insert(listAlliesCanReachBuilding, ally)
+                    else
+                        local haveTP = utils.HaveItem(ally, "item_tpscroll")
+                        if haveTP and haveTP:IsFullyCastable() then
+                            table.insert(listAlliesCanTPToBuildling, ally)
+                        end
+                    end
+                end
+            end
+        end
+    end
+    
+    if (#listAlliesCanReachBuilding + #listAlliesCanTPToBuildling) >= (numEnemies - 1) then
+        local numGoing = 0
+        for _, ally in pairs(listAlliesCanReachBuilding) do
+            gHeroVar.SetVar(ally:GetPlayerID(), "DoDefendLane", {lane, building, numEnemies})
+            numGoing = numGoing + 1
+            if numGoing >= (numEnemies - 1) then break end
+        end
+        for _, ally in pairs(listAlliesCanTPToBuildling) do
+            gHeroVar.SetVar(ally:GetPlayerID(), "DoDefendLane", {lane, building, numEnemies})
+            numGoing = numGoing + 1
+            if numGoing >= (numEnemies - 1) then break end
+        end
+    end
 end
 
 -- Determine which hero (based on their role) should farm where. By
@@ -85,6 +129,13 @@ end
 
 -- Determine if we should Roshan and which Heroes should be part of it.
 function ConsiderTeamRoshan()
+    local numAlive = enemyData.GetNumAlive()
+
+    local isRoshanAlive = DotaTime() - GetRoshanKillTime() > (11*60)
+
+    if (numAlive < 3 and (GetRoshanKillTime() == 0 or isRoshanAlive)) then
+        -- FIXME: Implement
+    end
 end
 
 -- Determine if we should seek out a specific enemy for a kill attempt
@@ -134,10 +185,10 @@ function ConsiderTeamShrine(playerAssignment)
     -- determine which allies need to use the shrine and which shrine is best
     -- for them
     for _, ally in pairs(listAlly) do
-        if ally:IsAlive() and not ally:IsIllusion() and ally:GetHealth()/ally:GetMaxHealth() < 0.35 
+        if ally:IsAlive() and not ally:IsIllusion() and ally:GetHealth()/ally:GetMaxHealth() < 0.3 
             and playerAssignment[ally:GetPlayerID()].UseShrine == nil then
             local SJ1 = GetShrine(Team, SHRINE_JUNGLE_1)
-            if SJ1 and SJ1:GetHealth() > 0 and GetShrineCooldown(SJ1) < 1 then
+            if SJ1 and SJ1:GetHealth() > 0 and GetShrineCooldown(SJ1) == 0 then
                 local dist = GetUnitToUnitDistance(ally, SJ1)
                 if dist < distToShrine then
                     distToShrine = dist
@@ -145,7 +196,7 @@ function ConsiderTeamShrine(playerAssignment)
                 end
             end
             local SJ2 = GetShrine(Team, SHRINE_JUNGLE_2)
-            if SJ2 and SJ2:GetHealth() > 0 and GetShrineCooldown(SJ2) < 1 then
+            if SJ2 and SJ2:GetHealth() > 0 and GetShrineCooldown(SJ2) == 0 then
                 local dist = GetUnitToUnitDistance(ally, SJ2)
                 if dist < distToShrine then
                     distToShrine = dist
@@ -153,7 +204,7 @@ function ConsiderTeamShrine(playerAssignment)
                 end
             end
             local SB1 = GetShrine(Team, SHRINE_BASE_1)
-            if SB1 and SB1:GetHealth() > 0 and GetShrineCooldown(SB1) < 1 then
+            if SB1 and SB1:GetHealth() > 0 and GetShrineCooldown(SB1) == 0 then
                 local dist = GetUnitToUnitDistance(ally, SB1)
                 if dist < distToShrine then
                     distToShrine = dist
@@ -161,7 +212,7 @@ function ConsiderTeamShrine(playerAssignment)
                 end
             end
             local SB2 = GetShrine(Team, SHRINE_BASE_2)
-            if SB2 and SB2:GetHealth() > 0 and GetShrineCooldown(SB2) < 1 then
+            if SB2 and SB2:GetHealth() > 0 and GetShrineCooldown(SB2) == 0 then
                 local dist = GetUnitToUnitDistance(ally, SB2)
                 if dist < distToShrine then
                     distToShrine = dist
@@ -169,7 +220,7 @@ function ConsiderTeamShrine(playerAssignment)
                 end
             end
             local SB3 = GetShrine(Team, SHRINE_BASE_3)
-            if SB3 and SB3:GetHealth() > 0 and GetShrineCooldown(SB3) < 1 then
+            if SB3 and SB3:GetHealth() > 0 and GetShrineCooldown(SB3) == 0 then
                 local dist = GetUnitToUnitDistance(ally, SB3)
                 if dist < distToShrine then
                     distToShrine = dist
@@ -177,7 +228,7 @@ function ConsiderTeamShrine(playerAssignment)
                 end
             end
             local SB4 = GetShrine(Team, SHRINE_BASE_4)
-            if SB4 and SB4:GetHealth() > 0 and GetShrineCooldown(SB4) < 1 then
+            if SB4 and SB4:GetHealth() > 0 and GetShrineCooldown(SB4) == 0 then
                 local dist = GetUnitToUnitDistance(ally, SB4)
                 if dist < distToShrine then
                     distToShrine = dist
@@ -185,7 +236,7 @@ function ConsiderTeamShrine(playerAssignment)
                 end
             end
             local SB5 = GetShrine(Team, SHRINE_BASE_5)
-            if SB5 and SB5:GetHealth() > 0 and GetShrineCooldown(SB5) < 1 then
+            if SB5 and SB5:GetHealth() > 0 and GetShrineCooldown(SB5) == 0 then
                 local dist = GetUnitToUnitDistance(ally, SB5)
                 if dist < distToShrine then
                     distToShrine = dist
@@ -193,23 +244,25 @@ function ConsiderTeamShrine(playerAssignment)
                 end
             end
             
-            if shrineUseList[bestShrine:GetUnitName()] == nil then
-                shrineUseList[bestShrine:GetUnitName()] = { location=bestShrine:GetLocation(), players={} }
+            if bestShrine then
+                if shrineUseList[tostring(bestShrine)] == nil then
+                    shrineUseList[tostring(bestShrine)] = { shrine=bestShrine, players={} }
+                end
+                
+                utils.myPrint("shrineUseList["..tostring(bestShrine).."] is best for: ", ally:GetPlayerID())
+                table.insert(shrineUseList[tostring(bestShrine)].players, ally:GetPlayerID())
             end
-            
-            table.insert(shrineUseList[bestShrine:GetUnitName()].players, ally:GetPlayerID())
         end
     end
     
     -- Now that we have assigned each player to the best shrine we need to set the player assignments
     -- telling the hero which shrine to go to and for how many people who should wait
-    for _, ally in pairs(listAlly) do
-        if ally:IsAlive() and not ally:IsIllusion() and ally:GetHealth()/ally:GetMaxHealth() < 0.5 
-            and playerAssignment[ally:GetPlayerID()].UseShrine == nil then
-            for _, shrine in pairs(shrineUseList) do
-                if utils.InTable(shrine.players, ally:GetPlayerID()) then
-                    playerAssignment[ally:GetPlayerID()].UseShrine = {location=shrine.location, allies=shrine.players}
-                end
+    for name, value in pairs(shrineUseList) do
+        for _, ally in pairs(listAlly) do
+            --utils.myPrint("Checking player '", ally:GetPlayerID(), "' for shrine ", name)
+            if utils.InTable(value.players, ally:GetPlayerID()) then
+                --utils.myPrint("Assigning ", utils.GetHeroName(ally), " to shrine: ", name)
+                playerAssignment[ally:GetPlayerID()].UseShrine = {shrine=value.shrine, allies=value.players}
             end
         end
     end

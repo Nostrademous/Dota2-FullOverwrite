@@ -27,7 +27,9 @@ end
 
 local function Updates(bot)
     if getHeroVar("IsInLane") then
-        setHeroVar("RetreatPos", utils.PositionAlongLane(bot, getHeroVar("RetreatLane")))
+        local retreatPos = utils.PositionAlongLane(bot, getHeroVar("RetreatLane")) - 0.03
+        setHeroVar("RetreatPos", retreatPos)
+        --utils.myPrint("RetreatLane: ", getHeroVar("RetreatLane"), " -- RetreatPos: <"..retreatPos..">")
     end
 end
 
@@ -41,7 +43,7 @@ function Think(bot, loc)
         nextmove = loc
     else
         if getHeroVar("IsInLane") then
-            nextmove = GetLocationAlongLane(getHeroVar("RetreatLane"), Max(getHeroVar("RetreatPos")-0.03, 0.0))
+            nextmove = GetLocationAlongLane(getHeroVar("RetreatLane"), Max(getHeroVar("RetreatPos"), 0.0))
         else
             nextmove = utils.Fountain(GetTeam())
         end

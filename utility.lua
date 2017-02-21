@@ -436,9 +436,9 @@ end
 
 function U.GetHeightDiff(hUnit1, hUnit2)
     if type(hUnit2) == "number" then -- case for trees
-        return (hUnit1:GetGroundHeight() - hUnit2)
+        return (hUnit1:GetLocation().z - hUnit2)
     end
-    return (hUnit1:GetGroundHeight() - hUnit2:GetGroundHeight())
+    return (hUnit1:GetLocation().z - hUnit2:GetLocation().z)
 end
 
 function U.EnemyDistanceFromTheirAncient( hEnemy )
@@ -851,7 +851,7 @@ function U.InitPathFinding()
 
     local allyList = GetUnitList(UNIT_LIST_ALLIED_HEROES)
     for _, ally in pairs(allyList) do
-        gHeroVar.SetVar(ally:GetPlayerID(), "NextHop", NextHop)
+        gHeroVar.SetVar(ally:GetPlayerID(), "NextHop", U.deepcopy(NextHop))
         gHeroVar.SetVar(ally:GetPlayerID(), "PathfindingWasInitiated", true)
     end
 end
@@ -1568,8 +1568,10 @@ function U.CourierThink(npcBot)
         npcBot:ActionImmediate_Courier(courier, COURIER_ACTION_RETURN_STASH_ITEMS)
     end
 
-    if GetCourierState(courier) == COURIER_STATE_DELIVERING_ITEMS or GetCourierState(courier) == COURIER_STATE_RETURNING_TO_BASE then
-        npcBot:ActionImmediate_Courier(GetCourier(0), COURIER_ACTION_BURST)
+    if courier:GetMaxHealth() >= 150 then
+        if GetCourierState(courier) == COURIER_STATE_DELIVERING_ITEMS or GetCourierState(courier) == COURIER_STATE_RETURNING_TO_BASE then
+            npcBot:ActionImmediate_Courier(courier, COURIER_ACTION_BURST)
+        end
     end
 end
 
@@ -1595,9 +1597,9 @@ function U.myPrint(...)
         msg = msg .. tostring(v)
     end
     --uncomment to only see messages by bots mentioned underneath
-    --if botname == "viper" then --or botname == "viper" then
+    if botname == "drow_ranger" then --or botname == "viper" then
       print(msg)
-    --end
+    end
 end
 
 return U;

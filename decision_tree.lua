@@ -28,13 +28,14 @@ local MODE_FIGHT      = constants.MODE_FIGHT
 local MODE_CHANNELING = constants.MODE_CHANNELING
 local MODE_JUNGLING   = constants.MODE_JUNGLING
 local MODE_MOVING     = constants.MODE_MOVING
-local MODE_SPECIALSHOP = constants.MODE_SPECIALSHOP
+local MODE_SPECIALSHOP= constants.MODE_SPECIALSHOP
 local MODE_RUNEPICKUP = constants.MODE_RUNEPICKUP
 local MODE_ROSHAN     = constants.MODE_ROSHAN
 local MODE_DEFENDALLY = constants.MODE_DEFENDALLY
 local MODE_DEFENDLANE = constants.MODE_DEFENDLANE
 local MODE_WARD       = constants.MODE_WARD
 local MODE_GANKING    = constants.MODE_GANKING
+local MODE_PUSHLANE   = constants.MODE_PUSHLANE
 
 local gStuck = false -- for detecting getting stuck in trees or whatever
 
@@ -72,6 +73,12 @@ function X:getModeStack()
     return self.modeStack
 end
 
+function X:printModeStack()
+    for k,v in ipairs(self:getModeStack()) do
+        utils.myPrint("ModeStack["..k.."] - ", v[1], " with value: ", v[2])
+    end
+end
+
 function X:getAbilityPriority()
     return self.abilityPriority
 end
@@ -88,7 +95,7 @@ function X:PrintModeTransition(name)
         elseif target.Id > 0 then
             utils.myPrint("Mode Transition: "..self:getPrevMode().." --> "..self:getCurrentMode(), " :: TargetID: ", target.Id)
         else
-            utils.myPrint("Mode Transition: "..self:getPrevMode().." --> "..self:getCurrentMode())
+            utils.myPrint("Mode Transition: "..self:getPrevMode().." --> "..self:getCurrentMode(), " :: Lane: ", self:getHeroVar("CurLane"))
         end
         self:setPrevMode(self:getCurrentMode())
     end
@@ -96,13 +103,22 @@ end
 
 function X:AddMode(mode, value)
     if mode == MODE_NONE then return end
+    
+    if mode == self:getCurrentMode() then return end
 
-    local k = self:HasMode(mode)
-    if k then
-        table.remove(self:getModeStack(), k)
+    --local k = self:HasMode(mode)
+    --if k then
+    --    table.remove(self:getModeStack(), k)
+    --end
+    
+    if self:getCurrentMode() == constants.MODE_SHRINE then
+        think.UpdatePlayerAssignment(GetBot(), "UseShrine", nil)
     end
-    table.insert(self:getModeStack(), 1, {mode, value})
+    
+    --table.insert(self:getModeStack(), 1, {mode, value})
 
+    --self:printModeStack()
+    
     self.currentMode = mode
     self.currentModeValue = value
 end
@@ -116,18 +132,20 @@ end
 
 function X:RemoveMode(mode)
     if mode == MODE_NONE then return end
+    
+    self:setCurrentMode(constants.MODE_NONE, BOT_MODE_DESIRE_NONE)
 
-    local k = self:HasMode(mode)
-    if k then
-        utils.myPrint("Removing Mode: ", mode)
-        table.remove(self:getModeStack(), k)
-        self:setCurrentMode(self:GetMode())
-    end
+    --local k = self:HasMode(mode)
+    --if k then
+    --    utils.myPrint("Removing Mode: ", mode)
+    --    table.remove(self:getModeStack(), k)
+    --    self:setCurrentMode(self:GetMode())
+    --end
 end
 
 function X:GetMode()
     if #self:getModeStack() == 0 then
-        return MODE_NONE, BOT_MODE_DESIRE_NONE
+        return {MODE_NONE, BOT_MODE_DESIRE_NONE}
     end
     return self:getModeStack()[1]
 end
@@ -285,8 +303,8 @@ function X:Think(bot)
     -- grab our bot's surrounding info
     nearbyEnemyHeroes   = bot:GetNearbyHeroes(EyeRange, true, BOT_MODE_NONE)
     nearbyAlliedHeroes  = bot:GetNearbyHeroes(EyeRange, false, BOT_MODE_NONE)
-    nearbyEnemyCreep    = bot:GetNearbyLaneCreeps(EyeRange, true)
-    nearbyAlliedCreep   = bot:GetNearbyLaneCreeps(EyeRange, false)
+    nearbyEnemyCreep    = bot:GetNearbyCreeps(EyeRange, true)
+    nearbyAlliedCreep   = bot:GetNearbyCreeps(EyeRange, false)
     nearbyEnemyTowers   = bot:GetNearbyTowers(EyeRange, true)
     nearbyAlliedTowers  = bot:GetNearbyTowers(EyeRange, false)
     
@@ -302,11 +320,12 @@ function X:Think(bot)
     end
     self:PrintModeTransition(utils.GetHeroName(bot))
     
-    --if self:getCurrentMode() == constants.MODE_EVADE then
+    if self:getCurrentMode() == constants.MODE_EVADE then
+        if self:DoEvade(bot) then return end
+    end
+    
     if self:getCurrentMode() == constants.MODE_FIGHT then
-        --utils.myPrint("FIGHT")
-        local bRet = self:DoFight(bot)
-        if bRet then return end
+        if self:DoFight(bot) then return end
     end
     
     -- check if I am channeling an ability/item (i.e. TP Scroll, Ultimate, etc.)
@@ -349,9 +368,16 @@ function X:Think(bot)
     
     if self:getCurrentMode() == constants.MODE_SPECIALSHOP then
         return
+    elseif self:getCurrentMode() == constants.MODE_DEFENDLANE then
+        return self:DoDefendLane(bot)
+    elseif self:getCurrentMode() == constants.MODE_ROAM then
+        return self:DoGank(bot)
+    elseif self:getCurrentMode() == constants.MODE_PUSHLANE then
+        return self:DoPushLane(bot)
     elseif self:getCurrentMode() == constants.MODE_SHRINE then
         return self:DoUseShrine(bot)
     elseif self:getCurrentMode() == constants.MODE_RETREAT then
+        utils.myPrint("DoRetreat reason: ", self:getHeroVar("RetreatReason"))
         return self:DoRetreat(bot, self:getHeroVar("RetreatReason"))
     elseif self:getCurrentMode() == constants.MODE_RUNEPICKUP then
         return self:DoGetRune(bot)
@@ -366,10 +392,6 @@ end
 
 function X:Think2(bot)
 
-    if ( self:GetMode() == MODE_SPECIALSHOP ) then
-        return
-    end
-
     if ( self:Determine_DoAlliesNeedHelp(bot) ) then
         local bRet = self:DoDefendAlly(bot)
         if bRet then return end
@@ -379,35 +401,9 @@ function X:Think2(bot)
         local bRet = self:DoRoshan(bot)
         if bRet then return end
     end
-
-    local lane, building, numEnemies = self:Determine_ShouldIDefendLane(bot)
-    if lane then
-        local bRet = self:DoDefendLane(bot, lane, building, numEnemies)
-        if bRet then return end
-    elseif self:getHeroVar("DoDefend") then
-        local hBuilding = buildings_status.GetHandle(GetTeam(), building)
-        if hBuilding == nil or hBuilding:TimeSinceDamagedByAnyHero() > 5.0 then
-            self:setHeroVar("DoDefend", false)
-        end
-    end
-
-    if ( self:GetMode() == MODE_GANKING or self:Determine_ShouldGank(bot) ) then
-        local bRet = self:DoGank(bot)
-        if bRet then return end
-    end
-
+    
     if ( self:Determine_ShouldRoam(bot) ) then
         local bRet = self:DoRoam(bot)
-        if bRet then return end
-    end
-
-    if ( self:GetMode() == MODE_JUNGLING or self:Determine_ShouldJungle(bot) ) then
-        local bRet = self:DoJungle(bot)
-        if bRet then return end
-    end
-
-    if ( self:GetMode() == MODE_WARD or self:Determine_ShouldWard(bot) ) then
-        local bRet = self:DoWard(bot)
         if bRet then return end
     end
 
@@ -416,18 +412,6 @@ function X:Think2(bot)
         if bRet then return end
     end
 
-    if ( self:Determine_ShouldIPushLane(bot) ) then
-        local bRet = self:DoPushLane(bot)
-        if bRet then return end
-    end
-
-    if ( self:GetMode() == MODE_LANING or self:Determine_ShouldLane(bot) ) then
-        local bRet = self:DoLane(bot)
-        if bRet then return end
-    end
-
-    local loc = self:Determine_WhereToMove(bot)
-    self:DoMove(bot, loc)
 end
 
 -------------------------------------------------------------------------------
@@ -435,21 +419,16 @@ end
 -------------------------------------------------------------------------------
 
 function X:DoWhileDead(bot)
-    -- clear our modeStack except for MODE_IDLE
-    local as = self:getModeStack()
-    if #as > 1 then
-        for i = #as-1, 1, -1 do
-            table.remove(as, i)
-            -- if we were waiting on shrine, inform others not to
-            -- wait on us
-            if as[1] == constants.MODE_SHRINE then
-                think.UpdatePlayerAssignment(bot, "UseShrine", nil)
-            end
-            self:PrintModeTransition(utils.GetHeroName(bot))
-        end
+    --utils.myPrint("I am dead")
+   
+    if self:getCurrentMode() == constants.MODE_SHRINE then
+        think.UpdatePlayerAssignment(bot, "UseShrine", nil)
     end
     
+    self:setCurrentMode(constants.MODE_NONE, BOT_MODE_DESIRE_NONE)
+    
     -- reset are various variables to default values
+    self:setHeroVar("BackTimer", nil)
     self:setHeroVar("RuneTarget", nil)
     self:setHeroVar("RuneLoc", nil)
     self:setHeroVar("IsRetreating", false)
@@ -458,6 +437,7 @@ function X:DoWhileDead(bot)
     self:setHeroVar("UsingShrine", false)
     self:setHeroVar("ShrineMode", nil)
     self:setHeroVar("ShrineLocation", nil)
+    self:setHeroVar("ShouldPush", false)
 
     self:MoveItemsFromStashToInventory(bot)
     local bb = self:ConsiderBuyback(bot)
@@ -491,226 +471,12 @@ function X:ConsiderItemUse()
     if item_usage.UseItems() then return true end
 end
 
-function X:Determine_ShouldUseGlyph(bot)
-    local vulnerableTowers = buildings_status.GetDestroyableTowers(GetTeam())
-    for i, building_id in pairs(vulnerableTowers) do
-        local tower = buildings_status.GetHandle(GetTeam(), building_id)
-        local listEnemyCreep = tower:GetNearbyCreeps(tower:GetAttackRange(), true)
-        local listHeroCount = tower:GetNearbyHeroes(tower:GetAttackRange(), true, BOT_MODE_NONE)
-
-        if tower:GetHealth() < math.max(tower:GetMaxHealth()*0.15, 150) and tower:TimeSinceDamagedByAnyHero() < 3
-            and tower:TimeSinceDamagedByCreep() < 3 then --FIXME uncomment when fixed and (#listEnemyCreep >= 2 or #listHeroCount >= 1) then
-            return true
-        end
-    end
-    return false
-end
-
-function X:Determine_ShouldIRetreat(bot)
-    if bot:GetHealth()/bot:GetMaxHealth() > 0.9 and bot:GetMana()/bot:GetMaxMana() > 0.5 then
-        if utils.IsTowerAttackingMe() and not self:GetMode() == MODE_FIGHT then
-            return constants.RETREAT_TOWER
-        end
-        return nil
-    end
-
-    if bot:GetHealth()/bot:GetMaxHealth() > 0.65 and bot:GetMana()/bot:GetMaxMana() > 0.6 and GetUnitToLocationDistance(bot, GetLocationAlongLane(self:getHeroVar("CurLane"), 0)) > 6000 then
-        if utils.IsTowerAttackingMe() and not self:GetMode() == MODE_FIGHT then
-            return constants.RETREAT_TOWER
-        end
-        if utils.IsCreepAttackingMe() and not self:GetMode() == MODE_FIGHT then
-            local pushing = self:getHeroVar("ShouldPush")
-            if self:getHeroVar("Target").Obj == nil or pushing == nil or pushing == false then
-                return constants.RETREAT_CREEP
-            end
-        end
-        return nil
-    end
-
-    if bot:GetHealth()/bot:GetMaxHealth() > 0.8 and bot:GetMana()/bot:GetMaxMana() > 0.36 and GetUnitToLocationDistance(bot, GetLocationAlongLane(self:getHeroVar("CurLane"), 0)) > 6000 then
-        if utils.IsTowerAttackingMe() and not self:GetMode() == MODE_FIGHT then
-            return constants.RETREAT_TOWER
-        end
-        if utils.IsCreepAttackingMe() and not self:GetMode() == MODE_FIGHT then
-            local pushing = self:getHeroVar("ShouldPush")
-            if self:getHeroVar("Target").Obj == nil or pushing == nil or pushing == false then
-                return constants.RETREAT_CREEP
-            end
-        end
-        return nil
-    end
-
-    if ((bot:GetHealth()/bot:GetMaxHealth()) < 0.33 and self:GetMode() ~= MODE_JUNGLING) or
-        (bot:GetMana()/bot:GetMaxMana() < 0.07 and self:getPrevMode() == MODE_LANING) then
-        self:setHeroVar("IsRetreating", true)
-        return constants.RETREAT_FOUNTAIN
-    end
-
-    local MaxStun = 0
-    for _,enemy in pairs(nearbyEnemyHeroes) do
-        if utils.NotNilOrDead(enemy) and enemy:GetHealth()/enemy:GetMaxHealth() > 0.25 then
-            local bEscape = self:getHeroVar("HasEscape")
-            local enemyManaRatio = enemy:GetMana()/enemy:GetMaxMana()
-
-            if bEscape then
-                MaxStun = MaxStun + enemy:GetStunDuration(true)
-            else
-                MaxStun = MaxStun + enemy:GetStunDuration(true) + 0.5*enemy:GetSlowDuration(true)
-            end
-        end
-    end
-
-    local enemyDamage = 0
-    for _, enemy in pairs(nearbyEnemyHeroes) do
-        if utils.NotNilOrDead(enemy) and enemy:GetHealth()/enemy:GetMaxHealth() > 0.4 then
-            local pDamage = enemy:GetEstimatedDamageToTarget(true, bot, MaxStun, DAMAGE_TYPE_PHYSICAL)
-            local mDamage = enemy:GetEstimatedDamageToTarget(true, bot, MaxStun, DAMAGE_TYPE_MAGICAL)
-            enemyDamage = enemyDamage + pDamage + mDamage + enemy:GetEstimatedDamageToTarget(true, bot, MaxStun, DAMAGE_TYPE_PURE)
-        end
-    end
-
-    if enemyDamage > bot:GetHealth() then
-        utils.myPrint(" - Retreating - could die in perfect stun/slow overlap")
-        self:setHeroVar("IsRetreating", true)
-        return constants.RETREAT_DANGER
-    end
-
-    if utils.IsTowerAttackingMe() then
-        if #nearbyEnemyTowers == 1 then
-            local eTower = nearbyEnemyTowers[1]
-            if eTower:GetHealth()/eTower:GetMaxHealth() < 0.1 and not eTower:HasModifier("modifier_fountain_glyph") then
-                return nil
-            end
-        end
-        return constants.RETREAT_TOWER
-    end
-    if utils.IsCreepAttackingMe() then
-        local pushing = self:getHeroVar("ShouldPush")
-        if self:getHeroVar("Target").Obj == nil or pushing ~= true then
-            return constants.RETREAT_CREEP
-        end
-    end
-
-    return nil
-end
 
 function X:Determine_ShouldIFight(bot)
     global_game_state.GlobalFightDetermination()
     if self:getHeroVar("Target").Id > 0 then
         return true
     end
-    return false
-end
-
-function X:Determine_ShouldIFight2(bot)
-    -- try to find a taret
-    local weakestHero, score = fighting.FindTarget(nearbyEnemyHeroes, nearbyEnemyTowers, nearbyAlliedTowers, nearbyEnemyCreep, nearbyAlliedCreep)
-
-    -- get my possible existing target
-    local myTarget = self:getHeroVar("Target")
-
-    -- if I found a new best target, but I have a target already, and they are not the same
-    if weakestHero ~= nil and utils.ValidTarget(myTarget) and myTarget.Obj ~= weakestHero then
-        if score > 50.0 or (score > 2.0 and (GetUnitToUnitDistance(bot, weakestHero) < GetUnitToUnitDistance(bot, myTarget)*1.5 or weakestHero:GetStunDuration(true) >= 1.0)) then
-            myTarget.Obj = weakestHero
-            myTarget.Id = weakestHero:GetPlayerID()
-            self:setHeroVar("Target", myTarget)
-        end
-    end
-
-    if myTarget.Id > 0 and not IsHeroAlive( myTarget.Id ) then
-        utils.AllChat("You dead buddy!")
-        self:RemoveMode(MODE_FIGHT)
-        self:setHeroVar("Target", NoTarget)
-        self:setHeroVar("GankTarget", NoTarget)
-        myTarget.Obj = nil
-        myTarget.Id = 0
-    end
-
-    -- if I have a target, set by me or by team fighting function
-    if myTarget.Id > 0 and IsHeroAlive(myTarget.Id) then
-        if utils.ValidTarget(myTarget) then
-            gHeroVar.HeroAttackUnit(bot, myTarget.Obj, true)
-            return true
-        elseif GetHeroLastSeenInfo(myTarget.Id).time > 3.0 then
-            utils.myPrint(" - Stopping my fight... lost sight of hero")
-            self:RemoveMode(MODE_FIGHT)
-            self:setHeroVar("Target", NoTarget)
-            return false
-        else
-            self:setHeroVar("Target", myTarget)
-            local Allies = GetUnitList(UNIT_LIST_ALLIED_HEROES)
-
-            for _, friend in pairs(Allies) do
-                local friendID = friend:GetPlayerID()
-                if self.pID ~= friendID and gHeroVar.HasID(friendID) and GetUnitToUnitDistance(myTarget.Obj, friend)/friend:GetCurrentMovementSpeed() <= 5.0 then
-                    utils.myPrint("getting help from ", utils.GetHeroName(friend), " in fighting enemyID: ", myTarget.Id)
-                    gHeroVar.SetVar(friendID, "Target", myTarget)
-                end
-            end
-
-            local pLoc = enemyData.PredictedLocation(myTarget.Id, GetHeroLastSeenInfo(myTarget.Id).time)
-            if pLoc then
-                item_usage.UseMovementItems()
-                gHeroVar.HeroMoveToLocation(bot, pLoc)
-                return true
-            end
-        end
-    end
-
-    -- otherwise use the weakest hero
-    if utils.NotNilOrDead(weakestHero) then
-        local bFight = (score > 1) or weakestHero:HasModifier("modifier_bloodseeker_rupture")
-
-        if bFight then
-            if self:HasMode(MODE_FIGHT) == false then
-                utils.myPrint(" - Fighting ", utils.GetHeroName(weakestHero))
-                self:AddMode(MODE_FIGHT)
-                self:setHeroVar("Target", {Obj=weakestHero, Id=weakestHero:GetPlayerID()})
-            end
-
-            if utils.GetHeroName(weakestHero) ~= utils.GetHeroName(getHeroVar("Target").Obj) then
-                utils.myPrint(" - Fight Change - Fighting ", utils.GetHeroName(weakestHero))
-                self:setHeroVar("Target", {Obj=weakestHero, Id=weakestHero:GetPlayerID()})
-            end
-
-            local Allies = GetUnitList(UNIT_LIST_ALLIED_HEROES)
-            for _, friend in pairs(Allies) do
-                local friendID = friend:GetPlayerID()
-                if self.pID ~= friendID and gHeroVar.HasID(friendID) and GetUnitToUnitDistance(bot, friend)/friend:GetCurrentMovementSpeed() <= 5.0 then
-                    utils.myPrint("getting help from ", utils.GetHeroName(friend), " in fighting: ", utils.GetHeroName(weakestHero))
-                    gHeroVar.SetVar(friendID, "Target", {Obj=weakestHero, Id=weakestHero:GetPlayerID()})
-                end
-            end
-
-            return true
-        end
-    end
-
-    self:RemoveMode(MODE_FIGHT)
-    self:setHeroVar("Target", NoTarget)
-    return false
-end
-
-function X:Determine_DoAlliesNeedHelp(bot)
-    return false
-end
-
-function X:Determine_ShouldIPushLane(bot)
-    if #nearbyEnemyTowers == 0 then
-        return false
-    end
-
-    if ( nearbyEnemyTowers[1]:GetHealth() / nearbyEnemyTowers[1]:GetMaxHealth() ) < 0.1 then
-        self:setHeroVar("ShouldPush", true)
-        return true
-    end
-
-    if #nearbyAlliedCreep > 0 and #nearbyEnemyHeroes == 0 then
-        self:setHeroVar("ShouldPush", true)
-        return true
-    end
-
     return false
 end
 
@@ -729,10 +495,6 @@ function X:IsReadyToGank(bot)
     return false
 end
 
-function X:Determine_ShouldRoam(bot)
-    return false
-end
-
 function X:Determine_ShouldIChangeLane(bot)
     -- don't change lanes for first 6 minutes
     if DotaTime() < 60*6 then return false end
@@ -746,113 +508,10 @@ function X:Determine_ShouldIChangeLane(bot)
     return false
 end
 
-function X:Determine_ShouldJungle(bot)
-    local bRoleJungler = self:getHeroVar("Role") == ROLE_JUNGLER
-    --FIXME: Implement other reasons when/why we would want to jungle
-    return bRoleJungler
-end
 
-function X:Determine_ShouldTeamRoshan(bot)
-    local numAlive = enemyData.GetNumAlive()
-
-    local isRoshanAlive = DotaTime() - GetRoshanKillTime() > 660 -- max 11 minutes respawn time of roshan
-
-    if (numAlive < 3 and (GetRoshanKillTime() == 0 or isRoshanAlive)) then -- FIXME: Implement
-        --if self:HasMode(MODE_ROSHAN) == false then
-        --    utils.myPrint(" - Going to Fight Roshan")
-        --    self:AddMode(MODE_ROSHAN)
-        --end
-    end
-    return false
-end
-
-function X:Determine_ShouldGetRune(bot)
-    if GetGameState() ~= GAME_STATE_GAME_IN_PROGRESS then return false end
-
-    for _,r in pairs(constants.RuneSpots) do
-        local loc = GetRuneSpawnLocation(r)
-        if utils.GetDistance(bot:GetLocation(), loc) < 1200 and GetRuneStatus(r) == RUNE_STATUS_AVAILABLE then
-            if self:HasMode(MODE_RUNEPICKUP) == false then
-                utils.myPrint(" STARTING TO GET RUNE ")
-                self:AddMode(MODE_RUNEPICKUP)
-                setHeroVar("RuneTarget", r)
-                setHeroVar("RuneLoc", loc)
-            end
-        end
-    end
-
-    local bRet = self:DoGetRune(bot) -- grab a rune if we near one as we jungle
-    if bRet then return bRet end
-end
-
-function X:Determine_ShouldWard(bot)
-    -- we need to lane first before we know where to ward properly
-    if self:getCurrentMode() ~= MODE_LANING then return false end
-    
-    local WardCheckTimer = self:getHeroVar("WardCheckTimer")
-    local bCheck = true
-    local newTime = GameTime()
-    if WardCheckTimer ~= nil then
-        bCheck, newTime = utils.TimePassed(WardCheckTimer, 0.5)
-    end
-    if bCheck then
-        self:setHeroVar("WardCheckTimer", newTime)
-        local ward = item_usage.HaveWard("item_ward_observer")
-        if ward then
-            local alliedMapWards = GetUnitList(UNIT_LIST_ALLIED_WARDS)
-            if #alliedMapWards < 2 then --FIXME: don't hardcode.. you get more wards then you can use this way
-                local wardLocs = utils.GetWardingSpot(self:getHeroVar("CurLane"))
-
-                if #wardLocs == 0 then return false end
-
-                -- FIXME: Consider ward expiration time
-                local wardLoc = nil
-                for _, wl in ipairs(wardLocs) do
-                    local bGoodLoc = true
-                    for _, value in ipairs(alliedMapWards) do
-                        if utils.GetDistance(value:GetLocation(), wl) < 1600 then
-                            bGoodLoc = false
-                        end
-                    end
-                    if bGoodLoc then
-                        wardLoc = wl
-                        break
-                    end
-                end
-
-                if wardLoc ~= nil and utils.EnemiesNearLocation(bot, wardLoc, 2000) < 2 then
-                    self:setHeroVar("WardLocation", wardLoc)
-                    utils.InitPath()
-                    if self:HasMode(MODE_WARD) == false then
-                        --utils.myPrint("Going to place an Observer Ward")
-                        self:AddMode(MODE_WARD)
-                    end
-                    return true
-                end
-            end
-        end
-    end
-
-    return false
-end
-
-function X:Determine_ShouldLane(bot)
-    local notJungler = self:getHeroVar("Role") ~= ROLE_JUNGLER
-    return notJungler
-end
-
-function X:Determine_WhereToMove(bot)
-    local loc = GetLocationAlongLane(self:getHeroVar("CurLane"), 0.5)
-    local dist = GetUnitToLocationDistance(bot, loc)
-    if ( dist <= 1.0 ) then
-        self:RemoveMode(MODE_MOVING)
-        return nil
-    end
-    return loc
-end
 
 function X:DoRetreat(bot, reason)
-
+    --utils.myPrint("DoRetreat reason: ", reason)
     if reason == constants.RETREAT_FOUNTAIN then
         if getHeroVar("RetreatLane") == nil then
             utils.myPrint("DoRetreat - STARTING TO RETREAT TO FOUNTAIN")
@@ -877,15 +536,24 @@ function X:DoRetreat(bot, reason)
         end
 
         if self:getHeroVar("IsRetreating") then
-            if bot:TimeSinceDamagedByAnyHero() < 3.0 then
+            local enemyTooClose = false
+            for _, enemy in pairs(nearbyEnemyHeroes) do
+                if GetUnitToUnitDistance(bot, enemy) < Max(650, enemy:GetAttackRange()) then
+                    enemyTooClose = true
+                    break
+                end
+            end
+            
+            if bot:TimeSinceDamagedByAnyHero() < 3.0 or enemyTooClose then
                 if bot:DistanceFromFountain() < 5000 and (bot:GetHealth()/bot:GetMaxHealth()) < 1.0 then
                     retreat_generic.Think(bot)
                     return true
                 elseif bot:DistanceFromFountain() >= 5000 and (bot:GetHealth()/bot:GetMaxHealth()) < 0.6 then
                     retreat_generic.Think(bot)
                     return true
-                else
-                    self:setHeroVar("IsRetreating", false)
+                elseif (bot:GetHealth()/bot:GetMaxHealth()) < 0.75 then
+                    retreat_generic.Think(bot)
+                    return true
                 end
             end
         end
@@ -894,40 +562,19 @@ function X:DoRetreat(bot, reason)
         --utils.myPrint("STARTING TO RETREAT b/c of tower damage")
 
         local mypos = bot:GetLocation()
-        if self:getHeroVar("TargetOfRunAwayFromCreepOrTower") == nil then
+        if utils.IsTowerAttackingMe(2.0) then
+            local rLoc = mypos
+            
             --set the target to go back
             local bInLane, cLane = utils.IsInLane()
             if bInLane then
-                self:setHeroVar("TargetOfRunAwayFromCreepOrTower", GetLocationAlongLane(cLane,Max(utils.PositionAlongLane(bot, cLane)-0.05, 0.0)))
-            elseif ( GetTeam() == TEAM_RADIANT ) then
-                cLane = self:getHeroVar("CurLane")
-                if cLane == LANE_BOT then
-                    self:setHeroVar("TargetOfRunAwayFromCreepOrTower", Vector(mypos[1], mypos[2] - 300))
-                elseif cLane == LANE_TOP then
-                    self:setHeroVar("TargetOfRunAwayFromCreepOrTower", Vector(mypos[1] - 400, mypos[2]))
-                else
-                    self:setHeroVar("TargetOfRunAwayFromCreepOrTower", Vector(mypos[1] - 300, mypos[2] - 300))
-                end
+                rLoc = GetLocationAlongLane(cLane,Max(utils.PositionAlongLane(bot, cLane)-0.05, 0.0))
             else
-                cLane = self:getHeroVar("CurLane")
-                if cLane == LANE_BOT then
-                    self:setHeroVar("TargetOfRunAwayFromCreepOrTower", Vector(mypos[1] + 300, mypos[2]))
-                elseif cLane == LANE_TOP then
-                    self:setHeroVar("TargetOfRunAwayFromCreepOrTower", Vector(mypos[1], mypos[2] + 400))
-                else
-                    self:setHeroVar("TargetOfRunAwayFromCreepOrTower", Vector(mypos[1] + 300, mypos[2] + 300))
-                end
+                rLoc = utils.VectorTowards(mypos, utils.Fountain(GetTeam()), 300)
             end
-        end
 
-        local rLoc = self:getHeroVar("TargetOfRunAwayFromCreepOrTower")
-        local d = GetUnitToLocationDistance(bot, rLoc)
-        if d > 50 and utils.IsTowerAttackingMe(2.0) then
-            if utils.IsInLane(bot) then
-                gHeroVar.HeroMoveToLocation(bot, rLoc)
-            else
-                utils.MoveSafelyToLocation(bot, rLoc)
-            end
+            utils.MoveSafelyToLocation(bot, rLoc)
+            --utils.myPrint("TowerRetreat: ", d)
             return true
         end
         --utils.myPrint("DoRetreat - RETREAT TOWER End")
@@ -935,30 +582,21 @@ function X:DoRetreat(bot, reason)
         --utils.myPrint("STARTING TO RETREAT b/c of creep damage")
 
         local mypos = bot:GetLocation()
-        if self:getHeroVar("TargetOfRunAwayFromCreepOrTower") == nil then
+        if utils.IsCreepAttackingMe(1.0) then
+            local rLoc = mypos
+            
             --set the target to go back
             local bInLane, cLane = utils.IsInLane()
             if bInLane then
-                utils.myPrint("Creep Retreat - InLane: ", cLane)
-                self:setHeroVar("TargetOfRunAwayFromCreepOrTower", GetLocationAlongLane(cLane, Max(utils.PositionAlongLane(bot, cLane)-0.04, 0.0)))
-            elseif ( GetTeam() == TEAM_RADIANT ) then
-                utils.myPrint("Creep Retreat - Not InLane - Radiant")
-                self:setHeroVar("TargetOfRunAwayFromCreepOrTower", Vector(mypos[1] - 300, mypos[2] - 300))
+                --utils.myPrint("Creep Retreat - InLane: ", cLane)
+                rLoc = GetLocationAlongLane(cLane, Max(utils.PositionAlongLane(bot, cLane)-0.04, 0.0))
             else
-                utils.myPrint("Creep Retreat - Not InLane - Dire")
-                self:setHeroVar("TargetOfRunAwayFromCreepOrTower", Vector(mypos[1] + 300, mypos[2] + 300))
+                --utils.myPrint("Creep Retreat - Not InLane")
+                rLoc = utils.VectorTowards(mypos, utils.Fountain(GetTeam()), 300)
             end
-        end
 
-        local rLoc = self:getHeroVar("TargetOfRunAwayFromCreepOrTower")
-        local d = GetUnitToLocationDistance(bot, rLoc)
-        --utils.myPrint("Creep Retreat - Destination - <",rLoc[1],", ",rLoc[2],"> Dist: ", d)
-        if d > 50 and utils.IsCreepAttackingMe(2.0) then
-            if utils.IsInLane(bot) then
-                gHeroVar.HeroMoveToLocation(bot, rLoc)
-            else
-                utils.MoveSafelyToLocation(bot, rLoc)
-            end
+            utils.MoveSafelyToLocation(bot, rLoc)
+            
             return true
         end
         --utils.myPrint("DoRetreat - RETREAT CREEP End")
@@ -967,10 +605,13 @@ function X:DoRetreat(bot, reason)
     -- If we got here, we are done retreating
     --utils.myPrint("done retreating from reason: "..reason)
     self:RemoveMode(MODE_RETREAT)
-    self:setHeroVar("TargetOfRunAwayFromCreepOrTower", nil)
     self:setHeroVar("IsRetreating", false)
     self:setHeroVar("RetreatReason", nil)
     return true
+end
+
+function X:DoEvade(bot)
+    return false
 end
 
 function X:DoFight(bot)
@@ -1037,96 +678,57 @@ function X:DoFight(bot)
     return false
 end
 
--- CONTRIBUTOR: code originally from arz_on4dt
 function X:DoUseShrine(bot)
     if bot:IsIllusion() then return false end
 
     -- if we somehow healed up to above 0.5 health and are not under shrine effect
     -- then we can cancel our desire to use shrine
     if bot:GetHealth()/bot:GetMaxHealth() > 0.5 and not bot:HasModifier("modifier_filler_heal") then
-        self:setHeroVar("UsingShrine", false)
+        utils.myPrint("Don't need to use shrine, canceling")
         self:setHeroVar("ShrineMode", nil)
-        self:setHeroVar("ShrineLocation", nil)
+        self:setHeroVar("Shrine", nil)
         self:RemoveMode(constants.MODE_SHRINE)
         think.UpdatePlayerAssignment(bot, "UseShrine", nil)
         return false
     end
     
     local botShrineMode = self:getHeroVar("ShrineMode")
-    if botShrineMode and botShrineMode[1] ~= constants.SHRINE_USE then
-        local location = self:getHeroVar("ShrineLocation")
-        if location and GetUnitToLocationDistance(bot, location) > 200 then
-            gHeroVar.HeroMoveToLocation(bot, location)
+    local shrine = self:getHeroVar("Shrine")
+    if botShrineMode then
+        if shrine and GetUnitToUnitDistance(bot, shrine) > 200 then
+            gHeroVar.HeroMoveToLocation(bot, shrine:GetLocation())
             local mvAbility = getHeroVar("HasMovementAbility")
             if mvAbility and mvAbility[1]:IsFullyCastable() then
-                local newLoc = utils.VectorTowards(bot:GetLocation(), location, mvAbility[2])
+                local newLoc = utils.VectorTowards(bot:GetLocation(), shrine:GetLocation(), mvAbility[2])
                 gHeroVar.HeroPushUseAbilityOnLocation(bot, mvAbility[1], newLoc)
             end
             return true
-        else
-            utils.myPrint("Waiting on more friends: ", #botShrineMode[2])
-        end
-        return false
-    end
-    
-    if bot:HasModifier("modifier_filler_heal") then
-        if not self:getHeroVar("UsingShrine") then
-            self:setHeroVar("UsingShrine", true)
-        end
-        return false
-    else
-        if self:getHeroVar("UsingShrine") then
-            self:setHeroVar("UsingShrine", false)
-            self:setHeroVar("ShrineMode", nil)
-            self:setHeroVar("ShrineLocation", nil)
-            self:RemoveMode(constants.MODE_SHRINE)
-            think.UpdatePlayerAssignment(bot, "UseShrine", nil)
+        elseif botShrineMode[1] ~= constants.SHRINE_USE then
+            if #botShrineMode[2] == 0 then
+                self:setHeroVar("ShrineMode", {constants.SHRINE_USE, {}})
+            else
+                utils.myPrint("Waiting on more friends: ", #botShrineMode[2])
+                for _, id in pairs(botShrineMode[2]) do
+                    utils.myPrint("\tID: ", id)
+                end
+            end
+            return true
         end
     end
 
-    local Team = GetTeam()
-    local SJ1 = GetShrine(Team, SHRINE_JUNGLE_1)
-    if SJ1 and SJ1:GetHealth() > 0 and GetUnitToUnitDistance(SJ1 , bot) < 200 and GetShrineCooldown(SJ1) < 1 then
-        utils.myPrint("using Shrine Jungle 1")
-        bot:ActionPush_UseShrine(SJ1)
+    if shrine and shrine:GetHealth() > 0 and GetShrineCooldown(shrine) == 0 then
+        utils.myPrint("using Shrine")
+        bot:ActionPush_UseShrine(shrine)
+        return true
+    elseif bot:HasModifier("modifier_filler_heal") then
         return true
     end
-    local SJ2 = GetShrine(Team, SHRINE_JUNGLE_2)
-    if SJ2 and SJ2:GetHealth() > 0 and GetUnitToUnitDistance(SJ2 , bot) < 200 and GetShrineCooldown(SJ2) < 1 then
-        utils.myPrint("using Shrine Jungle 2")
-        bot:ActionPush_UseShrine(SJ2)
-        return true
-    end
-    local SB1 = GetShrine(Team, SHRINE_BASE_1)
-    if SB1 and SB1:GetHealth() > 0 and GetUnitToUnitDistance(SB1 , bot) < 200 and GetShrineCooldown(SB1) < 1 then
-        utils.myPrint("using Shrine Base 1")
-        bot:ActionPush_UseShrine(SB1)
-        return true
-    end
-    local SB2 = GetShrine(Team, SHRINE_BASE_2)
-    if SB2 and SB2:GetHealth() > 0 and GetUnitToUnitDistance(SB2 , bot) < 200 and GetShrineCooldown(SB2) < 1 then
-        utils.myPrint("using Shrine Base 2")
-        bot:ActionPush_UseShrine(SB2)
-        return true
-    end
-    local SB3 = GetShrine(Team, SHRINE_BASE_3)
-    if SB3 and SB3:GetHealth() > 0 and GetUnitToUnitDistance(SB3 , bot) < 200 and GetShrineCooldown(SB3) < 1 then
-        utils.myPrint("using Shrine Base 3")
-        bot:ActionPush_UseShrine(SB3)
-        return true
-    end
-    local SB4 = GetShrine(Team, SHRINE_BASE_4)
-    if SB4 and SB4:GetHealth() > 0 and GetUnitToUnitDistance(SB4 , bot) < 200 and GetShrineCooldown(SB4) < 1 then
-        utils.myPrint("using Shrine Base 4")
-        bot:ActionPush_UseShrine(SB4)
-        return true
-    end
-    local SB5 = GetShrine(Team, SHRINE_BASE_5)
-    if SB5 and SB5:GetHealth() > 0 and GetUnitToUnitDistance(SB5 , bot) < 200 and GetShrineCooldown(SB5) < 1 then
-        utils.myPrint("using Shrine Base 5")
-        bot:ActionPush_UseShrine(SB5)
-        return true
-    end
+
+    self:setHeroVar("ShrineMode", nil)
+    self:setHeroVar("Shrine", nil)
+    self:RemoveMode(constants.MODE_SHRINE)
+    think.UpdatePlayerAssignment(bot, "UseShrine", nil)
+    
     return false
 end
 
@@ -1139,21 +741,30 @@ function X:DoPushLane(bot)
     local Barracks = bot:GetNearbyBarracks(750, true)
     local Ancient = GetAncient(utils.GetOtherTeam())
 
-    if #nearbyEnemyTowers == 0 and #Shrines == 0 and #Barracks == 0 then
-        if utils.NotNilOrDead(Ancient) and not Ancient:HasModifier("modifier_fountain_glyph") then
-            gHeroVar.HeroAttackUnit(bot, Ancient, false)
-            return true
-        end
+    if #nearbyEnemyHeroes > 0 then
+        self:setHeroVar("ShouldPush", false)
+        self:RemoveMode(constants.MODE_PUSHLANE)
         return false
     end
-
+    
+    if #nearbyEnemyTowers == 0 and #Shrines == 0 and #Barracks == 0 then
+        if GetUnitToLocationDistance(bot, Ancient:GetLocation()) < 500 then
+            if utils.NotNilOrDead(Ancient) and not Ancient:HasModifier("modifier_fountain_glyph") then
+                gHeroVar.HeroAttackUnit(bot, Ancient, false)
+                return true
+            end
+        end
+    end
+    
     if #nearbyEnemyCreep > 0 then
+        self:RemoveMode(constants.MODE_PUSHLANE)
         return false
     end
 
     if #nearbyEnemyTowers > 0 then
         for _, tower in ipairs(nearbyEnemyTowers) do
             if utils.NotNilOrDead(tower) and (not tower:HasModifier("modifier_fountain_glyph")) then
+                --self:setHeroVar("ShouldPush", true)
                 gHeroVar.HeroAttackUnit(bot, tower, false)
                 return true
             end
@@ -1178,51 +789,39 @@ function X:DoPushLane(bot)
         end
     end
 
+    -- we are pushing lane but no structures nearby, so push forward in lane
+    local enemyFrontier = GetLaneFrontAmount(utils.GetOtherTeam(), self:getHeroVar("CurLane"), false)
+    local frontier = Min(1.0, enemyFrontier)
+
+    local dest = GetLocationAlongLane(self:getHeroVar("CurLane"), Min(1.0, frontier))
+    utils.MoveSafelyToLocation(bot, dest)
+    
     return false
 end
 
 function X:DoDefendLane(bot, lane, building, numEnemies)
-    utils.myPrint("Need to defend lane: ", lane, ", building: ", building, " against numEnemies: ", numEnemies)
-    -- calculate num of bots that can defend
-    local listAlliesCanReachBuilding = {}
-    local listAlliesCanTPToBuildling = {}
-    local listAllies = GetUnitList(UNIT_LIST_ALLIED_HEROES)
+    local defendInfo = self:getHeroVar("DoDefendLane")
+    local lane = defendInfo[1]
+    local building = defendInfo[2]
+    local numEnemies = defendInfo[3]
     local hBuilding = buildings_status.GetHandle(GetTeam(), building)
-    for _, ally in pairs(listAllies) do
-        if not ally:IsIllusion() then
-            local distFromBuilding = GetUnitToUnitDistance(ally, hBuilding)
-            local timeToReachBuilding = distFromBuilding/ally:GetCurrentMovementSpeed()
+    
+    if lane and hBuilding and hBuilding:TimeSinceDamagedByAnyHero() < 5.0 then
+        utils.myPrint("Defending lane '"..lane.."' building: ", hBuilding:GetUnitName())
+        local distFromBuilding = GetUnitToUnitDistance(bot, hBuilding)
+        local timeToReachBuilding = distFromBuilding/bot:GetCurrentMovementSpeed()
 
-            if timeToReachBuilding <= 5.0 then
-                table.insert(listAlliesCanReachBuilding, ally)
-            else
-                local haveTP = utils.HaveItem(ally, "item_tpscroll")
-                if haveTP and haveTP:IsFullyCastable() then
-                    table.insert(listAlliesCanTPToBuildling, ally)
-                end
-            end
+        if timeToReachBuilding <= 5.0 then
+            gHeroVar.HeroMoveToLocation(bot, hBuilding:GetLocation())
+            return true
+        else
+            item_usage.UseTP(bot, hBuilding:GetLocation())
+            return true
         end
+    else
+        self:RemoveMode(constants.MODE_DEFENDLANE)
+        self:setHeroVar("DoDefendLane", nil)
     end
-
-    if (#listAlliesCanReachBuilding + #listAlliesCanTPToBuildling) >= (numEnemies - 1) then
-        utils.myPrint("FIXME: We Could Defend this building!!! Need to implement logic")
-        local numGoing = 0
-        for _, ally in pairs(listAlliesCanReachBuilding) do
-            gHeroVar.SetVar(ally:GetPlayerID(), "DoDefend", true)
-            gHeroVar.HeroMoveToLocation(ally, hBuilding:GetLocation())
-            numGoing = numGoing + 1
-            
-            if numGoing >= (numEnemies - 1) then break end
-        end
-        for _, ally in pairs(listAlliesCanTPToBuildling) do
-            gHeroVar.SetVar(ally:GetPlayerID(), "DoDefend", true)
-            item_usage.UseTP(ally, hBuilding:GetLocation())
-            numGoing = numGoing + 1
-            
-            if numGoing >= (numEnemies - 1) then break end
-        end
-    end
-
     return false
 end
 
@@ -1230,11 +829,6 @@ function X:DoGank(bot)
     local bStillGanking = true
     local gankTarget = self:getHeroVar("GankTarget")
     if gankTarget.Id > 0 and IsHeroAlive(gankTarget.Id) then
-        if ( self:HasMode(MODE_GANKING) == false ) then
-            utils.myPrint(" STARTING TO GANK ")
-            self:AddMode(MODE_GANKING)
-        end
-
         local bTimeToKill = ganking_generic.ApproachTarget(bot, gankTarget)
         if bTimeToKill then
             bStillGanking = ganking_generic.KillTarget(bot, gankTarget)
@@ -1242,9 +836,9 @@ function X:DoGank(bot)
 
         if not bStillGanking then
             utils.myPrint("clearing gank")
-            self:RemoveMode(MODE_GANKING)
-            self:setHeroVar("GankTarget", {Obj=nil, Id=0})
-            self:setHeroVar("Target", {Obj=nil, Id=0})
+            self:RemoveMode(constants.MODE_GANKING)
+            self:setHeroVar("GankTarget", NoTarget)
+            self:setHeroVar("Target", NoTarget)
         end
     else
         if utils.ValidTarget(gankTarget) then
@@ -1252,9 +846,9 @@ function X:DoGank(bot)
         else
             utils.myPrint("clearing gank - target [Id:"..gankTarget.Id.."] Alive: ", IsHeroAlive(gankTarget.Id))
         end
-        self:RemoveMode(MODE_GANKING)
-        self:setHeroVar("GankTarget", {Obj=nil, Id=0})
-        self:setHeroVar("Target", {Obj=nil, Id=0})
+        self:RemoveMode(constants.MODE_GANKING)
+        self:setHeroVar("GankTarget", NoTarget)
+        self:setHeroVar("Target", NoTarget)
     end
 
     return bStillGanking
@@ -1265,12 +859,6 @@ function X:DoRoam(bot)
 end
 
 function X:DoJungle(bot)
-    if ( self:HasMode(MODE_JUNGLING) == false ) then
-        utils.myPrint(" STARTING TO JUNGLE ")
-        self:AddMode(MODE_JUNGLING)
-        jungling_generic.OnStart(bot)
-    end
-
     jungling_generic.Think(bot)
 
     return true
@@ -1405,22 +993,12 @@ function X:DoWard(bot, wardType)
 end
 
 function X:DoLane(bot)
-    if ( self:HasMode(MODE_LANING) == false ) then
-        utils.myPrint(" STARTING TO LANE ")
-        self:AddMode(MODE_LANING)
-        laning_generic.OnStart(bot)
-    end
-
     laning_generic.Think(bot, nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCreep, nearbyAlliedCreep, nearbyEnemyTowers, nearbyAlliedTowers)
 
     return true
 end
 
 function X:DoMove(bot, loc)
-    if loc then
-        self:AddMode(MODE_MOVING)
-        gHeroVar.HeroMoveToLocation(bot, loc)
-    end
     return true
 end
 

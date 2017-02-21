@@ -53,28 +53,52 @@ local LaningStates={
 
 local LaningState = LaningStates.Start
 
-function OnStart(bot)
-    setHeroVar("BackTimerGen", -1000)
-
-    local dest = GetLocationAlongLane(getHeroVar("CurLane"), GetLaneFrontAmount(GetTeam(), getHeroVar("CurLane"), true)-0.04)
-    if GetUnitToLocationDistance(bot, dest) > 1500 then
-        utils.InitPath(bot)
-        setHeroVar("LaningState", LaningStates.MovingToLane)
-    end
-
-    --print(utils.GetHeroName(bot), " LANING OnStart Done")
-end
-
 -------------------------------
 
+local function HarassEnemy(bot)
+    for _, enemy in pairs(listEnemies) do
+        for _, myTower in pairs(listAlliedTowers) do
+            if GetUnitToUnitDistance(myTower, enemy) < 600 then
+                local stunAbilities = gHeroVar.GetVar(bot:GetPlayerID(),"HasStun")
+                if stunAbilities then
+                    for _, stun in pairs(stunAbilities) do
+                        if not enemy:IsStunned() and stun[1]:IsFullyCastable() then
+                            local behaviorFlag = stun[1]:GetBehavior()
+                            if utils.CheckFlag(behaviorFlag, ABILITY_BEHAVIOR_UNIT_TARGET) then
+                                bot:Action_UseAbilityOnEntity(stun[1], enemy)
+                                return true
+                            elseif utils.CheckFlag(behaviorFlag, ABILITY_BEHAVIOR_POINT) then
+                                bot:Action_UseAbilityOnLocation(stun[1], enemy:GetExtrapolatedLocation(stun[2]))
+                                return true
+                            end
+                        end
+                    end
+                end
+                gHeroVar.HeroAttackUnit(bot, enemy, true)
+                return true
+            end
+        end
+    end
+    
+    if utils.UseOrbEffect(bot) then return true end
+    
+    if #listEnemies == 1 and (#listEnemyCreep < #listAlliedCreep or #listEnemyCreep == 0) and 
+        GetUnitToUnitDistance(bot, listEnemies[1]) < (bot:GetAttackRange()+bot:GetBoundingRadius()) then
+        gHeroVar.HeroAttackUnit(bot, listEnemies[1], true)
+        return true
+    end
+    
+    return false
+end
+
 local function MovingToLane(bot)
-    local dest = GetLocationAlongLane(getHeroVar("CurLane"),GetLaneFrontAmount(GetTeam(), getHeroVar("CurLane"), true) - 0.04)
+    local dest = GetLocationAlongLane(getHeroVar("CurLane"),GetLaneFrontAmount(GetTeam(), getHeroVar("CurLane"), false) - 0.04)
 
     if GetUnitToLocationDistance(bot, dest) < 300 then
         LaningState = LaningStates.Moving
         return
     end
-
+    
     utils.MoveSafelyToLocation(bot, dest)
 end
 
@@ -112,9 +136,11 @@ local function Moving(bot)
     end
     --]]
 
-    local target = GetLocationAlongLane(CurLane, Min(1.0, frontier))
+    local target = GetLocationAlongLane(CurLane, Min(1.0, frontier+0.05))
     --utils.myPrint( "Lane: ", CurLane, " Going Forward :: MyLanePos:  ", LanePos, " TARGET: ", target[1], ",", target[2])
     utils.MoveSafelyToLocation(bot, target)
+    
+    if HarassEnemy(bot) then return true end
 
     if #listEnemyCreep > 0 then
         LaningState = LaningStates.MovingToPos
@@ -147,6 +173,8 @@ local function MovingToPos(bot)
     local rndtilt = RandomVector(75)
 
     dest = dest + rndtilt
+    
+    if HarassEnemy(bot) then return true end
 
     gHeroVar.HeroMoveToLocation(bot, dest)
 
@@ -204,7 +232,7 @@ local function DenyNearbyCreeps(bot)
         gHeroVar.HeroMoveToLocation(bot, dest)
         return true
     end
-
+    
     return false
 end
 
@@ -213,15 +241,17 @@ local function PushCS(bot, WeakestCreep, nAc, damage, AS)
     if WeakestCreep:GetHealth() > damage and WeakestCreep:GetHealth() < (damage + 17*nAc*AS) and nAc > 1 then
         if #listEnemyCreep > 1 then
             if listEnemyCreep[1] ~= WeakestCreep then
-                gHeroVar.HeroAttackUnit(bot, listEnemyCreep[1], false)
+                gHeroVar.HeroAttackUnit(bot, listEnemyCreep[1], true)
             else
-                gHeroVar.HeroAttackUnit(bot, listEnemyCreep[2], false)
+                gHeroVar.HeroAttackUnit(bot, listEnemyCreep[2], true)
             end
             return true
         else
             return false
         end
     end
+    
+    if HarassEnemy(bot) then return true end
 
     gHeroVar.HeroAttackUnit(bot, WeakestCreep, false)
     return true
@@ -253,16 +283,14 @@ local function CSing(bot)
     if ShouldPush and (#listEnemies > 0 or DotaTime() < (60*3)) then
         ShouldPush = false
     end
-    
-    local enemyFrontier = GetLaneFrontAmount(utils.GetOtherTeam(), CurLane, false)
-    if enemyFrontier < 0.18 then
-        ShouldPush = true
-    end
 
     if IsCore or (NoCoreAround and #listEnemies < 2) then
         local WeakestCreep, WeakestCreepHealth = utils.GetWeakestCreep(listEnemyCreep)
 
-        if WeakestCreep == nil then return end
+        if WeakestCreep == nil then
+            LaningState = LaningStates.Moving
+            return
+        end
 
         local nAc = 0
         if WeakestCreep ~= nil then
@@ -298,17 +326,22 @@ local function CSing(bot)
         end
 
         -- check if enemy has a breakable buff
-        if #listEnemies == 1 then
-            if utils.EnemyHasBreakableBuff(listEnemies[1]) then
-                --print(utils.GetHeroName(listEnemies[1]).." has a breakable buff running")
-                if (not utils.UseOrbEffect(bot, listEnemies[1])) then
-                    if GetUnitToUnitDistance(bot, listEnemies[1]) < (AttackRange+listEnemies[1]:GetBoundingRadius()) then
+        if #listEnemies > 0 and #listEnemies <= #listAllies then
+            local breakableEnemy = nil
+            for _, enemy in pairs(listEnemies) do
+                if utils.EnemyHasBreakableBuff(enemy) then
+                    breakableEnemy = enemy
+                    break
+                end
+            end
+            if breakableEnemy then
+                --print(utils.GetHeroName(breakableEnemy).." has a breakable buff running")
+                if (not utils.UseOrbEffect(bot, breakableEnemy)) then
+                    if GetUnitToUnitDistance(bot, breakableEnemy) < (AttackRange+breakableEnemy:GetBoundingRadius()) then
                         utils.TreadCycle(bot, constants.AGILITY)
-                        gHeroVar.HeroAttackUnit(bot, listEnemies[1], true)
+                        gHeroVar.HeroAttackUnit(bot, breakableEnemy, true)
                         return
                     end
-                else
-                    return
                 end
             end
         end
@@ -341,37 +374,7 @@ local function CSing(bot)
     -- if we got here we decided there are no creeps to kill/deny
     LaningState = LaningStates.MovingToPos
     
-    for _, enemy in pairs(listEnemies) do
-        for _, myTower in pairs(listAlliedTowers) do
-            if GetUnitToUnitDistance(myTower, enemy) < 600 then
-                local stunAbilities = gHeroVar.GetVar(bot:GetPlayerID(),"HasStun")
-                if stunAbilities then
-                    for _, stun in pairs(stunAbilities) do
-                        if not enemy:IsStunned() and stun[1]:IsFullyCastable() then
-                            local behaviorFlag = stun[1]:GetBehavior()
-                            if utils.CheckFlag(behaviorFlag, ABILITY_BEHAVIOR_UNIT_TARGET) then
-                                bot:Action_UseAbilityOnEntity(stun[1], enemy)
-                                return
-                            elseif utils.CheckFlag(behaviorFlag, ABILITY_BEHAVIOR_POINT) then
-                                bot:Action_UseAbilityOnLocation(stun[1], enemy:GetExtrapolatedLocation(stun[2]))
-                                return
-                            end
-                        end
-                    end
-                end
-                gHeroVar.HeroAttackUnit(bot, enemy, true)
-                return
-            end
-        end
-    end
-    
-    if utils.UseOrbEffect(bot) then return end
-    
-    if #listEnemies == 1 and #listEnemyCreep == 0 and 
-        GetUnitToUnitDistance(bot, listEnemies[1]) < bot:GetAttackRange() then
-        gHeroVar.HeroAttackUnit(bot, listEnemies[1], true)
-        return
-    end
+    if HarassEnemy(bot) then return true end
 end
 
 --------------------------------
@@ -426,13 +429,13 @@ local function Updates(bot, lE, lA, lEC, lAC, lET, lAT)
     end
 end
 
-local function GetBackGen(bot)
-    if getHeroVar("BackTimerGen") == nil then
-        setHeroVar("BackTimerGen", -1000)
+local function GetBack(bot)
+    if getHeroVar("BackTimer") == nil then
+        setHeroVar("BackTimer", -1000)
         return false
     end
 
-    if DotaTime() - getHeroVar("BackTimerGen") < 1 then
+    if DotaTime() - getHeroVar("BackTimer") < 1 then
         return true
     end
 
@@ -444,26 +447,41 @@ local function GetBackGen(bot)
         return false
     end
 
-    --[[
-    if utils.IsMelee(bot) and utils.IsAnyHeroAttackingMe(1.0) then
-        setHeroVar("BackTimerGen", DotaTime())
-        return true
+    if #listEnemies > #listAllies then
+        local stunDuration = 0
+        local estDmgToMe = 0
+        
+        for _, enemy in pairs(listEnemies) do
+            if enemy:GetHealth()/enemy:GetMaxHealth() > 0.1 and 
+                GetUnitToUnitDistance(bot, enemy) <= (enemy:GetAttackRange() + enemy:GetBoundingRadius() + bot:GetBoundingRadius()) then
+                stunDuration = stunDuration + enemy:GetStunDuration(true) + 0.5*enemy:GetSlowDuration(true)
+            end
+        end
+        
+        for _, enemy in pairs(listEnemies) do
+            if enemy:GetHealth()/enemy:GetMaxHealth() > 0.1 and 
+                GetUnitToUnitDistance(bot, enemy) <= (enemy:GetAttackRange() + enemy:GetBoundingRadius() + bot:GetBoundingRadius()) then
+                estDmgToMe = estDmgToMe + enemy:GetEstimatedDamageToTarget(true, bot, 3.0 + stunDuration, DAMAGE_TYPE_ALL)
+            end
+        end
+        
+        if bot:WasRecentlyDamagedByAnyHero(2.0) and estDmgToMe > 0.9*bot:GetHealth() then
+            setHeroVar("BackTimer", DotaTime()+2.0)
+            return true
+        end
     end
-    --]]
 
-    setHeroVar("BackTimerGen", -1000)
+    setHeroVar("BackTimer", -1000)
     return false
 end
 
 local function StayBack(bot)
     local LaneFront = GetLaneFrontAmount(GetTeam(), getHeroVar("CurLane"), true)
-    -- FIXME: we need to Min or Max depending on Team the LaneFrontAmount() with furthest standing tower
     local LaneEnemyFront = GetLaneFrontAmount(utils.GetOtherTeam(), getHeroVar("CurLane"), false)
+    local BackFront = Min(LaneFront, LaneEnemyFront)
 
-    local BackPos = GetLocationAlongLane(getHeroVar("CurLane"), Min(LaneFront-0.05,LaneEnemyFront-0.05)) + RandomVector(200)
-    if utils.IsMelee(bot) then
-        BackPos = GetLocationAlongLane(getHeroVar("CurLane"), Min(LaneFront, LaneEnemyFront+0.03)) + RandomVector(200)
-    end
+    local BackPos = GetLocationAlongLane(getHeroVar("CurLane"), BackFront - 0.03)
+
     gHeroVar.HeroMoveToLocation(bot, BackPos)
 end
 
@@ -479,22 +497,21 @@ local function LaningStatePrint(state)
 end
 
 function Think(bot, listEnemies, listAllies, listEnemyCreep, listAlliedCreep, listEnemyTowers, listAlliedTowers)
-    if getHeroVar("BackTimerGen") == nil then
-        OnStart(bot)
-    end
-    
-    Updates(bot, listEnemies, listAllies, listEnemyCreep, listAlliedCreep, listEnemyTowers, listAlliedTowers)
-    
-    if bot:IsUsingAbility() or bot:IsChanneling() then
-        return
+    if getHeroVar("BackTimer") == nil then
+        setHeroVar("BackTimer", -1000)
+        local dest = GetLocationAlongLane(getHeroVar("CurLane"), GetLaneFrontAmount(GetTeam(), getHeroVar("CurLane"), true)-0.04)
+        if GetUnitToLocationDistance(bot, dest) > 1500 then
+            utils.InitPath(bot)
+            setHeroVar("LaningState", LaningStates.MovingToLane)
+        end
     end
 
-    --[[
-    if LaningState ~= LaningStates.MovingToLane and GetBackGen(bot) then
+    Updates(bot, listEnemies, listAllies, listEnemyCreep, listAlliedCreep, listEnemyTowers, listAlliedTowers)
+    
+    if GetBack(bot) then
         StayBack(bot)
         return
     end
-    --]]
 
     --utils.myPrint("LaningState: ", LaningStatePrint(LaningState))
 

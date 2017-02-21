@@ -23,7 +23,7 @@ function X.UpdatePlayerAssignment(bot, var, value)
         -- so they know when to trigger it
         local listAllies = GetUnitList(UNIT_LIST_ALLIED_HEROES)
         for _, ally in pairs(listAllies) do
-            if playerAssignment[ally:GetPlayerID()][var] ~= nil then
+            if not ally:IsIllusion() and playerAssignment[ally:GetPlayerID()][var] ~= nil then
                 local pos = utils.PosInTable(playerAssignment[ally:GetPlayerID()][var].allies, bot:GetPlayerID())
                 table.remove(playerAssignment[ally:GetPlayerID()][var].allies, pos)
             end
@@ -164,7 +164,7 @@ function X.HeroThink(bot, nearbyEnemies, nearbyAllies, nearbyECreeps, nearbyACre
     -- in a fight but win the over-all battle. If no Team Fight Assignment, 
     -- then it is up to the Hero to manage their safety from global and
     -- tower/creep damage.
-    evaluatedDesireValue = hero_think.ConsiderRetreating(bot, nearbyEnemies, nearbyETowers)
+    evaluatedDesireValue = hero_think.ConsiderRetreating(bot, nearbyEnemies, nearbyETowers, nearbyAllies)
     if evaluatedDesireValue > highestDesireValue then
         highestDesireValue = evaluatedDesireValue
         highestDesireMode = constants.MODE_RETREAT
@@ -188,7 +188,7 @@ function X.HeroThink(bot, nearbyEnemies, nearbyAllies, nearbyECreeps, nearbyACre
     -- The decision is made at Team level. 
     -- This just checks if the Hero is part of the push, and if so, 
     -- what lane.
-    evaluatedDesireValue = hero_think.ConsiderPushingLane(bot)
+    evaluatedDesireValue = hero_think.ConsiderPushingLane(bot, nearbyEnemies, nearbyETowers, nearbyECreeps, nearbyACreeps)
     if evaluatedDesireValue > highestDesireValue then
         highestDesireValue = evaluatedDesireValue
         highestDesireMode = constants.MODE_PUSHLANE

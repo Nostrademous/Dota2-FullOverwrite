@@ -39,6 +39,9 @@ function AbilityUsageThink(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCre
 
     -- Check if we're already using an ability
     if bot:IsUsingAbility() or bot:IsChanneling() then return false end
+    
+    local me = getHeroVar("Self")
+    if me:getCurrentMode() == constants.MODE_RETREAT then return false end
 
     local target = getHeroVar("Target")
     if not utils.ValidTarget(target) then

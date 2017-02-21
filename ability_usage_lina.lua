@@ -192,7 +192,12 @@ function AbilityUsageThink(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCre
         castDSDesire, castDSLocation = ConsiderDragonSlave()
     end
 
-    if castLBDesire > castLSADesire and castLBDesire > castDSDesire then
+    --utils.myPrint("LB Desire: ", castLBDesire)
+    --utils.myPrint("LSA Desire: ", castLSADesire)
+    --utils.myPrint("DS Desire: ", castDSDesire)
+    
+    if castLBDesire > castLSADesire and 
+        castLBDesire > castDSDesire then
         utils.myPrint( "I Desired a LB Hit" )
         bot:Action_UseAbilityOnEntity( abilityR, castLBTarget )
         return true
@@ -290,11 +295,11 @@ function ConsiderLightStrikeArray(nearbyEnemyHeroes)
     end
     
     local me = getHeroVar("Self")
-    if me:getCurrentMode() == constants.MODE_PUSHLANE and ( npcBot:GetMana() / npcBot:GetMaxMana() >= 0.4 ) then
-        local locationAoE = npcBot:FindAoELocation( true, false, npcBot:GetLocation(), nCastRange, nRadius, abilityW:GetCastPoint(), 0 )
+    if me:getCurrentMode() == constants.MODE_PUSHLANE and (npcBot:GetMana()/npcBot:GetMaxMana()) >= 0.4 then
+        locationAoE = npcBot:FindAoELocation( true, false, npcBot:GetLocation(), nCastRange, nRadius, abilityW:GetCastPoint(), 0 )
 
         if ( locationAoE.count >= 2 ) then
-            return BOT_ACTION_DESIRE_MEDIUM, locationAoE.targetloc
+            return BOT_ACTION_DESIRE_MODERATE, locationAoE.targetloc
         end
     end
 
@@ -355,22 +360,21 @@ function ConsiderDragonSlave()
     local nDamage = abilityQ:GetAbilityDamage()
     --print("dragon_slave damage:" .. nDamage)
 
-    -- If we're farming and can kill 2+ creeps with LSA when we have plenty mana
+    -- If we're farming and can kill 2+ creeps with DS when we have plenty mana
     local locationAoE = npcBot:FindAoELocation( true, false, npcBot:GetLocation(), nCastRange, nRadius, 0, nDamage )
 
     if ( locationAoE.count >= 2 ) then
         return BOT_ACTION_DESIRE_LOW, locationAoE.targetloc
     end
 
-    -- If we're pushing or defending a lane and can hit 4+ creeps, go for it
+    -- If we're pushing or defending a lane and can hit 3+ creeps, go for it
     -- wasting mana banned!
     local me = getHeroVar("Self")
     if me:getCurrentMode() == constants.MODE_DEFENDLANE or 
-        (me:getCurrentMode() == constants.MODE_PUSHLANE and ( npcBot:GetMana() / npcBot:GetMaxMana() >= 0.4 )) then
+        (me:getCurrentMode() == constants.MODE_PUSHLANE and npcBot:GetMana() / npcBot:GetMaxMana() >= 0.4) then
         local locationAoE = npcBot:FindAoELocation( true, false, npcBot:GetLocation(), nCastRange, nRadius, 0, 0 )
 
-        if ( locationAoE.count >= 4 )
-        then
+        if ( locationAoE.count >= 3 ) then
             return BOT_ACTION_DESIRE_LOW, locationAoE.targetloc
         end
     end
@@ -401,7 +405,7 @@ function ConsiderLagunaBlade(nearbyEnemyHeroes)
     end
 
     -- Get some of its values
-    local nCastRange = abilityR:GetCastRange();
+    local nCastRange = abilityR:GetCastRange()
     local nDamage = abilityR:GetSpecialValueInt( "damage" )
     local eDamageType = DAMAGE_TYPE_MAGICAL
     if npcBot:HasScepter() then

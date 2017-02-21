@@ -1553,9 +1553,11 @@ function U.CourierThink(npcBot)
     setHeroVar("LastCourierThink", newTime)
 
     local courier = GetCourier(0)
-    if courier:GetMaxHealth() >= 150 then
+    if courier:GetMaxHealth() >= 150 and (GameTime() - gHeroVar.GetGlobalVar("LastCourierBurst")) >= 90.0 then
         if GetCourierState(courier) == COURIER_STATE_DELIVERING_ITEMS or GetCourierState(courier) == COURIER_STATE_RETURNING_TO_BASE then
             npcBot:ActionImmediate_Courier(courier, COURIER_ACTION_BURST)
+            gHeroVar.SetGlobalVar("LastCourierBurst", GameTime())
+            return
         end
     end
     

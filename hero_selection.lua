@@ -3,48 +3,47 @@
 --- GITHUB REPO: https://github.com/Nostrademous/Dota2-FullOverwrite
 -------------------------------------------------------------------------------
 
+local RadiantBots = {
+    "npc_dota_hero_drow_ranger",
+    "npc_dota_hero_crystal_maiden",
+    "npc_dota_hero_bloodseeker",
+    "npc_dota_hero_lina",
+    "npc_dota_hero_viper"
+}
+
+local DireBots = {
+    "npc_dota_hero_axe",
+    "npc_dota_hero_zuus",
+    "npc_dota_hero_phantom_assassin",
+    "npc_dota_hero_oracle",
+    "npc_dota_hero_lion"
+}
+
 function Think()
 	gs = GetGameState()
 	print( "game state: ", gs )
 
-	if ( gs == GAME_STATE_HERO_SELECTION )
-	then
+	if ( gs == GAME_STATE_HERO_SELECTION ) then
 		a = GetGameMode()
-		print( "game mode: ", a);
 
-		if ( a == GAMEMODE_AP )
-		then
+		if ( a == GAMEMODE_AP ) then
 			print ( "All Pick" )
-			if ( GetTeam() == TEAM_RADIANT )
-			then
+			if ( GetTeam() == TEAM_RADIANT ) then
 				print( "selecting radiant" )
-				SelectHero( 2, "npc_dota_hero_drow_ranger" )
-				SelectHero( 3, "npc_dota_hero_crystal_maiden" )
-				SelectHero( 4, "npc_dota_hero_bloodseeker" )
-				SelectHero( 5, "npc_dota_hero_lina" )
-				SelectHero( 6, "npc_dota_hero_viper" )
-			elseif ( GetTeam() == TEAM_DIRE )
-			then
+                local IDs = GetTeamPlayers(GetTeam())
+                for index, id in pairs(IDs) do
+                    if IsPlayerBot(id) then
+                        SelectHero(id, RadiantBots[index])
+                    end
+                end
+			elseif ( GetTeam() == TEAM_DIRE ) then
 				print( "selecting dire" )
-
-				SelectHero( 7, "npc_dota_hero_axe" )
-				SelectHero( 8, "npc_dota_hero_zuus" )
-				SelectHero( 9, "npc_dota_hero_phantom_assassin" )
-				SelectHero( 10, "npc_dota_hero_oracle" )
-				SelectHero( 11, "npc_dota_hero_lion" )
-
-			end
-		elseif ( a == GAMEMODE_1V1MID )
-		then
-			print ( "1V1 MID" )
-			if ( GetTeam() == TEAM_RADIANT )
-			then
-				print( "selecting radiant" );
-				SelectHero( 2, "npc_dota_lina" );
-			elseif ( GetTeam() == TEAM_DIRE )
-			then
-				print( "selecting dire" );
-				SelectHero( 7, "npc_dota_hero_drow_ranger" );
+                local IDs = GetTeamPlayers(GetTeam())
+                for index, id in pairs(IDs) do
+                    if IsPlayerBot(id) then
+                        SelectHero(id, DireBots[index])
+                    end
+                end
 			end
 		end
 	end

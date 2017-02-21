@@ -30,10 +30,26 @@ function ConsiderEvading(bot)
     
     -- NOTE: a projectile will be a table with { "location", "ability", "velocity", "radius" }
     for _, projectile in pairs(listProjectiles) do
+        --utils.myPrint("Ability: ", projectile.ability:GetName())
+        --utils.myPrint("Velocity: ", projectile.velocity)
     end
     
     -- NOTE: an aoe will be table with { "location", "ability", "caster", "radius" }.
-    for _, aoes in pairs(listAOEAreas) do
+    setHeroVar("nearbyAOEs", {})
+    for _, aoe in pairs(listAOEAreas) do
+        if aoe.caster:GetTeam() ~= GetTeam() then
+            utils.myPrint("Ability: ", aoe.ability:GetName())
+            table.insert(getHeroVar("nearbyAOEs"), aoe)
+        end
+    end
+    
+    local aoes = getHeroVar("nearbyAOEs")
+    if #aoes > 0 then
+        for _, aoe in pairs(aoes) do
+            if GetUnitToLocationDistance(bot, aoe.location) < aoe.radius then
+                return BOT_MODE_DESIRE_ABSOLUTE
+            end
+        end
     end
     
     return BOT_MODE_DESIRE_NONE
@@ -42,7 +58,7 @@ end
 -- Fight orchestration is done at a global Team level.
 -- This just checks if we are given a fight target and a specific
 -- action queue to execute as part of the fight.
-function ConsiderAttacking(bot, nearbyAllies)
+function ConsiderAttacking(bot, nearbyEnemies, nearbyAllies)
     local target = getHeroVar("Target")
     if target and utils.ValidTarget(target) then
         if #nearbyAllies >= 3 then
@@ -51,6 +67,18 @@ function ConsiderAttacking(bot, nearbyAllies)
             return BOT_MODE_DESIRE_MODERATE
         end
     end
+    
+    -- check 1v1 matchup
+    --[[
+    if #nearbyEnemies == 1 then
+        local enemy = nearbyEnemies[1]
+        if (bot:GetAttackDamage()*5 + bot:GetHealth()) > (enemy:GetAttackDamage()*5 + enemy:GetHealth()) then
+            setHeroVar("Target", {Obj=enemy, Id=enemy:GetPlayerID()})
+            return BOT_MODE_DESIRE_MODERATE
+        end
+    end
+    --]]
+    
     return BOT_MODE_DESIRE_NONE
 end
 
@@ -64,7 +92,7 @@ function ConsiderShrine(bot, playerAssignment, nearbyAllies)
         local numAllies = 0
         for _, ally in pairs(nearbyAllies) do
             if utils.InTable(useShrine.allies , ally:GetPlayerID()) then
-                if GetUnitToUnitDistance(bot, ally) < 100 then
+                if GetUnitToUnitDistance(bot, ally) < 50 then
                     numAllies = numAllies + 1
                 end
             end
@@ -80,7 +108,7 @@ function ConsiderShrine(bot, playerAssignment, nearbyAllies)
         end
         
         setHeroVar("ShrineMode", {constants.SHRINE_WAITING, useShrine.allies})
-        return BOT_MODE_DESIRE_HIGH
+        return BOT_ACTION_DESIRE_VERYHIGH
      end
     
     return BOT_MODE_DESIRE_NONE
@@ -215,14 +243,17 @@ function ConsiderPushingLane(bot, nearbyEnemies, nearbyETowers, nearbyECreeps, n
     -- don't push for at least first 3 minutes
     if DotaTime() < 3*60 then return BOT_MODE_DESIRE_NONE end
 
-    if getHeroVar("Role") == constants.ROLE_JUNGLER then
+    if getHeroVar("Role") == constants.ROLE_JUNGLER and DotaTime() < 10*60 then
         return BOT_MODE_DESIRE_NONE
     end
     
     -- this is hero-specific push-lane determination
     if #nearbyETowers > 0 then
-        if ( nearbyETowers[1]:GetHealth() / nearbyETowers[1]:GetMaxHealth() ) < 0.1 then
-            return BOT_MODE_DESIRE_MODERATE
+        if ( nearbyETowers[1]:GetHealth() / nearbyETowers[1]:GetMaxHealth() ) < 0.1 and
+            not nearbyETowers[1]:HasModifier("modifier_fountain_glyph") then
+            return BOT_MODE_DESIRE_HIGH
+        else
+            return BOT_MODE_DESIRE_NONE
         end
     end
 

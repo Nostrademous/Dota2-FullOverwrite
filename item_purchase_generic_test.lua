@@ -129,8 +129,10 @@ function X:Think(npcBot)
         local myTeamBuyList = getHeroVar("TeamBuy")
         if #myTeamBuyList > 0 then
             for _, item in ipairs(myTeamBuyList) do
-                utils.myPrint("Adding team mandated item to my purchase list: ", item)
-                table.insert(self.PurchaseOrder, 1, item)
+                if not utils.InTable(self.PurchaseOrder, item) then
+                    utils.myPrint("Adding team mandated item to my purchase list: ", item)
+                    table.insert(self.PurchaseOrder, 1, item)
+                end
             end
         end
 

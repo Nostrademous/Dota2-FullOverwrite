@@ -19,7 +19,6 @@ local utils = require( GetScriptDirectory().."/utility" )
 local DoTModifiers={
     "modifier_abyssal_underlord_firestorm_burn",
     "modifier_axe_battle_hunger",
-    "modifier_bloodseeker_rupture",
     "modifier_brewmaster_fire_permanent_immolation",
     "modifier_dazzle_poison_touch",
     "modifier_disruptor_thunder_strike",
@@ -58,6 +57,10 @@ function HasActiveDOTDebuff(bot)
     --]]
 
     return false
+end
+
+function IsRuptured(bot)
+    return bot:HasModifier("modifier_bloodseeker_rupture")
 end
 
 -------------------------------------------------------------------------------

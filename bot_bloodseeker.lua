@@ -84,7 +84,7 @@ end
 -- We over-write DoRetreat behavior for JUNGLER Bloodseeker
 function bloodseekerBot:DoRetreat(bot, reason)
     -- if we got creep damage and are a JUNGLER do special stuff
-    local pushing = getHeroVar("ShouldPush")
+    local pushing = self:getCurrentMode() == constants.MODE_PUSHLANE
 
     local bloodrage = bot:GetAbilityByName(BLOODSEEKER_SKILL_Q)
     local bloodragePct =  bloodrage:GetSpecialValueInt("health_bonus_creep_pct")/100
@@ -105,7 +105,7 @@ function bloodseekerBot:DoRetreat(bot, reason)
     local bloodrageHeal = bloodragePct * neutrals[1]:GetMaxHealth()
     local healthThreshold = math.max(bot:GetMaxHealth()*0.15, 100)
 
-    if reason == constants.RETREAT_CREEP and (self:GetMode() ~= constants.MODE_LANING or pushing) then
+    if reason == constants.RETREAT_CREEP and (self:getCurrentMode() ~= constants.MODE_LANING or pushing) then
         -- if our health is lower than maximum( 15% health, 100 health )
         if bot:GetHealth() < healthThreshold then
             local totalCreepDamage = 0

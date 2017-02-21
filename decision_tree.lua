@@ -167,6 +167,7 @@ local NoTarget = { Obj = nil, Id = 0 }
 
 function X:DoInit(bot)
     gHeroVar.SetGlobalVar("PrevEnemyDataDump", -1000.0)
+    gHeroVar.SetGlobalVar("LastCourierBurst", -1000.0)
 
     --print( "Initializing PlayerID: ", bot:GetPlayerID() )
     local allyList = GetUnitList(UNIT_LIST_ALLIED_HEROES)
@@ -631,12 +632,30 @@ function X:DoRetreat(bot, reason)
 end
 
 function X:DoEvade(bot)
+    local aoes = getHeroVar("nearbyAOEs")
+    if #aoes > 0 then
+        for _, aoe in pairs(aoes) do
+            local distFromCenter = GetUnitToLocationDistance(bot, aoe.location)
+            if distFromCenter < aoe.radius then
+                local escapeDist = aoe.radius - distFromCenter
+                local escapeLoc = utils.VectorAway(bot:GetLocation(), aoe.location, escapeDist+50)
+                gHeroVar.HeroMoveToLocation(bot, escapeLoc)
+                return true
+            else
+                self:RemoveMode(constants.MODE_EVADE)
+                return true
+            end
+        end
+    else
+        self:RemoveMode(constants.MODE_EVADE)
+        return true
+    end
     return false
 end
 
 function X:DoFight(bot)
     local target = self:getHeroVar("Target")
-
+    
     if target.Id > 0 and IsHeroAlive(target.Id) then
         if utils.ValidTarget(target) then
             if #nearbyEnemyTowers == 0 then

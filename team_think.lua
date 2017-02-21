@@ -50,16 +50,17 @@ function ConsiderTeamWideItemAcquisition(playerAssignment)
     -- only add TeamBuy if list is 'nil' or empty
     local lowestLevelAlly = nil
     for _, ally in pairs(listAlly) do
-        if not ally:IsIllusion() and #getHeroVar(ally:GetPlayerID(), "TeamBuy") == 0 then
+        if not ally:IsIllusion() then
             if not lowestLevelAlly or lowestLevelAlly:GetLevel() > ally:GetLevel() then
                 lowestLevelAlly = ally
             end
         end
     end
 
-    if lowestLevelAlly then
+    if lowestLevelAlly and #getHeroVar(lowestLevelAlly:GetPlayerID(), "TeamBuy") == 0 then
         local tomes = GetItemStockCount("item_tome_of_knowledge")
         while tomes > 0 do
+            utils.myPrint("Buying Tome of Knowledge for '"..utils.GetHeroName(lowestLevelAlly).."'")
             table.insert(getHeroVar(lowestLevelAlly:GetPlayerID(), "TeamBuy"),  1, "item_tome_of_knowledge")
             tomes = tomes - 1
         end

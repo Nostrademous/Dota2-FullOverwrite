@@ -69,7 +69,7 @@ function X.TeamThink()
     -- Intent is to smartly determine which heroes should purchases
     -- Team items like Tome of Knowledge, Wards, Dust/Sentry, and
     -- even stuff like picking up Gem, Aegis, Cheese, etc.
-    team_think.ConsiderTeamWideItemAcquisition()
+    team_think.ConsiderTeamWideItemAcquisition(playerAssignment)
 
     -- This is at top as all courier actions are Immediate actions,
     -- and therefore won't affect any other decision making.

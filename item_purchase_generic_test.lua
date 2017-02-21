@@ -107,17 +107,32 @@ end
 -- ToDo: Selling items for better ones
 -------------------------------------------------------------------------------
 
+local function UpdateTeamBuyList(myList, sItem)
+    if #myList > 0 then
+        local pos = utils.PosInTable(myList, sItem)
+        if pos > 0 then
+            table.remove(myList, pos)
+        end
+    end
+end
+
 function X:Think(npcBot)
     local tDelta = RealTime() - self.LastThink
     -- throttle think for better performance
     if tDelta > 0.1 then
-        -- If bot nothing bail
-        if npcBot == nil then return end
-
         if ( GetGameState() ~= GAME_STATE_GAME_IN_PROGRESS and GetGameState() ~= GAME_STATE_PRE_GAME ) then return end
 
         -- Initialization
         self:Init()
+
+        -- Put Team-wide Logic Assigned Items in our list
+        local myTeamBuyList = getHeroVar("TeamBuy")
+        if #myTeamBuyList > 0 then
+            for _, item in ipairs(myTeamBuyList) do
+                utils.myPrint("Adding team mandated item to my purchase list: ", item)
+                table.insert(self.PurchaseOrder, 1, item)
+            end
+        end
 
         -- Put support items in list if we are a support (even if we already wanted to buy something else)
         self:BuySupportItems()
@@ -174,6 +189,7 @@ function X:Think(npcBot)
                     if bDone then
                         me:RemoveMode(constants.MODE_SPECIALSHOP)
                         table.remove(self.PurchaseOrder, 1 )
+                        UpdateTeamBuyList(myTeamBuyList, sNextItem)
                         npcBot:SetNextItemPurchaseValue( 0 )
                     end
                 elseif bInSecret and me:getCurrentModeValue() < BOT_MODE_DESIRE_HIGH then
@@ -189,12 +205,14 @@ function X:Think(npcBot)
                     if bDone then
                         me:RemoveMode(constants.MODE_SPECIALSHOP)
                         table.remove(self.PurchaseOrder, 1 )
+                        UpdateTeamBuyList(myTeamBuyList, sNextItem)
                         npcBot:SetNextItemPurchaseValue( 0 )
                     end
                 else
                     me:RemoveMode(constants.MODE_SPECIALSHOP)
                     npcBot:ActionImmediate_PurchaseItem(sNextItem)
                     table.remove(self.PurchaseOrder, 1)
+                    UpdateTeamBuyList(myTeamBuyList, sNextItem)
                     npcBot:SetNextItemPurchaseValue(0)
                 end
                 self.LastThink = RealTime()
@@ -290,10 +308,19 @@ function X:BuySupportItems()
                 -- we have no courier, buy it
                 table.insert(self.PurchaseOrder, 1, "item_courier")
             end
+            -- buy flying courier if available (only 1x)
+            if GetNumCouriers() > 0 and DotaTime() >= (3*60) then
+                if not utils.InTable(self.BoughtItems, "item_flying_courier") then
+                    table.insert(self.PurchaseOrder, 1, "item_flying_courier")
+                    -- flying courier is the only item we put in the bought item list,
+                    -- wards etc. are not important to store
+                    table.insert(self.BoughtItems, "item_flying_courier")
+                end
+            end
+
             -- since smokes are not being used we don't buy them yet
             local wards = GetItemStockCount("item_ward_observer")
-            local tomes = GetItemStockCount("item_tome_of_knowledge")
-            local flyingCour = GetItemStockCount("item_flying_courier")
+
             -- buy all available wards
             local bot = GetBot()
             local item = utils.HaveItem(bot, "item_ward_observer")
@@ -308,22 +335,7 @@ function X:BuySupportItems()
                     wards = wards - 1
                 end
             end
-            -- buy all available tomes
-            if tomes > 0 then
-                while tomes > 0 do
-                    table.insert(self.PurchaseOrder, 1, "item_tome_of_knowledge")
-                    tomes = tomes - 1
-                end
-            end
-            -- buy flying courier if available (only 1x)
-            if flyingCour > 0 then
-                if not utils.InTable(self.BoughtItems, "item_flying_courier") then
-                    table.insert(self.PurchaseOrder, 1, "item_flying_courier")
-                    -- flying courier is the only item we put in the bought item list,
-                    -- wards etc. are not important to store
-                    table.insert(self.BoughtItems, "item_flying_courier")
-                end
-            end
+
             -- next support item think in 10 sec
             self.LastSupportThink = RealTime()
         end

@@ -44,7 +44,26 @@ end
 -- Intent is to smartly determine which heroes should purchases
 -- Team items like Tome of Knowledge, Wards, Dust/Sentry, and
 -- even stuff like picking up Gem, Aegis, Cheese, etc.
-function ConsiderTeamWideItemAcquisition()
+function ConsiderTeamWideItemAcquisition(playerAssignment)
+    local listAlly = GetUnitList(UNIT_LIST_ALLIED_HEROES)
+
+    -- only add TeamBuy if list is 'nil' or empty
+    local lowestLevelAlly = nil
+    for _, ally in pairs(listAlly) do
+        if not ally:IsIllusion() and #getHeroVar(ally:GetPlayerID(), "TeamBuy") == 0 then
+            if not lowestLevelAlly or lowestLevelAlly:GetLevel() > ally:GetLevel() then
+                lowestLevelAlly = ally
+            end
+        end
+    end
+
+    if lowestLevelAlly then
+        local tomes = GetItemStockCount("item_tome_of_knowledge")
+        while tomes > 0 do
+            table.insert(getHeroVar(lowestLevelAlly:GetPlayerID(), "TeamBuy"),  1, "item_tome_of_knowledge")
+            tomes = tomes - 1
+        end
+    end
 end
 
 -- This is at top as all courier actions are Immediate actions,

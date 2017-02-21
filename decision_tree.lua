@@ -185,6 +185,7 @@ function X:DoInit(bot)
     self:setHeroVar("LaneChangeTimer", -1000.0)
     self:setHeroVar("Target", NoTarget)
     self:setHeroVar("GankTarget", NoTarget)
+    self:setHeroVar("TeamBuy", {})
 
     role.GetRoles()
     if role.RolesFilled() then

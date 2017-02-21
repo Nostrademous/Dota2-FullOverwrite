@@ -23,7 +23,7 @@ function X.UpdatePlayerAssignment(bot, var, value)
         -- so they know when to trigger it
         local listAllies = GetUnitList(UNIT_LIST_ALLIED_HEROES)
         for _, ally in pairs(listAllies) do
-            if not ally:IsIllusion() and playerAssignment[ally:GetPlayerID()][var] ~= nil then
+            if ally:IsBot() and not ally:IsIllusion() and playerAssignment[ally:GetPlayerID()][var] ~= nil then
                 local pos = utils.PosInTable(playerAssignment[ally:GetPlayerID()][var].allies, bot:GetPlayerID())
                 table.remove(playerAssignment[ally:GetPlayerID()][var].allies, pos)
             end
@@ -52,7 +52,7 @@ function X.TeamThink()
     --utils.myPrint("TeamThink()")
     local listAllies = GetUnitList(UNIT_LIST_ALLIED_HEROES)
     for _, ally in pairs(listAllies) do
-        if playerAssignment[ally:GetPlayerID()] == nil or not ally:IsAlive() then
+        if ally:IsBot() and (playerAssignment[ally:GetPlayerID()] == nil or not ally:IsAlive()) then
             utils.myPrint("TeamThink() - clearing playerAssignment["..ally:GetPlayerID().."]")
             playerAssignment[ally:GetPlayerID()] = {}
         end

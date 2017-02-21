@@ -50,7 +50,7 @@ function ConsiderTeamWideItemAcquisition(playerAssignment)
     -- only add TeamBuy if list is 'nil' or empty
     local lowestLevelAlly = nil
     for _, ally in pairs(listAlly) do
-        if not ally:IsIllusion() then
+        if not ally:IsIllusion() and ally:IsBot() then
             if not lowestLevelAlly or lowestLevelAlly:GetLevel() > ally:GetLevel() then
                 lowestLevelAlly = ally
             end
@@ -106,7 +106,7 @@ function ConsiderTeamLaneDefense()
     
     local listAlly = GetUnitList(UNIT_LIST_ALLIED_HEROES)
     for _, ally in pairs(listAlly) do
-        if not ally:IsIllusion() then
+        if not ally:IsIllusion() and ally:IsBot() then
             if lane and (not hBuilding == nil or hBuilding:TimeSinceDamagedByAnyHero() > 5.0) then
                 if ally:GetHealth()/ally:GetMaxHealth() >= 0.5 then
                     local distFromBuilding = GetUnitToUnitDistance(ally, hBuilding)
@@ -175,7 +175,7 @@ function ConsiderTeamRune(playerAssignment)
             local bestDist = 5000
             local bestAlly = nil
             for _, ally in pairs(listAlly) do
-                if ally:IsAlive() and not ally:IsIllusion() then
+                if ally:IsAlive() and not ally:IsIllusion() and ally:IsBot() then
                     local dist = GetUnitToLocationDistance(ally, runeLoc)
                     if dist < bestDist then
                         bestDist = dist
@@ -205,7 +205,7 @@ function ConsiderTeamShrine(playerAssignment)
     -- determine which allies need to use the shrine and which shrine is best
     -- for them
     for _, ally in pairs(listAlly) do
-        if ally:IsAlive() and not ally:IsIllusion() and ally:GetHealth()/ally:GetMaxHealth() < 0.3 
+        if ally:IsAlive() and ally:IsBot() and not ally:IsIllusion() and ally:GetHealth()/ally:GetMaxHealth() < 0.3 
             and playerAssignment[ally:GetPlayerID()].UseShrine == nil then
             local SJ1 = GetShrine(Team, SHRINE_JUNGLE_1)
             if SJ1 and SJ1:GetHealth() > 0 and GetShrineCooldown(SJ1) == 0 then

@@ -851,8 +851,10 @@ function U.InitPathFinding()
 
     local allyList = GetUnitList(UNIT_LIST_ALLIED_HEROES)
     for _, ally in pairs(allyList) do
-        gHeroVar.SetVar(ally:GetPlayerID(), "NextHop", U.deepcopy(NextHop))
-        gHeroVar.SetVar(ally:GetPlayerID(), "PathfindingWasInitiated", true)
+        if ally:IsBot() then
+            gHeroVar.SetVar(ally:GetPlayerID(), "NextHop", U.deepcopy(NextHop))
+            gHeroVar.SetVar(ally:GetPlayerID(), "PathfindingWasInitiated", true)
+        end
     end
 end
 

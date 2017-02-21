@@ -159,7 +159,7 @@ function GlobalFightDetermination()
     local eyeRange = 1200
     local listAllies = GetUnitList(UNIT_LIST_ALLIED_HEROES)
     for _, ally in pairs(listAllies) do
-        if ally:IsAlive() and ally:GetHealth()/ally:GetMaxHealth() > 0.4 and not ally:IsIllusion()
+        if ally:IsAlive() and ally:IsBot() and ally:GetHealth()/ally:GetMaxHealth() > 0.4 and not ally:IsIllusion()
             and gHero.HasID(ally:GetPlayerID()) and gHero.GetVar(ally:GetPlayerID(), "Target").Id == 0 then
             
             local totalNukeDmg = 0

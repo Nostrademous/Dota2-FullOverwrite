@@ -397,7 +397,7 @@ function X:Think(bot)
     elseif self:getCurrentMode() == constants.MODE_SHRINE then
         return self:DoUseShrine(bot)
     elseif self:getCurrentMode() == constants.MODE_RETREAT then
-        utils.myPrint("DoRetreat reason: ", self:getHeroVar("RetreatReason"))
+        --utils.myPrint("DoRetreat reason: ", self:getHeroVar("RetreatReason"))
         return self:DoRetreat(bot, self:getHeroVar("RetreatReason"))
     elseif self:getCurrentMode() == constants.MODE_RUNEPICKUP then
         return self:DoGetRune(bot)
@@ -456,7 +456,7 @@ function X:DoWhileDead(bot)
     self:setHeroVar("GankTarget", NoTarget)
     self:setHeroVar("UsingShrine", false)
     self:setHeroVar("ShrineMode", nil)
-    self:setHeroVar("ShrineLocation", nil)
+    self:setHeroVar("Shrine", nil)
     self:setHeroVar("ShouldPush", false)
 
     self:MoveItemsFromStashToInventory(bot)
@@ -502,13 +502,6 @@ end
 
 function X:Determine_ShouldIDefendLane(bot)
     return global_game_state.DetectEnemyPush()
-end
-
-function X:Determine_ShouldGank(bot)
-    if getHeroVar("Role") == ROLE_ROAMER or (getHeroVar("Role") == ROLE_JUNGLER and self:IsReadyToGank(bot)) then
-        return ganking_generic.FindTarget(bot)
-    end
-    return false
 end
 
 function X:IsReadyToGank(bot)
@@ -734,7 +727,7 @@ function X:DoUseShrine(bot)
     local botShrineMode = self:getHeroVar("ShrineMode")
     local shrine = self:getHeroVar("Shrine")
     if botShrineMode then
-        if shrine and GetUnitToUnitDistance(bot, shrine) > 200 then
+        if shrine and GetUnitToUnitDistance(bot, shrine) > 300 then
             gHeroVar.HeroMoveToLocation(bot, shrine:GetLocation())
             local mvAbility = getHeroVar("HasMovementAbility")
             if mvAbility and mvAbility[1]:IsFullyCastable() then

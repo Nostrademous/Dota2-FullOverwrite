@@ -92,7 +92,7 @@ function queueNuke(bot, enemy, castQueue)
     local nCastRange = abilityR:GetCastRange()
     local dist = GetUnitToUnitDistance(bot, enemy)
 
-    bot:Action_ClearActions()
+    bot:Action_ClearActions(false)
 
     -- if out of range, attack move for one hit to get in range
     if dist > nCastRange then

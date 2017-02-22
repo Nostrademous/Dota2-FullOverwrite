@@ -42,16 +42,16 @@ function nukeDamage( bot, enemy )
     local castTime = 0
     local stunTime = 0
     local slowTime = 0
-    
+
     local magicImmune = utils.IsTargetMagicImmune(enemy)
-    
+
     -- Check Frost Arrows
     if abilityQ:IsFullyCastable() then
         if not magicImmune then
             local manaCostQ = abilityQ:GetManaCost()
             local speedReduction = abilityQ:GetSpecialValueInt("frost_arrows_movement_speed")
             local numCasts = 1
-            
+
             local dist = GetUnitToUnitDistance(bot, enemy)
             if dist < (bot:GetAttackRange() + bot:GetBoundingRadius() + enemy:GetBoundingRadius()) then
                 if bot:GetCurrentMovementSpeed() > (enemy:GetCurrentMovementSpeed() + speedReduction) then
@@ -62,7 +62,7 @@ function nukeDamage( bot, enemy )
                     numCasts = Min(math.floor(timeToEscape/bot:GetSecondsPerAttack()), math.floor(manaAvailable/12))
                 end
             end
-            
+
             for i = 1, numCasts, 1 do
                 if manaCostQ <= manaAvailable then
                     manaAvailable = manaAvailable - manaCostQ
@@ -74,7 +74,7 @@ function nukeDamage( bot, enemy )
             end
         end
     end
-    
+
     return dmgTotal, comboQueue, castTime, stunTime, slowTime
 end
 
@@ -82,7 +82,7 @@ function queueNuke(bot, enemy, castQueue)
     local nCastRange = bot:GetAttackRange() + bot:GetBoundingRadius() + enemy:GetBoundingRadius()
     local dist = GetUnitToUnitDistance(bot, enemy)
 
-    bot:Action_ClearActions()
+    bot:Action_ClearActions(false)
 
     -- if out of range, attack move for one hit to get in range
     if dist > nCastRange then
@@ -209,9 +209,9 @@ function AbilityUsageThink(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCre
 
     -- Check if we're already using an ability
     if bot:IsUsingAbility() or bot:IsChanneling() then return false end
-    
+
     if ( #nearbyEnemyHeroes == 0 and #nearbyEnemyCreep == 0 ) then return false end
-    
+
     local target = getHeroVar("Target")
     if not utils.ValidTarget(target) then
         if #nearbyEnemyHeroes == 1 then

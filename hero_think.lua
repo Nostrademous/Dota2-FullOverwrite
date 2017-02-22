@@ -92,7 +92,7 @@ function ConsiderShrine(bot, playerAssignment, nearbyAllies)
         local numAllies = 0
         for _, ally in pairs(nearbyAllies) do
             if utils.InTable(useShrine.allies , ally:GetPlayerID()) then
-                if GetUnitToUnitDistance(bot, ally) < 50 then
+                if GetUnitToUnitDistance(ally, useShrine.shrine) < 400 then
                     numAllies = numAllies + 1
                 end
             end
@@ -105,10 +105,11 @@ function ConsiderShrine(bot, playerAssignment, nearbyAllies)
         if numAllies == #useShrine.allies then
             setHeroVar("ShrineMode", {constants.SHRINE_USE, useShrine.allies})
             return BOT_MODE_DESIRE_ABSOLUTE
+        else
+            --utils.myPrint("NumAllies: ", numAllies, ", #useShrine.allies: ", #useShrine.allies)
+            setHeroVar("ShrineMode", {constants.SHRINE_WAITING, useShrine.allies})
+            return BOT_ACTION_DESIRE_VERYHIGH
         end
-        
-        setHeroVar("ShrineMode", {constants.SHRINE_WAITING, useShrine.allies})
-        return BOT_ACTION_DESIRE_VERYHIGH
      end
     
     return BOT_MODE_DESIRE_NONE

@@ -7,6 +7,7 @@ _G._savedEnv = getfenv()
 module( "ability_usage_bloodseeker", package.seeall )
 
 require( GetScriptDirectory().."/fight_simul" )
+require( GetScriptDirectory().."/modifiers" )
 
 local utils = require( GetScriptDirectory().."/utility" )
 local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
@@ -25,6 +26,76 @@ local Abilities ={
     "bloodseeker_thirst",
     "bloodseeker_rupture"
 };
+
+function nukeDamage( bot, enemy )
+    if enemy == nil or not utils.ValidTarget(enemy) then return 0, {}, 0, 0, 0 end
+
+    local comboQueue = {}
+    local manaAvailable = bot:GetMana()
+    local dmgTotal = 0
+    local castTime = 0
+    local stunTime = 0
+    local slowTime = 0
+
+    local magicImmune = utils.IsTargetMagicImmune(enemy)
+    
+    -- Check Rupture
+    if abilityR:IsFullyCastable() then
+        local manaCostR = abilityR:GetManaCost()
+        if manaCostR <= manaAvailable then
+            manaAvailable = manaAvailable - manaCostR
+            dmgTotal = dmgTotal + 200  -- 200 pure damage every 1/4 second if moving
+            castTime = castTime + abilityR:GetCastPoint()
+            stunTime = stunTime + 12.0
+            table.insert(comboQueue, abilityR)
+        end
+    end
+
+    -- Check Blood Bath
+    if abilityW:IsFullyCastable() then
+        local manaCostW = abilityW:GetManaCost()
+        if manaCostW <= manaAvailable then
+            if not magicImmune then
+                manaAvailable = manaAvailable - manaCostW
+                dmgTotal = dmgTotal + abilityW:GetSpecialValueInt("damage") -- damage is pure, silence is magic
+                castTime = castTime + abilityW:GetCastPoint()
+                table.insert(comboQueue, 1, abilityW)
+            end
+        end
+    end
+    
+    return dmgTotal, comboQueue, castTime, stunTime, slowTime
+end
+    
+function queueNuke(bot, enemy, castQueue)
+    local nRadius = 600
+    local nCastRange = 1500
+    local dist = GetUnitToUnitDistance(bot, enemy)
+
+    bot:Action_ClearActions(false)
+
+    -- if out of range, attack move for one hit to get in range
+    if dist > (nCastRange + nRadius) then
+        bot:ActionPush_AttackUnit( enemy, true )
+    end
+
+    utils.AllChat("Killing "..utils.GetHeroName(enemy).." softly with my song")
+    utils.myPrint("Queue Nuke Damage: ", utils.GetHeroName(enemy))
+    for i = #castQueue, 1, -1 do
+        local skill = castQueue[i]
+
+        if skill:GetName() == Abilities[2] then
+            if utils.IsCrowdControlled(enemy) or modifiers.IsRuptured(enemy) then
+                gHeroVar.HeroPushUseAbilityOnLocation(bot, skill, enemy:GetLocation())
+            else
+                gHeroVar.HeroPushUseAbilityOnLocation(bot, skill, enemy:GetExtrapolatedLocation(3.0))
+            end
+        elseif skill:GetName() == Abilities[4] then
+            bot:ActionPush_UseAbilityOnEntity(skill, enemy)
+        end
+    end
+    bot:ActionQueue_AttackUnit( enemy, false )
+end
 
 local function UseW(nearbyEnemyHeroes)
     local npcBot = GetBot()
@@ -116,6 +187,25 @@ function AbilityUsageThink(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCre
     if UseQ() then return true end
     
     if #nearbyEnemyHeroes == 0 then return false end
+    
+    if #nearbyEnemyHeroes == 1 then
+        local enemy = nearbyEnemyHeroes[1]
+        local dmg, castQueue, castTime, stunTime, slowTime = nukeDamage( bot, enemy )
+        
+        local rightClickTime = stunTime + 0.5*slowTime
+        if rightClickTime > 0.5 then
+            dmg = dmg + fight_simul.estimateRightClickDamage( bot, enemy, rightClickTime )
+        end
+
+        -- magic immunity is already accounted for by nukeDamage()
+        if dmg > enemy:GetHealth() then
+            setHeroVar("Target", {Obj=enemy, Id=enemy:GetPlayerID()})
+
+            queueNuke(bot, enemy, castQueue)
+
+            return true
+        end
+    end
 
     if UseUlt(nearbyEnemyHeroes, nearbyEnemyTowers) or UseW(nearbyEnemyHeroes) then return true end
     

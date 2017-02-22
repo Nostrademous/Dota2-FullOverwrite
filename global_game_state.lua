@@ -213,7 +213,7 @@ function GlobalFightDetermination()
                         
                         for _, ally2 in pairs(listAllies) do
                             -- this 'if' is for non-implemented bot heroes that are on our team
-                            if ally2:IsAlive() and not ally2:IsIllusion() and not gHero.HasID(ally2:GetPlayerID()) then
+                            if ally2:IsAlive() and ally2:IsBot() and not ally2:IsIllusion() and not gHero.HasID(ally2:GetPlayerID()) then
                                 local distToEnemy = 100000
                                 if enemy.Obj then
                                     distToEnemy = GetUnitToUnitDistance(ally2, enemy.Obj)

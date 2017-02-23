@@ -153,6 +153,28 @@ function X.HeroAttackUnit(bot, hTarget, bOnce)
     end
 end
 
+function X.HeroPushAttackUnit(bot, hTarget, bOnce)
+    if bDisableActions then return end
+    
+    local pID = bot:GetPlayerID()
+    local bOnce = bOnce or true
+    local ca = X.GetHeroCurrentAction(pID)
+
+    if checkSleepAttack(bot, ca) then return end
+    
+    if #ca == 0 or not (ca[1] == "AttackUnit" and ca[2] == hTarget and ca[3] == bOnce) then
+        if DEFAULT_METHOD then
+            X[pID].currentAction = {[1]="SleepAttack", [2]=GameTime()+bot:GetAttackPoint()}
+            bot:ActionPush_AttackUnit(hTarget, bOnce)
+        else
+            X[pID].actionQueue = {{[1]="AttackUnit", [2]=hTarget, [3]=bOnce}, {[1]="SleepAttack", [2]=GameTime()+bot:GetAttackPoint()}}
+            X[pID].currentAction = {}
+            table.insert(X[pID].actionQueue, 1, {[1]="SleepAttack", [2]=GameTime()+bot:GetAttackPoint()})
+            table.insert(X[pID].actionQueue, 1, {[1]="AttackUnit", [2]=hTarget, [3]=bOnce})
+        end
+    end
+end
+
 function X.HeroUseAbility(bot, ability)
     if bDisableActions then return end
     

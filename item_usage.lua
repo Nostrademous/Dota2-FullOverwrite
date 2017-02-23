@@ -324,7 +324,7 @@ function UseBuffItems()
 
     if bot:IsChanneling() or bot:IsUsingAbility() then return false end
     
-    UseTomeOfKnowledge()
+    if UseTomeOfKnowledge() then return true end
     
     if UseMidas() then return true end
     

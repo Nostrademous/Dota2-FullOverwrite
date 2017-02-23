@@ -1326,10 +1326,10 @@ function U.UseOrbEffect(bot, enemy)
         local ability = bot:GetAbilityByName(orb)
         if ability ~= nil and ability:IsFullyCastable() then
             if enemy == nil then
-                enemy, _ = U.GetWeakestHero(bot, ability:GetCastRange()+bot:GetBoundingRadius()-50)
+                enemy, _ = U.GetWeakestHero(bot, ability:GetCastRange()+bot:GetBoundingRadius())
             end
 
-            if enemy ~= nil and GetUnitToUnitDistance(bot, enemy) < (ability:GetCastRange()+bot:GetBoundingRadius()+100) then
+            if enemy ~= nil and GetUnitToUnitDistance(bot, enemy) < (ability:GetCastRange()+bot:GetBoundingRadius()) then
                 U.TreadCycle(bot, constants.INTELLIGENCE)
                 bot:Action_UseAbilityOnEntity(ability, enemy)
                 return true
@@ -1355,6 +1355,14 @@ end
 
 function U.IsCrowdControlled(enemy)
     return enemy:IsRooted() or enemy:IsHexed() or enemy:IsStunned() or enemy:IsNightmared()
+end
+
+function U.DropTowerAggro(bot, nearbyAlliedCreep)
+    if #nearbyAlliedCreep > 0 then
+        gHeroVar.HeroAttackUnit(bot, nearbyAlliedCreep[1], true)
+        return true
+    end
+    return false
 end
 
 -------------------------------------------------------------------------------

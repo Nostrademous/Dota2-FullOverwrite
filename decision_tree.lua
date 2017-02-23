@@ -504,10 +504,6 @@ function X:Determine_ShouldIDefendLane(bot)
     return global_game_state.DetectEnemyPush()
 end
 
-function X:IsReadyToGank(bot)
-    return false
-end
-
 function X:Determine_ShouldIChangeLane(bot)
     -- don't change lanes for first 6 minutes
     if DotaTime() < 60*6 then return false end
@@ -912,27 +908,7 @@ end
 
 function X:AnalyzeLanes(nLane)
     if utils.InTable(nLane, self:getHeroVar("CurLane")) then
-        --[[
-        if GetTeam() == TEAM_RADIANT then
-            if #nLane >= 3 then
-                if self:getHeroVar("Role") == constants.ROLE_MID then self:setHeroVar("CurLane", LANE_MID)
-                elseif self:getHeroVar("Role") == constants.ROLE_OFFLANE then self:setHeroVar("CurLane", LANE_TOP)
-                else
-                    self:setHeroVar("CurLane", LANE_BOT)
-                end
-            end
-        else
-            if #nLane >= 3 then
-                if self:getHeroVar("Role") == constants.ROLE_MID then self:setHeroVar("CurLane", LANE_MID)
-                elseif self:getHeroVar("Role") == constants.ROLE_OFFLANE then self:setHeroVar("CurLane", LANE_BOT)
-                else
-                    self:setHeroVar("CurLane", LANE_TOP)
-                end
-            end
-        end
-        utils.myPrint("Lanes are evenly pushed, going back to my lane: ", self:getHeroVar("CurLane"))
-        --]]
-        return false
+        return
     end
 
     if #nLane > 1 then
@@ -946,8 +922,9 @@ function X:AnalyzeLanes(nLane)
         utils.myPrint("Switching to lane: ", LANE_MID)
         self:setHeroVar("CurLane", LANE_MID)
     end
+    
     self:setHeroVar("LaningState", 1) -- 1 is LaningState.Moving
-    return false
+    return
 end
 
 function X:DoChangeLane(bot)
@@ -981,7 +958,7 @@ function X:DoChangeLane(bot)
         return self:AnalyzeLanes(nLane)
     end
 
-    return false
+    return
 end
 
 function X:DoGetRune(bot)
@@ -1033,25 +1010,16 @@ function X:DoWard(bot, wardType)
 end
 
 function X:DoLane(bot)
+    -- check if we shuld change lanes
+    self:DoChangeLane(bot)
+
     laning_generic.Think(bot, nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCreep, nearbyAlliedCreep, nearbyEnemyTowers, nearbyAlliedTowers)
 
     return true
 end
 
-function X:DoMove(bot, loc)
-    return true
-end
-
 function X:MoveItemsFromStashToInventory(bot)
     utils.MoveItemsFromStashToInventory(bot)
-end
-
-function X:DoCleanCamp(bot, neutrals)
-    gHeroVar.HeroAttackUnit(bot, neutrals[1], true)
-end
-
-function X:GetMaxClearableCampLevel(bot)
-    return constants.CAMP_ANCIENT
 end
 
 function X:SaveLocation(bot)
@@ -1064,12 +1032,26 @@ function X:DoHandleIllusions(bot)
     return bot:IsIllusion()
 end
 
--- completely virtual, needs to be implemented for each hero
+-------------------------------------------------------------------------------------
+-- BELOW ARE COMPLETELY VIRTUAL FUNCTIONS THAT NEED TO BE IMLEMENTED IN HERO FILES --
+-------------------------------------------------------------------------------------
+
+function X:DoCleanCamp(bot, neutrals)
+    gHeroVar.HeroAttackUnit(bot, neutrals[1], true)
+end
+
+function X:GetMaxClearableCampLevel(bot)
+    return constants.CAMP_ANCIENT
+end
+
+function X:IsReadyToGank(bot)
+    return false
+end
+
 function X:GetNukeDamage( hHero, hTarget )
     return 0, {}, 0, 0, 0
 end
 
--- completely virtual, needs to be implemented for each hero
 function X:QueueNuke( hHero, hTarget, actionQueue )
     return
 end

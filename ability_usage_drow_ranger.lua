@@ -34,7 +34,7 @@ local abilityE = ""
 local abilityR = ""
 
 function nukeDamage( bot, enemy )
-    if enemy == nil or not utils.ValidTarget(enemy) then return 0, {}, 0, 0, 0 end
+    if enemy == nil or enemy:IsNull() then return 0, {}, 0, 0, 0 end
 
     local comboQueue = {}
     local manaAvailable = bot:GetMana()
@@ -42,6 +42,7 @@ function nukeDamage( bot, enemy )
     local castTime = 0
     local stunTime = 0
     local slowTime = 0
+    local engageDist = bot:GetAttackRange() + bot:GetBoundingRadius()
 
     local magicImmune = utils.IsTargetMagicImmune(enemy)
 
@@ -55,7 +56,7 @@ function nukeDamage( bot, enemy )
             local dist = GetUnitToUnitDistance(bot, enemy)
             if dist < (bot:GetAttackRange() + bot:GetBoundingRadius() + enemy:GetBoundingRadius()) then
                 if bot:GetCurrentMovementSpeed() > (enemy:GetCurrentMovementSpeed() + speedReduction) then
-                    numCasts = Min(10, math.floor(manaAvailable/12))
+                    numCasts = Min(Min(bot:GetLevel(), 6), math.floor(manaAvailable/12))
                 else
                     local distToEscape = (bot:GetAttackRange() + bot:GetBoundingRadius() + enemy:GetBoundingRadius()) - dist
                     local timeToEscape = distToEscape/(enemy:GetCurrentMovementSpeed() + speedReduction - bot:GetCurrentMovementSpeed())
@@ -67,7 +68,7 @@ function nukeDamage( bot, enemy )
                 if manaCostQ <= manaAvailable then
                     manaAvailable = manaAvailable - manaCostQ
                     dmgTotal = dmgTotal + enemy:GetActualIncomingDamage(bot:GetAttackDamage(), DAMAGE_TYPE_PHYSICAL)
-                    castTime = castTime + abilityQ:GetAttackPoint()
+                    castTime = castTime + bot:GetAttackPoint()
                     slowTime = slowTime + 1.5
                     table.insert(comboQueue, abilityQ)
                 end
@@ -75,32 +76,29 @@ function nukeDamage( bot, enemy )
         end
     end
 
-    return dmgTotal, comboQueue, castTime, stunTime, slowTime
+    return dmgTotal, comboQueue, castTime, stunTime, slowTime, engageDist
 end
 
-function queueNuke(bot, enemy, castQueue)
-    local nCastRange = bot:GetAttackRange() + bot:GetBoundingRadius() + enemy:GetBoundingRadius()
+function queueNuke(bot, enemy, castQueue, engageDist)
     local dist = GetUnitToUnitDistance(bot, enemy)
 
-    bot:Action_ClearActions(false)
-
     -- if out of range, attack move for one hit to get in range
-    if dist > nCastRange then
-        bot:ActionPush_AttackUnit( enemy, true )
-    end
+    if dist < engageDist then
+        bot:Action_ClearActions(false)
+        utils.AllChat("Killing "..utils.GetHeroName(enemy).." softly with my song")
+        utils.myPrint("Queue Nuke Damage: ", utils.GetHeroName(enemy))
+        for i = #castQueue, 1, -1 do
+            local skill = castQueue[i]
 
-    utils.AllChat("Killing "..utils.GetHeroName(enemy).." softly with my song")
-    utils.myPrint("Queue Nuke Damage: ", utils.GetHeroName(enemy))
-    for i = #castQueue, 1, -1 do
-        local skill = castQueue[i]
-
-        if skill:GetName() == Abilities[1] then
-            bot:Action_UseAbilityOnEntity(skill, enemy)
-        elseif skill:GetName() == Abilities[2] then
-            gHeroVar.HeroPushUseAbilityOnLocation(skill, enemy)
+            if skill:GetName() == Abilities[1] then
+                bot:ActionPush_UseAbilityOnEntity(skill, enemy)
+            elseif skill:GetName() == Abilities[2] then
+                gHeroVar.HeroPushUseAbilityOnLocation(skill, enemy)
+            end
         end
+        return true
     end
-    bot:ActionQueue_AttackUnit( enemy, false )
+    return false
 end
 
 local function UseQ(bot)
@@ -217,12 +215,14 @@ function AbilityUsageThink(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCre
         if #nearbyEnemyHeroes == 1 then
             target = nearbyEnemyHeroes[1]
             if GetUnitToUnitDistance(bot, target) < (bot:GetAttackRange() + bot:GetBoundingRadius() + target:GetBoundingRadius()) then
-                local dmg, castQueue, castTime, stunTime, slowTime = nukeDamage( bot, target )
+                local dmg, castQueue, castTime, stunTime, slowTime, engageDist = nukeDamage( bot, target )
 
                 if dmg > target:GetHealth() then
-                    setHeroVar("Target", {Obj=target, Id=target:GetPlayerID()})
-                    queueNuke(bot, target, castQueue)
-                    return true
+                    local bKill = queueNuke(bot, target, castQueue, engageDist)
+                    if bKill then
+                        setHeroVar("Target", {Obj=target, Id=target:GetPlayerID()})
+                        return true
+                    end
                 end
             end
         end

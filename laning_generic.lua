@@ -136,7 +136,7 @@ local function Moving(bot)
     end
     --]]
 
-    local target = GetLocationAlongLane(CurLane, Min(1.0, frontier+0.05))
+    local target = GetLocationAlongLane(CurLane, Min(1.0, frontier))
     --utils.myPrint( "Lane: ", CurLane, " Going Forward :: MyLanePos:  ", LanePos, " TARGET: ", target[1], ",", target[2])
     utils.MoveSafelyToLocation(bot, target)
     
@@ -148,6 +148,22 @@ local function Moving(bot)
 end
 
 local function MovingToPos(bot)
+    if utils.IsTowerAttackingMe(0.1) and #listAlliedCreep > 0 then
+        if utils.DropTowerAggro(bot, listAlliedCreep) then return true end
+    elseif utils.IsTowerAttackingMe(0.1) and #listEnemyTowers > 0 then
+        local dist = GetUnitToUnitDistance(bot, listEnemyTowers[1])
+        if dist < 710 then
+            gHeroVar.HeroMoveToLocation(bot, utils.VectorAway(bot:GetLocation(), listEnemyTowers[1]:GetLocation(), 710-dist))
+        end
+    end
+
+    if #listEnemyTowers > 0 then
+        local dist = GetUnitToUnitDistance(bot, listEnemyTowers[1])
+        if dist < 710 then
+            gHeroVar.HeroMoveToLocation(bot, utils.VectorAway(bot:GetLocation(), listEnemyTowers[1]:GetLocation(), 710-dist))
+        end
+    end
+    
     if HarassEnemy(bot) then return true end
 
     local bNeedToGoHigher = false
@@ -270,6 +286,13 @@ local function CSing(bot)
     if #listEnemyCreep == 0 then
         LaningState = LaningStates.Moving
         return
+    end
+    
+    if #listEnemyTowers > 0 then
+        local dist = GetUnitToUnitDistance(bot, listEnemyTowers[1])
+        if dist < 710 then
+            gHeroVar.HeroMoveToLocation(bot, utils.VectorAway(bot:GetLocation(), listEnemyTowers[1]:GetLocation(), 710-dist))
+        end
     end
 
     AttackRange = bot:GetAttackRange() + bot:GetBoundingRadius()

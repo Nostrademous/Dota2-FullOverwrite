@@ -62,3 +62,11 @@ function Think()
         gHeroVar.ExecuteHeroActionQueue(bot)
     end
 end
+
+function timberBot:GetNukeDamage(bot, target)
+    return ability_usage_shredder.nukeDamage( bot, target )
+end
+
+function timberBot:QueueNuke(bot, target, actionQueue, engageDist)
+    return ability_usage_shredder.queueNuke( bot, target, actionQueue, engageDist )
+end

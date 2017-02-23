@@ -1521,7 +1521,7 @@ function U.GetTeleportationAbility(npcBot)
 end
 
 function U.IsItemAvailable(item_name)
-    local npcBot = GetBot();
+    local npcBot = GetBot()
 
     local item = U.HaveItem(npcBot, item_name)
     if item ~= nil then
@@ -1529,7 +1529,7 @@ function U.IsItemAvailable(item_name)
             return item
         end
     end
-    return nil;
+    return nil
 end
 
 --important items for delivery

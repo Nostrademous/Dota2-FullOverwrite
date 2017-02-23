@@ -71,3 +71,11 @@ function Think()
         gHeroVar.ExecuteHeroActionQueue(bot)
     end
 end
+
+function vmBot:GetNukeDamage(bot, target)
+    return ability_usage_venomancer.nukeDamage( bot, target )
+end
+
+function vmBot:QueueNuke(bot, target, actionQueue, engageDist)
+    return ability_usage_venomancer.queueNuke( bot, target, actionQueue, engageDist )
+end

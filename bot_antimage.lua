@@ -65,3 +65,11 @@ function Think()
         gHeroVar.ExecuteHeroActionQueue(bot)
     end
 end
+
+function amBot:GetNukeDamage(bot, target)
+    return ability_usage_antimage.nukeDamage( bot, target )
+end
+
+function amBot:QueueNuke(bot, target, actionQueue, engageDist)
+    return ability_usage_antimage.queueNuke( bot, target, actionQueue, engageDist )
+end

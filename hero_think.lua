@@ -270,7 +270,7 @@ end
 -- where to go to defend if so.
 function ConsiderDefendingLane(bot)
     local defInfo = getHeroVar("DoDefendLane")
-    if defLane ~= nil then
+    if #defInfo > 0 then
         return BOT_MODE_DESIRE_VERYHIGH
     end
     return BOT_MODE_DESIRE_NONE

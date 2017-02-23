@@ -65,8 +65,8 @@ function cmBot:GetNukeDamage(bot, target)
     return ability_usage_crystal_maiden.nukeDamage( bot, target )
 end
 
-function cmBot:QueueNuke(bot, target, actionQueue)
-    return ability_usage_crystal_maiden.queueNuke( bot, target, actionQueue )
+function cmBot:QueueNuke(bot, target, actionQueue, engageDist)
+    return ability_usage_crystal_maiden.queueNuke( bot, target, actionQueue, engageDist )
 end
 
 function cmBot:DoHeroSpecificInit(bot)

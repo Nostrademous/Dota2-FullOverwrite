@@ -89,10 +89,10 @@ function bloodseekerBot:DoRetreat(bot, reason)
     local bloodrage = bot:GetAbilityByName(BLOODSEEKER_SKILL_Q)
     local bloodragePct =  bloodrage:GetSpecialValueInt("health_bonus_creep_pct")/100
 
-    local neutrals = bot:GetNearbyCreeps(700,true)
+    local neutrals = bot:GetNearbyCreeps(500, true)
     if #neutrals == 0 then
         -- if we are retreating - piggyback on retreat logic movement code
-        if self:GetMode() == constants.MODE_RETREAT then
+        if self:getCurrentMode() == constants.MODE_RETREAT then
             -- we use '.' instead of ':' and pass 'self' so it is the correct self
             return dt.DoRetreat(self, bot, getHeroVar("RetreatReason"))
         end
@@ -102,16 +102,17 @@ function bloodseekerBot:DoRetreat(bot, reason)
 
     local estimatedDamage = bot:GetEstimatedDamageToTarget(true, neutrals[1], bot:GetSecondsPerAttack(), DAMAGE_TYPE_PHYSICAL)
     --local actualDamage = neutrals[1]:GetActualIncomingDamage(estimatedDamage, DAMAGE_TYPE_PHYSICAL)
-    local bloodrageHeal = bloodragePct * neutrals[1]:GetMaxHealth()
-    local healthThreshold = math.max(bot:GetMaxHealth()*0.15, 100)
+    local bloodrageHeal = bloodragePct * neutrals[1]:GetMaxHealth() 
 
-    if reason == constants.RETREAT_CREEP and (self:getCurrentMode() ~= constants.MODE_LANING or pushing) then
+    if reason == constants.RETREAT_CREEP and self:getCurrentMode() == constants.MODE_JUNGLING then
         -- if our health is lower than maximum( 15% health, 100 health )
+        local healthThreshold = math.max(bot:GetMaxHealth()*0.15, 100)
+        
         if bot:GetHealth() < healthThreshold then
             local totalCreepDamage = 0
 
             for i, neutral in ipairs(neutrals) do
-                local estimatedNCDamage =  neutral:GetEstimatedDamageToTarget(true, bot, neutral:GetAttackSpeed(), DAMAGE_TYPE_PHYSICAL)
+                local estimatedNCDamage = neutral:GetEstimatedDamageToTarget(true, bot, neutral:GetSecondsPerAttack(), DAMAGE_TYPE_ALL)
                 totalCreepDamage = (totalCreepDamage + estimatedNCDamage)
             end
 
@@ -121,13 +122,14 @@ function bloodseekerBot:DoRetreat(bot, reason)
                 if ( self:HasMode(constants.MODE_RETREAT) == false ) then
                     self:AddMode(constants.MODE_RETREAT)
                     setHeroVar("IsInLane", false)
+                    return true
                 end
             else
                 return false
             end
         end
         -- if we are retreating - piggyback on retreat logic movement code
-        if self:GetMode() == constants.MODE_RETREAT then
+        if self:getCurrentMode() == constants.MODE_RETREAT then
             -- we use '.' instead of ':' and pass 'self' so it is the correct self
             return dt.DoRetreat(self, bot, getHeroVar("RetreatReason"))
         end
@@ -193,4 +195,12 @@ function bloodseekerBot:DoCleanCamp(bot, neutrals, difficulty)
         end
     end
     -- TODO: don't attack if we should wait on all neutrals!
+end
+
+function bloodseekerBot:GetNukeDamage(bot, target)
+    return ability_usage_bloodseeker.nukeDamage( bot, target )
+end
+
+function bloodseekerBot:QueueNuke(bot, target, actionQueue, engageDist)
+    return ability_usage_bloodseeker.queueNuke( bot, target, actionQueue, engageDist )
 end

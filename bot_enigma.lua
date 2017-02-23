@@ -62,3 +62,11 @@ function Think()
         gHeroVar.ExecuteHeroActionQueue(bot)
     end
 end
+
+function enigmaBot:GetNukeDamage(bot, target)
+    return ability_usage_enigma.nukeDamage( bot, target )
+end
+
+function enigmaBot:QueueNuke(bot, target, actionQueue, engageDist)
+    return ability_usage_enigma.queueNuke( bot, target, actionQueue, engageDist )
+end

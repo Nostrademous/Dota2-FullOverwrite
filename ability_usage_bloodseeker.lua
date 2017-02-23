@@ -25,10 +25,15 @@ local Abilities ={
     "bloodseeker_blood_bath",
     "bloodseeker_thirst",
     "bloodseeker_rupture"
-};
+}
+
+local abilityQ = ""
+local abilityW = ""
+local abilityE = ""
+local abilityR = ""
 
 function nukeDamage( bot, enemy )
-    if enemy == nil or not utils.ValidTarget(enemy) then return 0, {}, 0, 0, 0 end
+    if enemy == nil or enemy:IsNull() then return 0, {}, 0, 0, 0 end
 
     local comboQueue = {}
     local manaAvailable = bot:GetMana()
@@ -36,6 +41,7 @@ function nukeDamage( bot, enemy )
     local castTime = 0
     local stunTime = 0
     local slowTime = 0
+    local engageDist = 10000
 
     local magicImmune = utils.IsTargetMagicImmune(enemy)
     
@@ -47,6 +53,7 @@ function nukeDamage( bot, enemy )
             dmgTotal = dmgTotal + 200  -- 200 pure damage every 1/4 second if moving
             castTime = castTime + abilityR:GetCastPoint()
             stunTime = stunTime + 12.0
+            engageDist = Min(engageDist, abilityR:GetCastRange())
             table.insert(comboQueue, abilityR)
         end
     end
@@ -59,69 +66,63 @@ function nukeDamage( bot, enemy )
                 manaAvailable = manaAvailable - manaCostW
                 dmgTotal = dmgTotal + abilityW:GetSpecialValueInt("damage") -- damage is pure, silence is magic
                 castTime = castTime + abilityW:GetCastPoint()
+                engageDist = Min(engageDist, abilityW:GetCastRange())
                 table.insert(comboQueue, 1, abilityW)
             end
         end
     end
     
-    return dmgTotal, comboQueue, castTime, stunTime, slowTime
+    return dmgTotal, comboQueue, castTime, stunTime, slowTime, engageDist
 end
     
-function queueNuke(bot, enemy, castQueue)
-    local nRadius = 600
-    local nCastRange = 1500
+function queueNuke(bot, enemy, castQueue, engageDist)
     local dist = GetUnitToUnitDistance(bot, enemy)
 
-    bot:Action_ClearActions(false)
-
     -- if out of range, attack move for one hit to get in range
-    if dist > (nCastRange + nRadius) then
-        bot:ActionPush_AttackUnit( enemy, true )
-    end
+    if dist < engageDist then
+        bot:Action_ClearActions(false)
+        utils.AllChat("Killing "..utils.GetHeroName(enemy).." softly with my song")
+        utils.myPrint("Queue Nuke Damage: ", utils.GetHeroName(enemy))
+        for i = #castQueue, 1, -1 do
+            local skill = castQueue[i]
 
-    utils.AllChat("Killing "..utils.GetHeroName(enemy).." softly with my song")
-    utils.myPrint("Queue Nuke Damage: ", utils.GetHeroName(enemy))
-    for i = #castQueue, 1, -1 do
-        local skill = castQueue[i]
-
-        if skill:GetName() == Abilities[2] then
-            if utils.IsCrowdControlled(enemy) or modifiers.IsRuptured(enemy) then
-                gHeroVar.HeroPushUseAbilityOnLocation(bot, skill, enemy:GetLocation())
-            else
-                gHeroVar.HeroPushUseAbilityOnLocation(bot, skill, enemy:GetExtrapolatedLocation(3.0))
+            if skill:GetName() == Abilities[2] then
+                if utils.IsCrowdControlled(enemy) or modifiers.IsRuptured(enemy) then
+                    gHeroVar.HeroPushUseAbilityOnLocation(bot, skill, enemy:GetLocation())
+                else
+                    gHeroVar.HeroPushUseAbilityOnLocation(bot, skill, enemy:GetExtrapolatedLocation(3.0))
+                end
+            elseif skill:GetName() == Abilities[4] then
+                bot:ActionPush_UseAbilityOnEntity(skill, enemy)
             end
-        elseif skill:GetName() == Abilities[4] then
-            bot:ActionPush_UseAbilityOnEntity(skill, enemy)
         end
+        bot:ActionQueue_AttackUnit( enemy, false )
+        return true
     end
-    bot:ActionQueue_AttackUnit( enemy, false )
+    return false
 end
 
-local function UseW(nearbyEnemyHeroes)
-    local npcBot = GetBot()
-    local ability = npcBot:GetAbilityByName(Abilities[2])
-    if ability == nil or (not ability:IsFullyCastable()) then return false end
+local function UseW(bot, nearbyEnemyHeroes)
+    if not abilityW:IsFullyCastable() then return false end
 
-    local ult = npcBot:GetAbilityByName(Abilities[4])
-
-    if #nearbyEnemyHeroes == 1 and ( ult ~= nil and ult:IsFullyCastable() ) then
+    if #nearbyEnemyHeroes == 1 and abilityR:IsFullyCastable() then
         setHeroVar("Target", {Obj=nearbyEnemyHeroes[1], Id=nearbyEnemyHeroes[1]:GetPlayerID()})
         return false
     end
 
     local target = getHeroVar("Target")
-    if utils.ValidTarget(target) and GetUnitToUnitDistance(npcBot, target.Obj) > 1500 then
+    if utils.ValidTarget(target) and GetUnitToUnitDistance(bot, target.Obj) > 1500 then
         return false
     end
     
-    local delay = ability:GetSpecialValueFloat("delay_plus_castpoint_tooltip")
+    local delay = abilityW:GetSpecialValueFloat("delay_plus_castpoint_tooltip")
     if #nearbyEnemyHeroes == 1 then
-        npcBot:Action_UseAbilityOnLocation(ability, nearbyEnemyHeroes[1]:GetExtrapolatedLocation(delay))
+        bot:Action_UseAbilityOnLocation(abilityW, nearbyEnemyHeroes[1]:GetExtrapolatedLocation(delay))
         return true
     else
         local center = utils.GetCenter(nearbyEnemyHeroes)
         if center ~= nil then
-            npcBot:Action_UseAbilityOnLocation(ability, center)
+            bot:Action_UseAbilityOnLocation(abilityW, center)
             return true
         end
     end
@@ -129,11 +130,8 @@ local function UseW(nearbyEnemyHeroes)
     return false
 end
 
-local function UseUlt(nearbyEnemyHeroes, nearbyEnemyTowers)
-    -- TODO: don't use it if we can kill the enemy by rightclicking / have teammates around
-    local npcBot = GetBot()
-    local ability = npcBot:GetAbilityByName(Abilities[4])
-    if ability == nil or (not ability:IsFullyCastable()) then return false end
+local function UseUlt(bot, nearbyEnemyHeroes, nearbyEnemyTowers)
+    if not abilityR:IsFullyCastable() then return false end
 
     local enemy = getHeroVar("Target")
     if not utils.ValidTarget(enemy) then return false end
@@ -143,71 +141,71 @@ local function UseUlt(nearbyEnemyHeroes, nearbyEnemyTowers)
         return false
     end
     --]]
-    local timeToKillRightClicking = fight_simul.estimateTimeToKill(npcBot, enemy.Obj)
-    utils.myPrint("Estimating Time To Kill with Right Clicks: ", timeToKillRightClicking)
+    local timeToKillRightClicking = fight_simul.estimateTimeToKill(bot, enemy.Obj)
+    --utils.myPrint("Estimating Time To Kill with Right Clicks: ", timeToKillRightClicking)
     if timeToKillRightClicking < 4.0 then
         utils.myPrint("Not Using Ult")
         return false
     end
 
-    if GetUnitToUnitDistance(enemy.Obj, npcBot) < (ability:GetCastRange() - 100) then
-        npcBot:Action_UseAbilityOnEntity(ability, enemy.Obj)
+    if GetUnitToUnitDistance(enemy.Obj, bot) < (abilityR:GetCastRange() - 100) then
+        bot:Action_UseAbilityOnEntity(abilityR, enemy.Obj)
         return true
     end
 
     return false
 end
 
-local function UseQ()
-    local npcBot = GetBot()
-    local ability = npcBot:GetAbilityByName(Abilities[1])
-    if ability == nil or (not ability:IsFullyCastable()) then return false end
+local function UseQ(bot)
+    if not abilityQ:IsFullyCastable() then return false end
 
     local enemy = getHeroVar("Target")
-    if utils.ValidTarget(enemy) and GetUnitToUnitDistance(enemy.Obj, npcBot) < (ability:GetCastRange() - 100) then
-        npcBot:Action_UseAbilityOnEntity(ability, enemy.Obj)
+    if utils.ValidTarget(enemy) and GetUnitToUnitDistance(enemy.Obj, bot) < (abilityQ:GetCastRange() - 100) then
+        bot:Action_UseAbilityOnEntity(abilityQ, enemy.Obj)
         return true
     end
     
-    if npcBot:HasModifier("modifier_bloodseeker_bloodrage") then return false end
+    if bot:HasModifier("modifier_bloodseeker_bloodrage") then return false end
     
-    npcBot:Action_UseAbilityOnEntity(ability, npcBot)
+    bot:Action_UseAbilityOnEntity(abilityQ, bot)
     return true
 end
 
 function AbilityUsageThink(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCreep, nearbyAlliedCreep, nearbyEnemyTowers, nearbyAlliedTowers)
     if ( GetGameState() ~= GAME_STATE_GAME_IN_PROGRESS and GetGameState() ~= GAME_STATE_PRE_GAME ) then return false end
 
-    local npcBot = GetBot()
+    local bot = GetBot()
+    
+    if abilityQ == "" then abilityQ = bot:GetAbilityByName( Abilities[1] ) end
+    if abilityW == "" then abilityW = bot:GetAbilityByName( Abilities[2] ) end
+    if abilityE == "" then abilityE = bot:GetAbilityByName( Abilities[3] ) end
+    if abilityR == "" then abilityR = bot:GetAbilityByName( Abilities[4] ) end
 
-    if npcBot:IsChanneling() or npcBot:IsUsingAbility() then return false end
+    if bot:IsChanneling() or bot:IsUsingAbility() then return false end
 
     if not utils.ValidTarget(getHeroVar("Target")) then return false end
 
-    if UseQ() then return true end
+    if UseQ(bot) then return true end
     
     if #nearbyEnemyHeroes == 0 then return false end
     
     if #nearbyEnemyHeroes == 1 then
         local enemy = nearbyEnemyHeroes[1]
-        local dmg, castQueue, castTime, stunTime, slowTime = nukeDamage( bot, enemy )
-        
-        local rightClickTime = stunTime + 0.5*slowTime
-        if rightClickTime > 0.5 then
-            dmg = dmg + fight_simul.estimateRightClickDamage( bot, enemy, rightClickTime )
-        end
+        local dmg, castQueue, castTime, stunTime, slowTime, engageDist = nukeDamage( bot, enemy )
+
+        dmg = dmg + fight_simul.estimateRightClickDamage( bot, enemy, 5.0 )
 
         -- magic immunity is already accounted for by nukeDamage()
         if dmg > enemy:GetHealth() then
-            setHeroVar("Target", {Obj=enemy, Id=enemy:GetPlayerID()})
-
-            queueNuke(bot, enemy, castQueue)
-
-            return true
+            local bKill = queueNuke(bot, enemy, castQueue, engageDist)
+            if bKill then
+                setHeroVar("Target", {Obj=enemy, Id=enemy:GetPlayerID()})
+                return true
+            end
         end
     end
 
-    if UseUlt(nearbyEnemyHeroes, nearbyEnemyTowers) or UseW(nearbyEnemyHeroes) then return true end
+    if UseUlt(bot, nearbyEnemyHeroes, nearbyEnemyTowers) or UseW(bot, nearbyEnemyHeroes) then return true end
     
     return false
 end

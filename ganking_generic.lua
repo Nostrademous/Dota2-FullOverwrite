@@ -53,7 +53,7 @@ function FindTarget(bot)
         r = r + UnitPosFactor * (1 - global_game_state.GetPositionBetweenBuildings(e, GetTeam()))
         local hero_count = 0
         for _, enemy in pairs(enemies) do
-            if enemy:CanBeSeen() and utils.GetHeroName(enemy) ~= utils.GetHeroName(e) then
+            if utils.GetHeroName(enemy) ~= utils.GetHeroName(e) then
                 if GetUnitToUnitDistance(enemy, e) < 1500 then
                     hero_count = hero_count - 1
                 end
@@ -130,7 +130,7 @@ function ApproachTarget(bot, target)
                 return false
             end
             
-            if distFromTarget < 1000 and target.Obj:CanBeSeen() then
+            if distFromTarget < 1000 then
                 return true
             else
                 --[[ FIXME: need to teach bots not to use abilities from afar when invis
@@ -155,10 +155,12 @@ function ApproachTarget(bot, target)
             else
                 local pLoc = enemyData.PredictedLocation(target.Id, timeSinceSeen)
                 if pLoc then
-                    item_usage.UseMovementItems()
+                    if item_usage.UseMovementItems() then return false end
                     gHeroVar.HeroMoveToLocation(bot, pLoc)
                 else
                     utils.myPrint("didn't get a valid predicted location")
+                    me:RemoveMode(constants.MODE_GANKING)
+                    setHeroVar("GankTarget", {Obj=nil, Id=0})
                 end
                 return false
             end
@@ -173,12 +175,11 @@ function ApproachTarget(bot, target)
 end
 
 function KillTarget(bot, target)
-    utils.myPrint("[KillTarget()] - TargetID: ", target.Id, ", Alive: ", IsHeroAlive(target.Id))
+    --utils.myPrint("[KillTarget()] - TargetID: ", target.Id, ", Alive: ", IsHeroAlive(target.Id))
     if target.Id > 0 and IsHeroAlive(target.Id) then
         if utils.ValidTarget(target) then
             setHeroVar("Target", target)
             utils.myPrint("killing target :: ", utils.GetHeroName(target.Obj))
-            gHeroVar.HeroAttackUnit(bot, target.Obj, false)
             return true
         end
     end

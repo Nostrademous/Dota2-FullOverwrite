@@ -66,8 +66,8 @@ function invBot:GetNukeDamage(bot, target)
     return ability_usage_invoker.nukeDamage( bot, target )
 end
 
-function invBot:QueueNuke(bot, target, actionQueue)
-    return ability_usage_invoker.queueNuke( bot, target, actionQueue )
+function invBot:QueueNuke(bot, target, actionQueue, engageDist)
+    return ability_usage_invoker.queueNuke( bot, target, actionQueue, engageDist )
 end
 
 function invBot:DoHeroSpecificInit(bot)

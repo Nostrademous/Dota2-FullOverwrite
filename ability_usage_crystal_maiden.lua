@@ -35,7 +35,7 @@ local abilityE = ""
 local abilityR = ""
 
 function nukeDamage( bot, enemy )
-    if enemy == nil or not utils.ValidTarget(enemy) then return 0, {}, 0, 0, 0 end
+    if enemy == nil or enemy:IsNull() then return 0, {}, 0, 0, 0 end
     
     local comboQueue = {}
     local manaAvailable = bot:GetMana()
@@ -43,6 +43,7 @@ function nukeDamage( bot, enemy )
     local castTime = 0
     local stunTime = 0
     local slowTime = 0
+    local engageDist = 10000
     
     local magicImmune = utils.IsTargetMagicImmune(enemy)
     
@@ -55,6 +56,7 @@ function nukeDamage( bot, enemy )
                 dmgTotal = dmgTotal + enemy:GetActualIncomingDamage(abilityQ:GetSpecialValueInt("nova_damage"), DAMAGE_TYPE_MAGICAL)
                 castTime = castTime + abilityQ:GetCastPoint()
                 slowTime = slowTime + abilityQ:GetSpecialValueFloat("duration")
+                engageDist = Min(engageDist, abilityQ:GetCastRange())
                 table.insert(comboQueue, 1, abilityQ)
             end
         end
@@ -69,6 +71,7 @@ function nukeDamage( bot, enemy )
                 dmgTotal = dmgTotal + enemy:GetActualIncomingDamage(abilityW:GetSpecialValueInt("hero_damage_tooltip"), DAMAGE_TYPE_MAGICAL)
                 castTime = castTime + abilityW:GetCastPoint()
                 stunTime = stunTime + abilityW:GetSpecialValueFloat("duration")
+                engageDist = Min(engageDist, abilityW:GetCastRange())
                 table.insert(comboQueue, 1, abilityW)
             end
         end
@@ -90,52 +93,49 @@ function nukeDamage( bot, enemy )
                 dmgTotal = dmgTotal + enemy:GetActualIncomingDamage(abilityR:GetSpecialValueInt("damage")*timeInField, DAMAGE_TYPE_MAGICAL)
                 castTime = castTime + abilityR:GetCastPoint()
                 slowTime = slowTime + abilityR:GetSpecialValueFloat("slow_duration")
+                engageDist = Min(engageDist, 835)
                 table.insert(comboQueue, abilityR)
             end
         end
     end
     
-    return dmgTotal, comboQueue, castTime, stunTime, slowTime
+    return dmgTotal, comboQueue, castTime, stunTime, slowTime, engageDist
 end
 
-function queueNuke(bot, enemy, castQueue)
-    local nRadius = abilityQ:GetSpecialValueInt( "radius" )
-    local nCastRange = abilityQ:GetCastRange()
+function queueNuke(bot, enemy, castQueue, engageDist)
     local dist = GetUnitToUnitDistance(bot, enemy)
     
-    bot:Action_ClearActions(false)
-
     -- if out of range, attack move for one hit to get in range
-    if dist > (nCastRange + nRadius) then
-        bot:ActionPush_AttackUnit( enemy, true )
-    end
-
-    utils.AllChat("Killing "..utils.GetHeroName(enemy).." softly with my song")
-    utils.myPrint("Queue Nuke Damage: ", utils.GetHeroName(enemy))
-    for i = #castQueue, 1, -2 do
-        local skill = castQueue[i]
-        local behaviorFlag = skill:GetBehavior()
-        
-        utils.myPrint(" - skill '", skill:GetName(), "' has BehaviorFlag: ", behaviorFlag)
-        
-        if skill:GetName() == Abilities[1] then
-            if utils.IsCrowdControlled(enemy) then
-                gHeroVar.HeroPushUseAbilityOnLocation(bot, skill, enemy:GetLocation())
-            else
-                gHeroVar.HeroPushUseAbilityOnLocation(bot, skill, enemy:GetExtrapolatedLocation(0.95))
+    if dist < engageDist then
+        bot:Action_ClearActions(false)
+        utils.AllChat("Killing "..utils.GetHeroName(enemy).." softly with my song")
+        utils.myPrint("Queue Nuke Damage: ", utils.GetHeroName(enemy))
+        for i = #castQueue, 1, -2 do
+            local skill = castQueue[i]
+            local behaviorFlag = skill:GetBehavior()
+            
+            utils.myPrint(" - skill '", skill:GetName(), "' has BehaviorFlag: ", behaviorFlag)
+            
+            if skill:GetName() == Abilities[1] then
+                if utils.IsCrowdControlled(enemy) then
+                    gHeroVar.HeroPushUseAbilityOnLocation(bot, skill, enemy:GetLocation())
+                else
+                    gHeroVar.HeroPushUseAbilityOnLocation(bot, skill, enemy:GetExtrapolatedLocation(0.95))
+                end
+            elseif skill:GetName() == Abilities[2] then
+                if utils.IsCrowdControlled(enemy) then
+                    gHeroVar.HeroPushUseAbilityOnLocation(bot, skill, enemy:GetLocation())
+                else
+                    -- account for 0.45 cast point and speed of wave (1200) needed to travel the distance between us
+                    gHeroVar.HeroPushUseAbilityOnLocation(bot, skill, enemy:GetExtrapolatedLocation(0.45 + dist/1200))
+                end
+            elseif skill:GetName() == Abilities[4] then
+                bot:ActionPush_UseAbilityOnEntity(skill, enemy)
             end
-        elseif skill:GetName() == Abilities[2] then
-            if utils.IsCrowdControlled(enemy) then
-                gHeroVar.HeroPushUseAbilityOnLocation(bot, skill, enemy:GetLocation())
-            else
-                -- account for 0.45 cast point and speed of wave (1200) needed to travel the distance between us
-                gHeroVar.HeroPushUseAbilityOnLocation(bot, skill, enemy:GetExtrapolatedLocation(0.45 + dist/1200))
-            end
-        elseif skill:GetName() == Abilities[4] then
-            bot:ActionPush_UseAbilityOnEntity(skill, enemy)
         end
+        return true
     end
-    bot:ActionQueue_AttackUnit( enemy, false )
+    return false
 end
 
 function AbilityUsageThink(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCreep, nearbyAlliedCreep, nearbyEnemyTowers, nearbyAlliedTowers)
@@ -161,7 +161,7 @@ function AbilityUsageThink(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCre
     
         --FIXME: in the future we probably want to target a hero that has a disable to my ult, rather than weakest
         local enemy, enemyHealth = utils.GetWeakestHero(bot, nRadius + nCastRange, nearbyEnemyHeroes)
-        local dmg, castQueue, castTime, stunTime, slowTime = nukeDamage( bot, enemy )
+        local dmg, castQueue, castTime, stunTime, slowTime, engageDist = nukeDamage( bot, enemy )
         
         local rightClickTime = stunTime + 0.5*slowTime
         if rightClickTime > 0.5 then
@@ -170,11 +170,11 @@ function AbilityUsageThink(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCre
         
         -- magic immunity is already accounted for by nukeDamage()
         if dmg > enemyHealth then
-            setHeroVar("Target", {Obj=enemy, Id=enemy:GetPlayerID()})
-            
-            queueNuke(bot, enemy, castQueue)
-
-            return true
+            local bKill = queueNuke(bot, enemy, castQueue, engageDist)
+            if bKill then
+                setHeroVar("Target", {Obj=enemy, Id=enemy:GetPlayerID()})
+                return true
+            end
         end
     end
 
@@ -302,7 +302,7 @@ function UseW(bot, nearbyEnemyHeroes)
         end
     else
         if not utils.IsCrowdControlled(target.Obj) and not utils.IsTargetMagicImmune(target.Obj) then
-            bot:Action_UseAbilityOnEntity( abilityW, bestTarget )
+            bot:Action_UseAbilityOnEntity( abilityW, target.Obj )
             return true
         end
     end

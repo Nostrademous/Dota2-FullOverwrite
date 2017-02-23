@@ -187,6 +187,7 @@ function X:DoInit(bot)
     self:setHeroVar("Target", NoTarget)
     self:setHeroVar("GankTarget", NoTarget)
     self:setHeroVar("TeamBuy", {})
+    self:setHeroVar("DoDefendLane", {})
 
     role.GetRoles()
     if role.RolesFilled() then
@@ -342,10 +343,6 @@ function X:Think(bot)
         if self:DoEvade(bot) then return end
     end
     
-    if self:getCurrentMode() == constants.MODE_FIGHT then
-        if self:DoFight(bot) then return end
-    end
-    
     -- check if I am channeling an ability/item (i.e. TP Scroll, Ultimate, etc.)
     -- and don't interrupt if true
     if bot:IsChanneling() then
@@ -357,12 +354,17 @@ function X:Think(bot)
     -- if we are using an ability/item, return to let it complete
     if bot:IsUsingAbility() then
         --utils.myPrint("Using Ability")
-        return
+        local target = self:getHeroVar("Target")
+        if target.Id == 0 then return end
+        
+        if not utils.ValidTarget(target) then return end
+        
+        if GetUnitToUnitDistance(bot, target.Obj) < 2000 then return end
     end
     
     -- if we have queued actions, do them as anything below this can clear them
     if bot:NumQueuedActions() > 0 then
-        utils.myPrint("has "..bot:NumQueuedActions().." queued actions")
+        --utils.myPrint("has "..bot:NumQueuedActions().." queued actions")
         --utils.myPrint("current action is: ", bot:GetCurrentActionType())
         --utils.myPrint("top queued action is: ", bot:GetQueuedActionType(0))
         return
@@ -384,6 +386,10 @@ function X:Think(bot)
                                    nearbyAlliedCreep, nearbyEnemyTowers, nearbyAlliedTowers) then
             return
         end
+    end
+    
+    if self:getCurrentMode() == constants.MODE_FIGHT then
+        if self:DoFight(bot) then return end
     end
     
     if self:getCurrentMode() == constants.MODE_SPECIALSHOP then
@@ -426,12 +432,6 @@ function X:Think2(bot)
         local bRet = self:DoRoam(bot)
         if bRet then return end
     end
-
-    if ( self:Determine_ShouldIChangeLane(bot) ) then
-        local bRet = self:DoChangeLane(bot)
-        if bRet then return end
-    end
-
 end
 
 -------------------------------------------------------------------------------
@@ -458,6 +458,7 @@ function X:DoWhileDead(bot)
     self:setHeroVar("ShrineMode", nil)
     self:setHeroVar("Shrine", nil)
     self:setHeroVar("ShouldPush", false)
+    self:setHeroVar("DoDefendLane", {})
 
     self:MoveItemsFromStashToInventory(bot)
     local bb = self:ConsiderBuyback(bot)
@@ -502,19 +503,6 @@ end
 
 function X:Determine_ShouldIDefendLane(bot)
     return global_game_state.DetectEnemyPush()
-end
-
-function X:Determine_ShouldIChangeLane(bot)
-    -- don't change lanes for first 6 minutes
-    if DotaTime() < 60*6 then return false end
-
-    local LaneChangeTimer = self:getHeroVar("LaneChangeTimer")
-    local bCheck, newTime = utils.TimePassed(LaneChangeTimer, 3.0)
-    if bCheck then
-        self:setHeroVar("LaneChangeTimer", newTime)
-        return true
-    end
-    return false
 end
 
 
@@ -643,30 +631,81 @@ function X:DoEvade(bot)
 end
 
 function X:DoFight(bot)
-    local target = self:getHeroVar("Target")
-    
+    local target = self:getHeroVar("Target")  
     if target.Id > 0 and IsHeroAlive(target.Id) then
         if utils.ValidTarget(target) then
-            if #nearbyEnemyTowers == 0 then
+            if #nearbyEnemyTowers == 0 and #nearbyEnemyHeroes == 1 then
                 if target.Obj:IsAttackImmune() or (bot:GetLastAttackTime() + bot:GetSecondsPerAttack()) > GameTime() then
                     if item_usage.UseMovementItems() then return true end
-                    bot:Action_MoveToUnit(target.Obj)
+                    if utils.IsMelee(bot) then
+                        bot:Action_MoveToUnit(target.Obj)
+                    else
+                        local dist = GetUnitToUnitDistance(bot, target.Obj)
+                        if dist > 0.7*bot:GetAttackRange() then
+                            gHeroVar.HeroMoveToLocation(bot, utils.VectorTowards(bot:GetLocation(), target.Obj:GetLocation(), dist-0.7*bot:GetAttackRange()))
+                        elseif dist < 0.4*bot:GetAttackRange() then
+                            gHeroVar.HeroMoveToLocation(bot, utils.VectorAway(bot:GetLocation(), target.Obj:GetLocation(), 0.7*bot:GetAttackRange()-dist))
+                        end
+                    end
                 else
                     gHeroVar.HeroAttackUnit(bot, target.Obj, true)
                 end
                 return true
-            else
+            elseif #nearbyEnemyTowers > 0 and #nearbyEnemyHeroes > 1 then
+                self:RemoveMode(MODE_FIGHT)
+                self:setHeroVar("Target", NoTarget)
+                return false
+            elseif #nearbyEnemyHeroes > 1 then
+                local myDmgToTarget = bot:GetEstimatedDamageToTarget( true, target.Obj, 5.0, DAMAGE_TYPE_ALL )
+                local enemyDmgToMe = 0
+                for _, enemy in pairs(nearbyEnemyHeroes) do
+                    if GetUnitToUnitDistance( bot, enemy ) < enemy:GetAttackRange() then
+                        enemyDmgToMe = enemyDmgToMe + enemy:GetEstimatedDamageToTarget( false, bot, 5.0, DAMAGE_TYPE_ALL )
+                    end
+                end
+                if myDmgToTarget > target.Obj:GetHealth() and enemyDmgToMe < (bot:GetHealth() + 100) then
+                    if target.Obj:IsAttackImmune() or (bot:GetLastAttackTime() + bot:GetSecondsPerAttack()) > GameTime() then
+                        if item_usage.UseMovementItems() then return true end
+                        if utils.IsMelee(bot) then
+                            bot:Action_MoveToUnit(target.Obj)
+                        else
+                            local dist = GetUnitToUnitDistance(bot, target.Obj)
+                            if dist > 0.7*bot:GetAttackRange() then
+                                gHeroVar.HeroMoveToLocation(bot, utils.VectorTowards(bot:GetLocation(), target.Obj:GetLocation(), dist-0.7*bot:GetAttackRange()))
+                            elseif dist < 0.4*bot:GetAttackRange() then
+                                gHeroVar.HeroMoveToLocation(bot, utils.VectorAway(bot:GetLocation(), target.Obj:GetLocation(), 0.7*bot:GetAttackRange()-dist))
+                            end
+                        end
+                    else
+                        gHeroVar.HeroAttackUnit(bot, target.Obj, true)
+                    end
+                else
+                    self:RemoveMode(MODE_FIGHT)
+                    self:setHeroVar("Target", NoTarget)
+                    return false
+                end
+            elseif #nearbyEnemyTowers > 0 then
                 local towerDmgToMe = 0
                 local myDmgToTarget = bot:GetEstimatedDamageToTarget( true, target.Obj, 5.0, DAMAGE_TYPE_ALL )
                 for _, tow in pairs(nearbyEnemyTowers) do
-                    if GetUnitToLocationDistance( bot, tow:GetLocation() ) < 750 then
+                    if GetUnitToUnitDistance( bot, tow ) < 750 then
                         towerDmgToMe = towerDmgToMe + tow:GetEstimatedDamageToTarget( false, bot, 5.0, DAMAGE_TYPE_PHYSICAL )
                     end
                 end
                 if myDmgToTarget > target.Obj:GetHealth() and towerDmgToMe < (bot:GetHealth() + 100) then
                     --print(utils.GetHeroName(bot), " - we are tower diving for the kill")
                     if target.Obj:IsAttackImmune() or (bot:GetLastAttackTime() + bot:GetSecondsPerAttack()) > GameTime() then
-                        bot:Action_MoveToUnit(target.Obj)
+                        if item_usage.UseMovementItems() then return true end
+                        if utils.IsMelee(bot) then
+                            bot:Action_MoveToUnit(target.Obj)
+                        else
+                            local dist = GetUnitToUnitDistance(bot, target.Obj)
+                            if dist > 0.7*bot:GetAttackRange() then
+                                gHeroVar.HeroMoveToLocation(bot, utils.VectorTowards(bot:GetLocation(), target.Obj:GetLocation(), dist-0.7*bot:GetAttackRange()))
+                            elseif dist < 0.4*bot:GetAttackRange() then
+                                gHeroVar.HeroMoveToLocation(bot, utils.VectorAway(bot:GetLocation(), target.Obj:GetLocation(), 0.7*bot:GetAttackRange()-dist))
+                            end
+                        end
                     else
                         gHeroVar.HeroAttackUnit(bot, target.Obj, true)
                     end
@@ -678,6 +717,12 @@ function X:DoFight(bot)
                 end
             end
         else -- target alive but we don't see it
+            if #nearbyEnemyTowers > 0 and GetUnitToUnitDistance(bot, nearbyEnemyTowers[1]) < 750 then
+                self:RemoveMode(constants.MODE_FIGHT)
+                setHeroVar("Target", NoTarget)
+                return false
+            end
+            
             local timeSinceSeen = GetHeroLastSeenInfo(target.Id).time
             if timeSinceSeen > 3.0 then
                 self:RemoveMode(constants.MODE_FIGHT)
@@ -778,10 +823,22 @@ function X:DoPushLane(bot)
     if #nearbyEnemyTowers == 0 and #Shrines == 0 and #Barracks == 0 then
         if GetUnitToLocationDistance(bot, Ancient:GetLocation()) < 500 then
             if utils.NotNilOrDead(Ancient) and not Ancient:HasModifier("modifier_fountain_glyph") then
-                gHeroVar.HeroAttackUnit(bot, Ancient, false)
+                gHeroVar.HeroAttackUnit(bot, Ancient, true)
                 return true
             end
         end
+    end
+    
+    -- we are pushing lane but no structures nearby, so push forward in lane
+    local enemyFrontier = GetLaneFrontAmount(utils.GetOtherTeam(), self:getHeroVar("CurLane"), false)
+    local frontier = Min(1.0, enemyFrontier)
+    local dest = GetLocationAlongLane(self:getHeroVar("CurLane"), Min(1.0, frontier))
+    
+    if utils.IsTowerAttackingMe(0.1) and #nearbyAlliedCreep > 0 then
+        if utils.DropTowerAggro(bot, nearbyAlliedCreep) then return true end
+    elseif utils.IsTowerAttackingMe(0.1) then
+        self:RemoveMode(constants.MODE_PUSHLANE)
+        return false
     end
     
     if #nearbyEnemyCreep > 0 then
@@ -797,12 +854,20 @@ function X:DoPushLane(bot)
         end
     end
 
-    if #nearbyEnemyTowers > 0 then
+    if #nearbyEnemyTowers > 0 and (#nearbyAlliedCreep > 1 or 
+        (#nearbyAlliedCreep == 1 and nearbyAlliedCreep[1]:GetHealth() > 162) or
+        nearbyEnemyTowers[1]:GetHealth()/nearbyEnemyTowers[1]:GetMaxHealth() < 0.1) then
         for _, tower in ipairs(nearbyEnemyTowers) do
             if utils.NotNilOrDead(tower) and (not tower:HasModifier("modifier_fountain_glyph")) then
                 --self:setHeroVar("ShouldPush", true)
-                gHeroVar.HeroAttackUnit(bot, tower, false)
+                gHeroVar.HeroAttackUnit(bot, tower, true)
                 return true
+            else
+                local dist = GetUnitToUnitDistance(bot, nearbyEnemyTowers[1])
+                if dist < 710 then
+                    gHeroVar.HeroMoveToLocation(bot, utils.VectorAway(bot:GetLocation(), nearbyEnemyTowers[1]:GetLocation(), 710-dist))
+                    return true
+                end
             end
         end
     end
@@ -810,7 +875,7 @@ function X:DoPushLane(bot)
     if #Barracks > 0 then
         for _, barrack in ipairs(Barracks) do
             if utils.NotNilOrDead(barrack) and (not barrack:HasModifier("modifier_fountain_glyph")) then
-                gHeroVar.HeroAttackUnit(bot, barrack, false)
+                gHeroVar.HeroAttackUnit(bot, barrack, true)
                 return true
             end
         end
@@ -819,23 +884,19 @@ function X:DoPushLane(bot)
     if #Shrines > 0 then
         for _, shrine in ipairs(Shrines) do
             if utils.NotNilOrDead(shrine) and (not shrine:HasModifier("modifier_fountain_glyph")) then
-                gHeroVar.HeroAttackUnit(bot, shrine, false)
+                gHeroVar.HeroAttackUnit(bot, shrine, true)
                 return true
             end
         end
     end
-
-    -- we are pushing lane but no structures nearby, so push forward in lane
-    local enemyFrontier = GetLaneFrontAmount(utils.GetOtherTeam(), self:getHeroVar("CurLane"), false)
-    local frontier = Min(1.0, enemyFrontier)
-
-    local dest = GetLocationAlongLane(self:getHeroVar("CurLane"), Min(1.0, frontier))
+    
     utils.MoveSafelyToLocation(bot, dest)
     
     return false
 end
 
 function X:DoDefendLane(bot, lane, building, numEnemies)
+    utils.myPrint("\nDO DEFEND LANE\n")
     local defendInfo = self:getHeroVar("DoDefendLane")
     local lane = defendInfo[1]
     local building = defendInfo[2]
@@ -856,7 +917,7 @@ function X:DoDefendLane(bot, lane, building, numEnemies)
         end
     else
         self:RemoveMode(constants.MODE_DEFENDLANE)
-        self:setHeroVar("DoDefendLane", nil)
+        self:setHeroVar("DoDefendLane", {})
     end
     return false
 end
@@ -1011,7 +1072,7 @@ end
 
 function X:DoLane(bot)
     -- check if we shuld change lanes
-    self:DoChangeLane(bot)
+    --self:DoChangeLane(bot)
 
     laning_generic.Think(bot, nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCreep, nearbyAlliedCreep, nearbyEnemyTowers, nearbyAlliedTowers)
 
@@ -1049,10 +1110,10 @@ function X:IsReadyToGank(bot)
 end
 
 function X:GetNukeDamage( hHero, hTarget )
-    return 0, {}, 0, 0, 0
+    return 0, {}, 0, 0, 0, 10000
 end
 
-function X:QueueNuke( hHero, hTarget, actionQueue )
+function X:QueueNuke( hHero, hTarget, actionQueue, engageDist )
     return
 end
 

@@ -70,8 +70,8 @@ function linaBot:GetNukeDamage(bot, target)
     return ability_usage_lina.nukeDamage( bot, target )
 end
 
-function linaBot:QueueNuke(bot, target, actionQueue)
-    return ability_usage_lina.queueNuke( bot, target, actionQueue )
+function linaBot:QueueNuke(bot, target, actionQueue, engageDist)
+    return ability_usage_lina.queueNuke( bot, target, actionQueue, engageDist )
 end
 
 function Think()

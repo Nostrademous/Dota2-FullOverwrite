@@ -65,3 +65,11 @@ function Think()
         gHeroVar.ExecuteHeroActionQueue(bot)
     end
 end
+
+function viperBot:GetNukeDamage(bot, target)
+    return ability_usage_viper.nukeDamage( bot, target )
+end
+
+function viperBot:QueueNuke(bot, target, actionQueue, engageDist)
+    return ability_usage_viper.queueNuke( bot, target, actionQueue, engageDist )
+end

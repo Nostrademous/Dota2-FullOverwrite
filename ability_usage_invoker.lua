@@ -51,7 +51,7 @@ local castSSDesire = 0
 local castFSDesire = 0
 
 function nukeDamage( bot, enemy )
-    if enemy == nil or not utils.ValidTarget(enemy) then return 0, {}, 0, 0, 0 end
+    if enemy == nil or enemy:IsNull() then return 0, {}, 0, 0, 0 end
     
     local comboQueue = {}
     local manaAvailable = bot:GetMana()
@@ -59,6 +59,7 @@ function nukeDamage( bot, enemy )
     local castTime = 0
     local stunTime = 0
     local slowTime = 0
+    local engageDist = 10000
     
     local magicImmune = utils.IsTargetMagicImmune(enemy)
     
@@ -96,10 +97,10 @@ function nukeDamage( bot, enemy )
     
     -- TODO: Implement rest of spells and update order as necessary
     
-    return dmgTotal, comboQueue, castTime, stunTime, slowTime
+    return dmgTotal, comboQueue, castTime, stunTime, slowTime, engageDist
 end
 
-function queueNuke(bot, enemy, castQueue)
+function queueNuke(bot, enemy, castQueue, engageDist)
     local nTravelDist = abilityCM:GetSpecialValueInt( "travel_distance" )
     local nCastRange = abilityCM:GetCastRange()
     local dist = GetUnitToUnitDistance(bot, enemy)
@@ -138,8 +139,6 @@ function queueNuke(bot, enemy, castQueue)
             end
         end
     end
-
-    bot:ActionQueue_AttackUnit( enemy, false )
 end
 
 function AbilityUsageThink(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCreep, nearbyAlliedCreep, nearbyEnemyTowers, nearbyAlliedTowers)

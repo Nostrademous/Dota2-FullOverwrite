@@ -59,7 +59,7 @@ invBot = botInv:new{modeStack = inModeStack, abilityPriority = AbilityPriority}
 invBot.Init = false
 
 function invBot:ConsiderAbilityUse(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCreep, nearbyAlliedCreep, nearbyEnemyTowers, nearbyAlliedTowers)
-    ability_usage_invoker.AbilityUsageThink(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCreep, nearbyAlliedCreep, nearbyEnemyTowers, nearbyAlliedTowers)
+    return ability_usage_invoker.AbilityUsageThink(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCreep, nearbyAlliedCreep, nearbyEnemyTowers, nearbyAlliedTowers)
 end
 
 function invBot:GetNukeDamage(bot, target)

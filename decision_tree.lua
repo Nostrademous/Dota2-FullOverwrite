@@ -353,7 +353,7 @@ function X:Think(bot)
     
     -- if we are using an ability/item, return to let it complete
     if bot:IsCastingAbility() then
-        --utils.myPrint("Using Ability")
+        --utils.myPrint("Casting Ability")
         local target = self:getHeroVar("Target")
         if target.Id == 0 then return end
         

@@ -86,7 +86,7 @@ function nukeDamage( bot, enemy )
         local ssDmg = abilitySS:GetSpecialValueFloat("damage")
         
         local manaCostSS = abilitySS:GetManaCost()
-        if abilityCM:IsHidden() then manaCostCM = manaCostCM + abilityR:GetManaCost() end
+        if abilitySS:IsHidden() then manaCostSS = manaCostSS + abilityR:GetManaCost() end
         if manaCostSS <= manaAvailable then
             manaAvailable = manaAvailable - manaCostSS
             dmgTotal = dmgTotal + ssDmg
@@ -105,7 +105,7 @@ function queueNuke(bot, enemy, castQueue, engageDist)
     local nCastRange = abilityCM:GetCastRange()
     local dist = GetUnitToUnitDistance(bot, enemy)
 
-    bot:Action_ClearActions()
+    bot:Action_ClearActions(false)
     --setHeroVar("Queued", true)
     -- if out of range, attack move for one hit to get in range
     if dist > (nCastRange + nTravelDist/2) then
@@ -166,6 +166,27 @@ function AbilityUsageThink(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCre
     if abilitySS == "" then abilitySS = bot:GetAbilityByName( "invoker_sun_strike" ) end
     if abilityFS == "" then abilityFS = bot:GetAbilityByName( "invoker_forge_spirit" ) end
 
+    -- Check if we were asked to use our globalEnemies
+    local useGlobal = getHeroVar("UseGlobal")
+    if useGlobal then
+        local ability = useGlobal[1]
+        local targetLoc = useGlobal[2]
+        if ability:IsFullyCastable() then
+            if ability:IsHidden() then
+                if exortTrained() and abilityR:IsFullyCastable() then
+                    bot:Action_ClearActions(true)
+                    invokeSunStrike(bot)
+                    bot:ActionQueue_UseAbilityOnLocation( ability, targetLoc )
+                    return true
+                end
+            else
+                bot:ActionPush_UseAbilityOnLocation( ability, targetLoc )
+                return true
+            end
+        end
+        setHeroVar("UseGlobal", nil)
+    end
+    
     castTODesire, castTOLocation = ConsiderTornado(bot, nearbyEnemyHeroes)
     castEMPDesire, castEMPLocation = ConsiderEMP(bot)
     castCMDesire, castCMLocation = ConsiderChaosMeteor(bot, nearbyEnemyHeroes)
@@ -196,7 +217,7 @@ function AbilityUsageThink(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCre
         if castTODesire > 0 then
             utils.myPrint("I want to Tornado")
             if not abilityTO:IsHidden() then
-                bot:Action_UseAbilityOnLocation( abilityTO, castTOLocation )
+                bot:ActionPush_UseAbilityOnLocation( abilityTO, castTOLocation )
                 return true
             elseif abilityR:IsFullyCastable() then
                 bot:Action_ClearActions(true)
@@ -209,7 +230,7 @@ function AbilityUsageThink(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCre
         if castCMDesire > 0 then
             utils.myPrint("I want to Chaos Meteor")
             if not abilityCM:IsHidden() then
-                bot:Action_UseAbilityOnLocation( abilityCM, castCMLocation )
+                bot:ActionPush_UseAbilityOnLocation( abilityCM, castCMLocation )
                 return true
             elseif abilityR:IsFullyCastable() then
                 bot:Action_ClearActions(true)
@@ -222,7 +243,7 @@ function AbilityUsageThink(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCre
         if castEMPDesire > 0 then
             utils.myPrint("I want to EMP")
             if not abilityEMP:IsHidden() then
-                bot:Action_UseAbilityOnLocation( abilityEMP, castEMPLocation )
+                bot:ActionPush_UseAbilityOnLocation( abilityEMP, castEMPLocation )
                 return true
             elseif abilityR:IsFullyCastable() then
                 bot:Action_ClearActions(true)
@@ -235,7 +256,7 @@ function AbilityUsageThink(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCre
         if castDBDesire > 0 then
             utils.myPrint("I want to Deafening Blast")
             if not abilityDB:IsHidden() then
-                bot:Action_UseAbilityOnLocation( abilityDB, castDBLocation )
+                bot:ActionPush_UseAbilityOnLocation( abilityDB, castDBLocation )
                 return true
             elseif abilityR:IsFullyCastable() then
                 bot:Action_ClearActions(true)
@@ -248,7 +269,7 @@ function AbilityUsageThink(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCre
         if castCSDesire > 0 then
             utils.myPrint("I want to Cold Snap")
             if not abilityCS:IsHidden() then
-                bot:Action_UseAbilityOnEntity( abilityCS, castCSTarget )
+                bot:ActionPush_UseAbilityOnEntity( abilityCS, castCSTarget )
                 return true
             elseif abilityR:IsFullyCastable() then
                 bot:Action_ClearActions(true)
@@ -261,7 +282,7 @@ function AbilityUsageThink(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCre
         if castSSDesire > 0 then
             utils.myPrint("I want to Sunstrike")
             if not abilitySS:IsHidden() then
-                bot:Action_UseAbilityOnLocation( abilitySS, castSSLocation )
+                bot:ActionPush_UseAbilityOnLocation( abilitySS, castSSLocation )
                 return true
             elseif abilityR:IsFullyCastable() then
                 bot:Action_ClearActions(true)
@@ -274,7 +295,7 @@ function AbilityUsageThink(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCre
         if castACDesire > 0 then
             utils.myPrint("I want to Alacrity")
             if not abilityAC:IsHidden() then
-                bot:Action_UseAbilityOnEntity( abilityAC, bot )
+                bot:ActionPush_UseAbilityOnEntity( abilityAC, bot )
                 return true
             elseif abilityR:IsFullyCastable() then
                 bot:Action_ClearActions(true)
@@ -287,7 +308,7 @@ function AbilityUsageThink(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCre
         if castFSDesire > 0 then
             utils.myPrint("I want to Forge Spirit")
             if not abilityFS:IsHidden() then
-                gHeroVar.HeroUseAbility(bot,  abilityFS )
+                bot:ActionPush_UseAbility( abilityFS )
                 return true
             elseif abilityR:IsFullyCastable() then
                 bot:Action_ClearActions(true)
@@ -300,7 +321,7 @@ function AbilityUsageThink(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCre
         if castGWDesire > 0 then
             utils.myPrint("I want to Ghost Walk")
             if not abilityGW:IsHidden() then
-                gHeroVar.HeroUseAbility(bot,  abilityGW )
+                bot:ActionPush_UseAbility( abilityGW )
                 return true
             elseif abilityR:IsFullyCastable() then
                 bot:Action_ClearActions(true)
@@ -313,7 +334,7 @@ function AbilityUsageThink(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCre
         if castIWDesire > 0 then
             utils.myPrint("I want to Ice Wall")
             if not abilityIW:IsHidden() then
-                gHeroVar.HeroUseAbility(bot,  abilityIW )
+                bot:ActionPush_UseAbility( abilityIW )
                 return true
             elseif abilityR:IsFullyCastable() then
                 bot:Action_ClearActions(true)
@@ -324,11 +345,9 @@ function AbilityUsageThink(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCre
         end
         
         -- Determine what orbs we want
-        local bRet = ConsiderOrbs(bot)
-        if bRet then return true end
+        if ConsiderOrbs(bot) then return true end
         
-        bRet = ConsiderShowUp(bot, nearbyEnemyHeroes)
-        if bRet then return true end
+        if ConsiderShowUp(bot, nearbyEnemyHeroes) then return true end
     end
     
     -- Initial invokes at low levels
@@ -582,7 +601,7 @@ function ConsiderOrbs(bot)
         if (nWex + nQuas + nExort) >= 3 then break end
     end
     
-    if getHeroVar("IsRetreating") or me:GetMode() == constants.MODE_RETREAT then
+    if getHeroVar("IsRetreating") or me:getCurrentMode() == constants.MODE_RETREAT then
         if nWex < 3 then 
             return tripleWexBuff(bot)
         end

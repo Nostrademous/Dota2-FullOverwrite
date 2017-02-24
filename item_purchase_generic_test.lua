@@ -230,6 +230,9 @@ end
 function X:InitTable()
     -- Don't do this before the game starts
     if ( GetGameState() ~= GAME_STATE_GAME_IN_PROGRESS and GetGameState() ~= GAME_STATE_PRE_GAME ) then return false end
+    
+    if not gHeroVar.HasID(GetBot():GetPlayerID()) or getHeroVar("Role") == nil then return false end
+    
     -- Tables already initialized, bail
     if #self.StartingItems > 0
         or #self.UtilityItems > 0

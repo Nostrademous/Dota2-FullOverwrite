@@ -212,7 +212,7 @@ function Think(bot)
         OnStart(bot)
     end
     
-    if bot:IsUsingAbility() or bot:IsChanneling() then return end
+    if bot:IsCastingAbility() or bot:IsChanneling() then return end
 
     States[getHeroVar("JunglingState")](bot)
 end

@@ -202,7 +202,7 @@ local function RetUlt()
 		end
 		if nEn == 0 or bot:GetMana() < 100 then
 			local ret = bot:GetAbilityByName(Abilities[5]);
-			if ret ~= nil and ret:IsFullyCastable() and (not bot:IsChanneling()) and (not bot:IsUsingAbility()) and (not bot:IsSilenced()) and (not bot:IsStunned()) then
+			if ret ~= nil and ret:IsFullyCastable() and (not bot:IsChanneling()) and (not bot:IsCastingAbility()) and (not bot:IsSilenced()) and (not bot:IsStunned()) then
 				gHeroVar.HeroUseAbility(bot, ret);
 				setHeroVar("Ulted", false)
 				setHeroVar("UltTimer", -10000)
@@ -223,7 +223,7 @@ function AbilityUsageThink(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCre
     RetUlt()
     
     -- Check if we're already using an ability
-    if bot:IsUsingAbility() or bot:IsChanneling() then return false end
+    if bot:IsCastingAbility() or bot:IsChanneling() then return false end
 	
 	UseQ()
 	

@@ -151,7 +151,7 @@ function AbilityUsageThink(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCre
     if not bot:IsAlive() then return false end
 
     -- Check if we're already using an ability
-    if bot:IsUsingAbility() or bot:IsChanneling() then return false end
+    if bot:IsCastingAbility() or bot:IsChanneling() then return false end
     
     if ( #nearbyEnemyHeroes == 0 and #nearbyEnemyCreep == 0 ) then return false end
 

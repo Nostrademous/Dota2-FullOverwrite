@@ -124,7 +124,7 @@ function AbilityUsageThink(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCre
     if abilityR == "" then abilityR = bot:GetAbilityByName( Abilities[4] ) end
 
     -- Check if we're already using an ability
-    if bot:IsUsingAbility() or bot:IsChanneling() then return false end
+    if bot:IsCastingAbility() or bot:IsChanneling() then return false end
     
     local me = getHeroVar("Self")
     if me:getCurrentMode() == constants.MODE_RETREAT then return false end

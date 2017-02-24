@@ -29,10 +29,16 @@ function ConsiderEvading(bot)
     local listAOEAreas = GetAvoidanceZones()
     
     -- NOTE: a projectile will be a table with { "location", "ability", "velocity", "radius" }
-    for _, projectile in pairs(listProjectiles) do
+    --for _, projectile in pairs(listProjectiles) do
         --utils.myPrint("Ability: ", projectile.ability:GetName())
         --utils.myPrint("Velocity: ", projectile.velocity)
-    end
+    --end
+    
+    -- NOTE: the tracking projectile will be a table with { "location", "ability", "is_dodgeable", "is_attack" }.
+    --local listTrackingProjectiles = bot:GetIncomingTrackingProjectiles()
+    --for _, projectile in pairs(listTrackingProjectiles) do
+    --    utils.myPrint("Tracking Ability: ", projectile.ability:GetName(), ", Dodgeable: ", projectile.is_dodgeable)
+    --end
     
     -- NOTE: an aoe will be table with { "location", "ability", "caster", "radius" }.
     setHeroVar("nearbyAOEs", {})

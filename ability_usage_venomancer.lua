@@ -60,7 +60,7 @@ function AbilityUsageThink(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCre
     if not bot:IsAlive() then return false end
 
     -- Check if we're already using an ability
-    if ( bot:IsUsingAbility() or bot:IsChanneling() ) then return false end
+    if ( bot:IsCastingAbility() or bot:IsChanneling() ) then return false end
 
     local abilityVG = bot:GetAbilityByName( Abilities[1] )
     local abilityPW = bot:GetAbilityByName( Abilities[3] )

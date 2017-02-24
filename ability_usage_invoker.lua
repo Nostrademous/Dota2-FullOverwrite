@@ -149,7 +149,7 @@ function AbilityUsageThink(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCre
     if not bot:IsAlive() then return false end
     
     -- Check if we're already using an ability
-    if bot:IsUsingAbility() or bot:IsChanneling() then return false end
+    if bot:IsCastingAbility() or bot:IsChanneling() then return false end
 
     if abilityQ == "" then abilityQ = bot:GetAbilityByName( "invoker_quas" ) end
     if abilityW == "" then abilityW = bot:GetAbilityByName( "invoker_wex" ) end

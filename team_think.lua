@@ -21,6 +21,8 @@ local function getHeroVar(id, var)
     return gHeroVar.GetVar(id, var)
 end
 
+local glyphTimer = -1000
+
 -- This is at top as all item purchases are Immediate actions,
 -- and therefore won't affect any other decision making.
 -- Intent is to smartly determine when we should use our Glyph
@@ -32,8 +34,9 @@ function ConsiderGlyphUse()
 
         if tower:GetHealth() < math.max(tower:GetMaxHealth()*0.15, 165) and tower:TimeSinceDamagedByAnyHero() < 3
             and tower:TimeSinceDamagedByCreep() < 3 then
-            if GetGlyphCooldown() == 0 then
+            if GetGlyphCooldown() == 0 and (GameTime() - glyphTimer > 1.0) then
                 GetBot():ActionImmediate_Glyph()
+                glyphTimer = GameTime()
             end
         end
     end

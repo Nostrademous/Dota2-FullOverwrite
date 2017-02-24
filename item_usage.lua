@@ -25,7 +25,7 @@ end
 function UseRegenItems()
     local bot = GetBot()
 
-    if bot:IsChanneling() or bot:IsUsingAbility() then
+    if bot:IsChanneling() or bot:IsCastingAbility() then
         return false
     end
     
@@ -141,7 +141,7 @@ end
 function UseRegenItemsOnAlly()
     local bot = GetBot()
 
-    if bot:IsChanneling() or bot:IsUsingAbility() then
+    if bot:IsChanneling() or bot:IsCastingAbility() then
         return false
     end
     
@@ -241,7 +241,7 @@ end
 function UseTeamItems()
     local bot = GetBot()
 
-    if bot:IsChanneling() or bot:IsUsingAbility() then
+    if bot:IsChanneling() or bot:IsCastingAbility() then
         return false
     end
 
@@ -310,7 +310,7 @@ function UseDefensiveItems(enemy, triggerDistance)
     local bot = GetBot()
     local location = location or bot:GetLocation()
 
-    if bot:IsChanneling() or bot:IsUsingAbility() then return false end
+    if bot:IsChanneling() or bot:IsCastingAbility() then return false end
 
     local hp = utils.HaveItem(bot, "item_hurricane_pike")
     if hp ~= nil and GetUnitToUnitDistance(bot, enemy) < triggerDistance then
@@ -322,7 +322,7 @@ end
 function UseBuffItems()
     local bot = GetBot()
 
-    if bot:IsChanneling() or bot:IsUsingAbility() then return false end
+    if bot:IsChanneling() or bot:IsCastingAbility() then return false end
     
     if UseTomeOfKnowledge() then return true end
     
@@ -339,7 +339,7 @@ function UseTP(hero, loc, lane)
     
     if DotaTime() < 10 then return false end
 
-    if hero:IsChanneling() or hero:IsUsingAbility() then return false end
+    if hero:IsChanneling() or hero:IsCastingAbility() then return false end
     
     -- if we are in fountain, don't TP out until we have full health & mana
     if hero:DistanceFromFountain() < 200 and 
@@ -406,7 +406,7 @@ function UseItems()
 
     local bot = GetBot()
 
-    if bot:IsChanneling() or bot:IsUsingAbility() then return false end
+    if bot:IsChanneling() or bot:IsCastingAbility() then return false end
 
     if UseBuffItems() then return true end
     

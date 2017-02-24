@@ -75,7 +75,7 @@ function ThinkSecretShop( NextItem )
         return false
     end
 
-    if npcBot:IsUsingAbility() or npcBot:IsChanneling() then return false end
+    if npcBot:IsCastingAbility() or npcBot:IsChanneling() then return false end
 
     if (not IsItemPurchasedFromSecretShop(NextItem)) or npcBot:GetGold() < GetItemCost( NextItem ) then
         return false
@@ -103,7 +103,7 @@ function ThinkSideShop( NextItem )
         return false
     end
 
-    if npcBot:IsUsingAbility() or npcBot:IsChanneling() then return false end
+    if npcBot:IsCastingAbility() or npcBot:IsChanneling() then return false end
 
     if (not IsItemPurchasedFromSideShop(NextItem)) or npcBot:GetGold() < GetItemCost( NextItem ) then
         return false

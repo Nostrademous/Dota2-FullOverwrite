@@ -181,7 +181,7 @@ function AbilityUsageThink(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCre
     if abilityE == "" then abilityE = bot:GetAbilityByName( Abilities[3] ) end
     if abilityR == "" then abilityR = bot:GetAbilityByName( Abilities[4] ) end
 
-    if bot:IsChanneling() or bot:IsUsingAbility() then return false end
+    if bot:IsChanneling() or bot:IsCastingAbility() then return false end
 
     if not utils.ValidTarget(getHeroVar("Target")) then return false end
 

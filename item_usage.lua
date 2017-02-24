@@ -369,6 +369,12 @@ function UseTP(hero, loc, lane)
     if tp == nil and GetUnitToLocationDistance(hero, dest) > 3000
         and hero:DistanceFromFountain() < 200
         and hero:GetGold() > 50 then
+        
+        -- if our inventory and backpack is full, don't bother buying TPs
+        if utils.NumberOfItemsInBackpack(hero) == 3 and utils.NumberOfItems(hero) == 6 then
+            return false
+        end
+        
         local savedValue = hero:GetNextItemPurchaseValue()
         backPackSlot = utils.GetFreeSlotInBackPack(hero)
         if utils.NumberOfItems(hero) == 6 and backPackSlot > 0 then 

@@ -116,7 +116,7 @@ local function UpdateTeamBuyList(myList, sItem)
     end
 end
 
-function X:Think(npcBot)
+function X:Think(bot)
     local tDelta = RealTime() - self.LastThink
     -- throttle think for better performance
     if tDelta > 0.1 then
@@ -140,7 +140,7 @@ function X:Think(npcBot)
         self:BuySupportItems()
 
         -- If there's an item to be purchased already bail
-        if ( (npcBot:GetNextItemPurchaseValue() > 0) and (npcBot:GetGold() < npcBot:GetNextItemPurchaseValue()) ) then return end
+        if ( (bot:GetNextItemPurchaseValue() > 0) and (bot:GetGold() < bot:GetNextItemPurchaseValue()) ) then return end
 
         -- If we want a new item we determine which one first
         if #self.PurchaseOrder == 0 then
@@ -149,10 +149,10 @@ function X:Think(npcBot)
         end
 
         -- Consider selling items
-        if npcBot:DistanceFromFountain() < constants.SHOP_USE_DISTANCE or
-            npcBot:DistanceFromSecretShop() < constants.SHOP_USE_DISTANCE or
-            npcBot:DistanceFromSideShop() < constants.SHOP_USE_DISTANCE then
-            self:ConsiderSellingItems(npcBot)
+        if bot:DistanceFromFountain() < constants.SHOP_USE_DISTANCE or
+            bot:DistanceFromSecretShop() < constants.SHOP_USE_DISTANCE or
+            bot:DistanceFromSideShop() < constants.SHOP_USE_DISTANCE then
+            self:ConsiderSellingItems(bot)
         end
 
         -- Get the next item
@@ -160,16 +160,16 @@ function X:Think(npcBot)
 
         if sNextItem ~= nil then
             -- Set cost
-            npcBot:SetNextItemPurchaseValue(GetItemCost(sNextItem))
+            bot:SetNextItemPurchaseValue(GetItemCost(sNextItem))
 
             -- Enough gold -> buy, remove
-            if(npcBot:GetGold() >= GetItemCost(sNextItem)) then
+            if(bot:GetGold() >= GetItemCost(sNextItem)) then
                 -- Next item only available in secret shop?
                 local bInSide = IsItemPurchasedFromSideShop( sNextItem )
                 local bInSecret = IsItemPurchasedFromSecretShop( sNextItem )
 
                 if bInSide and bInSecret then
-                    if npcBot:DistanceFromSecretShop() < npcBot:DistanceFromSideShop() or
+                    if bot:DistanceFromSecretShop() < bot:DistanceFromSideShop() or
                         special_shop_generic.GetSideShop() == nil then
                         bInSide = false
                     end
@@ -177,46 +177,49 @@ function X:Think(npcBot)
                     bInSide = false
                 end
 
-                local me = getHeroVar("Self")
-                if bInSide and me:getCurrentModeValue() < BOT_MODE_DESIRE_HIGH then
-                    if me:GetMode() ~= constants.MODE_SPECIALSHOP then
-                        if ( me:HasMode(constants.MODE_SPECIALSHOP) == false ) then
-                            me:AddMode(constants.MODE_SPECIALSHOP, BOT_MODE_DESIRE_HIGH)
-                            utils.myPrint(" STARTING TO HEAD TO SIDE SHOP ")
-                            special_shop_generic.OnStart()
+                if bot:IsAlive() then
+                    local me = getHeroVar("Self")
+                    if bInSide and me:getCurrentModeValue() < BOT_MODE_DESIRE_HIGH then
+                        if me:getCurrentMode() ~= constants.MODE_SPECIALSHOP then
+                            if ( me:HasMode(constants.MODE_SPECIALSHOP) == false ) then
+                                me:AddMode(constants.MODE_SPECIALSHOP, BOT_MODE_DESIRE_HIGH)
+                                utils.myPrint(" STARTING TO HEAD TO SIDE SHOP ")
+                                special_shop_generic.OnStart()
+                            end
+                        else
+                            local bDone = special_shop_generic.ThinkSideShop(sNextItem)
+                            if bDone then
+                                me:RemoveMode(constants.MODE_SPECIALSHOP)
+                                table.remove(self.PurchaseOrder, 1 )
+                                UpdateTeamBuyList(myTeamBuyList, sNextItem)
+                                bot:SetNextItemPurchaseValue( 0 )
+                            end
                         end
-                    end
-
-                    local bDone = special_shop_generic.ThinkSideShop(sNextItem)
-                    if bDone then
-                        me:RemoveMode(constants.MODE_SPECIALSHOP)
-                        table.remove(self.PurchaseOrder, 1 )
-                        UpdateTeamBuyList(myTeamBuyList, sNextItem)
-                        npcBot:SetNextItemPurchaseValue( 0 )
-                    end
-                elseif bInSecret and me:getCurrentModeValue() < BOT_MODE_DESIRE_HIGH then
-                    if me:GetMode() ~= constants.MODE_SPECIALSHOP then
-                        if ( me:HasMode(constants.MODE_SPECIALSHOP) == false ) then
-                            me:AddMode(constants.MODE_SPECIALSHOP, BOT_MODE_DESIRE_HIGH)
-                            utils.myPrint(" STARTING TO HEAD TO SECRET SHOP ")
-                            special_shop_generic.OnStart()
+                    elseif bInSecret and me:getCurrentModeValue() < BOT_MODE_DESIRE_HIGH then
+                        if me:getCurrentMode() ~= constants.MODE_SPECIALSHOP then
+                            if ( me:HasMode(constants.MODE_SPECIALSHOP) == false ) then
+                                me:AddMode(constants.MODE_SPECIALSHOP, BOT_MODE_DESIRE_HIGH)
+                                utils.myPrint(" STARTING TO HEAD TO SECRET SHOP ")
+                                special_shop_generic.OnStart()
+                            end
+                        else
+                            local bDone = special_shop_generic.ThinkSecretShop(sNextItem)
+                            if bDone then
+                                me:RemoveMode(constants.MODE_SPECIALSHOP)
+                                table.remove(self.PurchaseOrder, 1 )
+                                UpdateTeamBuyList(myTeamBuyList, sNextItem)
+                                bot:SetNextItemPurchaseValue( 0 )
+                            end
                         end
-                    end
-
-                    local bDone = special_shop_generic.ThinkSecretShop(sNextItem)
-                    if bDone then
-                        me:RemoveMode(constants.MODE_SPECIALSHOP)
-                        table.remove(self.PurchaseOrder, 1 )
+                    else
+                        bot:ActionImmediate_PurchaseItem(sNextItem)
+                        table.remove(self.PurchaseOrder, 1)
                         UpdateTeamBuyList(myTeamBuyList, sNextItem)
-                        npcBot:SetNextItemPurchaseValue( 0 )
+                        bot:SetNextItemPurchaseValue(0)
+                        me:RemoveMode(constants.MODE_SPECIALSHOP)
                     end
-                else
-                    me:RemoveMode(constants.MODE_SPECIALSHOP)
-                    npcBot:ActionImmediate_PurchaseItem(sNextItem)
-                    table.remove(self.PurchaseOrder, 1)
-                    UpdateTeamBuyList(myTeamBuyList, sNextItem)
-                    npcBot:SetNextItemPurchaseValue(0)
                 end
+
                 self.LastThink = RealTime()
             end
         end
@@ -230,9 +233,9 @@ end
 function X:InitTable()
     -- Don't do this before the game starts
     if ( GetGameState() ~= GAME_STATE_GAME_IN_PROGRESS and GetGameState() ~= GAME_STATE_PRE_GAME ) then return false end
-    
+
     if not gHeroVar.HasID(GetBot():GetPlayerID()) or getHeroVar("Role") == nil then return false end
-    
+
     -- Tables already initialized, bail
     if #self.StartingItems > 0
         or #self.UtilityItems > 0
@@ -357,7 +360,7 @@ function X:UpdatePurchaseOrder()
             -- last think over 10s ago?
             if tDelta > 10.0 then
                 -- consider buying extensions
-                self:ConsiderBuyingExtensions(npcBot)
+                self:ConsiderBuyingExtensions(bot)
                 -- update last think time
                 self.LastExtensionThink = RealTime()
             end

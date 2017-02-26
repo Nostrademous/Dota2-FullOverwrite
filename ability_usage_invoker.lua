@@ -50,37 +50,8 @@ local castIWDesire = 0
 local castSSDesire = 0
 local castFSDesire = 0
 
-function nukeDamage( bot, enemy )
-    if enemy == nil or enemy:IsNull() then return 0, {}, 0, 0, 0 end
-    
-    local comboQueue = {}
-    local manaAvailable = bot:GetMana()
-    local dmgTotal = 0
-    local castTime = 0
-    local stunTime = 0
-    local slowTime = 0
-    local engageDist = 10000
-    
-    local magicImmune = utils.IsTargetMagicImmune(enemy)
-    
-    -- Check Chaos Meteor
-    if abilityCM:IsFullyCastable() then
-        local burnDuration = 3.0
-        local burnDamage = burnDuration * abilityCM:GetSpecialValueFloat("burn_dps")
-        local mainDamage = abilityCM:GetSpecialValueFloat("main_damage")
-        
-        local manaCostCM = abilityCM:GetManaCost()
-        if abilityCM:IsHidden() then manaCostCM = manaCostCM + abilityR:GetManaCost() end
-        if manaCostCM <= manaAvailable then
-            if not magicImmune then
-                manaAvailable = manaAvailable - manaCostCM
-                dmgTotal = dmgTotal + enemy:GetActualIncomingDamage(mainDamage + burnDamage, DAMAGE_TYPE_MAGICAL)
-                castTime = castTime + abilityCM:GetCastPoint()
-                table.insert(comboQueue, 1, abilityCM)
-            end
-        end
-    end
-    
+function nukeDamageSS( bot )
+    --[[
     -- Check Sun Strike
     if abilitySS:IsFullyCastable() then
         local ssDmg = abilitySS:GetSpecialValueFloat("damage")
@@ -94,51 +65,113 @@ function nukeDamage( bot, enemy )
             table.insert(comboQueue, 1, abilitySS)
         end
     end
-    
-    -- TODO: Implement rest of spells and update order as necessary
-    
-    return dmgTotal, comboQueue, castTime, stunTime, slowTime, engageDist
+    --]]
 end
 
-function queueNuke(bot, enemy, castQueue, engageDist)
-    local nTravelDist = abilityCM:GetSpecialValueInt( "travel_distance" )
-    local nCastRange = abilityCM:GetCastRange()
-    local dist = GetUnitToUnitDistance(bot, enemy)
-
-    bot:Action_ClearActions(false)
-    --setHeroVar("Queued", true)
-    -- if out of range, attack move for one hit to get in range
-    if dist > (nCastRange + nTravelDist/2) then
-        bot:ActionPush_AttackUnit( enemy, true )
+function prepNukeTOCMDB( bot )
+    if not (abilityTO:IsFullyCastable() and abilityCM:IsFullyCastable() and abilityDB:IsFullyCastable()) then
+        setHeroVar("nukeTOCMDB", false)
+        return false
     end
     
-    utils.AllChat("Killing "..utils.GetHeroName(enemy).." softly with my song")
-    utils.myPrint("Queue Nuke Damage: ", utils.GetHeroName(enemy))
-    for i = #castQueue, 1, -1 do
-        local skill = castQueue[i]
-        
-        if skill:GetName() == "invoker_chaos_meteor" then
-            if skill:IsHidden() then
+    if abilityTO:IsHidden() then
+        if abilityR:IsFullyCastable() then
+            invokeTornado(bot)
+            return true
+        end
+    else
+        if abilityCM:IsHidden() then
+            if abilityR:IsFullyCastable() then
                 invokeChaosMeteor(bot)
+                return true
             end
+        else
+            local botModifierCount = bot:NumModifiers()
+            local nQuas = 0
+            local nWex = 0
+            local nExort = 0
             
-            if utils.IsCrowdControlled(enemy) then
-                gHeroVar.HeroPushUseAbilityOnLocation(bot, skill, enemy:GetLocation())
-            else
-                gHeroVar.HeroPushUseAbilityOnLocation(bot, skill, enemy:GetExtrapolatedLocation(1.35))
+            for i = 0, botModifierCount-1, 1 do
+                local modName = bot:GetModifierName(i)
+                if modName == "modifier_invoker_wex_instance" then
+                    nWex = nWex + 1
+                elseif modName == "modifier_invoker_quas_instance" then
+                    nQuas = nQuas + 1
+                elseif modName == "modifier_invoker_exort_instance" then
+                    nExort = nExort + 1
+                end
+                
+                if (nWex + nQuas + nExort) >= 3 then break end
             end
-        elseif skill:GetName() == "invoker_sun_strike" then
-            if skill:IsHidden() then
-                invokeSunStrike(bot)
-            end
-            
-            if utils.IsCrowdControlled(enemy) then
-                gHeroVar.HeroPushUseAbilityOnLocation(bot, skill, enemy:GetLocation())
+                
+            if nWex == 1 and nQuas == 1 and nExort == 1 then
+                setHeroVar("nukeTOCMDB", true)
+                return false
             else
-                gHeroVar.HeroPushUseAbilityOnLocation(bot, skill, enemy:GetExtrapolatedLocation(1.75))
+                bot:ActionPush_Delay(0.01)
+                bot:ActionPush_UseAbility(abilityQ)
+                bot:ActionPush_UseAbility(abilityW)
+                bot:ActionPush_UseAbility(abilityE)
+                return true
             end
         end
     end
+    
+    return false
+end
+
+function nukeDamageTOCMDB( bot )
+    local manaAvailable = bot:GetMana()
+    local dmgTotal = 0
+    local engageDist = 700
+    
+    if (abilityTO:IsFullyCastable() and  abilityCM:IsFullyCastable() and abilityDB:IsFullyCastable()) and
+       (not abilityTO:IsHidden() and not abilityCM:IsHidden() and abilityR:IsFullyCastable()) and
+       (manaAvailable >= (abilityTO:GetManaCost()+abilityCM:GetManaCost()+abilityR:GetManaCost()+abilityDB:GetManaCost())) then
+    
+        -- Tornado
+        local damageTO = 70 + abilityTO:GetSpecialValueFloat("wex_damage")
+        dmgTotal = dmgTotal + damageTO
+    
+        -- Check Chaos Meteor
+        local burnDuration = 3.0
+        local burnDamage = burnDuration * abilityCM:GetSpecialValueFloat("burn_dps")
+        local mainDamage = abilityCM:GetSpecialValueFloat("main_damage")
+        dmgTotal = dmgTotal + mainDamage + burnDamage
+    
+        -- Deafening Blast
+        local damageDB = abilityDB:GetSpecialValueFloat("damage")
+        dmgTotal = dmgTotal + damageDB
+        
+        engageDist = abilityTO:GetSpecialValueInt("travel_distance")
+    end
+    
+    return dmgTotal, engageDist
+end
+
+function queueNukeTOCMDB(bot, location, engageDist)
+    local dist = GetUnitToLocationDistance(bot, location)
+
+    local liftDuration = abilityTO:GetSpecialValueFloat("lift_duration")
+    local tornadoSpeed = abilityTO:GetSpecialValueInt("travel_speed")
+    local cmLandTime = abilityCM:GetSpecialValueFloat("land_time")
+    
+    if dist < engageDist then
+        bot:Action_ClearActions(true)
+        utils.AllChat("Too EZ for Arteezy")
+        utils.myPrint("INVOKER TO CM DB combo!!!")
+
+        bot:ActionQueue_UseAbilityOnLocation(abilityTO, location)
+        bot:ActionQueue_UseAbility(abilityR) -- invoke DB
+        bot:ActionQueue_Delay(liftDuration - cmLandTime + engageDist/tornadoSpeed - 0.1) -- 0.1 for bot-difficulty avg delay
+        bot:ActionQueue_UseAbilityOnLocation(abilityCM, utils.VectorTowards(bot:GetLocation(), location, 450))
+        bot:ActionQueue_Delay(0.55)
+        bot:ActionQueue_UseAbilityOnLocation(abilityDB, location)
+        bot:ActionQueue_Delay(0.01)
+        return true     
+    end
+    
+    return false
 end
 
 function AbilityUsageThink(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCreep, nearbyAlliedCreep, nearbyEnemyTowers, nearbyAlliedTowers)
@@ -149,7 +182,7 @@ function AbilityUsageThink(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCre
     if not bot:IsAlive() then return false end
     
     -- Check if we're already using an ability
-    if bot:IsCastingAbility() or bot:IsChanneling() then return false end
+    if bot:IsCastingAbility() or bot:IsChanneling() or bot:NumQueuedActions() > 0 then return false end
 
     if abilityQ == "" then abilityQ = bot:GetAbilityByName( "invoker_quas" ) end
     if abilityW == "" then abilityW = bot:GetAbilityByName( "invoker_wex" ) end
@@ -166,36 +199,61 @@ function AbilityUsageThink(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCre
     if abilitySS == "" then abilitySS = bot:GetAbilityByName( "invoker_sun_strike" ) end
     if abilityFS == "" then abilityFS = bot:GetAbilityByName( "invoker_forge_spirit" ) end
 
-    -- Check if we were asked to use our globalEnemies
+    if abilityQ:GetLevel() >= 3 then
+        if getHeroVar("nukeTOCMDB") then
+            local dmg, engageDist = nukeDamageTOCMDB( bot )
+            local nearbyEnemyHeroes = bot:GetNearbyHeroes(engageDist, true, BOT_MODE_NONE)
+            if #nearbyEnemyHeroes >= 1 then
+                local locationAoE = bot:FindAoELocation( true, true, bot:GetLocation(), engageDist, 200, 0, 0 )
+                if locationAoE.count >= #nearbyEnemyHeroes - 1 then
+                    if queueNukeTOCMDB(bot, locationAoE.targetloc, engageDist) then
+                        nukeTOCMDB = false
+                        return true
+                    end
+                end
+            end
+        else
+            if prepNukeTOCMDB(bot) then return true end
+        end
+    end
+    
+    -- Check if we were asked to use our global
     local useGlobal = getHeroVar("UseGlobal")
     if useGlobal then
         local ability = useGlobal[1]
-        local targetLoc = useGlobal[2]
+        local target = useGlobal[2]
         if ability:IsFullyCastable() then
             if ability:IsHidden() then
                 if exortTrained() and abilityR:IsFullyCastable() then
-                    bot:Action_ClearActions(true)
+                    utils.myPrint("global Sun Strike invoke")
                     invokeSunStrike(bot)
-                    bot:ActionQueue_UseAbilityOnLocation( ability, targetLoc )
                     return true
                 end
-            else
-                bot:ActionPush_UseAbilityOnLocation( ability, targetLoc )
+            end
+            
+            if not target:IsNull() and utils.IsCrowdControlled(target) then
+                utils.PartyChat("Sun Strike incoming...")
+                bot:ActionPush_UseAbilityOnLocation( ability, target:GetLocation() )
                 return true
             end
+            
+            if target:IsNull() then
+                setHeroVar("UseGlobal", nil)
+            end
+        else
+            setHeroVar("UseGlobal", nil)
         end
-        setHeroVar("UseGlobal", nil)
     end
     
     castTODesire, castTOLocation = ConsiderTornado(bot, nearbyEnemyHeroes)
-    castEMPDesire, castEMPLocation = ConsiderEMP(bot)
+    castEMPDesire, castEMPLocation = ConsiderEMP(bot, nearbyEnemyHeroes)
     castCMDesire, castCMLocation = ConsiderChaosMeteor(bot, nearbyEnemyHeroes)
-    castDBDesire, castDBLocation = ConsiderDeafeningBlast(bot)
+    castDBDesire, castDBLocation = ConsiderDeafeningBlast(bot, nearbyEnemyHeroes)
     castSSDesire, castSSLocation = ConsiderSunStrike(bot)
     castCSDesire, castCSTarget = ConsiderColdSnap(bot)
-    castACDesire = ConsiderAlacrity(bot, nearbyEnemyHeroes, nearbyEnemyCreep, nearbyEnemyTowers)
+    castACDesire, castACTarget = ConsiderAlacrity(bot, nearbyEnemyHeroes, nearbyEnemyCreep, nearbyEnemyTowers)
     castGWDesire = ConsiderGhostWalk(bot, nearbyEnemyHeroes)
-    castIWDesire = ConsiderIceWall(bot, nearbyEnemyHeroes)
+    castIWDesire, castIWFacing = ConsiderIceWall(bot, nearbyEnemyHeroes)
     castFSDesire = ConsiderForgedSpirit(bot, nearbyEnemyHeroes, nearbyEnemyCreep, nearbyEnemyTowers)
 
     --[[
@@ -215,7 +273,7 @@ function AbilityUsageThink(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCre
     if not inGhostWalk(bot) then
         -- NOTE: the castXXDesire accounts for skill being fully castable        
         if castTODesire > 0 then
-            utils.myPrint("I want to Tornado")
+            --utils.myPrint("I want to Tornado")
             if not abilityTO:IsHidden() then
                 bot:ActionPush_UseAbilityOnLocation( abilityTO, castTOLocation )
                 return true
@@ -228,7 +286,7 @@ function AbilityUsageThink(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCre
         end
         
         if castCMDesire > 0 then
-            utils.myPrint("I want to Chaos Meteor")
+            --utils.myPrint("I want to Chaos Meteor")
             if not abilityCM:IsHidden() then
                 bot:ActionPush_UseAbilityOnLocation( abilityCM, castCMLocation )
                 return true
@@ -241,7 +299,7 @@ function AbilityUsageThink(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCre
         end
 
         if castEMPDesire > 0 then
-            utils.myPrint("I want to EMP")
+            --utils.myPrint("I want to EMP")
             if not abilityEMP:IsHidden() then
                 bot:ActionPush_UseAbilityOnLocation( abilityEMP, castEMPLocation )
                 return true
@@ -254,7 +312,7 @@ function AbilityUsageThink(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCre
         end
 
         if castDBDesire > 0 then
-            utils.myPrint("I want to Deafening Blast")
+            --utils.myPrint("I want to Deafening Blast")
             if not abilityDB:IsHidden() then
                 bot:ActionPush_UseAbilityOnLocation( abilityDB, castDBLocation )
                 return true
@@ -267,7 +325,7 @@ function AbilityUsageThink(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCre
         end
 
         if castCSDesire > 0 then
-            utils.myPrint("I want to Cold Snap")
+            --utils.myPrint("I want to Cold Snap")
             if not abilityCS:IsHidden() then
                 bot:ActionPush_UseAbilityOnEntity( abilityCS, castCSTarget )
                 return true
@@ -280,7 +338,7 @@ function AbilityUsageThink(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCre
         end
 
         if castSSDesire > 0 then
-            utils.myPrint("I want to Sunstrike")
+            --utils.myPrint("I want to Sunstrike")
             if not abilitySS:IsHidden() then
                 bot:ActionPush_UseAbilityOnLocation( abilitySS, castSSLocation )
                 return true
@@ -293,20 +351,20 @@ function AbilityUsageThink(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCre
         end
         
         if castACDesire > 0 then
-            utils.myPrint("I want to Alacrity")
+            --utils.myPrint("I want to Alacrity")
             if not abilityAC:IsHidden() then
-                bot:ActionPush_UseAbilityOnEntity( abilityAC, bot )
+                bot:ActionPush_UseAbilityOnEntity( abilityAC, castACTarget )
                 return true
             elseif abilityR:IsFullyCastable() then
                 bot:Action_ClearActions(true)
                 invokeAlacrity(bot)
-                bot:ActionQueue_UseAbilityOnEntity( abilityAC, bot )
+                bot:ActionQueue_UseAbilityOnEntity( abilityAC, castACTarget )
                 return true
             end
         end
 
         if castFSDesire > 0 then
-            utils.myPrint("I want to Forge Spirit")
+            --utils.myPrint("I want to Forge Spirit")
             if not abilityFS:IsHidden() then
                 bot:ActionPush_UseAbility( abilityFS )
                 return true
@@ -319,7 +377,7 @@ function AbilityUsageThink(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCre
         end
         
         if castGWDesire > 0 then
-            utils.myPrint("I want to Ghost Walk")
+            --utils.myPrint("I want to Ghost Walk")
             if not abilityGW:IsHidden() then
                 bot:ActionPush_UseAbility( abilityGW )
                 return true
@@ -332,20 +390,39 @@ function AbilityUsageThink(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCre
         end
 
         if castIWDesire > 0 then
-            utils.myPrint("I want to Ice Wall")
+            --utils.myPrint("I want to Ice Wall")
             if not abilityIW:IsHidden() then
                 bot:ActionPush_UseAbility( abilityIW )
+                if castIWFacing ~= 0 then
+                    local currentFacing = bot:GetFacing() -- returns 0 - 359 degrees. East is 0, North is 90
+                    local desiredFacing = (currentFacing + castIWFacing) % 360
+                    local myLoc = bot:GetLocation()
+                    local yDisp = utils.Round(math.sin(math.rad(desiredFacing)), 0)
+                    local xDisp = utils.Round(math.cos(math.rad(desiredFacing)), 0)
+                    bot:ActionPush_MoveToLocation( utils.VectorTowards(myLoc, myLoc+Vector( xDisp, yDisp, 0 ), 50) )
+                end
                 return true
             elseif abilityR:IsFullyCastable() then
                 bot:Action_ClearActions(true)
                 invokeIceWall(bot)
+                -- if we have a facing modifier, turn there first
+                if castIWFacing ~= 0 then
+                    local currentFacing = bot:GetFacing() -- returns 0 - 359 degrees. East is 0, North is 90
+                    local desiredFacing = (currentFacing + castIWFacing) % 360
+                    local myLoc = bot:GetLocation()
+                    local yDisp = utils.Round(math.sin(math.rad(desiredFacing)), 0)
+                    local xDisp = utils.Round(math.cos(math.rad(desiredFacing)), 0)
+                    bot:ActionQueue_MoveToLocation( utils.VectorTowards(myLoc, myLoc+Vector( xDisp, yDisp, 0 ), 50) )
+                end
                 bot:ActionQueue_UseAbility( abilityIW )
                 return true
             end
         end
         
         -- Determine what orbs we want
-        if ConsiderOrbs(bot) then return true end
+        if not getHeroVar("nukeTOCMDB") then
+            if ConsiderOrbs(bot) then return true end
+        end
         
         if ConsiderShowUp(bot, nearbyEnemyHeroes) then return true end
     end
@@ -400,6 +477,7 @@ function invokeTornado(bot)
     
     utils.myPrint("invoking Tornado")
 
+    bot:ActionPush_Delay(0.01)
     bot:ActionPush_UseAbility( abilityR )
     bot:ActionPush_UseAbility( abilityW )
     bot:ActionPush_UseAbility( abilityQ )
@@ -416,6 +494,7 @@ function invokeChaosMeteor(bot)
     
     utils.myPrint("invoking Chaos Meteor")
 
+    bot:ActionPush_Delay(0.01)
     bot:ActionPush_UseAbility( abilityR )
     bot:ActionPush_UseAbility( abilityE )
     bot:ActionPush_UseAbility( abilityW )
@@ -432,6 +511,7 @@ function invokeDeafeningBlast(bot)
     
     utils.myPrint("invoking Deafening Blast")
 
+    bot:ActionPush_Delay(0.01)
     bot:ActionPush_UseAbility( abilityR )
     bot:ActionPush_UseAbility( abilityQ )
     bot:ActionPush_UseAbility( abilityW )
@@ -448,6 +528,7 @@ function invokeForgedSpirit(bot)
     
     utils.myPrint("invoking Forged Spirit")
 
+    bot:ActionPush_Delay(0.01)
     bot:ActionPush_UseAbility( abilityR )
     bot:ActionPush_UseAbility( abilityE )
     bot:ActionPush_UseAbility( abilityQ )
@@ -464,6 +545,7 @@ function invokeIceWall(bot)
 
     utils.myPrint("invoking Ice Wall")
 
+    bot:ActionPush_Delay(0.01)
     bot:ActionPush_UseAbility( abilityR )
     bot:ActionPush_UseAbility( abilityQ )
     bot:ActionPush_UseAbility( abilityQ )
@@ -479,6 +561,7 @@ function invokeEMP(bot)
     
     utils.myPrint("invoking EMP")
 
+    bot:ActionPush_Delay(0.01)
     bot:ActionPush_UseAbility( abilityR )
     bot:ActionPush_UseAbility( abilityW )
     bot:ActionPush_UseAbility( abilityW )
@@ -494,7 +577,8 @@ function invokeColdSnap(bot)
     end
 
     utils.myPrint("invoking Cold Snap")
-
+    
+    bot:ActionPush_Delay(0.01)
     bot:ActionPush_UseAbility( abilityR )
     bot:ActionPush_UseAbility( abilityQ )
     bot:ActionPush_UseAbility( abilityQ )
@@ -511,6 +595,7 @@ function invokeSunStrike(bot)
 
     utils.myPrint("invoking Sun Strike")
 
+    bot:ActionPush_Delay(0.01)
     bot:ActionPush_UseAbility( abilityR )
     bot:ActionPush_UseAbility( abilityE )
     bot:ActionPush_UseAbility( abilityE )
@@ -527,6 +612,7 @@ function invokeAlacrity(bot)
 
     utils.myPrint("invoking Alacrity")
 
+    bot:ActionPush_Delay(0.01)
     bot:ActionPush_UseAbility( abilityR )
     bot:ActionPush_UseAbility( abilityW )
     bot:ActionPush_UseAbility( abilityE )
@@ -543,6 +629,7 @@ function invokeGhostWalk(bot)
     
     utils.myPrint("invoking Ghost Walk")
 
+    bot:ActionPush_Delay(0.01)
     bot:ActionPush_UseAbility( abilityR )
     bot:ActionPush_UseAbility( abilityQ )
     bot:ActionPush_UseAbility( abilityW )
@@ -553,6 +640,7 @@ end
 
 function tripleExortBuff(bot)
     if exortTrained() then
+        bot:ActionPush_Delay(0.01)
         bot:ActionPush_UseAbility( abilityE )
         bot:ActionPush_UseAbility( abilityE )
         bot:ActionPush_UseAbility( abilityE )
@@ -563,6 +651,7 @@ end
 
 function tripleQuasBuff(bot)
     if quasTrained() then
+        bot:ActionPush_Delay(0.01)
         bot:ActionPush_UseAbility( abilityQ )
         bot:ActionPush_UseAbility( abilityQ )
         bot:ActionPush_UseAbility( abilityQ )
@@ -573,6 +662,7 @@ end
 
 function tripleWexBuff(bot)
     if wexTrained() then
+        bot:ActionPush_Delay(0.01)
         bot:ActionPush_UseAbility( abilityW )
         bot:ActionPush_UseAbility( abilityW )
         bot:ActionPush_UseAbility( abilityW )
@@ -582,7 +672,6 @@ function tripleWexBuff(bot)
 end
 
 function ConsiderOrbs(bot)
-    local me = getHeroVar("Self")
     local botModifierCount = bot:NumModifiers()
     local nQuas = 0
     local nWex = 0
@@ -601,7 +690,7 @@ function ConsiderOrbs(bot)
         if (nWex + nQuas + nExort) >= 3 then break end
     end
     
-    if getHeroVar("IsRetreating") or me:getCurrentMode() == constants.MODE_RETREAT then
+    if getHeroVar("IsRetreating") then
         if nWex < 3 then 
             return tripleWexBuff(bot)
         end
@@ -652,57 +741,13 @@ function ConsiderTornado(bot, nearbyEnemyHeroes)
     -- Check for a channeling enemy
     for _, npcEnemy in pairs( nearbyEnemyHeroes ) do
         if npcEnemy:IsChanneling() then
-            return BOT_ACTION_DESIRE_HIGH, npcEnemy:GetLocation()
-        end
-    end
-
-    --------------------------------------
-    -- Mode based usage
-    --------------------------------------
-
-    --------- RETREATING -----------------------
-    if getHeroVar("IsRetreating") then
-        for _,npcEnemy in pairs( nearbyEnemyHeroes ) do
-            if bot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) and GetUnitToUnitDistance( bot, npcEnemy ) <= nDistance then
-                return BOT_ACTION_DESIRE_MODERATE, npcEnemy:GetLocation()
+            if abilityCS:IsFullyCastable() and abilityTO:IsHidden() then
+                return BOT_ACTION_DESIRE_NONE, {}
+            else
+                return BOT_ACTION_DESIRE_HIGH, npcEnemy:GetLocation()
             end
         end
     end
-
-    --------- TEAM FIGHT --------------------------------
-    if #nearbyEnemyHeroes >= 2 then
-        local locationAoE = bot:FindAoELocation( true, false, bot:GetLocation(), nCastRange, 200, 0, 0 )
-
-        if locationAoE.count >= 2 then
-            return BOT_ACTION_DESIRE_HIGH, locationAoE.targetloc
-        end
-    end
-
-    --------- CHASING --------------------------------
-    local target = getHeroVar("Target")
-    if utils.ValidTarget(target) then
-        local dist = GetUnitToUnitDistance( target.Obj, bot )
-        if dist < (nDistance - 200) then
-            return BOT_ACTION_DESIRE_MODERATE, target.Obj:GetExtrapolatedLocation( dist/nSpeed )
-        end
-    end
-
-    return BOT_ACTION_DESIRE_NONE, {}
-end
-
-function ConsiderIceWall(bot, nearbyEnemyHeroes)
-    if not quasTrained() or not exortTrained() then
-        return BOT_ACTION_DESIRE_NONE
-    end
-
-    -- Make sure it's castable
-    if  not abilityIW:IsFullyCastable() then
-        return BOT_ACTION_DESIRE_NONE
-    end
-
-    -- Get some of its values
-    local nCastRange = abilityIW:GetSpecialValueInt( "wall_place_distance" )
-    local nRadius = abilityIW:GetSpecialValueInt( "wall_element_radius" )
 
     --------------------------------------
     -- Mode based usage
@@ -711,8 +756,55 @@ function ConsiderIceWall(bot, nearbyEnemyHeroes)
     --------- RETREATING -----------------------
     if getHeroVar("IsRetreating") then
         for _, npcEnemy in pairs( nearbyEnemyHeroes ) do
-            if  bot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) or GetUnitToUnitDistance(npcEnemy, bot) < (nCastRange + nRadius) then
-                return BOT_ACTION_DESIRE_MODERATE
+            if bot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) and GetUnitToUnitDistance( bot, npcEnemy ) <= nDistance then
+                return BOT_ACTION_DESIRE_MODERATE, npcEnemy:GetLocation()
+            end
+        end
+    end
+
+    --------- TEAM FIGHT --------------------------------
+    if #nearbyEnemyHeroes >= 2 then
+        local locationAoE = bot:FindAoELocation( true, false, bot:GetLocation(), nCastRange, nDistance, 0, 0 )
+        if locationAoE.count >= 2 then
+            return BOT_ACTION_DESIRE_HIGH, locationAoE.targetloc
+        end
+    end
+
+    --------- CHASING --------------------------------
+    local target = getHeroVar("Target")
+    if utils.ValidTarget(target) then
+        local dist = GetUnitToUnitDistance( bot, target.Obj )
+        if dist < (nDistance - 200) then
+            return BOT_ACTION_DESIRE_MODERATE, target.Obj:GetExtrapolatedLocation( dist/nSpeed + getHeroVar("AbilityDelay") )
+        end
+    end
+
+    return BOT_ACTION_DESIRE_NONE, {}
+end
+
+function ConsiderIceWall(bot, nearbyEnemyHeroes)
+    if not quasTrained() or not exortTrained() then
+        return BOT_ACTION_DESIRE_NONE, 0
+    end
+
+    -- Make sure it's castable
+    if  not abilityIW:IsFullyCastable() then
+        return BOT_ACTION_DESIRE_NONE, 0
+    end
+
+    -- Get some of its values
+    local nCastRange = abilityIW:GetSpecialValueInt( "wall_place_distance" )
+    local nLength = 80*15
+
+    --------------------------------------
+    -- Mode based usage
+    --------------------------------------
+
+    --------- RETREATING -----------------------
+    if getHeroVar("IsRetreating") then
+        for _, npcEnemy in pairs( nearbyEnemyHeroes ) do
+            if  bot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) or GetUnitToUnitDistance(npcEnemy, bot) < 600 then
+                return BOT_ACTION_DESIRE_MODERATE, 0
             end
         end
     end
@@ -721,12 +813,12 @@ function ConsiderIceWall(bot, nearbyEnemyHeroes)
     local target = getHeroVar("Target")
     if utils.ValidTarget(target) then
         --FIXME: Need to check orientation
-        if GetUnitToUnitDistance( bot, target.Obj ) < (nCastRange + nRadius) then
-            return BOT_ACTION_DESIRE_MODERATE
+        if GetUnitToUnitDistance( bot, target.Obj ) < (nCastRange + nLength/2) then
+            return BOT_ACTION_DESIRE_MODERATE, 90
         end
     end
 
-    return BOT_ACTION_DESIRE_NONE
+    return BOT_ACTION_DESIRE_NONE, 0
 end
 
 
@@ -749,22 +841,12 @@ function ConsiderChaosMeteor(bot, nearbyEnemyHeroes)
     --------------------------------------
     -- Mode based usage
     --------------------------------------
+    
+    --------- TEAM FIGHT -----------------------------
     if #nearbyEnemyHeroes >= 2 then
-        local locationAoE = bot:FindAoELocation( true, true, bot:GetLocation(), nCastRange + nTravelDistance/2, nRadius, 0, 0 )
+        local locationAoE = bot:FindAoELocation( true, true, bot:GetLocation(), nCastRange, nTravelDistance, nDelay + getHeroVar("AbilityDelay"), 0 )
         if locationAoE.count >= 2 then
             return BOT_ACTION_DESIRE_HIGH, locationAoE.targetloc
-        end
-    end
-
-    --------- CHASING --------------------------------
-    local target = getHeroVar("Target")
-    if utils.ValidTarget(target) then
-        if GetUnitToUnitDistance( target, bot ) < (nCastRange + nTravelDistance/2) then
-            if utils.IsCrowdControlled(target.Obj) then
-                return BOT_ACTION_DESIRE_MODERATE, target.Obj:GetLocation()
-            else
-                return BOT_ACTION_DESIRE_MODERATE, target.Obj:GetExtrapolatedLocation( nDelay )
-            end
         end
     end
 
@@ -784,7 +866,7 @@ function ConsiderSunStrike(bot)
 
     -- Get some of its values
     local nRadius = 175
-    local nDelay = 2.0 -- 0.05 cast point, 1.7 delay, + some forgiveness
+    local nDelay = 1.75 + getHeroVar("AbilityDelay") + 0.75 -- 0.05 cast point, 1.7 delay, 0.5 grace
     local nDamage = abilitySS:GetSpecialValueFloat("damage")
 
     --------------------------------------
@@ -796,7 +878,11 @@ function ConsiderSunStrike(bot)
             if utils.IsCrowdControlled(enemy) then
                 return BOT_ACTION_DESIRE_MODERATE, enemy:GetLocation()
             else
-                return BOT_ACTION_DESIRE_MODERATE, enemy:GetExtrapolatedLocation( nDelay )
+                if enemy:GetMovementDirectionStability() > 0.7 then
+                    return BOT_ACTION_DESIRE_MODERATE, enemy:GetExtrapolatedLocation( nDelay  )
+                else
+                    return BOT_ACTION_DESIRE_NONE, {}
+                end
             end
         end
     end
@@ -807,14 +893,18 @@ function ConsiderSunStrike(bot)
         if utils.IsCrowdControlled(target.Obj) then
             return BOT_ACTION_DESIRE_MODERATE, target.Obj:GetLocation()
         else
-            return BOT_ACTION_DESIRE_MODERATE, target.Obj:GetExtrapolatedLocation( nDelay )
+            if enemy:GetMovementDirectionStability() > 0.7 then
+                return BOT_ACTION_DESIRE_MODERATE, target.Obj:GetExtrapolatedLocation( nDelay )
+            else
+                return BOT_ACTION_DESIRE_NONE, {}
+            end
         end
     end
 
     return BOT_ACTION_DESIRE_NONE, {}
 end
 
-function ConsiderDeafeningBlast(bot)
+function ConsiderDeafeningBlast(bot, nearbyEnemyHeroes)
     if not quasTrained() or  not wexTrained() or not exortTrained() then
         return BOT_ACTION_DESIRE_NONE, {}
     end
@@ -825,75 +915,26 @@ function ConsiderDeafeningBlast(bot)
     end
 
     -- Get some of its values
-    local nCastRange = abilityDB:GetCastRange()
-    local nRadius = abilityDB:GetSpecialValueInt("radius_end")
+    local nCastRange = abilityDB:GetSpecialValueInt("radius_start")
+    local nRadius = abilityDB:GetSpecialValueInt("travel_distance")
     local nDamage = abilityDB:GetSpecialValueInt("damage")
 
     --------------------------------------
     -- Mode based usage
     --------------------------------------
-    local tableNearbyAttackingAlliedHeroes = bot:GetNearbyHeroes( 1000, false, BOT_MODE_ATTACK )
-    if ( #tableNearbyAttackingAlliedHeroes >= 1 )
-    then
+    
+    --------- TEAM FIGHT -----------------------------
+    if #nearbyEnemyHeroes >= 2 then
         local locationAoE = bot:FindAoELocation( true, true, bot:GetLocation(), nCastRange, nRadius, 0, 0 )
-        local tableNearbyEnemyHeroes = bot:GetNearbyHeroes( nCastRange, true, BOT_MODE_NONE )
-        if ( locationAoE.count >= 2 and #tableNearbyEnemyHeroes > 0 )
-        then
-            for _,npcEnemy in pairs (tableNearbyEnemyHeroes)
-            do
-                if CanCastDeafeningBlastOnTarget (npcEnemy) then
-                    return BOT_ACTION_DESIRE_HIGH, locationAoE.targetloc
-                end
-            end
-        end
-    end
-
-    -- If we're seriously retreating, see if we can land a stun on someone who's damaged us recently
-    if ( bot:GetActiveMode() == BOT_MODE_RETREAT and bot:GetActiveModeDesire() >= BOT_MODE_DESIRE_HIGH )
-    then
-        local tableNearbyEnemyHeroes = bot:GetNearbyHeroes( nCastRange, true, BOT_MODE_NONE )
-        for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
-        do
-            if ( bot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) and CanCastDeafeningBlastOnTarget (npcEnemy) )
-            then
-                return BOT_ACTION_DESIRE_MODERATE, npcEnemy:GetLocation()
-            end
-        end
-    end
-
-    -- If a mode has set a target, and we can kill them, do it
-    local npcTarget = bot:GetTarget()
-    if ( npcTarget ~= nil and npcTarget:IsHero() )
-    then
-        if( npcTarget:GetActualIncomingDamage( nDamage, DAMAGE_TYPE_MAGICAL  ) > npcTarget:GetHealth() and
-            GetUnitToUnitDistance( npcTarget, bot ) < nCastRange - (nCastRange/3) and
-            CanCastDeafeningBlastOnTarget (npcTarget) )
-        then
-            return BOT_ACTION_DESIRE_HIGH, npcTarget:GetLocation()
-        end
-    end
-
-    -- If we're going after someone
-    if ( bot:GetActiveMode() == BOT_MODE_ROAM or
-         bot:GetActiveMode() == BOT_MODE_TEAM_ROAM or
-         bot:GetActiveMode() == BOT_MODE_GANK or
-         bot:GetActiveMode() == BOT_MODE_ATTACK or
-         bot:GetActiveMode() == BOT_MODE_DEFEND_ALLY )
-    then
-        local npcTarget = bot:GetTarget()
-
-        if ( npcTarget ~= nil and npcTarget:IsHero() and
-            GetUnitToUnitDistance( npcTarget, bot ) < nCastRange - (nCastRange/3) and
-            CanCastDeafeningBlastOnTarget (npcTarget) )
-        then
-            return BOT_ACTION_DESIRE_MODERATE, npcTarget:GetLocation()
+        if locationAoE.count >= 2 then
+            return BOT_ACTION_DESIRE_HIGH, locationAoE.targetloc
         end
     end
 
     return BOT_ACTION_DESIRE_NONE, {}
 end
 
-function ConsiderEMP(bot)
+function ConsiderEMP(bot, nearbyEnemyHeroes)
     if not wexTrained() then
         return BOT_ACTION_DESIRE_NONE, {}
     end
@@ -912,30 +953,22 @@ function ConsiderEMP(bot)
     --------------------------------------
     -- Mode based usage
     --------------------------------------
-
-    local tableNearbyAttackingAlliedHeroes = bot:GetNearbyHeroes( 1000, false, BOT_MODE_ATTACK )
-    if ( #tableNearbyAttackingAlliedHeroes >= 1 )
-    then
-        local locationAoE = bot:FindAoELocation( true, true, bot:GetLocation(), nCastRange, ( nRadius/2 ), 0, 0 )
-
-        if ( locationAoE.count >= 2 )
-        then
+    
+    --------- TEAM FIGHT -----------------------------
+    if #nearbyEnemyHeroes >= 3 then
+        local locationAoE = bot:FindAoELocation( true, true, bot:GetLocation(), nCastRange, nRadius, 2.95 + getHeroVar("AbilityDelay"), 0 )
+        if locationAoE.count >= 3 then
             return BOT_ACTION_DESIRE_HIGH, locationAoE.targetloc
         end
     end
 
-    -- If we're going after someone
-    if ( bot:GetActiveMode() == BOT_MODE_ROAM or
-         bot:GetActiveMode() == BOT_MODE_TEAM_ROAM or
-         bot:GetActiveMode() == BOT_MODE_GANK or
-         bot:GetActiveMode() == BOT_MODE_ATTACK or
-         bot:GetActiveMode() == BOT_MODE_DEFEND_ALLY )
-    then
-        local npcTarget = bot:GetTarget()
-
-        if ( npcTarget ~= nil and npcTarget:HasModifier("modifier_invoker_tornado") and GetUnitToUnitDistance( npcTarget, bot ) < (nCastRange - (nRadius / 2)) )
-        then
-            return BOT_ACTION_DESIRE_MODERATE, npcTarget:GetLocation( )
+    --------- CHASING --------------------------------
+    local target = getHeroVar("Target")
+    if utils.ValidTarget(target) then
+        if target.Obj:HasModifier("modifier_invoker_tornado") and 
+            target.Obj:GetMana() > 600 and
+            GetUnitToUnitDistance( target.Obj, bot ) < (nCastRange - (nRadius / 2)) then
+            return BOT_ACTION_DESIRE_MODERATE, target.Obj:GetLocation()
         end
     end
 
@@ -960,14 +993,25 @@ function ConsiderGhostWalk(bot, nearbyEnemyHeroes)
             end
         end
     end
+    
+    -- We are roaming
+    local me = getHeroVar("Self")
+    if me:getCurrentMode() == constants.MODE_GANKING then
+        local target = getHeroVar("GankTarget")
+        if target.Id > 0 and utils.ValidTarget(target) then
+            local dist = GetUnitToUnitDistance(bot, target.Obj)
+            if dist < 3200 then
+                return BOT_ACTION_DESIRE_MODERATE
+            end
+        end
+    end
 
     return BOT_ACTION_DESIRE_NONE
 end
 
-
 function ConsiderColdSnap(bot)
     if not quasTrained() then
-        return  BOT_ACTION_DESIRE_NONE, nil
+        return BOT_ACTION_DESIRE_NONE, nil
     end
 
     -- Make sure it's castable
@@ -984,57 +1028,21 @@ function ConsiderColdSnap(bot)
 
     -- Check for a channeling enemy
     local tableNearbyEnemyHeroes = bot:GetNearbyHeroes( nCastRange, true, BOT_MODE_NONE )
-    for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
-    do
-        if ( npcEnemy:IsChanneling() )
-        then
-            return BOT_ACTION_DESIRE_HIGH, npcEnemy
-        end
-    end
-
-    --------------------------------------
-    -- Mode based usage
-    --------------------------------------
-
-    -- If we're seriously retreating, see if we can land a stun on someone who's damaged us recently
-    if ( bot:GetActiveMode() == BOT_MODE_RETREAT and bot:GetActiveModeDesire() >= BOT_MODE_DESIRE_HIGH )
-    then
-        local tableNearbyEnemyHeroes = bot:GetNearbyHeroes( nCastRange, true, BOT_MODE_NONE )
-        for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
-        do
-            if ( bot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) and CanCastColdSnapOnTarget(npcEnemy) )
-            then
-                return BOT_ACTION_DESIRE_MODERATE, npcEnemy
+    for _,npcEnemy in pairs( tableNearbyEnemyHeroes ) do
+        if npcEnemy:IsChanneling() then
+            if abilityTO:IsFullyCastable() and not abilityTO:IsHidden() then
+                return BOT_ACTION_DESIRE_NONE, nil
+            else
+                return BOT_ACTION_DESIRE_HIGH, npcEnemy
             end
         end
     end
-
-    local tableNearbyAttackingAlliedHeroes = bot:GetNearbyHeroes( 1000, false, BOT_MODE_ATTACK )
-    if ( #tableNearbyAttackingAlliedHeroes >= 1 )
-    then
-        local tableNearbyEnemyHeroes = bot:GetNearbyHeroes( nCastRange, true, BOT_MODE_NONE )
-        for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
-        do
-            if ( GetUnitToUnitDistance( npcEnemy, bot ) < ( nCastRange ) and CanCastColdSnapOnTarget(npcEnemy) )
-            then
-                return BOT_ACTION_DESIRE_MODERATE, npcEnemy
-            end
-        end
-    end
-
 
     -- If we're going after someone
-    if ( bot:GetActiveMode() == BOT_MODE_ROAM or
-         bot:GetActiveMode() == BOT_MODE_TEAM_ROAM or
-         bot:GetActiveMode() == BOT_MODE_GANK or
-         bot:GetActiveMode() == BOT_MODE_ATTACK or
-         bot:GetActiveMode() == BOT_MODE_DEFEND_ALLY )
-    then
-        local npcTarget = bot:GetTarget()
-
-        if ( npcTarget ~= nil and GetUnitToUnitDistance( npcTarget, bot ) < nCastRange and CanCastColdSnapOnTarget(npcTarget) )
-        then
-            return BOT_ACTION_DESIRE_HIGH, npcTarget
+    local target = getHeroVar("Target")
+    if utils.ValidTarget(target) then
+        if GetUnitToUnitDistance( target.Obj, bot ) < nCastRange and CanCastColdSnapOnTarget(target.Obj) then
+            return BOT_ACTION_DESIRE_HIGH, target.Obj
         end
     end
 
@@ -1043,47 +1051,42 @@ end
 
 function ConsiderAlacrity(bot, nearbyEnemyHeroes, nearbyEnemyCreep, nearbyEnemyTowers)
     if not wexTrained() or not exortTrained() then
-        return BOT_ACTION_DESIRE_NONE
+        return BOT_ACTION_DESIRE_NONE, nil
     end
 
     -- Make sure it's castable
     if not abilityAC:IsFullyCastable() then
-        return BOT_ACTION_DESIRE_NONE
+        return BOT_ACTION_DESIRE_NONE, nil
     end
 
     --------------------------------------
     -- Global high-priorty usage
     --------------------------------------
+    local manaRatio = bot:GetMana()/bot:GetMaxMana()
+    
     -- If we're pushing or defending a lane and can hit 4+ creeps, go for it
-    if getHeroVar("ShouldDefend") or getHeroVar("ShouldPush") then
+    if manaRatio > 0.6 and (getHeroVar("ShouldDefend") or getHeroVar("ShouldPush")) then
         if #nearbyEnemyCreep >= 3 or #nearbyEnemyTowers > 0 then
-            return BOT_ACTION_DESIRE_LOW
-        end
-    end
-    --------------------------------------
-    -- Mode based usage
-    --------------------------------------
-    for _,npcEnemy in pairs( nearbyEnemyHeroes ) do
-        if GetUnitToUnitDistance( npcEnemy, bot ) < 600 then
-            return BOT_ACTION_DESIRE_MODERATE
+            return BOT_ACTION_DESIRE_LOW, bot
         end
     end
 
     --------- CHASING --------------------------------
     local target = getHeroVar("Target")
     if utils.ValidTarget(target) then
-        return BOT_ACTION_DESIRE_MODERATE
+        return BOT_ACTION_DESIRE_MODERATE, bot
     end
 
+    --------- ROSHAN --------------------------------
     local me = getHeroVar("Self")
-    if me:GetMode() == constants.MODE_ROSHAN then
+    if me:getCurrentMode() == constants.MODE_ROSHAN then
         local npcTarget = bot:GetTarget()
         if utils.NotNilOrDead(npcTarget) then
-            return BOT_ACTION_DESIRE_LOW
+            return BOT_ACTION_DESIRE_LOW, bot
         end
     end
 
-    return BOT_ACTION_DESIRE_NONE
+    return BOT_ACTION_DESIRE_NONE, nil
 end
 
 function ConsiderForgedSpirit(bot, nearbyEnemyHeroes, nearbyEnemyCreep, nearbyEnemyTowers)
@@ -1096,8 +1099,9 @@ function ConsiderForgedSpirit(bot, nearbyEnemyHeroes, nearbyEnemyCreep, nearbyEn
         return BOT_ACTION_DESIRE_NONE
     end
 
+    --------- ROSHAN --------------------------------
     local me = getHeroVar("Self")
-    if me:GetMode() == constants.MODE_ROSHAN then
+    if me:getCurrentMode() == constants.MODE_ROSHAN then
         local npcTarget = bot:GetTarget()
         if utils.NotNilOrDead(npcTarget) then
             return BOT_ACTION_DESIRE_LOW
@@ -1107,25 +1111,21 @@ function ConsiderForgedSpirit(bot, nearbyEnemyHeroes, nearbyEnemyCreep, nearbyEn
     --------------------------------------
     -- Global high-priorty usage
     --------------------------------------
+    local manaRatio = bot:GetMana()/bot:GetMaxMana()
+    
     -- If we're pushing or defending a lane and can hit 4+ creeps, go for it
-    if getHeroVar("ShouldDefend") or getHeroVar("ShouldPush") then
+    if manaRatio > 0.6 and (getHeroVar("ShouldDefend") or getHeroVar("ShouldPush")) then
         if #nearbyEnemyCreep >= 3 or #nearbyEnemyTowers > 0 then
             return BOT_ACTION_DESIRE_LOW
-        end
-    end
-    --------------------------------------
-    -- Mode based usage
-    --------------------------------------
-    for _,npcEnemy in pairs( nearbyEnemyHeroes ) do
-        if GetUnitToUnitDistance( npcEnemy, bot ) < 600 then
-            return BOT_ACTION_DESIRE_MODERATE
         end
     end
 
     --------- CHASING --------------------------------
     local target = getHeroVar("Target")
     if utils.ValidTarget(target) then
-        return BOT_ACTION_DESIRE_MODERATE
+        if abilityCS:IsFullyCastable() then
+            return BOT_ACTION_DESIRE_MODERATE
+        end
     end
 
     return BOT_ACTION_DESIRE_NONE

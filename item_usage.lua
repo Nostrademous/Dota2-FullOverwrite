@@ -277,7 +277,6 @@ end
 
 function UseMovementItems(location)
     local bot = GetBot()
-    local location = location or bot:GetLocation()
 
     if bot:IsChanneling() then
         return false

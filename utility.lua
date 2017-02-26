@@ -721,6 +721,7 @@ end
 
 -- CONTRIBUTOR: Function below was coded by Platinum_dota2
 function U.MoveSafelyToLocation(npcBot, dest)
+    --[[
     if getHeroVar("NextHop")==nil or #getHeroVar("NextHop")==0 or getHeroVar("PathfindingWasInitiated")==nil or (not getHeroVar("PathfindingWasInitiated")) then
         U.InitPathFinding()
         U.myPrint("Path finding for all heroes has been initiated")
@@ -794,16 +795,19 @@ function U.MoveSafelyToLocation(npcBot, dest)
         return
     end
 
-    if GetUnitToLocationDistance(npcBot,safeSpots[getHeroVar("NextHop")[getHeroVar("LastHop")][ti]])<500 then
+    if GetUnitToLocationDistance(npcBot,safeSpots[ getHeroVar("NextHop")[getHeroVar("LastHop")][ti] ])<500 then
         setHeroVar("LastHop", getHeroVar("NextHop")[getHeroVar("LastHop")][ti])
     end
 
     local newT = getHeroVar("NextHop")[getHeroVar("LastHop")][ti]
 
     gHeroVar.HeroMoveToLocation(npcBot, safeSpots[newT])
+    --]]
+    gHeroVar.HeroMoveToLocation(npcBot, dest)
 end
 
 function U.InitPathFinding()
+    --[[
     -- creating the graph
     local SafeDist = 2000
     local safeSpots = {}
@@ -856,11 +860,14 @@ function U.InitPathFinding()
             gHeroVar.SetVar(ally:GetPlayerID(), "PathfindingWasInitiated", true)
         end
     end
+    --]]
 end
 
 function U.InitPath(npcBot)
+    --[[
     setHeroVar("FinalHop", false)
     setHeroVar("LastHop", nil)
+    --]]
 end
 
 function U.IsInLane()
@@ -1610,7 +1617,7 @@ function U.myPrint(...)
         msg = msg .. tostring(v)
     end
     --uncomment to only see messages by bots mentioned underneath
-    --if botname == "drow_ranger" then --or botname == "viper" then
+    --if botname == "invoker" then --or botname == "viper" then
       print(msg)
     --end
 end

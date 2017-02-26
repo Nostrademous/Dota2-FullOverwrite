@@ -64,7 +64,7 @@ end
 -- Fight orchestration is done at a global Team level.
 -- This just checks if we are given a fight target and a specific
 -- action queue to execute as part of the fight.
-function ConsiderAttacking(bot, nearbyEnemies, nearbyAllies)
+function ConsiderAttacking(bot, nearbyEnemies, nearbyAllies, nearbyETowers, nearbyATowers, nearbyECreeps, nearbyACreeps)
     local target = getHeroVar("Target")
     if target and utils.ValidTarget(target) then
         if #nearbyAllies >= 3 then
@@ -73,17 +73,6 @@ function ConsiderAttacking(bot, nearbyEnemies, nearbyAllies)
             return BOT_MODE_DESIRE_MODERATE
         end
     end
-    
-    -- check 1v1 matchup
-    --[[
-    if #nearbyEnemies == 1 then
-        local enemy = nearbyEnemies[1]
-        if (bot:GetAttackDamage()*5 + bot:GetHealth()) > (enemy:GetAttackDamage()*5 + enemy:GetHealth()) then
-            setHeroVar("Target", {Obj=enemy, Id=enemy:GetPlayerID()})
-            return BOT_MODE_DESIRE_MODERATE
-        end
-    end
-    --]]
     
     return BOT_MODE_DESIRE_NONE
 end
@@ -161,7 +150,6 @@ function ConsiderRetreating(bot, nearbyEnemies, nearbyETowers, nearbyAllies)
     if enemyDamage > 0 and enemyDamage > bot:GetHealth() then
         --utils.myPrint(" - Retreating - could die in perfect stun/slow overlap")
         if bot:GetHealth()/bot:GetMaxHealth() < 0.75 then
-            setHeroVar("IsRetreating", true)
             setHeroVar("RetreatReason", constants.RETREAT_DANGER)
             return BOT_MODE_DESIRE_HIGH
         end
@@ -209,7 +197,6 @@ function ConsiderRetreating(bot, nearbyEnemies, nearbyETowers, nearbyAllies)
     if ((bot:GetHealth()/bot:GetMaxHealth()) < 0.33 and me:getCurrentMode() ~= constants.MODE_JUNGLING) or
         (bot:GetMana()/bot:GetMaxMana() < 0.07 and me:getPrevMode() == constants.MODE_LANING and 
         not utils.IsCore()) then
-        setHeroVar("IsRetreating", true)
         setHeroVar("RetreatReason", constants.RETREAT_FOUNTAIN)
         return BOT_MODE_DESIRE_NONE 
     end
@@ -239,6 +226,11 @@ end
 -- will be unavailable to use for a certain period of time.
 function ConsiderSecretAndSideShop(bot)
     if bot:IsIllusion() then return BOT_MODE_DESIRE_NONE end
+    
+    local me = getHeroVar("Self")
+    if me:getCurrentMode() == constants.MODE_SPECIALSHOP then
+        return me:getCurrentModeValue()
+    end
     
     return BOT_MODE_DESIRE_NONE
 end

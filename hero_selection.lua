@@ -7,7 +7,7 @@ local RadiantBots = {
     "npc_dota_hero_drow_ranger",
     "npc_dota_hero_crystal_maiden",
     "npc_dota_hero_bloodseeker",
-    "npc_dota_hero_lina",
+    "npc_dota_hero_invoker",
     "npc_dota_hero_viper"
 }
 

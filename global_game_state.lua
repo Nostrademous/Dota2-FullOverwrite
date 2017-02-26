@@ -318,7 +318,7 @@ function GlobalFightDetermination()
                                 end
                                 
                                 for _, v in pairs(globalAllies) do
-                                    gHero.SetVar(v[1]:GetPlayerID(), "UseGlobal", {v[2][1], enemy.Obj:GetExtrapolatedLocation(v[2][2])})
+                                    gHero.SetVar(v[1]:GetPlayerID(), "UseGlobal", {v[2][1], enemy.Obj})
                                     utils.myPrint(utils.GetHeroName(v[1]).." casting global skill.")
                                 end
                                 
@@ -341,7 +341,8 @@ function GlobalFightDetermination()
                                 end
                                 
                                 for _, v in pairs(globalAllies) do
-                                    gHero.HeroUseAbilityOnLocation(gHero.GetVar(v[1]:GetPlayerID(), "Self"), v[2][1], enemy.Obj:GetExtrapolatedLocation(v[2][2]), 100000)
+                                    gHero.SetVar(v[1]:GetPlayerID(), "UseGlobal", {v[2][1], enemy.Obj})
+                                    utils.myPrint(utils.GetHeroName(v[1]).." casting global skill.")
                                 end
                                 
                                 return

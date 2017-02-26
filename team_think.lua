@@ -53,7 +53,7 @@ function ConsiderTeamWideItemAcquisition(playerAssignment)
     -- only add TeamBuy if list is 'nil' or empty
     local lowestLevelAlly = nil
     for _, ally in pairs(listAlly) do
-        if not ally:IsIllusion() and ally:IsBot() then
+        if not ally:IsIllusion() and gHeroVar.HasID(ally:GetPlayerID()) then
             if not lowestLevelAlly or lowestLevelAlly:GetLevel() > ally:GetLevel() then
                 lowestLevelAlly = ally
             end
@@ -87,7 +87,7 @@ end
 -- heroes with Global skills (Invoker Sun Strike, Zeus Ult, etc.)
 -- can be part of this without actually being present in the area.
 function ConsiderTeamFightAssignment(playerActionQueues)
-    global_game_state.GlobalFightDetermination()
+    --global_game_state.GlobalFightDetermination()
 end
 
 -- Determine which lanes should be pushed and which Heroes should

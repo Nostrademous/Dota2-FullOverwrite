@@ -27,7 +27,7 @@ end
 
 local function Updates(bot)
     if getHeroVar("IsInLane") then
-        local retreatPos = utils.PositionAlongLane(bot, getHeroVar("RetreatLane")) - 0.03
+        local retreatPos = utils.PositionAlongLane(bot, getHeroVar("RetreatLane"))
         setHeroVar("RetreatPos", retreatPos)
         --utils.myPrint("RetreatLane: ", getHeroVar("RetreatLane"), " -- RetreatPos: <"..retreatPos..">")
     end
@@ -38,12 +38,11 @@ function Think(bot, loc)
     
     Updates(bot)
 
-    local nextmove = nil
-    if loc ~= nil then
-        nextmove = loc
-    else
+    local nextmove = loc or nil
+    
+    if nextmove == nil then
         if getHeroVar("IsInLane") then
-            nextmove = GetLocationAlongLane(getHeroVar("RetreatLane"), Max(getHeroVar("RetreatPos"), 0.0))
+            nextmove = GetLocationAlongLane(getHeroVar("RetreatLane"), Max(getHeroVar("RetreatPos")-0.03, 0.0))
         else
             nextmove = utils.Fountain(GetTeam())
         end
@@ -61,15 +60,11 @@ function Think(bot, loc)
         return
     end
 
+    --utils.myPrint("MyLanePos: ", tostring(bot:GetLocation()), ", RetreatPos: ", tostring(nextmove))
+    
     if item_usage.UseMovementItems(nextmove) then return end
     
-    if getHeroVar("IsInLane") then
-        --utils.myPrint("generic retreat - in Lane - loc <", nextmove[1], ", ", nextmove[2], ">")
-        gHeroVar.HeroMoveToLocation(bot, nextmove)
-    else
-        --utils.myPrint("generic retreat - not in Lane - loc <", nextmove[1], ", ", nextmove[2], ">")
-        utils.MoveSafelyToLocation(bot, nextmove)
-    end
+    bot:Action_MoveToLocation(nextmove)
 end
 
 --------

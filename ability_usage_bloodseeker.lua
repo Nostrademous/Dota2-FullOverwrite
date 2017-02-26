@@ -80,7 +80,7 @@ function queueNuke(bot, enemy, castQueue, engageDist)
 
     -- if out of range, attack move for one hit to get in range
     if dist < engageDist then
-        bot:Action_ClearActions(false)
+        bot:Action_ClearActions(true)
         utils.AllChat("Killing "..utils.GetHeroName(enemy).." softly with my song")
         utils.myPrint("Queue Nuke Damage: ", utils.GetHeroName(enemy))
         for i = #castQueue, 1, -1 do
@@ -97,6 +97,7 @@ function queueNuke(bot, enemy, castQueue, engageDist)
             end
         end
         bot:ActionQueue_AttackUnit( enemy, false )
+        bot:ActionQueue_Delay(0.01)
         return true
     end
     return false

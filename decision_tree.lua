@@ -97,12 +97,26 @@ function X:PrintModeTransition(name)
         else
             utils.myPrint("Mode Transition: "..self:getPrevMode().." --> "..self:getCurrentMode(), " :: Lane: ", self:getHeroVar("CurLane"))
         end
+        
+        if self:getCurrentMode() == constants.MODE_RETREAT then
+            utils.myPrint("Retreat Reason: ", self:getHeroVar("RetreatReason"))
+        end
+        
+        if self:getCurrentMode() == constants.MODE_JUNGLING then
+            self:setHeroVar("JunglingState", nil)
+        end
+        
+        if self:getPrevMode() == constants.MODE_RETREAT then
+            --utils.myPrint("clearing IsRetreating flag")
+            self:setHeroVar("IsRetreating", false)
+        end
+        
         self:setPrevMode(self:getCurrentMode())
     end
 end
 
 function X:AddMode(mode, value)
-    if mode == MODE_NONE then return end
+    if mode == constants.MODE_NONE then return end
     
     if mode == self:getCurrentMode() then return end
 
@@ -131,7 +145,7 @@ function X:HasMode(mode)
 end
 
 function X:RemoveMode(mode)
-    if mode == MODE_NONE then return end
+    if mode == constants.MODE_NONE then return end
     
     self:setCurrentMode(constants.MODE_NONE, BOT_MODE_DESIRE_NONE)
 
@@ -145,7 +159,7 @@ end
 
 function X:GetMode()
     if #self:getModeStack() == 0 then
-        return {MODE_NONE, BOT_MODE_DESIRE_NONE}
+        return {constants.MODE_NONE, BOT_MODE_DESIRE_NONE}
     end
     return self:getModeStack()[1]
 end
@@ -188,6 +202,18 @@ function X:DoInit(bot)
     self:setHeroVar("GankTarget", NoTarget)
     self:setHeroVar("TeamBuy", {})
     self:setHeroVar("DoDefendLane", {})
+    self:setHeroVar("IsRetreating", false)
+    
+    local botDifficulty = bot:GetDifficulty()
+    if botDifficulty == DIFFICULTY_EASY then
+        self:setHeroVar("AbilityDelay", 0.75)
+    elseif botDifficulty == DIFFICULTY_MEDIUM then
+        self:setHeroVar("AbilityDelay", 0.45)
+    elseif botDifficulty == DIFFICULTY_HARD then
+        self:setHeroVar("AbilityDelay", 0.15)
+    elseif botDifficulty == DIFFICULTY_UNFAIR then
+        self:setHeroVar("AbilityDelay", 0.1)
+    end
 
     role.GetRoles()
     if role.RolesFilled() then
@@ -361,13 +387,16 @@ function X:Think(bot)
         
         if GetUnitToUnitDistance(bot, target.Obj) < 2000 then return end
     end
-    
+        
     -- if we have queued actions, do them as anything below this can clear them
+    -- but only if we are not retreating... or we might die
     if bot:NumQueuedActions() > 0 then
         --utils.myPrint("has "..bot:NumQueuedActions().." queued actions")
         --utils.myPrint("current action is: ", bot:GetCurrentActionType())
         --utils.myPrint("top queued action is: ", bot:GetQueuedActionType(0))
-        return
+        if not self:getHeroVar("IsRetreating") then
+            return
+        end
     end
     
     ---------------------------------------------------------------------
@@ -396,7 +425,7 @@ function X:Think(bot)
         return
     elseif self:getCurrentMode() == constants.MODE_DEFENDLANE then
         return self:DoDefendLane(bot)
-    elseif self:getCurrentMode() == constants.MODE_ROAM then
+    elseif self:getCurrentMode() == constants.MODE_GANKING then
         return self:DoGank(bot)
     elseif self:getCurrentMode() == constants.MODE_PUSHLANE then
         return self:DoPushLane(bot)
@@ -513,10 +542,11 @@ function X:DoRetreat(bot, reason)
             utils.myPrint("DoRetreat - STARTING TO RETREAT TO FOUNTAIN")
         end
 
+        self:setHeroVar("IsRetreating", true)
+        
         -- if we healed up enough, change our reason for retreating
         if bot:DistanceFromFountain() >= 5000 and (bot:GetHealth()/bot:GetMaxHealth()) > 0.6 and (bot:GetMana()/bot:GetMaxMana()) > 0.6 then
             utils.myPrint("DoRetreat - Upgrading from RETREAT_FOUNTAIN to RETREAT_DANGER")
-            self:setHeroVar("IsRetreating", true)
             self:setHeroVar("RetreatReason", constants.RETREAT_DANGER)
             return true
         end
@@ -531,26 +561,26 @@ function X:DoRetreat(bot, reason)
             utils.myPrint("STARTING TO RETREAT b/c OF DANGER")
         end
 
-        if self:getHeroVar("IsRetreating") then
-            local enemyTooClose = false
-            for _, enemy in pairs(nearbyEnemyHeroes) do
-                if GetUnitToUnitDistance(bot, enemy) < Max(650, enemy:GetAttackRange()) then
-                    enemyTooClose = true
-                    break
-                end
+        self:setHeroVar("IsRetreating", true)
+        
+        local enemyTooClose = false
+        for _, enemy in pairs(nearbyEnemyHeroes) do
+            if GetUnitToUnitDistance(bot, enemy) < Max(650, enemy:GetAttackRange()) then
+                enemyTooClose = true
+                break
             end
-            
-            if bot:TimeSinceDamagedByAnyHero() < 3.0 or enemyTooClose then
-                if bot:DistanceFromFountain() < 5000 and (bot:GetHealth()/bot:GetMaxHealth()) < 1.0 then
-                    retreat_generic.Think(bot)
-                    return true
-                elseif bot:DistanceFromFountain() >= 5000 and (bot:GetHealth()/bot:GetMaxHealth()) < 0.6 then
-                    retreat_generic.Think(bot)
-                    return true
-                elseif (bot:GetHealth()/bot:GetMaxHealth()) < 0.75 then
-                    retreat_generic.Think(bot)
-                    return true
-                end
+        end
+        
+        if bot:TimeSinceDamagedByAnyHero() < 3.0 or enemyTooClose then
+            if bot:DistanceFromFountain() < 5000 and (bot:GetHealth()/bot:GetMaxHealth()) < 1.0 then
+                retreat_generic.Think(bot)
+                return true
+            elseif bot:DistanceFromFountain() >= 5000 and (bot:GetHealth()/bot:GetMaxHealth()) < 0.6 then
+                retreat_generic.Think(bot)
+                return true
+            elseif (bot:GetHealth()/bot:GetMaxHealth()) < 0.75 then
+                retreat_generic.Think(bot)
+                return true
             end
         end
         --utils.myPrint("DoRetreat - RETREAT DANGER End".." - DfF: "..bot:DistanceFromFountain()..", H: "..bot:GetHealth())
@@ -570,7 +600,7 @@ function X:DoRetreat(bot, reason)
                 rLoc = utils.VectorTowards(mypos, utils.Fountain(GetTeam()), 300)
             end
 
-            utils.MoveSafelyToLocation(bot, rLoc)
+            gHeroVar.HeroMoveToLocation(bot, rLoc)
             --utils.myPrint("TowerRetreat: ", d)
             return true
         end
@@ -593,7 +623,7 @@ function X:DoRetreat(bot, reason)
                 rLoc = utils.VectorTowards(mypos, utils.Fountain(GetTeam()), 300)
             end
 
-            utils.MoveSafelyToLocation(bot, rLoc)
+            gHeroVar.HeroMoveToLocation(bot, rLoc)
             
             return true
         end
@@ -602,9 +632,10 @@ function X:DoRetreat(bot, reason)
 
     -- If we got here, we are done retreating
     --utils.myPrint("done retreating from reason: "..reason)
-    self:RemoveMode(MODE_RETREAT)
+    self:RemoveMode(constants.MODE_RETREAT)
     self:setHeroVar("IsRetreating", false)
     self:setHeroVar("RetreatReason", nil)
+    self:setHeroVar("RetreatLane", nil)
     return true
 end
 
@@ -634,43 +665,97 @@ function X:DoFight(bot)
     local target = self:getHeroVar("Target")  
     if target.Id > 0 and IsHeroAlive(target.Id) then
         if utils.ValidTarget(target) then
-            if #nearbyEnemyTowers == 0 and #nearbyEnemyHeroes == 1 then
-                if target.Obj:IsAttackImmune() or (bot:GetLastAttackTime() + bot:GetSecondsPerAttack()) > GameTime() then
-                    if item_usage.UseMovementItems() then return true end
-                    if utils.IsMelee(bot) then
-                        bot:Action_MoveToUnit(target.Obj)
-                    else
-                        local dist = GetUnitToUnitDistance(bot, target.Obj)
-                        if dist > 0.7*bot:GetAttackRange() then
-                            gHeroVar.HeroMoveToLocation(bot, utils.VectorTowards(bot:GetLocation(), target.Obj:GetLocation(), dist-0.7*bot:GetAttackRange()))
-                        elseif dist < 0.4*bot:GetAttackRange() then
-                            gHeroVar.HeroMoveToLocation(bot, utils.VectorAway(bot:GetLocation(), target.Obj:GetLocation(), 0.7*bot:GetAttackRange()-dist))
-                        end
-                    end
-                else
-                    gHeroVar.HeroAttackUnit(bot, target.Obj, true)
+        
+            local inRangeEnemyTowers = {}
+            for _, eTower in pairs(nearbyEnemyTowers) do
+                if GetUnitToUnitDistance(bot, eTower) < 750 then
+                    table.insert(inRangeEnemyTowers, eTower)
                 end
-                return true
-            elseif #nearbyEnemyTowers > 0 and #nearbyEnemyHeroes > 1 then
-                self:RemoveMode(MODE_FIGHT)
-                self:setHeroVar("Target", NoTarget)
-                return false
-            elseif #nearbyEnemyHeroes > 1 then
-                local myDmgToTarget = bot:GetEstimatedDamageToTarget( true, target.Obj, 5.0, DAMAGE_TYPE_ALL )
+            end
+            
+            local inRangeAlliedTowers = {}
+            for _, aTower in pairs(nearbyAlliedTowers) do
+                if GetUnitToUnitDistance(bot, aTower) < 650 then
+                    table.insert(inRangeAlliedTowers, aTower)
+                end
+            end
+            
+            if #inRangeEnemyTowers == 0 and #nearbyEnemyHeroes == 1 then
+                local enemy = nearbyEnemyHeroes[1]
+                
+                if enemy ~= target.Obj then
+                    utils.myPrint("Unhandled situation, fix me!")
+                    self:setHeroVar("Target", {Obj=enemy, Id=enemy:GetPlayerID()})
+                end
+                
+                local ourDmgToTarget = 0
+                for _, ally in pairs(nearbyAlliedHeroes) do
+                    if GetUnitToUnitDistance( ally, enemy ) < enemy:GetAttackRange() then
+                        ourDmgToTarget = ally:GetEstimatedDamageToTarget( true, enemy, 5.0, DAMAGE_TYPE_ALL )
+                    end
+                end
+                
                 local enemyDmgToMe = 0
                 for _, enemy in pairs(nearbyEnemyHeroes) do
                     if GetUnitToUnitDistance( bot, enemy ) < enemy:GetAttackRange() then
                         enemyDmgToMe = enemyDmgToMe + enemy:GetEstimatedDamageToTarget( false, bot, 5.0, DAMAGE_TYPE_ALL )
                     end
                 end
-                if myDmgToTarget > target.Obj:GetHealth() and enemyDmgToMe < (bot:GetHealth() + 100) then
-                    if target.Obj:IsAttackImmune() or (bot:GetLastAttackTime() + bot:GetSecondsPerAttack()) > GameTime() then
-                        if item_usage.UseMovementItems() then return true end
+                
+                if ourDmgToTarget > enemyDmgToMe and bot:GetHealth()+50 > enemyDmgToMe then
+                    if enemy:IsAttackImmune() or (bot:GetLastAttackTime() + bot:GetSecondsPerAttack()) > GameTime() then
                         if utils.IsMelee(bot) then
+                            if item_usage.UseMovementItems(enemy:GetLocation()) then return true end
+                            bot:Action_MoveToUnit(enemy)
+                        else
+                            local dist = GetUnitToUnitDistance(bot, enemy)
+                            if dist > 0.7*bot:GetAttackRange() then
+                                if item_usage.UseMovementItems(enemy:GetLocation()) then return true end
+                                gHeroVar.HeroMoveToLocation(bot, utils.VectorTowards(bot:GetLocation(), enemy:GetLocation(), dist-0.7*bot:GetAttackRange()))
+                            elseif dist < 0.4*bot:GetAttackRange() then
+                                gHeroVar.HeroMoveToLocation(bot, utils.VectorAway(bot:GetLocation(), enemy:GetLocation(), 0.7*bot:GetAttackRange()-dist))
+                            end
+                        end
+                    else
+                        gHeroVar.HeroAttackUnit(bot, enemy, true)
+                    end
+                    return true
+                else
+                    utils.myPrint("Abandoning my fight against single enemy - too risky")
+                    self:RemoveMode(MODE_FIGHT)
+                    self:setHeroVar("Target", NoTarget)
+                    return false
+                end
+                return false
+            elseif #inRangeEnemyTowers > 0 and #nearbyEnemyHeroes > 1 then
+                utils.myPrint("Abandoning Fight - a tower is close and more than 1 enemies")
+                -- FIXME: Check number of allies vs number of enemies accounting for tower
+                self:RemoveMode(MODE_FIGHT)
+                self:setHeroVar("Target", NoTarget)
+                return false
+            elseif #nearbyEnemyHeroes > 1 then
+                local ourDmgToTarget = 0
+                for _, ally in pairs(nearbyAlliedHeroes) do
+                    if GetUnitToUnitDistance( ally, target.Obj ) < target.Obj:GetAttackRange() then
+                        ourDmgToTarget = ally:GetEstimatedDamageToTarget( true, target.Obj, 5.0, DAMAGE_TYPE_ALL )
+                    end
+                end
+                
+                local enemyDmgToMe = 0
+                for _, enemy in pairs(nearbyEnemyHeroes) do
+                    if GetUnitToUnitDistance( bot, enemy ) < enemy:GetAttackRange() then
+                        enemyDmgToMe = enemyDmgToMe + enemy:GetEstimatedDamageToTarget( false, bot, 5.0, DAMAGE_TYPE_ALL )
+                    end
+                end
+                if ourDmgToTarget > target.Obj:GetHealth() and enemyDmgToMe < ourDmgToTarget then --(bot:GetHealth() + 100) then
+                    if target.Obj:IsAttackImmune() or (bot:GetLastAttackTime() + bot:GetSecondsPerAttack()) > GameTime() then
+                        if utils.IsMelee(bot) then
+                            if item_usage.UseMovementItems(enemy:GetLocation()) then return true end
                             bot:Action_MoveToUnit(target.Obj)
                         else
                             local dist = GetUnitToUnitDistance(bot, target.Obj)
                             if dist > 0.7*bot:GetAttackRange() then
+                                if item_usage.UseMovementItems(enemy:GetLocation()) then return true end
                                 gHeroVar.HeroMoveToLocation(bot, utils.VectorTowards(bot:GetLocation(), target.Obj:GetLocation(), dist-0.7*bot:GetAttackRange()))
                             elseif dist < 0.4*bot:GetAttackRange() then
                                 gHeroVar.HeroMoveToLocation(bot, utils.VectorAway(bot:GetLocation(), target.Obj:GetLocation(), 0.7*bot:GetAttackRange()-dist))
@@ -680,27 +765,27 @@ function X:DoFight(bot)
                         gHeroVar.HeroAttackUnit(bot, target.Obj, true)
                     end
                 else
+                    utils.myPrint("Abandoning my fight... doesn't look favorable")
                     self:RemoveMode(MODE_FIGHT)
                     self:setHeroVar("Target", NoTarget)
                     return false
                 end
-            elseif #nearbyEnemyTowers > 0 then
+            elseif #inRangeEnemyTowers > 0 then
                 local towerDmgToMe = 0
                 local myDmgToTarget = bot:GetEstimatedDamageToTarget( true, target.Obj, 5.0, DAMAGE_TYPE_ALL )
-                for _, tow in pairs(nearbyEnemyTowers) do
-                    if GetUnitToUnitDistance( bot, tow ) < 750 then
-                        towerDmgToMe = towerDmgToMe + tow:GetEstimatedDamageToTarget( false, bot, 5.0, DAMAGE_TYPE_PHYSICAL )
-                    end
+                for _, tow in pairs(inRangeEnemyTowers) do
+                    towerDmgToMe = towerDmgToMe + tow:GetEstimatedDamageToTarget( false, bot, 5.0, DAMAGE_TYPE_PHYSICAL )
                 end
                 if myDmgToTarget > target.Obj:GetHealth() and towerDmgToMe < (bot:GetHealth() + 100) then
                     --print(utils.GetHeroName(bot), " - we are tower diving for the kill")
                     if target.Obj:IsAttackImmune() or (bot:GetLastAttackTime() + bot:GetSecondsPerAttack()) > GameTime() then
-                        if item_usage.UseMovementItems() then return true end
                         if utils.IsMelee(bot) then
+                            if item_usage.UseMovementItems(enemy:GetLocation()) then return true end
                             bot:Action_MoveToUnit(target.Obj)
                         else
                             local dist = GetUnitToUnitDistance(bot, target.Obj)
                             if dist > 0.7*bot:GetAttackRange() then
+                                if item_usage.UseMovementItems(enemy:GetLocation()) then return true end
                                 gHeroVar.HeroMoveToLocation(bot, utils.VectorTowards(bot:GetLocation(), target.Obj:GetLocation(), dist-0.7*bot:GetAttackRange()))
                             elseif dist < 0.4*bot:GetAttackRange() then
                                 gHeroVar.HeroMoveToLocation(bot, utils.VectorAway(bot:GetLocation(), target.Obj:GetLocation(), 0.7*bot:GetAttackRange()-dist))
@@ -711,6 +796,7 @@ function X:DoFight(bot)
                     end
                     return true
                 else
+                    utils.myPrint("Abandoning my fight... enemy tower presence makes it not faovrable")
                     self:RemoveMode(MODE_FIGHT)
                     self:setHeroVar("Target", NoTarget)
                     return false
@@ -731,7 +817,7 @@ function X:DoFight(bot)
             else
                 local pLoc = enemyData.PredictedLocation(target.Id, timeSinceSeen)
                 if pLoc then
-                    if item_usage.UseMovementItems() then return true end
+                    if item_usage.UseMovementItems(pLoc) then return true end
                     gHeroVar.HeroMoveToLocation(bot, pLoc)
                     return true
                 else
@@ -767,13 +853,16 @@ function X:DoUseShrine(bot)
     
     local botShrineMode = self:getHeroVar("ShrineMode")
     local shrine = self:getHeroVar("Shrine")
+    
+    --utils.myPrint("botShrineMode: ", botShrineMode[1], ", shrineLoc: ", tostring(shrine:GetLocation()))
+    
     if botShrineMode then
         if shrine and GetUnitToUnitDistance(bot, shrine) > 300 then
-            gHeroVar.HeroMoveToLocation(bot, shrine:GetLocation())
+            bot:Action_MoveToLocation(shrine:GetLocation())
             local mvAbility = getHeroVar("HasMovementAbility")
             if mvAbility and mvAbility[1]:IsFullyCastable() then
                 local newLoc = utils.VectorTowards(bot:GetLocation(), shrine:GetLocation(), mvAbility[2])
-                gHeroVar.HeroPushUseAbilityOnLocation(bot, mvAbility[1], newLoc)
+                bot:ActionPush_UseAbilityOnLocation(mvAbility[1], newLoc)
             end
             return true
         elseif botShrineMode[1] ~= constants.SHRINE_USE then
@@ -929,6 +1018,8 @@ function X:DoGank(bot)
         local bTimeToKill = ganking_generic.ApproachTarget(bot, gankTarget)
         if bTimeToKill then
             bStillGanking = ganking_generic.KillTarget(bot, gankTarget)
+            self:RemoveMode(constants.MODE_GANKING)
+            self:setHeroVar("GankTarget", NoTarget)
         end
 
         if not bStillGanking then

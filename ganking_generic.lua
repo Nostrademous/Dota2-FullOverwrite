@@ -178,7 +178,7 @@ function KillTarget(bot, target)
     --utils.myPrint("[KillTarget()] - TargetID: ", target.Id, ", Alive: ", IsHeroAlive(target.Id))
     if target.Id > 0 and IsHeroAlive(target.Id) then
         if utils.ValidTarget(target) then
-            setHeroVar("Target", target)
+            setHeroVar("Target", {Obj=target.Obj, Id=target.Id})
             utils.myPrint("killing target :: ", utils.GetHeroName(target.Obj))
             return true
         end

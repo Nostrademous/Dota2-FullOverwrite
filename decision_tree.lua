@@ -16,6 +16,7 @@ require( GetScriptDirectory().."/jungle_status" )
 require( GetScriptDirectory().."/buildings_status" )
 require( GetScriptDirectory().."/fighting" )
 require( GetScriptDirectory().."/global_game_state" )
+require( GetScriptDirectory().."/debugging" )
 
 local utils = require( GetScriptDirectory().."/utility" )
 local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
@@ -309,7 +310,10 @@ function X:Think(bot)
     
     -- check if jungle respawn timer was hit to repopulate our table
     jungle_status.checkSpawnTimer()
-    
+
+    -- draw debug stuff (actual drawing is done on the first call in a frame)
+    debugging.draw()
+
     -- update our building information
     buildings_status.Update()
     

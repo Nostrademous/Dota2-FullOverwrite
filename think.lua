@@ -9,6 +9,9 @@ require( GetScriptDirectory().."/hero_think" )
 
 local utils = require( GetScriptDirectory().."/utility" )
 
+local laningMode    = require( GetScriptDirectory().."/modes/laning" )
+local runeMode      = require( GetScriptDirectory().."/modes/runes" )
+
 local freqTeamThink = 0.25
 local lastTeamThink = -1000.0
 
@@ -227,7 +230,7 @@ function X.HeroThink(bot, nearbyEnemies, nearbyAllies, nearbyECreeps, nearbyACre
     evaluatedDesireValue = hero_think.ConsiderRune(bot, playerAssignment)
     if evaluatedDesireValue > highestDesireValue then
         highestDesireValue = evaluatedDesireValue
-        highestDesireMode = constants.MODE_RUNEPICKUP
+        highestDesireMode = runeMode -- constants.MODE_RUNEPICKUP
     end
     
     -- The decision to Roshan is done in TeamThink().
@@ -252,7 +255,7 @@ function X.HeroThink(bot, nearbyEnemies, nearbyAllies, nearbyECreeps, nearbyACre
     evaluatedDesireValue = hero_think.ConsiderLaning(bot, playerAssignment)
     if evaluatedDesireValue > highestDesireValue then
         highestDesireValue = evaluatedDesireValue
-        highestDesireMode = constants.MODE_LANING
+        highestDesireMode = laningMode -- constants.MODE_LANING
     end
     
     -- Warding is done on a per-lane basis. This evaluates if this Hero

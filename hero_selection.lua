@@ -4,11 +4,11 @@
 -------------------------------------------------------------------------------
 
 local RadiantBots = {
-    "npc_dota_hero_drow_ranger",
-    "npc_dota_hero_crystal_maiden",
-    "npc_dota_hero_bloodseeker",
+    "npc_dota_hero_chaos_knight", --"npc_dota_hero_drow_ranger",
+    "npc_dota_hero_bane", --"npc_dota_hero_crystal_maiden",
+    "npc_dota_hero_mirana", --"npc_dota_hero_bloodseeker",
     "npc_dota_hero_invoker",
-    "npc_dota_hero_viper"
+    "npc_dota_hero_axe" --"npc_dota_hero_viper"
 }
 
 local DireBots = {

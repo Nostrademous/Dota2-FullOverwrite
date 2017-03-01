@@ -610,6 +610,13 @@ function U.GetHeroName(bot)
     return string.sub(sName, 15, string.len(sName));
 end
 
+function U.IsBusy(bot)
+    if bot:IsChanneling() then return true end
+    if bot:IsCastingAbility() then return true end
+    if bot:NumQueuedActions() > 0 then return true end
+    return false
+end
+
 function U.IsCore()
     if getHeroVar("Role") == constants.ROLE_HARDCARRY
         or getHeroVar("Role") == constants.ROLE_MID
@@ -719,155 +726,23 @@ function U.PositionAlongLane(bot, lane)
     return fAmount.amount
 end
 
--- CONTRIBUTOR: Function below was coded by Platinum_dota2
-function U.MoveSafelyToLocation(npcBot, dest)
-    --[[
-    if getHeroVar("NextHop")==nil or #getHeroVar("NextHop")==0 or getHeroVar("PathfindingWasInitiated")==nil or (not getHeroVar("PathfindingWasInitiated")) then
-        U.InitPathFinding()
-        U.myPrint("Path finding for all heroes has been initiated")
+function U.NearestLane(bot)
+    local botPos = bot:GetLocation()
+    for i = 1, 3, 1 do
+        local fAmount = GetAmountAlongLane(i, botPos)
+        if fAmount.distance <= 1600 then return i end
     end
+    return 0
+end
 
-    local safeSpots = nil
-    local safeDist = 2000
-    if dest == nil then
-        U.myPrint("PathFinding: No destination was specified")
-        return
-    end
-
-    if GetTeam()==TEAM_RADIANT then
-        safeSpots = U.RadiantSafeSpots
-    else
-        safeSpots = U.DireSafeSpots
-    end
-
-    if getHeroVar("FinalHop")==nil then
-        setHeroVar("FinalHop", false)
-    end
-
-
-    local s=nil;
-    local si=-1;
-    local mindisS=100000;
-
-    local t=nil;
-    local ti=-1;
-    local mindisT=100000;
-
-    local CurLoc = npcBot:GetLocation()
-
-    for i,spot in pairs(safeSpots) do
-        if U.GetDistance(spot,CurLoc)<mindisS then
-            s=spot;
-            si=i;
-            mindisS=U.GetDistance(spot,CurLoc);
-        end
-
-        if U.GetDistance(spot,dest)<mindisT then
-            t=spot;
-            ti=i;
-            mindisT=U.GetDistance(spot,dest);
-        end
-    end
-
-    if s==nil or t==nil then
-        U.AllChat('Something is wrong with path finding.')
-        return
-    end
-
-    if GetUnitToLocationDistance(npcBot,dest)<safeDist or getHeroVar("FinalHop") or mindisS+mindisT>GetUnitToLocationDistance(npcBot,dest) then
-        gHeroVar.HeroMoveToLocation(npcBot, dest)
-        setHeroVar("FinalHop", true)
-        return;
-    end
-
-    if si==ti then
-        setHeroVar("FinalHop", true)
-        gHeroVar.HeroMoveToLocation(npcBot, dest)
-        return;
-    end
-
-    if GetUnitToLocationDistance(npcBot,s)<500 and getHeroVar("LastHop")==nil then
-        setHeroVar("LastHop", si)
-    end
-
-    if mindisS>safeDist or getHeroVar("LastHop")==nil then
-        gHeroVar.HeroMoveToLocation(npcBot, s)
-        return
-    end
-
-    if GetUnitToLocationDistance(npcBot,safeSpots[ getHeroVar("NextHop")[getHeroVar("LastHop")][ti] ])<500 then
-        setHeroVar("LastHop", getHeroVar("NextHop")[getHeroVar("LastHop")][ti])
-    end
-
-    local newT = getHeroVar("NextHop")[getHeroVar("LastHop")][ti]
-
-    gHeroVar.HeroMoveToLocation(npcBot, safeSpots[newT])
-    --]]
-    gHeroVar.HeroMoveToLocation(npcBot, dest)
+function U.MoveSafelyToLocation(bot, dest)
+    bot:Action_MoveToLocation(dest)
 end
 
 function U.InitPathFinding()
-    --[[
-    -- creating the graph
-    local SafeDist = 2000
-    local safeSpots = {}
-    if GetTeam() == TEAM_RADIANT then
-        safeSpots = U.RadiantSafeSpots
-    else
-        safeSpots = U.DireSafeSpots
-    end
-
-    --initialization
-    local inf = 100000
-    local dist = {}
-    local NextHop = {}
-
-    U.myPrint("Inits are done")
-    for u,uv in pairs(safeSpots) do
-        local q=true;
-        dist[u]={};
-        NextHop[u]={};
-        for v,vv in pairs(safeSpots) do
-            if U.GetDistance(uv,vv)>SafeDist then
-                dist[u][v]=inf;
-            else
-                q=false;
-                dist[u][v]=U.GetDistance(uv,vv);
-            end
-            NextHop[u][v]=v;
-        end
-        if q then
-            U.myPrint("There is an isolated vertex in safespots")
-        end
-    end
-
-    --floyd algorithm (path is saved in NextHop)
-    for k,_ in pairs(safeSpots) do
-        for u,_ in pairs(safeSpots) do
-            for v,_ in pairs(safeSpots) do
-                if dist[u][v]>dist[u][k]+dist[k][v] then
-                    dist[u][v]=dist[u][k]+dist[k][v];
-                    NextHop[u][v]=NextHop[u][k];
-                end
-            end
-        end
-    end
-
-    local allyList = GetUnitList(UNIT_LIST_ALLIED_HEROES)
-    for _, ally in pairs(allyList) do
-        if ally:IsBot() then
-            gHeroVar.SetVar(ally:GetPlayerID(), "NextHop", U.deepcopy(NextHop))
-            gHeroVar.SetVar(ally:GetPlayerID(), "PathfindingWasInitiated", true)
-        end
-    end
-    --]]
 end
 
 function U.InitPath(npcBot)
-    --[[
-    setHeroVar("FinalHop", false)
-    setHeroVar("LastHop", nil)
-    --]]
 end
 
 function U.IsInLane()
@@ -895,11 +770,9 @@ function U.EnemiesNearLocation(bot, loc, dist)
     end
 
     local num = 0
-    --FIXME: this list below only returns visible heroes, need to do this for all alive heroes
     local listEnemies = GetUnitList(UNIT_LIST_ENEMY_HEROES)
     for _, enemy in pairs(listEnemies) do
-        local eID = enemy:GetPlayerID()
-        if U.ValidTarget(enemy) and IsHeroAlive(eID) and U.GetDistance(enemy:GetLocation(), loc) <= dist then
+        if not enemy:IsNull() and U.GetDistance(enemy:GetLocation(), loc) <= dist then
             num = num + 1
         end
     end
@@ -961,53 +834,12 @@ end
 -- Neutral Functions
 -------------------------------------------------------------------------------
 
--- TODO: should be broken, from looking at it (U["tableNeutralCamps"][CAMP_EASY] etc. doenst make sense)
-function U.DistanceToNeutrals(hUnit, largestCampType)
-    local camps = {}
-    local sCamps = {}
-    for i,v in ipairs(U["tableNeutralCamps"][CAMP_EASY]) do
-        camps[GetUnitToLocationDistance( hUnit, v )] = v
-    end
-    if largestCampType == CAMP_EASY then
-        for k,v in U.Spairs(HighScore, function(t,a,b) return t[b] < t[a] end) do
-            sCamps[k] = v
-        end
-        return camps
-    end
-    for i,v in ipairs(U["tableNeutralCamps"][CAMP_MEDIUM]) do
-        camps[GetUnitToLocationDistance( hUnit, v )] = v
-    end
-    if largestCampType == CAMP_MEDIUM then
-        for k,v in U.Spairs(HighScore, function(t,a,b) return t[b] < t[a] end) do
-            sCamps[k] = v
-        end
-    return camps
-    end
-    for i,v in ipairs(U["tableNeutralCamps"][CAMP_HARD]) do
-        camps[GetUnitToLocationDistance( hUnit, v )] = v
-    end
-    if largestCampType == CAMP_HARD then
-        for k,v in U.Spairs(HighScore, function(t,a,b) return t[b] < t[a] end) do
-            sCamps[k] = v
-        end
-        return camps
-    end
-    for i,v in ipairs(U["tableNeutralCamps"][CAMP_ANCIENT]) do
-        camps[GetUnitToLocationDistance( hUnit, v )] = v
-    end
-
-    for k,v in U.Spairs(HighScore, function(t,a,b) return t[b] < t[a] end) do
-        sCamps[k] = v
-    end
-    return camps
-end
-
 function U.NextNeutralSpawn()
     if DotaTime() < 30 then
         return 30
     else
         t = math.ceil((DotaTime() - 60) / 120) * 120 + 60
-        U.myPrint("Next spawn time is ", t)
+        --U.myPrint("Next spawn time is ", t)
         return t
     end
 end
@@ -1107,6 +939,25 @@ function U.GetLaneTower(team, lane, i)
     return nil
 end
 
+function U.GetLaneTowerAttackTarget(team, lane, i)
+    if i > 3 and i < 6 then
+        return GetTowerAttackTarget(team, 5 + i)
+    end
+
+    local j = i - 1
+    if lane == LANE_MID then
+        j = j + 3
+    elseif lane == LANE_BOT then
+        j = j + 6
+    end
+
+    if j < 9 and j > -1 and (lane == LANE_BOT or lane == LANE_MID or lane == LANE_TOP) then
+        return GetTowerAttackTarget(team, j)
+    end
+
+    return nil
+end
+
 function U.Fountain(team)
     if team==TEAM_RADIANT then
         return Vector(-7093,-6542);
@@ -1200,7 +1051,7 @@ function U.GetCreepHealthDeltaPerSec(creep)
     end
 end
 
--- takes a "RANGE", returns creep handle and health value of that creep
+-- takes a creep list, returns creep handle and health value of that creep
 function U.GetWeakestCreep(creeps)
     local WeakestCreep = nil
     local LowestHealth = 100000
@@ -1244,13 +1095,21 @@ function U.IsAnyHeroAttackingMe(fTime)
     return false
 end
 
-function U.IsTowerAttackingMe(fTime)
-    local fTime = fTime or 1.0
-    local npcBot = GetBot()
+function U.IsTowerAttackingMe()
+    local bot = GetBot()
+    local nearEnemyTowers = bot:GetNearbyTowers(750, true)
 
-    if npcBot:WasRecentlyDamagedByTower(fTime) then
-        return true
+    -- if there are no towers then the answer is no
+    if #nearEnemyTowers == 0 then return false end
+
+    local lane = U.NearestLane(bot)
+    if lane == 0 then return false end
+
+    for i = 1, 5, 1, do
+        local target = GetTowerAttackTarget(U.GetOtherTeam(), lane, i)
+        if bot == target then return true end
     end
+
     return false
 end
 
@@ -1571,7 +1430,7 @@ function U.CourierThink(npcBot)
     setHeroVar("LastCourierThink", newTime)
 
     local courier = GetCourier(0)
-    if courier:GetMaxHealth() >= 150 and (GameTime() - gHeroVar.GetGlobalVar("LastCourierBurst")) >= 90.0 then
+    if IsFlyingCourier(courier) and courier:GetHealth() >= 1 and (GameTime() - gHeroVar.GetGlobalVar("LastCourierBurst")) >= 90.0 then
         if GetCourierState(courier) == COURIER_STATE_DELIVERING_ITEMS or GetCourierState(courier) == COURIER_STATE_RETURNING_TO_BASE then
             npcBot:ActionImmediate_Courier(courier, COURIER_ACTION_BURST)
             gHeroVar.SetGlobalVar("LastCourierBurst", GameTime())
@@ -1608,6 +1467,11 @@ function U.GetNearestTree(npcBot)
 end
 
 -------------------------------------------------------------------------------
+
+function U.pause(...)
+    U.myPrint(...)
+    DebugPause()
+end
 
 function U.myPrint(...)
     local args = {...}

@@ -25,19 +25,18 @@ end
 -------------------------------------------------------------------------------
 
 function OnStart()
-    utils.InitPath()
 end
 
 function GetSideShop()
-    local npcBot = GetBot()
+    local bot = GetBot()
 
-    local Enemies = npcBot:GetNearbyHeroes(1300, true, BOT_MODE_NONE)
+    local Enemies = bot:GetNearbyHeroes(1300, true, BOT_MODE_NONE)
 
-    if  npcBot:DistanceFromSideShop() > 2400 or (#Enemies > 1 and npcBot:DistanceFromSideShop() > 1500) then
+    if  bot:DistanceFromSideShop() > 2400 or (#Enemies > 1 and bot:DistanceFromSideShop() > 1500) then
         return nil
     end
 
-    if GetUnitToLocationDistance(npcBot, constants.SIDE_SHOP_TOP) < GetUnitToLocationDistance(npcBot, constants.SIDE_SHOP_BOT) then
+    if GetUnitToLocationDistance(bot, constants.SIDE_SHOP_TOP) < GetUnitToLocationDistance(bot, constants.SIDE_SHOP_BOT) then
         return constants.SIDE_SHOP_TOP
     else
         return constants.SIDE_SHOP_BOT
@@ -46,7 +45,7 @@ function GetSideShop()
 end
 
 local function GetSecretShop()
-    local npcBot = GetBot()
+    local bot = GetBot()
 
     if GetTeam() == TEAM_RADIANT then
         local safeTower = utils.GetLaneTower(utils.GetOtherTeam(), LANE_BOT, 1)
@@ -62,7 +61,7 @@ local function GetSecretShop()
         end
     end
 
-    if GetUnitToLocationDistance(npcBot, constants.SECRET_SHOP_DIRE) < GetUnitToLocationDistance(npcBot, constants.SECRET_SHOP_RADIANT) then
+    if GetUnitToLocationDistance(bot, constants.SECRET_SHOP_DIRE) < GetUnitToLocationDistance(bot, constants.SECRET_SHOP_RADIANT) then
         return constants.SECRET_SHOP_DIRE
     else
         return constants.SECRET_SHOP_RADIANT
@@ -70,59 +69,53 @@ local function GetSecretShop()
 end
 
 function ThinkSecretShop( NextItem )
-    local npcBot = GetBot()
+    local bot = GetBot()
     if  NextItem == nil then
         return false
     end
 
-    if npcBot:IsCastingAbility() or npcBot:IsChanneling() then return false end
-
-    if (not IsItemPurchasedFromSecretShop(NextItem)) or npcBot:GetGold() < GetItemCost( NextItem ) then
+    if (not IsItemPurchasedFromSecretShop(NextItem)) or bot:GetGold() < GetItemCost( NextItem ) then
         return false
     end
 
     local secLoc = GetSecretShop()
+    if secLoc = =nil then return false end
 
-    if GetUnitToLocationDistance(npcBot, secLoc) < constants.SHOP_USE_DISTANCE then
-        if npcBot:GetGold() >= GetItemCost( NextItem ) then
-            npcBot:ActionImmediate_PurchaseItem( NextItem )
-            utils.InitPath()
+    if GetUnitToLocationDistance(bot, secLoc) < constants.SHOP_USE_DISTANCE then
+        if bot:GetGold() >= GetItemCost( NextItem ) then
+            bot:ActionImmediate_PurchaseItem( NextItem )
             return true
         else
             return false
         end
     else
-        utils.MoveSafelyToLocation(npcBot, secLoc)
+        bot:Action_MoveToLocation(secLoc)
         return false
     end
 end
 
 function ThinkSideShop( NextItem )
-    local npcBot = GetBot()
+    local bot = GetBot()
     if  NextItem == nil then
         return false
     end
 
-    if npcBot:IsCastingAbility() or npcBot:IsChanneling() then return false end
-
-    if (not IsItemPurchasedFromSideShop(NextItem)) or npcBot:GetGold() < GetItemCost( NextItem ) then
+    if (not IsItemPurchasedFromSideShop(NextItem)) or bot:GetGold() < GetItemCost( NextItem ) then
         return false
     end
 
     local sideLoc = GetSideShop()
-
     if sideLoc == nil then return false end
 
-    if GetUnitToLocationDistance(npcBot, sideLoc) < constants.SHOP_USE_DISTANCE then
-        if npcBot:GetGold() >= GetItemCost( NextItem ) then
-            npcBot:ActionImmediate_PurchaseItem( NextItem )
-            utils.InitPath()
+    if GetUnitToLocationDistance(bot, sideLoc) < constants.SHOP_USE_DISTANCE then
+        if bot:GetGold() >= GetItemCost( NextItem ) then
+            bot:ActionImmediate_PurchaseItem( NextItem )
             return true
         else
             return false
         end
     else
-        utils.MoveSafelyToLocation(npcBot, sideLoc)
+        bot:Action_MoveToLocation(secLoc)
         return false
     end
 end

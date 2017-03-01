@@ -304,9 +304,13 @@ function ConsiderRune(bot, playerAssignment)
     
     if playerAssignment[bot:GetPlayerID()].GetRune ~= nil then
         local runeInfo = playerAssignment[bot:GetPlayerID()].GetRune
-        setHeroVar("RuneTarget", runeInfo[1])
-        setHeroVar("RuneLoc", runeInfo[2])
-        return BOT_MODE_DESIRE_HIGH 
+        if runeInfo[1] == nil or GetRuneStatus(runeInfo[1]) == RUNE_STATUS_MISSING then
+            return BOT_MODE_DESIRE_NONE
+        else
+            setHeroVar("RuneTarget", runeInfo[1])
+            setHeroVar("RuneLoc", runeInfo[2])
+            return BOT_MODE_DESIRE_HIGH 
+        end
     end
     
     return BOT_MODE_DESIRE_NONE

@@ -48,7 +48,10 @@ function draw()
 end
 
 function SetBotState(bot, line, state)
-    if line < 1 or BOT_STATES_MAX_LINES > 2 then return end
+    if line < 1 or BOT_STATES_MAX_LINES > 2 then
+        print("SetBotState: line out of bounds!")
+        return
+    end
     local name = utils.GetHeroName(bot)
     if bot_states[name] == nil then
         bot_states[name] = {}
@@ -57,7 +60,10 @@ function SetBotState(bot, line, state)
 end
 
 function SetTeamState(category, line, state)
-    if line < 1 or line > TEAM_STATES_MAX_LINES then return end
+    if line < 1 or line > TEAM_STATES_MAX_LINES then
+        print("SetBotState: line out of bounds!")
+        return
+    end
     if team_states[category] == nil then
         team_states[category] = {}
     end

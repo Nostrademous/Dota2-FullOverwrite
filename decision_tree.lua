@@ -751,7 +751,7 @@ function X:DoFight(bot)
                         else
                             local dist = GetUnitToUnitDistance(bot, target.Obj)
                             if dist > 0.7*bot:GetAttackRange() then
-                                if item_usage.UseMovementItems(enemy:GetLocation()) then return true end
+                                if item_usage.UseMovementItems(target.Obj:GetLocation()) then return true end
                                 gHeroVar.HeroMoveToLocation(bot, utils.VectorTowards(bot:GetLocation(), target.Obj:GetLocation(), dist-0.7*bot:GetAttackRange()))
                             elseif dist < 0.4*bot:GetAttackRange() then
                                 gHeroVar.HeroMoveToLocation(bot, utils.VectorAway(bot:GetLocation(), target.Obj:GetLocation(), 0.7*bot:GetAttackRange()-dist))

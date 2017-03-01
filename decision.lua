@@ -5,6 +5,7 @@
 
 require( GetScriptDirectory().."/constants" )
 require( GetScriptDirectory().."/role" )
+require( GetScriptDirectory().."/buildings_status" )
 
 local utils = require( GetScriptDirectory().."/utility" )
 local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
@@ -126,7 +127,8 @@ function X:DoInit(bot)
     self:DoHeroSpecificInit(bot)
 
     local itemPurchase = require( GetScriptDirectory().."/itemPurchase/"..self.Name )
-    itemPurchase.Init()
+    setHeroVar("ItemPurchaseClass", itemPurchase)
+    itemPurchase:Init()
 end
 
 -------------------------------------------------------------------------------
@@ -163,7 +165,10 @@ function X:Think(bot)
     end
 
     -- consider purchasing items
-    self:getHeroVar("ItemPurchaseClass"):ItemPurchaseThink()
+    self:getHeroVar("ItemPurchaseClass"):ItemPurchaseThink(bot)
+    
+    -- update our building information
+    buildings_status.Update()
 
     -- do out Thinking and set our Mode
     local highestDesiredMode, highestDesiredValue = think.MainThink()
@@ -203,3 +208,4 @@ function X:DoHeroSpecificInit(bot)
     return
 end
 
+return X

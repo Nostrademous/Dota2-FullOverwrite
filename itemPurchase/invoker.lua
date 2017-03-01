@@ -62,7 +62,7 @@ local ItemsToBuyAsSupport = {}
 local ItemsToBuyAsJungler = {}
 local ItemsToBuyAsRoamer = {}
 
-ToBuy = generic:new()
+local ToBuy = generic:new()
 
 -- create a 2nd layer of isolation so this bot has it's own instance not shared with other bots
 function ToBuy:new(o)
@@ -83,7 +83,7 @@ local myExtensionItems = {
     DefensiveItems = {}
 }
 
-invBuy = ToBuy:new()
+local invBuy = ToBuy:new()
 
 -- set our members to our localized values so we don't fall through to parent's class members
 invBuy.PurchaseOrder = myPurchaseOrder
@@ -100,11 +100,12 @@ invBuy.ItemsToBuyAsSupport = ItemsToBuyAsSupport
 invBuy.ItemsToBuyAsJungler = ItemsToBuyAsJungler
 invBuy.ItemsToBuyAsRoamer = ItemsToBuyAsRoamer
 
-function Init()
-    invBuy:InitTable()
+function invBuy:Init()
+    self:InitTable()
 end
 
-function ItemPurchaseThink()
-    invBuy:Think(bot)
+function invBuy:ItemPurchaseThink(bot)
+    self:Think(bot)
 end
 
+return invBuy

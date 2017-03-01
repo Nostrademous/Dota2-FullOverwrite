@@ -42,7 +42,7 @@ local AbilityPriority = {
     SKILL_Q,    SKILL_W,    SKILL_Q,    SKILL_Q,    ABILITY7
 }
 
-botInv = dt:new()
+local botInv = dt:new()
 
 function botInv:new(o)
     o = o or dt:new(o)
@@ -51,7 +51,7 @@ function botInv:new(o)
     return o
 end
 
-invBot = botInv:new{abilityPriority = AbilityPriority}
+local invBot = botInv:new{abilityPriority = AbilityPriority}
 
 function invBot:ConsiderAbilityUse()
     return ability.AbilityUsageThink()

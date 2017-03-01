@@ -178,15 +178,13 @@ function X:Think(bot)
                     local me = getHeroVar("Self")
                     if bInSide and me:getCurrentModeValue() < BOT_MODE_DESIRE_HIGH then
                         if me:getCurrentMode() ~= constants.MODE_SPECIALSHOP then
-                            if ( me:HasMode(constants.MODE_SPECIALSHOP) == false ) then
-                                me:AddMode(constants.MODE_SPECIALSHOP, BOT_MODE_DESIRE_HIGH)
-                                utils.myPrint(" STARTING TO HEAD TO SIDE SHOP ")
-                                special_shop_generic.OnStart()
-                            end
+                            me:BeginMode(constants.MODE_SPECIALSHOP, BOT_MODE_DESIRE_HIGH)
+                            utils.myPrint(" STARTING TO HEAD TO SIDE SHOP ")
+                            special_shop_generic.OnStart()
                         else
                             local bDone = special_shop_generic.ThinkSideShop(sNextItem)
                             if bDone then
-                                me:RemoveMode(constants.MODE_SPECIALSHOP)
+                                me:ClearMode()
                                 table.remove(self.PurchaseOrder, 1 )
                                 UpdateTeamBuyList(myTeamBuyList, sNextItem)
                                 bot:SetNextItemPurchaseValue( 0 )
@@ -194,15 +192,13 @@ function X:Think(bot)
                         end
                     elseif bInSecret and me:getCurrentModeValue() < BOT_MODE_DESIRE_HIGH then
                         if me:getCurrentMode() ~= constants.MODE_SPECIALSHOP then
-                            if ( me:HasMode(constants.MODE_SPECIALSHOP) == false ) then
-                                me:AddMode(constants.MODE_SPECIALSHOP, BOT_MODE_DESIRE_HIGH)
-                                utils.myPrint(" STARTING TO HEAD TO SECRET SHOP ")
-                                special_shop_generic.OnStart()
-                            end
+                            me:BeginMode(constants.MODE_SPECIALSHOP, BOT_MODE_DESIRE_HIGH)
+                            utils.myPrint(" STARTING TO HEAD TO SECRET SHOP ")
+                            special_shop_generic.OnStart()
                         else
                             local bDone = special_shop_generic.ThinkSecretShop(sNextItem)
                             if bDone then
-                                me:RemoveMode(constants.MODE_SPECIALSHOP)
+                                me:ClearMode()
                                 table.remove(self.PurchaseOrder, 1 )
                                 UpdateTeamBuyList(myTeamBuyList, sNextItem)
                                 bot:SetNextItemPurchaseValue( 0 )
@@ -213,7 +209,6 @@ function X:Think(bot)
                         table.remove(self.PurchaseOrder, 1)
                         UpdateTeamBuyList(myTeamBuyList, sNextItem)
                         bot:SetNextItemPurchaseValue(0)
-                        me:RemoveMode(constants.MODE_SPECIALSHOP)
                     end
                 end
 
@@ -267,7 +262,6 @@ function X:InitTable()
         self:SetExtensionItems(self.ItemsToBuyAsRoamer.ExtensionItems)
         return true
     end
-    setHeroVar("ItemPurchaseClass", self)
 end
 
 -------------------------------------------------------------------------------

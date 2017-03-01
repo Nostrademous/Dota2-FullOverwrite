@@ -36,7 +36,7 @@ function X.UpdatePlayerAssignment(bot, var, value)
     playerAssignment[bot:GetPlayerID()][var] = value
 end
 
-function X.MainThink(nearbyEnemies, nearbyAllies, nearbyECreeps, nearbyACreeps, nearbyETowers, nearbyATowers)
+function X.MainThink()
     
     -- Exercise TeamThink() at coded frequency
     if GameTime() > lastTeamThink then
@@ -47,8 +47,7 @@ function X.MainThink(nearbyEnemies, nearbyAllies, nearbyECreeps, nearbyACreeps, 
     -- Exercise individual Hero think at every frame (if possible).
     -- HeroThink() will check assignments from TeamThink()
     -- for that individual Hero that it should perform, if any.
-    local bot = GetBot()
-    return X.HeroThink(bot, nearbyEnemies, nearbyAllies, nearbyECreeps, nearbyACreeps, nearbyETowers, nearbyATowers)
+    return X.HeroThink()
 end
 
 function X.TeamThink()
@@ -123,7 +122,9 @@ function X.TeamThink()
     team_think.ConsiderTeamShrine(playerAssignment)
 end
 
-function X.HeroThink(bot, nearbyEnemies, nearbyAllies, nearbyECreeps, nearbyACreeps, nearbyETowers, nearbyATowers)
+function X.HeroThink()
+    local bot = GetBot()
+    
     --utils.myPrint("HeroThink()")
     local highestDesireValue = 0.0
     local highestDesireMode = constants.MODE_NONE
@@ -144,6 +145,13 @@ function X.HeroThink(bot, nearbyEnemies, nearbyAllies, nearbyECreeps, nearbyACre
     if evaluatedDesireValue >= BOT_MODE_DESIRE_VERYHIGH then
         return highestDesireMode, highestDesireValue
     end
+    
+    local nearbyEnemies     = bot:GetNearbyHeroes(1200, true, BOT_MODE_NONE)
+    local nearbyAllies      = bot:GetNearbyHeroes(1200, false, BOT_MODE_NONE)
+    local nearbyECreeps     = bot:GetNearbyCreeps(1200, true)
+    local nearbyACreeps     = bot:GetNearbyCreeps(1200, false)
+    local nearbyETowers     = bot:GetNearbyTowers(750, true)
+    local nearbyATowers     = bot:GetNearbyTowers(650, false)
     
     -- Fight orchestration is done at a global Team level.
     -- This just checks if we are given a fight target and a specific

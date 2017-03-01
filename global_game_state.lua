@@ -2,9 +2,133 @@ _G._savedEnv = getfenv()
 module( "global_game_state", package.seeall )
 
 require( GetScriptDirectory().."/buildings_status" )
+require( GetScriptDirectory().."/debugging" )
 local gHero = require( GetScriptDirectory().."/global_hero_data" )
 local utils = require( GetScriptDirectory().."/utility" )
 local enemyData = require( GetScriptDirectory().."/enemy_data" )
+
+
+function EvaluateGameState()
+    -- TODO: rate limiting
+    local team = GetTeam()
+    local topA = EvaluateLaneState(team, LANE_TOP)
+    local midA = EvaluateLaneState(team, LANE_MID)
+    local botA = EvaluateLaneState(team, LANE_BOT)
+end
+
+-- calculate some metrices on the given lane
+function EvaluateLaneState(team, lane)
+    enemy_team = utils.GetOtherTeam()
+    -- consider defence
+    local ttr_attackers, enemies = TimeToReachBuilding(team, enemy_team, lane)
+    local ttr_defenders, allies = TimeToReachBuilding(team, team, lane)
+    local backdoor = TimeUntilBackdoorIsDown(team, lane)
+    local dps = ExpectedDpsOnBuilding(enemy_team, lane, enemies)
+
+    debugging.SetTeamState("Push/Defend", lane * 2 - 1, string.format("Defence: TTRD %.1f TTRA %.1f backdoor %.1f dps %d %dv%d", ttr_defenders, ttr_attackers, backdoor, dps, #allies, #enemies))
+
+    ttr_attackers, allies = TimeToReachBuilding(enemy_team, team, lane)
+    ttr_defenders, enemies = TimeToReachBuilding(enemy_team, enemy_team, lane)
+    backdoor = TimeUntilBackdoorIsDown(enemy_team, lane)
+    dps = ExpectedDpsOnBuilding(team, lane, allies)
+
+    debugging.SetTeamState("Push/Defend", lane * 2, string.format("Push: TTRD %.1f TTRA %.1f backdoor %.1f dps %d %dv%d", ttr_defenders, ttr_attackers, backdoor, dps, #allies, #enemies))
+end
+
+local MAX_DISTANCE = 3000
+
+-- When will the heroes reach the tower? (for now: consider all heroes close to the tower)
+function TimeToReachBuilding(tower_team, heroes_team, lane)
+    local tower = buildings_status.GetVulnerableBuildingIDs(tower_team, lane)
+    if #tower == 0 then return 99999, {} end
+    tower = tower[1]
+    local hTower = buildings_status.GetHandle(tower_team, tower)
+    local heroes = {}
+    local slowest = 0
+
+    if heroes_team == GetTeam() then -- our team, we know everything
+        local allies = GetUnitList(UNIT_LIST_ALLIED_HEROES) -- TODO: illusions?
+        for i, ally in pairs(allies) do
+            local dist = GetUnitToUnitDistance(ally, hTower)
+            if dist < MAX_DISTANCE then -- TODO: use some better geometry
+                table.insert(heroes, ally)
+                local time = dist / ally:GetCurrentMovementSpeed()
+                if time > slowest then slowest = time end
+            end
+        end
+    else -- enemy team, might have to use estimated values
+        for k, enemy in pairs(enemyData) do
+            if type(k) == "number" and enemy.Alive then
+                local dist = 100000
+                if enemy.Obj then
+                    dist = GetUnitToUnitDistance(hTower, enemy.Obj)
+                else
+                    if GetHeroLastSeenInfo(k).time <= 0.5 then
+                        dist = GetUnitToLocationDistance(hTower, enemy.LocExtra1)
+                    elseif GetHeroLastSeenInfo(k).time <= 3.0 then
+                        dist = GetUnitToLocationDistance(hTower, enemy.LocExtra2)
+                    else
+                        dist = GetUnitToLocationDistance(hTower, GetHeroLastSeenInfo(k).location)
+                    end
+                end
+                if dist < MAX_DISTANCE then -- TODO: use some better geometry
+                    table.insert(heroes, enemy)
+                    local time = dist / enemy.MoveSpeed
+                    if time > slowest then slowest = time end
+                end
+            end
+        end
+    end
+
+    return slowest, heroes
+end
+
+-- When will there be creeps, if they move with their max speed? (0 for T1)
+function TimeUntilBackdoorIsDown(tower_team, lane)
+    local tower = buildings_status.GetVulnerableBuildingIDs(tower_team, lane)
+    if #tower == 0 then return 99999 end
+    tower = tower[1]
+    local apiid = buildings_status.GetApiID(tower_team, tower)
+    if apiid == TOWER_TOP_1 or apiid == TOWER_MID_1 or apiid == TOWER_BOT_1 then
+        return 0
+    end
+
+    local hTower = buildings_status.GetHandle(tower_team, tower)
+
+    local lane_fron
+
+    if tower_team == GetTeam() then
+         lane_front = GetLaneFrontLocation( tower_team, lane, 0 )
+         return GetUnitToLocationDistance(hTower, lane_front) / 325
+    else
+        lane_front = GetLaneFrontLocation( tower_team, lane, 0 )
+        return GetUnitToLocationDistance(hTower, lane_front) / 325
+    end
+end
+
+-- Considered that all nearby enemy heroes auto hit the tower, calculate their dps
+function ExpectedDpsOnBuilding(team, lane, heroes)
+    dps = 0
+
+    local tower = buildings_status.GetVulnerableBuildingIDs(team, lane)
+    if #tower == 0 then return 99999 end
+    tower = tower[1]
+    local hTower = buildings_status.GetHandle(team, tower)
+    local armor = hTower:GetArmor()
+    local dmg_factor = 0.5 * (1 - 0.06 * armor / (1 + (0.06 * math.abs(armor))))
+
+    if team == GetTeam() then -- our team
+        for i, hero in pairs(heroes) do
+            dps = dps + dmg_factor * hero:GetAttackDamage() / hero:GetSecondsPerAttack()
+        end
+    else -- enemy team, use estimations
+        for i, hero in pairs(heroes) do
+            dps = dps + dmg_factor * hero.AttackDamage / hero.SecondsPerAttack -- TODO: results are far to high
+        end
+    end
+    return dps
+end
+
 
 -- Returns the closest building of team to a unit
 function GetClosestBuilding(unit, team)

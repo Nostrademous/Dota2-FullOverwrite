@@ -35,6 +35,8 @@ local buildings = {
     {["ApiID"]=SHRINE_BASE_5, ["Type"]=TYPE_SHRINE}
 }
 
+local offsetByLane = {[LANE_TOP] = 0, [LANE_MID] = 3, [LANE_BOT] = 6}
+
 local tableBuildings = {}
 
 local towers = {}
@@ -109,7 +111,7 @@ function Update(forceUpdate)
 end
 
 function GetHealth(team, id, cacheOnly)
-    cacheOnly = cacheOnly or true
+    if cacheOnly == nil then cacheOnly = true end -- thats -not- the same as 'cacheOnly = cacheOnly or true'
     local seen = tableBuildings[team][id].LastSeenHealth
     if cacheOnly then return seen end
     if seen <= 0 then return -1 end
@@ -164,6 +166,10 @@ function GetType(team, id)
     return tableBuildings[team][id].Type
 end
 
+function GetApiID(team, id)
+    return tableBuildings[team][id].ApiID
+end
+
 function GetDestroyableTowers(team)
     local ids = {}
     for _, id in pairs(towers) do
@@ -185,15 +191,18 @@ function printBuildings()
     end
 end
 
--- check tower dependencies (glyph doesn't matter)
-function GetVulnerableBuildingIDs(team)
+-- check tower dependencies (glyph doesn't matter). Lane can be nil, to get all lanes' towers
+-- throne is considered to be on all lanes
+function GetVulnerableBuildingIDs(team, lane)
     local ids = {}
     -- TODO: use a method that isn't depending on exact order in tableBuildings
     for j = 0,6,3 do -- for all lanes
-        for i = 1,3,1 do -- towers from t1 to t3
-            if GetHealth(team, i+j) > 0 then
-                ids[#ids+1] = i+j
-                break
+        if lane == nil or j == offsetByLane[lane] then
+            for i = 1,3,1 do -- towers from t1 to t3
+                if GetHealth(team, i+j) > 0 then
+                    ids[#ids+1] = i+j
+                    break
+                end
             end
         end
     end

@@ -311,12 +311,16 @@ function X:Think(bot)
     -- check if jungle respawn timer was hit to repopulate our table
     jungle_status.checkSpawnTimer()
 
+    -- update our building information
+    buildings_status.Update()
+
+    -- do high level thinking (rate limited)
+    -- TODO: not sure where to put this
+    global_game_state.EvaluateGameState()
+
     -- draw debug stuff (actual drawing is done on the first call in a frame)
     debugging.draw()
 
-    -- update our building information
-    buildings_status.Update()
-    
     -- check if I am alive, if not, short-circuit most stuff
     if not bot:IsAlive() then
         local bRet = self:DoWhileDead(bot)

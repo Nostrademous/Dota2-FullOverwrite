@@ -145,7 +145,7 @@ function X.HeroThink(bot, nearbyEnemies, nearbyAllies, nearbyECreeps, nearbyACre
     -- Fight orchestration is done at a global Team level.
     -- This just checks if we are given a fight target and a specific
     -- action queue to execute as part of the fight.
-    evaluatedDesireValue = hero_think.ConsiderAttacking(bot, nearbyEnemies, nearbyAllies, nearbyETowers, nearbyATowers, nearbyECreeps, nearbyACreeps,)
+    evaluatedDesireValue = hero_think.ConsiderAttacking(bot, nearbyEnemies, nearbyAllies, nearbyETowers, nearbyATowers, nearbyECreeps, nearbyACreeps)
     if evaluatedDesireValue > highestDesireValue then
         highestDesireValue = evaluatedDesireValue
         highestDesireMode = constants.MODE_FIGHT

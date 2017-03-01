@@ -186,18 +186,8 @@ end
 
 -- Detect if a tower is being pushed
 function DetectEnemyPushMid()
-    local building = 0
-    local listRemainingBuildings = buildings_status.GetStandingBuildingIDs(GetTeam())
-    if utils.InTable(listRemainingBuildings, TOWER_MID_1) then building = TOWER_MID_1
-    elseif utils.InTable(listRemainingBuildings, TOWER_MID_2) then building = TOWER_MID_2
-    elseif utils.InTable(listRemainingBuildings, TOWER_MID_3) then building = TOWER_MID_3
-    elseif utils.InTable(listRemainingBuildings, BARRACKS_MID_MELEE) then building = BARRACKS_MID_MELEE
-    elseif utils.InTable(listRemainingBuildings, BARRACKS_MID_RANGED) then building = BARRACKS_MID_RANGED
-    elseif utils.InTable(listRemainingBuildings, TOWER_BASE_1) then building = TOWER_BASE_1
-    elseif utils.InTable(listRemainingBuildings, TOWER_BASE_2) then building = TOWER_BASE_2
-    else building = 0 
-    end
-    
+    local building = buildings_status.GetVulnerableBuildingIDs(GetTeam(), LANE_MID)[1]
+
     local hBuilding = buildings_status.GetHandle(GetTeam(), building)
     if hBuilding and hBuilding:TimeSinceDamagedByAnyHero() < 1.5 then
         local num = numEnemiesNearBuilding(building)
@@ -207,18 +197,8 @@ function DetectEnemyPushMid()
 end
 
 function DetectEnemyPushTop()
-    local building = 0
-    local listRemainingBuildings = buildings_status.GetStandingBuildingIDs(GetTeam())
-    if utils.InTable(listRemainingBuildings, TOWER_TOP_1) then building = TOWER_TOP_1
-    elseif utils.InTable(listRemainingBuildings, TOWER_TOP_2) then building = TOWER_TOP_2
-    elseif utils.InTable(listRemainingBuildings, TOWER_TOP_3) then building = TOWER_TOP_3
-    elseif utils.InTable(listRemainingBuildings, BARRACKS_TOP_MELEE) then building = BARRACKS_TOP_MELEE
-    elseif utils.InTable(listRemainingBuildings, BARRACKS_TOP_RANGED) then building = BARRACKS_TOP_RANGED
-    elseif utils.InTable(listRemainingBuildings, TOWER_BASE_1) then building = TOWER_BASE_1
-    elseif utils.InTable(listRemainingBuildings, TOWER_BASE_2) then building = TOWER_BASE_2
-    else building = 0 
-    end
-    
+    local building = buildings_status.GetVulnerableBuildingIDs(GetTeam(), LANE_TOP)[1]
+
     local hBuilding = buildings_status.GetHandle(GetTeam(), building)
     if hBuilding and hBuilding:TimeSinceDamagedByAnyHero() < 1.5 then
         local num = numEnemiesNearBuilding(building)
@@ -228,18 +208,8 @@ function DetectEnemyPushTop()
 end
 
 function DetectEnemyPushBot()
-    local building = 0
-    local listRemainingBuildings = buildings_status.GetStandingBuildingIDs(GetTeam())
-    if utils.InTable(listRemainingBuildings, TOWER_BOT_1) then building = TOWER_BOT_1
-    elseif utils.InTable(listRemainingBuildings, TOWER_BOT_2) then building = TOWER_BOT_2
-    elseif utils.InTable(listRemainingBuildings, TOWER_BOT_3) then building = TOWER_BOT_3
-    elseif utils.InTable(listRemainingBuildings, BARRACKS_BOT_MELEE) then building = BARRACKS_BOT_MELEE
-    elseif utils.InTable(listRemainingBuildings, BARRACKS_BOT_RANGED) then building = BARRACKS_BOT_RANGED
-    elseif utils.InTable(listRemainingBuildings, TOWER_BASE_1) then building = TOWER_BASE_1
-    elseif utils.InTable(listRemainingBuildings, TOWER_BASE_2) then building = TOWER_BASE_2
-    else building = 0 
-    end
-    
+    local building = buildings_status.GetVulnerableBuildingIDs(GetTeam(), LANE_BOT)[1]
+
     local hBuilding = buildings_status.GetHandle(GetTeam(), building)
     if hBuilding and hBuilding:TimeSinceDamagedByAnyHero() < 1.5 then
         local num = numEnemiesNearBuilding(building)
@@ -255,12 +225,19 @@ function DetectEnemyPush()
         local numMid, midBuilding = DetectEnemyPushMid()
         local numTop, topBuilding = DetectEnemyPushTop()
         local numBot, botBuildign = DetectEnemyPushBot()
-        if numMid > 0 then return LANE_MID, midBuilding, numMid
-        elseif numTop > 0 then return LANE_TOP, topBuilding, numTop
-        elseif numBot > 0 then return LANE_BOT, botBuilding, numBot
+        if numMid > 0 then
+            debugging.SetTeamState("Getting Pushed", 1, "MID")
+            return LANE_MID, midBuilding, numMid
+        elseif numTop > 0 then
+            debugging.SetTeamState("Getting Pushed", 1, "TOP")
+            return LANE_TOP, topBuilding, numTop
+        elseif numBot > 0 then
+            debugging.SetTeamState("Getting Pushed", 1, "BOT")
+            return LANE_BOT, botBuilding, numBot
         end
         lastPushCheck = newTime
     end
+    debugging.SetTeamState("Getting Pushed", 1, "no incoming pushes")
     return nil, nil, nil
 end
 

@@ -89,7 +89,7 @@ function TimeUntilBackdoorIsDown(tower_team, lane)
     if #tower == 0 then return 99999 end
     tower = tower[1]
     local apiid = buildings_status.GetApiID(tower_team, tower)
-    if apiid == TOWER_TOP_1 or apiid == TOWER_MID_1 or apiid == TOWER_BOT_1 then
+    if buildings_status.GetType(tower_team, tower) == buildings_status.TYPE_TOWER and (apiid == TOWER_TOP_1 or apiid == TOWER_MID_1 or apiid == TOWER_BOT_1) then
         return 0
     end
 
@@ -101,7 +101,7 @@ function TimeUntilBackdoorIsDown(tower_team, lane)
          lane_front = GetLaneFrontLocation( tower_team, lane, 0 )
          return GetUnitToLocationDistance(hTower, lane_front) / 325
     else
-        lane_front = GetLaneFrontLocation( tower_team, lane, 0 )
+        lane_front = GetLaneFrontLocation( tower_team, lane, 0 ) -- TODO: is this an estimation? if yes, can we do better?
         return GetUnitToLocationDistance(hTower, lane_front) / 325
     end
 end

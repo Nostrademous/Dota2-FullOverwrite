@@ -79,7 +79,7 @@ function ThinkSecretShop( NextItem )
     end
 
     local secLoc = GetSecretShop()
-    if secLoc = =nil then return false end
+    if secLoc == nil then return false end
 
     if GetUnitToLocationDistance(bot, secLoc) < constants.SHOP_USE_DISTANCE then
         if bot:GetGold() >= GetItemCost( NextItem ) then

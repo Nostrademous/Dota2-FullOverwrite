@@ -1105,8 +1105,8 @@ function U.IsTowerAttackingMe()
     local lane = U.NearestLane(bot)
     if lane == 0 then return false end
 
-    for i = 1, 5, 1, do
-        local target = GetTowerAttackTarget(U.GetOtherTeam(), lane, i)
+    for i = 1, 5, 1 do
+        local target = U.GetLaneTowerAttackTarget(U.GetOtherTeam(), lane, i)
         if bot == target then return true end
     end
 

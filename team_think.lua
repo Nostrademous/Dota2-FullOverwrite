@@ -8,6 +8,7 @@ module( "team_think", package.seeall )
 
 require( GetScriptDirectory().."/buildings_status" )
 require( GetScriptDirectory().."/global_game_state" )
+require( GetScriptDirectory().."/debugging" )
 
 local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
 local utils = require( GetScriptDirectory().."/utility" )
@@ -98,37 +99,43 @@ end
 -- Determine which lanes should be defended and which Heroes should
 -- be part of the defense.
 function ConsiderTeamLaneDefense()
+    debugging.SetTeamState("Getting Pushed", 2, "")
+    debugging.SetTeamState("Getting Pushed", 3, "")
+
     local lane, building, numEnemies = global_game_state.DetectEnemyPush()
     
     if lane == nil or building == nil or numEnemies == nil then return end
     
     local hBuilding = buildings_status.GetHandle(GetTeam(), building)
-    
+
+    if hBuilding == nil then return end
+
     local listAlliesCanReachBuilding = {}
     local listAlliesCanTPToBuildling = {}
     
     local listAlly = GetUnitList(UNIT_LIST_ALLIED_HEROES)
     for _, ally in pairs(listAlly) do
         if not ally:IsIllusion() and ally:IsBot() then
-            if lane and (not hBuilding == nil or hBuilding:TimeSinceDamagedByAnyHero() > 5.0) then
-                if ally:GetHealth()/ally:GetMaxHealth() >= 0.5 then
-                    local distFromBuilding = GetUnitToUnitDistance(ally, hBuilding)
-                    local timeToReachBuilding = distFromBuilding/ally:GetCurrentMovementSpeed()
+            if ally:GetHealth()/ally:GetMaxHealth() >= 0.5 then
+                local distFromBuilding = GetUnitToUnitDistance(ally, hBuilding)
+                local timeToReachBuilding = distFromBuilding/ally:GetCurrentMovementSpeed()
 
-                    if timeToReachBuilding <= 5.0 then
-                        table.insert(listAlliesCanReachBuilding, ally)
-                    else
-                        local haveTP = utils.HaveItem(ally, "item_tpscroll")
-                        if haveTP and haveTP:IsFullyCastable() then
-                            table.insert(listAlliesCanTPToBuildling, ally)
-                        end
+                if timeToReachBuilding <= 5.0 then
+                    table.insert(listAlliesCanReachBuilding, ally)
+                else
+                    local haveTP = utils.HaveItem(ally, "item_tpscroll")
+                    if haveTP and haveTP:IsFullyCastable() then
+                        table.insert(listAlliesCanTPToBuildling, ally)
                     end
                 end
             end
         end
     end
-    
+
+    debugging.SetTeamState("Getting Pushed", 2, string.format("Defense: %d enemies. %d allies near, %d more could tp", numEnemies, #listAlliesCanReachBuilding, #listAlliesCanTPToBuildling))
+
     if (#listAlliesCanReachBuilding + #listAlliesCanTPToBuildling) >= (numEnemies - 1) then
+        debugging.SetTeamState("Getting Pushed", 3, "Mounting a defense!")
         local numGoing = 0
         for _, ally in pairs(listAlliesCanReachBuilding) do
             gHeroVar.SetVar(ally:GetPlayerID(), "DoDefendLane", {lane, building, numEnemies})
@@ -140,6 +147,8 @@ function ConsiderTeamLaneDefense()
             numGoing = numGoing + 1
             if numGoing >= (numEnemies - 1) then break end
         end
+    else -- TODO: do we need to tell our allies to be carefull?
+        debugging.SetTeamState("Getting Pushed", 3, "Goodbye, little tower.")
     end
 end
 

@@ -156,7 +156,7 @@ function GetPositionBetweenBuildings(unit, team)
 end
 
 function nearBuilding(unitLoc, building)
-    return utils.GetDistance(unitLoc, building) <= 500
+    return utils.GetDistance(unitLoc, building) <= 1500
 end
 
 function numEnemiesNearBuilding(building)
@@ -189,7 +189,8 @@ function DetectEnemyPushMid()
     local building = buildings_status.GetVulnerableBuildingIDs(GetTeam(), LANE_MID)[1]
 
     local hBuilding = buildings_status.GetHandle(GetTeam(), building)
-    if hBuilding and hBuilding:TimeSinceDamagedByAnyHero() < 1.5 then
+
+    if hBuilding and hBuilding:TimeSinceDamagedByAnyHero() >= 0 and hBuilding:TimeSinceDamagedByAnyHero() < 1.5 then
         local num = numEnemiesNearBuilding(building)
         return num, building
     end
@@ -200,7 +201,8 @@ function DetectEnemyPushTop()
     local building = buildings_status.GetVulnerableBuildingIDs(GetTeam(), LANE_TOP)[1]
 
     local hBuilding = buildings_status.GetHandle(GetTeam(), building)
-    if hBuilding and hBuilding:TimeSinceDamagedByAnyHero() < 1.5 then
+
+    if hBuilding and hBuilding:TimeSinceDamagedByAnyHero() >= 0 and hBuilding:TimeSinceDamagedByAnyHero() < 1.5 then
         local num = numEnemiesNearBuilding(building)
         return num, building
     end
@@ -211,7 +213,8 @@ function DetectEnemyPushBot()
     local building = buildings_status.GetVulnerableBuildingIDs(GetTeam(), LANE_BOT)[1]
 
     local hBuilding = buildings_status.GetHandle(GetTeam(), building)
-    if hBuilding and hBuilding:TimeSinceDamagedByAnyHero() < 1.5 then
+
+    if hBuilding and hBuilding:TimeSinceDamagedByAnyHero() >= 0 and hBuilding:TimeSinceDamagedByAnyHero() < 1.5 then
         local num = numEnemiesNearBuilding(building)
         return num, building
     end
@@ -224,7 +227,7 @@ function DetectEnemyPush()
     if bUpdate then
         local numMid, midBuilding = DetectEnemyPushMid()
         local numTop, topBuilding = DetectEnemyPushTop()
-        local numBot, botBuildign = DetectEnemyPushBot()
+        local numBot, botBuilding = DetectEnemyPushBot()
         if numMid > 0 then
             debugging.SetTeamState("Getting Pushed", 1, "MID")
             return LANE_MID, midBuilding, numMid

@@ -55,7 +55,7 @@ function draw()
 end
 
 -- set a line in the specified bot's text area
-function SetBotState(bot, line, state)
+function SetBotState(bot, line, text)
     if line < 1 or BOT_STATES_MAX_LINES > 2 then
         print("SetBotState: line out of bounds!")
         return
@@ -64,11 +64,11 @@ function SetBotState(bot, line, state)
     if bot_states[name] == nil then
         bot_states[name] = {}
     end
-    bot_states[name][line] = state
+    bot_states[name][line] = text
 end
 
 -- set a line in the specified category's text area
-function SetTeamState(category, line, state)
+function SetTeamState(category, line, text)
     if line < 1 or line > TEAM_STATES_MAX_LINES then
         print("SetBotState: line out of bounds!")
         return
@@ -76,7 +76,7 @@ function SetTeamState(category, line, state)
     if team_states[category] == nil then
         team_states[category] = {}
     end
-    team_states[category][line] = state
+    team_states[category][line] = text
 end
 
 -- draw a (filled) circle

@@ -12,6 +12,7 @@ local utils = require( GetScriptDirectory().."/utility" )
 local laningMode    = dofile( GetScriptDirectory().."/modes/laning" )
 local runeMode      = dofile( GetScriptDirectory().."/modes/runes" )
 local jungleMode    = dofile( GetScriptDirectory().."/modes/jungling" )
+local retreatMode   = dofile( GetScriptDirectory().."/modes/retreat" )
 
 local freqTeamThink = 0.25
 local lastTeamThink = -1000.0
@@ -179,7 +180,7 @@ function X.HeroThink()
     evaluatedDesireValue = hero_think.ConsiderRetreating(bot, nearbyEnemies, nearbyETowers, nearbyAllies)
     if evaluatedDesireValue > highestDesireValue then
         highestDesireValue = evaluatedDesireValue
-        highestDesireMode = constants.MODE_RETREAT
+        highestDesireMode = retreatMode
     end
     
     -- If we really want to Attack, Use Shrine or Retreat ( >= 0.75 ); 
@@ -239,7 +240,7 @@ function X.HeroThink()
     evaluatedDesireValue = hero_think.ConsiderRune(bot, playerAssignment)
     if evaluatedDesireValue > highestDesireValue then
         highestDesireValue = evaluatedDesireValue
-        highestDesireMode = runeMode -- constants.MODE_RUNEPICKUP
+        highestDesireMode = runeMode
     end
     
     -- The decision to Roshan is done in TeamThink().
@@ -264,7 +265,7 @@ function X.HeroThink()
     evaluatedDesireValue = hero_think.ConsiderLaning(bot, playerAssignment)
     if evaluatedDesireValue > highestDesireValue then
         highestDesireValue = evaluatedDesireValue
-        highestDesireMode = laningMode -- constants.MODE_LANING
+        highestDesireMode = laningMode
     end
     
     -- Warding is done on a per-lane basis. This evaluates if this Hero

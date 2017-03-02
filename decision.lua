@@ -6,6 +6,7 @@
 require( GetScriptDirectory().."/constants" )
 require( GetScriptDirectory().."/role" )
 require( GetScriptDirectory().."/buildings_status" )
+require( GetScriptDirectory().."/item_usage" )
 
 local none = dofile( GetScriptDirectory().."/modes/none" )
 
@@ -40,6 +41,9 @@ end
 
 function X:ExecuteMode()
     if self.currentMode ~= self.prevMode then
+        if self.currentMode:GetName() == nil then
+            utils.pause("Unimplemented Mode: ", self.currentMode)
+        end
         utils.myPrint("Mode Transition: "..self.prevMode:GetName().." --> "..self.currentMode:GetName())
         self.prevMode:OnEnd()
         self.currentMode:OnStart(self)
@@ -125,6 +129,9 @@ function X:DoInit(bot)
     local itemPurchase = dofile( GetScriptDirectory().."/itemPurchase/"..self.Name )
     setHeroVar("ItemPurchaseClass", itemPurchase)
     itemPurchase:Init()
+    
+    local abilityUse = dofile( GetScriptDirectory().."/abilityUse/abilityUse_"..self.Name )
+    setHeroVar("AbilityUsageClass", abilityUse)
 end
 
 -------------------------------------------------------------------------------
@@ -165,7 +172,14 @@ function X:Think(bot)
     
     -- update our building information
     buildings_status.Update()
+    
+    -- consider using abilities
+    local bAbilityQueued = self:getHeroVar("AbilityUsageClass"):AbilityUsageThink(bot)
+    if bAbilityQueued then return end
 
+    -- consider using items
+    if item_usage.UseItems() then return end
+    
     -- do out Thinking and set our Mode
     local highestDesiredMode, highestDesiredValue = think.MainThink()
     self:BeginMode(highestDesiredMode, highestDesiredValue)
@@ -179,7 +193,7 @@ end
 function X:DoWhileDead(bot)
     self:ClearMode()
 
-    self:MoveItemsFromStashToInventory(bot)
+    utils.MoveItemsFromStashToInventory(bot)
     local bb = self:ConsiderBuyback(bot)
     if (bb) then
         bot:ActionImmediate_Buyback()

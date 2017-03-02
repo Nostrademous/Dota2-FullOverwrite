@@ -4,10 +4,9 @@
 --- GITHUB REPO: https://github.com/Nostrademous/Dota2-FullOverwrite
 -------------------------------------------------------------------------------
 
-_G._savedEnv = getfenv()
-module( "abilityUse_invoker", package.seeall )
+BotsInit = require( "game/botsinit" )
+local invAbility = BotsInit.CreateGeneric()
 
-require( GetScriptDirectory().."/fight_simul" )
 require( GetScriptDirectory().."/constants" )
 
 local utils = require( GetScriptDirectory().."/utility" )
@@ -156,31 +155,28 @@ function queueNukeTOCMDB(bot, location, engageDist)
     
     if dist < engageDist then
         bot:Action_ClearActions(true)
-        utils.AllChat("Too EZ for Arteezy")
+        --utils.AllChat("Too EZ for Arteezy")
         utils.myPrint("INVOKER TO CM DB combo!!!")
 
         bot:ActionQueue_UseAbilityOnLocation(abilityTO, location)
         bot:ActionQueue_UseAbility(abilityR) -- invoke DB
-        bot:ActionQueue_Delay(liftDuration - cmLandTime + engageDist/tornadoSpeed - 0.1) -- 0.1 for bot-difficulty avg delay
-        bot:ActionQueue_UseAbilityOnLocation(abilityCM, utils.VectorTowards(bot:GetLocation(), location, 450))
-        bot:ActionQueue_Delay(0.55)
+        bot:ActionQueue_Delay(liftDuration - cmLandTime + engageDist/tornadoSpeed - getHeroVar("AbilityDelay"))
+        bot:ActionQueue_UseAbilityOnLocation(abilityCM, utils.VectorTowards(bot:GetLocation(), location, 400))
+        bot:ActionQueue_Delay(0.6)
         bot:ActionQueue_UseAbilityOnLocation(abilityDB, location)
         bot:ActionQueue_Delay(0.01)
+        setHeroVar("nukeTOCMDB", false)
         return true     
     end
     
     return false
 end
 
-function AbilityUsageThink()
-    if ( GetGameState() ~= GAME_STATE_GAME_IN_PROGRESS and GetGameState() ~= GAME_STATE_PRE_GAME ) then return false end
-
-    local bot = GetBot()
-
-    if not bot:IsAlive() then return false end
-    
+function invAbility:AbilityUsageThink(bot)    
     -- Check if we're already using an ability
-    if bot:IsCastingAbility() or bot:IsChanneling() or bot:NumQueuedActions() > 0 then return false end
+    if bot:IsCastingAbility() or bot:IsChanneling() or bot:NumQueuedActions() > 0 then
+        return true 
+    end
 
     if abilityQ == "" then abilityQ = bot:GetAbilityByName( "invoker_quas" ) end
     if abilityW == "" then abilityW = bot:GetAbilityByName( "invoker_wex" ) end
@@ -196,24 +192,29 @@ function AbilityUsageThink()
     if abilityIW == "" then abilityIW = bot:GetAbilityByName( "invoker_ice_wall" ) end
     if abilitySS == "" then abilitySS = bot:GetAbilityByName( "invoker_sun_strike" ) end
     if abilityFS == "" then abilityFS = bot:GetAbilityByName( "invoker_forge_spirit" ) end
+    
+    local nearbyEnemyHeroes = bot:GetNearbyHeroes(1200, true, BOT_MODE_NONE)
+    local nearbyEnemyCreep  = bot:GetNearbyCreeps(1200, true)
+    local nearbyEnemyTowers = bot:GetNearbyTowers(750, true)
 
+    --[[
     if abilityQ:GetLevel() >= 3 then
         if getHeroVar("nukeTOCMDB") then
             local dmg, engageDist = nukeDamageTOCMDB( bot )
-            local nearbyEnemyHeroes = bot:GetNearbyHeroes(engageDist, true, BOT_MODE_NONE)
             if #nearbyEnemyHeroes >= 1 then
                 local locationAoE = bot:FindAoELocation( true, true, bot:GetLocation(), engageDist, 200, 0, 0 )
                 if locationAoE.count >= #nearbyEnemyHeroes - 1 then
                     if queueNukeTOCMDB(bot, locationAoE.targetloc, engageDist) then
-                        nukeTOCMDB = false
                         return true
                     end
                 end
             end
+            return false
         else
             if prepNukeTOCMDB(bot) then return true end
         end
     end
+    --]]
     
     -- Check if we were asked to use our global
     local useGlobal = getHeroVar("UseGlobal")
@@ -429,7 +430,7 @@ function AbilityUsageThink()
     if bot:GetLevel() == 1 and abilitySS:IsHidden() then
         invokeSunStrike(bot)
         return true
-    elseif bot:GetLevel() == 2 and abilityCM:IsHidden() then
+    elseif bot:GetLevel() == 2 and abilityCM:IsHidden() and wexTrained() then
         tripleExortBuff(bot) -- this is first since we are pushing, not queueing
         invokeChaosMeteor(bot)
         return true
@@ -904,7 +905,7 @@ function ConsiderSunStrike(bot)
 
     -- Get some of its values
     local nRadius = 175
-    local nDelay = 1.75 + getHeroVar("AbilityDelay") + 1.0 -- 0.05 cast point, 1.7 delay, 1.0 grace
+    local nDelay = 3.0 + getHeroVar("AbilityDelay") -- 0.05 cast point, 1.7 delay
     local nDamage = abilitySS:GetSpecialValueFloat("damage")
 
     --------------------------------------
@@ -1229,4 +1230,4 @@ function ConsiderForgedSpirit(bot, nearbyEnemyHeroes, nearbyEnemyCreep, nearbyEn
     return BOT_ACTION_DESIRE_NONE
 end
 
-for k,v in pairs( abilityUse_invoker ) do _G._savedEnv[k] = v end
+return invAbility

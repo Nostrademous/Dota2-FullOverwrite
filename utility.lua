@@ -645,7 +645,7 @@ function U.AllChat(msg)
 end
 
 function U.ValidTarget(target)
-    if target.Obj ~= nil and not target.Obj:IsNull() then
+    if target and target.Obj ~= nil and not target.Obj:IsNull() then
         return true
     end
     return false
@@ -1123,14 +1123,63 @@ function U.IsCreepAttackingMe(fTime)
     return false
 end
 
---[[
-function U.EnemiesThatCanAttackMe(bot, nearbyEnemies)
-    local listEnemies = {}
-    for _, enemy in pairs(nearbyEnemies) do
+function U.HarassEnemy(bot, listEnemies)
+    local enemyToHarass = nil
+    
+    local listAlliedTowers = bot:GetNearbyTowers(650, false)
+    for _, enemy in pairs(listEnemies) do
+    
+        for _, myTower in pairs(listAlliedTowers) do
+            local stunAbilities = getHeroVar("HasStun")
+            if stunAbilities then
+                for _, stun in pairs(stunAbilities) do
+                    if not enemy:IsStunned() and stun[1]:IsFullyCastable() then
+                        local behaviorFlag = stun[1]:GetBehavior()
+                        if U.CheckFlag(behaviorFlag, ABILITY_BEHAVIOR_UNIT_TARGET) then
+                            bot:Action_UseAbilityOnEntity(stun[1], enemy)
+                            return true
+                        elseif U.CheckFlag(behaviorFlag, ABILITY_BEHAVIOR_POINT) then
+                            bot:Action_UseAbilityOnLocation(stun[1], enemy:GetExtrapolatedLocation(stun[2]+getHeroVar("AbilityDelay")))
+                            return true
+                        end
+                    end
+                end
+            end
+            gHeroVar.HeroAttackUnit(bot, enemy, true)
+            return true
+        end
         
+        local heightDiff = U.GetHeightDiff(bot, enemy)
+        if heightDiff > 0 then
+            enemyToHarass = enemy
+            break
+        end
+        
+        if (bot:GetHealth() + bot:GetAttackDamage()) < (enemy:GetHealth() + enemy:GetAttackDamage()) and
+            #listEnemies == 1 then -- and enemy:GetAttackRange() <= bot:GetAttackRange() then
+            enemyToHarass = enemy
+        end
     end
+    
+    -- if we have an orb effect (won't aggro creep), use it
+    if U.UseOrbEffect(bot) then return true end
+    
+    -- if we are high-ground and they are low ground, harrass
+    if enemyToHarass then
+        gHeroVar.HeroAttackUnit(bot, enemyToHarass, true)
+        return true
+    end
+    
+    local listEnemyCreep = bot:GetNearbyCreeps(1200, true)
+    local listAlliedCreep = bot:GetNearbyCreeps(1200, false)
+    if #listEnemies > 0 and (#listEnemyCreep < (#listAlliedCreep-1) or #listEnemyCreep == 0) and
+        GetUnitToUnitDistance(bot, listEnemies[1]) < (bot:GetAttackRange()+bot:GetBoundingRadius()) then
+        gHeroVar.HeroAttackUnit(bot, listEnemies[1], true)
+        return true
+    end
+    
+    return false
 end
---]]
 
 -- returns a VECTOR() with location being the center point of provided hero array
 function U.GetCenter(Heroes)

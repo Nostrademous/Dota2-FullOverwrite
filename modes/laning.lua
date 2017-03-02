@@ -36,43 +36,6 @@ X.LaningState = X.LaningStates.Start
 
 -------------------------------
 
-local function HarassEnemy(bot)
-    local listAlliedTowers = bot:GetNearbyTowers(600, false)
-    for _, enemy in pairs(X.listEnemies) do
-        for _, myTower in pairs(listAlliedTowers) do
-            local stunAbilities = X.me:getHeroVar("HasStun")
-            if stunAbilities then
-                for _, stun in pairs(stunAbilities) do
-                    if not enemy:IsStunned() and stun[1]:IsFullyCastable() then
-                        local behaviorFlag = stun[1]:GetBehavior()
-                        if utils.CheckFlag(behaviorFlag, ABILITY_BEHAVIOR_UNIT_TARGET) then
-                            bot:Action_UseAbilityOnEntity(stun[1], enemy)
-                            return true
-                        elseif utils.CheckFlag(behaviorFlag, ABILITY_BEHAVIOR_POINT) then
-                            bot:Action_UseAbilityOnLocation(stun[1], enemy:GetExtrapolatedLocation(stun[2]+X.me:getHeroVar("AbilityDelay")))
-                            return true
-                        end
-                    end
-                end
-            end
-            gHeroVar.HeroAttackUnit(bot, enemy, true)
-            return true
-        end
-    end
-    
-    if utils.UseOrbEffect(bot) then return true end
-    
-    local listEnemyCreep = bot:GetNearbyCreeps(1200, true)
-    local listAlliedCreep = bot:GetNearbyCreeps(1200, false)
-    if #X.listEnemies == 1 and (#listEnemyCreep < #listAlliedCreep or #listEnemyCreep == 0) and 
-        GetUnitToUnitDistance(bot, X.listEnemies[1]) < (bot:GetAttackRange()+bot:GetBoundingRadius()) then
-        gHeroVar.HeroAttackUnit(bot, X.listEnemies[1], true)
-        return true
-    end
-    
-    return false
-end
-
 local function Start(bot)
     if X.CurLane == LANE_MID then
         gHeroVar.HeroMoveToLocation(bot, GetRuneSpawnLocation(RUNE_BOUNTY_2))
@@ -96,7 +59,7 @@ local function Moving(bot)
     local enemyFrontier = GetLaneFrontAmount(utils.GetOtherTeam(), X.CurLane, false)
     frontier = Min(frontier, enemyFrontier)
 
-    if HarassEnemy(bot) then return end
+    if utils.HarassEnemy(bot, listEnemies) then return end
     
     local dest = GetLocationAlongLane(X.CurLane, Min(1.0, frontier))
     gHeroVar.HeroMoveToLocation(bot, dest)
@@ -129,7 +92,7 @@ local function MovingToPos(bot)
         end
     end
     
-    if HarassEnemy(bot) then return end
+    if utils.HarassEnemy(bot, listEnemies) then return end
 
     local bNeedToGoHigher = false
     local higherDest = nil
@@ -152,7 +115,7 @@ local function MovingToPos(bot)
     local bpos = GetLocationAlongLane(CurLane, X.LanePos-0.02)
 
     local dest = utils.VectorTowards(cpos, bpos, 500)
-    if bNeedToGoHigher and #listAlliedCreep > 0 then
+    if bNeedToGoHigher and #listAlliedCreep > 0 and #listEnemies == 0 then
         dest = higherDest
     end
 
@@ -173,7 +136,7 @@ local function DenyNearbyCreeps(bot)
         return false
     end
 
-    X.AttackRange = bot:GetAttackRange()
+    X.AttackRange = bot:GetAttackRange() + bot:GetBoundingRadius()
 
     local eDamage = bot:GetEstimatedDamageToTarget(true, WeakestCreep, bot:GetAttackSpeed(), DAMAGE_TYPE_PHYSICAL)
     if utils.IsMelee(bot) then
@@ -205,6 +168,15 @@ local function DenyNearbyCreeps(bot)
         return true
     end
     
+    -- try to keep lane equilibrium
+    if WeakestCreep ~= nil then
+        local healthRatio = WeakestCreep:GetHealth()/WeakestCreep:GetMaxHealth()
+        local listEnemyCreep = bot:GetNearbyCreeps(1200, false)
+        if healthRatio < 0.5 and WeakestCreepHealth > 2.0*damage and #listAlliedCreep >= #listEnemyCreep then
+            gHeroVar.HeroAttackUnit(bot, WeakestCreep, true)
+        end
+    end
+    
     return false
 end
 
@@ -223,7 +195,7 @@ local function PushCS(bot, WeakestCreep, nAc, damage, AS)
         end
     end
     
-    if HarassEnemy(bot) then return true end
+    if utils.HarassEnemy(bot, listEnemies) then return end
 
     gHeroVar.HeroAttackUnit(bot, WeakestCreep, false)
     return true
@@ -246,6 +218,7 @@ local function CSing(bot)
     
     local listEnemyTowers = bot:GetNearbyTowers(710, true)
     if #listEnemyTowers > 0 then
+        local dist = GetUnitToUnitDistance(bot, listEnemyTowers[1])
         gHeroVar.HeroMoveToLocation(bot, utils.VectorAway(bot:GetLocation(), listEnemyTowers[1]:GetLocation(), 710-dist))
         return
     end
@@ -354,7 +327,7 @@ local function CSing(bot)
     -- if we got here we decided there are no creeps to kill/deny
     X.LaningState = X.LaningStates.MovingToPos
     
-    if HarassEnemy(bot) then return end
+    if utils.HarassEnemy(bot, listEnemies) then return end
 end
 
 local function GetBack(bot)

@@ -3,9 +3,12 @@
 --- GITHUB REPO: https://github.com/Nostrademous/Dota2-FullOverwrite
 -------------------------------------------------------------------------------
 
-local generic = require( GetScriptDirectory().."/itemPurchase/generic" )
+BotsInit = require( "game/botsinit" )
+local invBuy = BotsInit.CreateGeneric()
 
-local ItemsToBuyAsHardCarry = {
+local generic = dofile( GetScriptDirectory().."/itemPurchase/generic" )
+
+generic.ItemsToBuyAsHardCarry = {
     StartingItems = {
         "item_wraith_band",
         "item_faerie_fire",
@@ -31,7 +34,7 @@ local ItemsToBuyAsHardCarry = {
         }
     }
 }
-local ItemsToBuyAsMid = {
+generic.ItemsToBuyAsMid = {
     StartingItems = {
         "item_wraith_band",
         "item_faerie_fire",
@@ -57,55 +60,59 @@ local ItemsToBuyAsMid = {
         }
     }
 }
-local ItemsToBuyAsOfflane = {}
-local ItemsToBuyAsSupport = {}
-local ItemsToBuyAsJungler = {}
-local ItemsToBuyAsRoamer = {}
+--generic.ItemsToBuyAsOfflane = {}
+--generic.ItemsToBuyAsSupport = {}
+--generic.ItemsToBuyAsJungler = {}
+--generic.ItemsToBuyAsRoamer = {}
 
-local ToBuy = generic:new()
+--local ToBuy = generic:new()
 
 -- create a 2nd layer of isolation so this bot has it's own instance not shared with other bots
+--[[
 function ToBuy:new(o)
     o = o or generic:new(o)
     setmetatable(o, self)
     self.__index = self
     return o
 end
+--]]
 
 -- we need these so if multiple bots inherit from the generic class they don't get mixed with each other
-local myPurchaseOrder = {}
-local myBoughtItems = {}
-local myStartingItems = {}
-local myUtilityItems = {}
-local myCoreItems = {}
-local myExtensionItems = {
+--[[
+generic.myPurchaseOrder = {}
+generic.myBoughtItems = {}
+generic.myStartingItems = {}
+generic.myUtilityItems = {}
+generic.myCoreItems = {}
+generic.myExtensionItems = {
     OffensiveItems = {},
     DefensiveItems = {}
 }
+--]]
 
-local invBuy = ToBuy:new()
+--local invBuy = ToBuy:new()
 
 -- set our members to our localized values so we don't fall through to parent's class members
-invBuy.PurchaseOrder = myPurchaseOrder
-invBuy.BoughtItems = myBoughtItems
-invBuy.StartingItems = myStartingItems
-invBuy.UtilityItems = myUtilityItems
-invBuy.CoreItems = myCoreItems
-invBuy.ExtensionItems = myExtensionItems
+--invBuy.PurchaseOrder = myPurchaseOrder
+--invBuy.BoughtItems = myBoughtItems
+--invBuy.StartingItems = myStartingItems
+--invBuy.UtilityItems = myUtilityItems
+--invBuy.CoreItems = myCoreItems
+--invBuy.ExtensionItems = myExtensionItems
 
-invBuy.ItemsToBuyAsHardCarry = ItemsToBuyAsHardCarry
-invBuy.ItemsToBuyAsMid = ItemsToBuyAsMid
-invBuy.ItemsToBuyAsOfflane = ItemsToBuyAsOfflane
-invBuy.ItemsToBuyAsSupport = ItemsToBuyAsSupport
-invBuy.ItemsToBuyAsJungler = ItemsToBuyAsJungler
-invBuy.ItemsToBuyAsRoamer = ItemsToBuyAsRoamer
+--invBuy.ItemsToBuyAsHardCarry = ItemsToBuyAsHardCarry
+--invBuy.ItemsToBuyAsMid = ItemsToBuyAsMid
+--invBuy.ItemsToBuyAsOfflane = ItemsToBuyAsOfflane
+--invBuy.ItemsToBuyAsSupport = ItemsToBuyAsSupport
+--invBuy.ItemsToBuyAsJungler = ItemsToBuyAsJungler
+--invBuy.ItemsToBuyAsRoamer = ItemsToBuyAsRoamer
 
 function invBuy:Init()
-    self:InitTable()
+    generic:InitTable()
 end
 
 function invBuy:ItemPurchaseThink(bot)
-    self:Think(bot)
+    generic:Think(bot)
 end
 
 return invBuy

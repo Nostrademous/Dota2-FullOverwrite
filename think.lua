@@ -9,8 +9,9 @@ require( GetScriptDirectory().."/hero_think" )
 
 local utils = require( GetScriptDirectory().."/utility" )
 
-local laningMode    = require( GetScriptDirectory().."/modes/laning" )
-local runeMode      = require( GetScriptDirectory().."/modes/runes" )
+local laningMode    = dofile( GetScriptDirectory().."/modes/laning" )
+local runeMode      = dofile( GetScriptDirectory().."/modes/runes" )
+local jungleMode    = dofile( GetScriptDirectory().."/modes/jungling" )
 
 local freqTeamThink = 0.25
 local lastTeamThink = -1000.0
@@ -254,7 +255,7 @@ function X.HeroThink()
     evaluatedDesireValue = hero_think.ConsiderJungle(bot, playerAssignment)
     if evaluatedDesireValue > highestDesireValue then
         highestDesireValue = evaluatedDesireValue
-        highestDesireMode = constants.MODE_JUNGLING
+        highestDesireMode = jungleMode
     end
     
     -- Laning assignments are made Team Wide for Pushing & Defending.

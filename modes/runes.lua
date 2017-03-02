@@ -1,46 +1,50 @@
 
 -------------------------------------------------------------------------------
 --- AUTHOR: Nostrademous
---- CONTRIBUTOR: Code based on work by Platinum_dota2
 --- GITHUB REPO: https://github.com/Nostrademous/Dota2-FullOverwrite
 -------------------------------------------------------------------------------
 
-_G._savedEnv = getfenv()
-module( "runes", package.seeall )
+BotsInit = require( "game/botsinit" )
+local X = BotsInit.CreateGeneric()
 
 ----------
 local utils = require( GetScriptDirectory().."/utility")
 local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
 
 ----------
-local me            = nil
-local runeLoc       = nil
-local runeTarget    = nil
+X.me            = nil
+X.runeLoc       = nil
+X.runeTarget    = nil
 
-function OnStart(myBot)
-    me = myBot
-    runeLoc = self:getHeroVar("RuneLoc")
-    runeTarget = self:getHeroVar("RuneTarget")
+function X:GetName()
+    return "Rune Mode"
 end
 
-function OnEnd()
-    me:setHeroVar("RuneTarget", nil)
-    me:setHeroVar("RuneLoc", nil)
+function X:OnStart(myBot)
+    X.me = myBot
+    X.runeLoc = X.me:getHeroVar("RuneLoc")
+    X.runeTarget = X.me:getHeroVar("RuneTarget")
+end
+
+function X:OnEnd()
+    X.me:setHeroVar("RuneTarget", nil)
+    X.me:setHeroVar("RuneLoc", nil)
     think.UpdatePlayerAssignment(bot, "GetRune", nil)
 end
 
-function Think(bot)
-    assert(runeLoc ~= nil, "[runes.lua] Think() - runeLoc is 'false'")
+function X:Think(bot)
+    assert(X.runeLoc ~= nil, "[runes.lua] Think() - runeLoc is 'false'")
 
     if utils.IsBusy(bot) then return end
 
-    local dist = utils.GetDistance(bot:GetLocation(), runeLoc)
+    local dist = utils.GetDistance(bot:GetLocation(), X.runeLoc)
     if dist > 500 then
-        gHeroVar.HeroMoveToLocation(bot, runeLoc)
-    elseif GetRuneStatus(runeTarget) ~= RUNE_STATUS_MISSING then
-        bot:Action_PickUpRune(runeTarget)
+        gHeroVar.HeroMoveToLocation(bot, X.runeLoc)
+    else
+        if GetRuneStatus(X.runeTarget) ~= RUNE_STATUS_MISSING then
+            bot:Action_PickUpRune(X.runeTarget)
+        end
     end
 end
 
-----------
-for k,v in pairs( runes ) do _G._savedEnv[k] = v end
+return X

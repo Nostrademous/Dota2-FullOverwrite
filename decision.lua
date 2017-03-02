@@ -7,6 +7,8 @@ require( GetScriptDirectory().."/constants" )
 require( GetScriptDirectory().."/role" )
 require( GetScriptDirectory().."/buildings_status" )
 
+local none = dofile( GetScriptDirectory().."/modes/none" )
+
 local utils = require( GetScriptDirectory().."/utility" )
 local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
 local think = require( GetScriptDirectory().."/think" )
@@ -15,7 +17,7 @@ local think = require( GetScriptDirectory().."/think" )
 -- BASE CLASS - DO NOT MODIFY THIS SECTION
 -------------------------------------------------------------------------------
 
-local X = { init = false, currentMode = constants.MODE_NONE, currentModeValue = BOT_MODE_DESIRE_NONE, prevMode = constants.MODE_NONE, abilityPriority = {} }
+local X = { init = false, currentMode = none, currentModeValue = BOT_MODE_DESIRE_NONE, prevMode = none, abilityPriority = {} }
 
 function X:new(o)
     o = o or {}
@@ -38,19 +40,13 @@ end
 
 function X:ExecuteMode()
     if self.currentMode ~= self.prevMode then
-        utils.myPrint("Mode Transition: "..self.prevMode.." --> "..self.currentMode)
-        if self.prevMode ~= constants.MODE_NONE then
-            self.prevMode:OnEnd()
-        end
-        if self.currentMode ~= constants.MODE_NONE then
-            self.currentMode:OnStart(self)
-        end
+        utils.myPrint("Mode Transition: "..self.prevMode:GetName().." --> "..self.currentMode:GetName())
+        self.prevMode:OnEnd()
+        self.currentMode:OnStart(self)
         self.prevMode = self.currentMode
     end
 
-    if self.currentMode ~= constants.MODE_NONE then
-        self.currentMode:Think()
-    end
+    self.currentMode:Think(GetBot())
 end
 
 function X:BeginMode(mode, value)
@@ -60,7 +56,7 @@ function X:BeginMode(mode, value)
 end
 
 function X:ClearMode()
-    self.currentMode = constants.MODE_NONE
+    self.currentMode = none
     self.currentModeValue = BOT_MODE_DESIRE_NONE
 end
 
@@ -104,9 +100,9 @@ function X:DoInit(bot)
     elseif botDifficulty == DIFFICULTY_MEDIUM then
         self:setHeroVar("AbilityDelay", 0.45)
     elseif botDifficulty == DIFFICULTY_HARD then
-        self:setHeroVar("AbilityDelay", 0.15)
+        self:setHeroVar("AbilityDelay", 0.0)
     elseif botDifficulty == DIFFICULTY_UNFAIR then
-        self:setHeroVar("AbilityDelay", 0.1)
+        self:setHeroVar("AbilityDelay", 0.0)
     end
 
     role.GetRoles()
@@ -126,7 +122,7 @@ function X:DoInit(bot)
 
     self:DoHeroSpecificInit(bot)
 
-    local itemPurchase = require( GetScriptDirectory().."/itemPurchase/"..self.Name )
+    local itemPurchase = dofile( GetScriptDirectory().."/itemPurchase/"..self.Name )
     setHeroVar("ItemPurchaseClass", itemPurchase)
     itemPurchase:Init()
 end

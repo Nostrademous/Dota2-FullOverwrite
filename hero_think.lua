@@ -300,15 +300,16 @@ end
 function ConsiderRune(bot, playerAssignment)
     if GetGameState() ~= GAME_STATE_GAME_IN_PROGRESS then return BOT_MODE_DESIRE_NONE end
     
-    if bot:IsIllusion() then return BOT_MODE_DESIRE_NONE end
-    
-    if playerAssignment[bot:GetPlayerID()].GetRune ~= nil then
-        local runeInfo = playerAssignment[bot:GetPlayerID()].GetRune
-        if runeInfo[1] == nil or GetRuneStatus(runeInfo[1]) == RUNE_STATUS_MISSING then
+    local playerRuneAssignment = playerAssignment[bot:GetPlayerID()].GetRune
+    if playerRuneAssignment ~= nil then
+        if playerRuneAssignment[1] == nil or GetRuneStatus(playerRuneAssignment[1]) == RUNE_STATUS_MISSING then
+            playerAssignment[bot:GetPlayerID()].GetRune = nil
+            setHeroVar("RuneTarget", nil)
+            setHeroVar("RuneLoc", nil)
             return BOT_MODE_DESIRE_NONE
         else
-            setHeroVar("RuneTarget", runeInfo[1])
-            setHeroVar("RuneLoc", runeInfo[2])
+            setHeroVar("RuneTarget", playerRuneAssignment[1])
+            setHeroVar("RuneLoc", playerRuneAssignment[2])
             return BOT_MODE_DESIRE_HIGH 
         end
     end

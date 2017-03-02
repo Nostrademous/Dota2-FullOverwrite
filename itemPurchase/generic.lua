@@ -3,6 +3,11 @@
 --- GITHUB REPO: https://github.com/Nostrademous/Dota2-FullOverwrite
 -------------------------------------------------------------------------------
 
+-------------------
+BotsInit = require( "game/botsinit" )
+local X = BotsInit.CreateGeneric()
+-------------------
+
 require( GetScriptDirectory().."/special_shop_generic" )
 local utils = require( GetScriptDirectory().."/utility" )
 local items = require(GetScriptDirectory().."/itemPurchase/items" )
@@ -59,12 +64,14 @@ X.LastExtensionThink = -1000.0
 -- Init
 -------------------------------------------------------------------------------
 
+--[[
 function X:new(o)
     o = o or {}
     setmetatable(o, self)
     self.__index = self
     return o
 end
+--]]
 
 -------------------------------------------------------------------------------
 -- Properties

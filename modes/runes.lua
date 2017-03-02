@@ -29,7 +29,6 @@ end
 function X:OnEnd()
     X.me:setHeroVar("RuneTarget", nil)
     X.me:setHeroVar("RuneLoc", nil)
-    think.UpdatePlayerAssignment(bot, "GetRune", nil)
 end
 
 function X:Think(bot)

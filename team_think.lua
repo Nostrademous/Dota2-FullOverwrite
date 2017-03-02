@@ -190,6 +190,16 @@ function ConsiderTeamRune(playerAssignment)
             if bestAlly then
                 playerAssignment[bestAlly:GetPlayerID()].GetRune = {rune, runeLoc}
             end
+        elseif GetRuneStatus(rune) == RUNE_STATUS_MISSING then
+            for _, ally in pairs(listAlly) do
+                if not ally:IsIllusion() and ally:IsBot() then
+                    if playerAssignment[ally:GetPlayerID()].GetRune ~= nil then
+                        if playerAssignment[ally:GetPlayerID()].GetRune[1] == rune then
+                            playerAssignment[ally:GetPlayerID()].GetRune = nil
+                        end
+                    end
+                end
+            end
         end
     end
 end

@@ -101,13 +101,14 @@ local function Moving(bot)
     local dest = GetLocationAlongLane(X.CurLane, Min(1.0, frontier))
     gHeroVar.HeroMoveToLocation(bot, dest)
 
+    local listEnemyCreep = bot:GetNearbyCreeps(1200, true)
     if #listEnemyCreep > 0 then
         X.LaningState = X.LaningStates.MovingToPos
     end
 end
 
 local function MovingToPos(bot)
-    local listAlliedCreep = bot:GetNearbyCreep(1200, false)
+    local listAlliedCreep = bot:GetNearbyCreeps(1200, false)
     -- if we are attacked by tower, drop aggro
     if utils.IsTowerAttackingMe() and #listAlliedCreep > 0 then
         if utils.DropTowerAggro(bot, listAlliedCreep) then return end
@@ -132,7 +133,7 @@ local function MovingToPos(bot)
 
     local bNeedToGoHigher = false
     local higherDest = nil
-    local listEnemyCreep = bot:GetNearbyCreep(1200, true)
+    local listEnemyCreep = bot:GetNearbyCreeps(1200, true)
     for _, eCreep in ipairs(listEnemyCreep) do
         if eCreep:GetHealth()/eCreep:GetMaxHealth() <= 0.5 and utils.GetHeightDiff(bot, eCreep) < 0 then
             bNeedToGoHigher = true
@@ -161,7 +162,7 @@ local function MovingToPos(bot)
 end
 
 local function DenyNearbyCreeps(bot)
-    local listAlliedCreep = bot:GetNearbyCreep(1200, false)
+    local listAlliedCreep = bot:GetNearbyCreeps(1200, false)
     if #listAlliedCreep == 0 then
         return false
     end
@@ -229,7 +230,7 @@ local function PushCS(bot, WeakestCreep, nAc, damage, AS)
 end
 
 local function CSing(bot)
-    local listAlliedCreep = bot:GetNearbyCreep(1200, false)
+    local listAlliedCreep = bot:GetNearbyCreeps(1200, false)
     if #listAlliedCreep == 0 then
         if not X.ShouldPush then
             X.LaningState = X.LaningStates.Moving
@@ -237,7 +238,7 @@ local function CSing(bot)
         end
     end
 
-    local listEnemyCreep = bot:GetNearbyCreep(1200, true)
+    local listEnemyCreep = bot:GetNearbyCreeps(1200, true)
     if #listEnemyCreep == 0 then
         X.LaningState = X.LaningStates.Moving
         return

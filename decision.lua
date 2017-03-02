@@ -168,9 +168,7 @@ function X:Think(bot)
 
     -- do out Thinking and set our Mode
     local highestDesiredMode, highestDesiredValue = think.MainThink()
-    if highestDesiredValue >= self:getCurrentModeValue() then
-        self:BeginMode(highestDesiredMode, highestDesiredValue)
-    end
+    self:BeginMode(highestDesiredMode, highestDesiredValue)
     self:ExecuteMode()
 end
 

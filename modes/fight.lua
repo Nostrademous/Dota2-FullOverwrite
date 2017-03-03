@@ -8,7 +8,6 @@ local X = BotsInit.CreateGeneric()
 
 ----------
 X.me            = nil
-X.Attacking     = false
 
 function X:GetName()
     return "fight"
@@ -16,7 +15,6 @@ end
 
 function X:OnStart(myBot)
     X.me = myBot
-    X.Attacking = false
 end
 
 function X:OnEnd()

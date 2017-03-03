@@ -98,6 +98,8 @@ function X:DoInit(bot)
     self:setHeroVar("DoDefendLane", {})
     self:setHeroVar("IsRetreating", false)
     self:setHeroVar("ShouldPush", false)
+    self:setHeroVar("Target", nil)
+    self:setHeroVar("RoamTarget", nil)
     
     local botDifficulty = bot:GetDifficulty()
     if botDifficulty == DIFFICULTY_EASY then

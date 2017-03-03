@@ -10,7 +10,7 @@ local X = BotsInit.CreateGeneric()
 X.me            = nil
 
 function X:GetName()
-    return "Shrine Mode"
+    return "shrine"
 end
 
 function X:OnStart(myBot)

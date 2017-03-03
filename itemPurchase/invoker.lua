@@ -4,7 +4,7 @@
 -------------------------------------------------------------------------------
 
 BotsInit = require( "game/botsinit" )
-local invBuy = BotsInit.CreateGeneric()
+local thisBot = BotsInit.CreateGeneric()
 
 local generic = dofile( GetScriptDirectory().."/itemPurchase/generic" )
 
@@ -61,16 +61,16 @@ generic.ItemsToBuyAsMid = {
     }
 }
 
-function invBuy:Init()
+function thisBot:Init()
     generic:InitTable()
 end
 
-function invBuy:GetPurchaseOrder()
+function thisBot:GetPurchaseOrder()
     return generic:GetPurchaseOrder()
 end
 
-function invBuy:ItemPurchaseThink(bot)
+function thisBot:ItemPurchaseThink(bot)
     generic:Think(bot)
 end
 
-return invBuy
+return thisBot

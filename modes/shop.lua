@@ -12,8 +12,6 @@ require( GetScriptDirectory().."/constants" )
 
 local utils = require( GetScriptDirectory().."/utility" )
 
-
-
 ----------
 X.me    = nil
 X.type  = constants.SHOP_TYPE_NONE
@@ -118,7 +116,7 @@ function ThinkSideShop( NextItem )
 end
 
 function X:GetName()
-    return "Shop Mode"
+    return "shop"
 end
 
 function X:OnStart(myBot)

@@ -10,7 +10,7 @@ local X = BotsInit.CreateGeneric()
 X.me            = nil
 
 function X:GetName()
-    return "Roshan Mode"
+    return "roshan"
 end
 
 function X:OnStart(myBot)

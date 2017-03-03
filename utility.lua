@@ -645,13 +645,13 @@ function U.ValidTarget(target)
 end
 
 function U.NotNilOrDead(unit)
-    if unit==nil then
-        return false;
+    if unit == nil or unit:IsNull() then
+        return false
     end
     if unit:IsAlive() then
-        return true;
+        return true
     end
-    return false;
+    return false
 end
 
 function U.TimePassed(prevTime, amount)

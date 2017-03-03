@@ -411,7 +411,7 @@ local function SaveLaningData()
 end
 
 function X:GetName()
-    return "Laning Mode"
+    return "laning"
 end
 
 function X:OnStart(myBot)

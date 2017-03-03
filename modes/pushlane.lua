@@ -10,7 +10,7 @@ local X = BotsInit.CreateGeneric()
 X.me            = nil
 
 function X:GetName()
-    return "Push Lane Mode"
+    return "pushlane"
 end
 
 function X:OnStart(myBot)

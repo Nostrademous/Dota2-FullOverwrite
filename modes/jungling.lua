@@ -27,7 +27,7 @@ X.me = nil
 X.move_ticks = 0
 
 function X:GetName()
-    return "Jungling Mode"
+    return "jungling"
 end
 
 function X:OnStart(myBot)
@@ -142,7 +142,7 @@ local function CleanCamp(bot)
         return
     end
 
-    local neutrals = bot:GetNearbyCreeps(EyeRange, true)
+    local neutrals = bot:GetNearbyCreeps(900, true)
     if #neutrals == 0 then -- we did it
         local camp, _ = utils.NearestNeutralCamp(bot, jungle_status.GetJungle(GetTeam())) -- we might not have killed the `currentCamp`
         -- we could have been killing lane creeps, don't mistaken for neutral

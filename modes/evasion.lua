@@ -14,7 +14,7 @@ local mods  = require( GetScriptDirectory().."/modifiers" )
 X.me            = nil
 
 function X:GetName()
-    return "Evasion Mode"
+    return "evasion"
 end
 
 function X:OnStart(myBot)

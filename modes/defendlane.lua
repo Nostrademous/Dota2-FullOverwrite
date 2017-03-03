@@ -10,7 +10,7 @@ local X = BotsInit.CreateGeneric()
 X.me            = nil
 
 function X:GetName()
-    return "Defend Lane Mode"
+    return "defendlane"
 end
 
 function X:OnStart(myBot)

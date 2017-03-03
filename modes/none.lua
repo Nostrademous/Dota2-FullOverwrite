@@ -7,7 +7,7 @@ BotsInit = require( "game/botsinit" )
 local X = BotsInit.CreateGeneric()
 
 function X:GetName()
-    return "None Mode"
+    return "none"
 end
 
 function X:OnStart(myBot)

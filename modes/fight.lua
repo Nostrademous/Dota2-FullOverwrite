@@ -11,7 +11,7 @@ X.me            = nil
 X.Attacking     = false
 
 function X:GetName()
-    return "Fight Mode"
+    return "fight"
 end
 
 function X:OnStart(myBot)

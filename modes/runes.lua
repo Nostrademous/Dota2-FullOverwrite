@@ -17,7 +17,7 @@ X.runeLoc       = nil
 X.runeTarget    = nil
 
 function X:GetName()
-    return "Rune Mode"
+    return "rune"
 end
 
 function X:OnStart(myBot)

@@ -15,7 +15,7 @@ local utils = require( GetScriptDirectory().."/utility" )
 X.me            = nil
 
 function X:GetName()
-    return "Ward Mode"
+    return "ward"
 end
 
 function X:OnStart(myBot)

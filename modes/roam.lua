@@ -8,6 +8,7 @@ local X = BotsInit.CreateGeneric()
 
 ----------
 local utils = require( GetScriptDirectory().."/utility" )
+local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
 
 ----------
 X.me = nil
@@ -19,6 +20,7 @@ local HeroCountFactor = 0.3
 local MinRating = 1.0
 
 function FindTarget(bot)
+    X.me = gHeroVar.GetVar(bot:GetPlayerID(), "Self")
     if not X.me:IsReadyToGank(bot) then
         return false
     end
@@ -78,7 +80,7 @@ function FindTarget(bot)
 end
 
 function X:GetName()
-    return "Roam Mode"
+    return "roam"
 end
 
 function X:OnStart(myBot)

@@ -7,6 +7,7 @@ require( GetScriptDirectory().."/constants" )
 require( GetScriptDirectory().."/role" )
 require( GetScriptDirectory().."/buildings_status" )
 require( GetScriptDirectory().."/item_usage" )
+require( GetScriptDirectory().."/debugging" )
 
 local none = dofile( GetScriptDirectory().."/modes/none" )
 
@@ -44,7 +45,7 @@ function X:ExecuteMode()
         if self.currentMode:GetName() == nil then
             utils.pause("Unimplemented Mode: ", self.currentMode)
         end
-        utils.myPrint("Mode Transition: "..self.prevMode:GetName().." --> "..self.currentMode:GetName())
+        utils.myPrint("Mode Transition: "..self.prevMode:GetName():upper().." --> "..self.currentMode:GetName():upper())
         self.prevMode:OnEnd()
         self.currentMode:OnStart(self)
         self.prevMode = self.currentMode
@@ -126,9 +127,14 @@ function X:DoInit(bot)
 
     self:DoHeroSpecificInit(bot)
 
+    utils.myPrint("start: ", self.Name)
+    
     local itemPurchase = dofile( GetScriptDirectory().."/itemPurchase/"..self.Name )
     setHeroVar("ItemPurchaseClass", itemPurchase)
+    utils.myPrint("Initializing Purchase Table: ", itemPurchase)
     itemPurchase:Init()
+    
+    utils.myPrint("end: ", self.Name)
     
     local abilityUse = dofile( GetScriptDirectory().."/abilityUse/abilityUse_"..self.Name )
     setHeroVar("AbilityUsageClass", abilityUse)
@@ -158,8 +164,14 @@ function X:Think(bot)
         end
     end
 
+    -- check if jungle respawn timer was hit to repopulate our table
+    jungle_status.checkSpawnTimer()
+    
     -- use courier if needed (TO BE REPLACED BY TEAM LEVEL COURIER CONTROLS)
     utils.CourierThink(bot)
+    
+    -- draw debug stuff (actual drawing is done on the first call in a frame)
+    debugging.draw()
     
     -- check if I am alive, if not, short-circuit most stuff
     if not bot:IsAlive() then
@@ -213,6 +225,7 @@ end
 -- VIRTUAL FUNCTIONS - OVER-LOAD THESE IN HERO-SPECIFIC FILES (IF APPROPRIATE)
 -------------------------------------------------------------------------------
 function X:DoHeroSpecificInit(bot)
+    utils.myPrint("non-overloaded function 'DoHeroSpecificInit' called")
     return
 end
 

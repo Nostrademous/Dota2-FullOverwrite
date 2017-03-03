@@ -10,7 +10,7 @@ local X = BotsInit.CreateGeneric()
 X.me            = nil
 
 function X:GetName()
-    return "Defend Ally Mode"
+    return "defendally"
 end
 
 function X:OnStart(myBot)

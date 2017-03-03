@@ -54,7 +54,7 @@ end
 local invBot = botInv:new{abilityPriority = AbilityPriority}
 
 function invBot:ConsiderAbilityUse()
-    return ability.AbilityUsageThink()
+    return ability.AbilityUsageThink(GetBot())
 end
 
 function invBot:GetNukeDamage(bot, target)

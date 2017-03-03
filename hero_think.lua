@@ -24,6 +24,12 @@ local function getHeroVar(var)
     return gHeroVar.GetVar(GetBot():GetPlayerID(), var)
 end
 
+local specialFile = nil
+local specialFileName = nil
+function tryHeroSpecialMode()
+    specialFile = dofile(specialFileName)
+end
+
 -- Consider incoming projectiles or nearby AOE and if we can evade.
 -- This is of highest importance b/c if we are stunned/disabled we 
 -- cannot do any of the other actions we might be asked to perform.
@@ -127,135 +133,15 @@ end
 -- then it is up to the Hero to manage their safety from global and
 -- tower/creep damage.
 function ConsiderRetreating(bot, nearbyEnemies, nearbyETowers, nearbyAllies)
-
-    local MaxStun = 3   
-    for _, enemy in pairs(nearbyEnemies) do
-        if utils.NotNilOrDead(enemy) and enemy:GetHealth()/enemy:GetMaxHealth() > 0.25 then
-            if getHeroVar("HasEscape") then
-                MaxStun = MaxStun + enemy:GetStunDuration(true)
-            else
-                MaxStun = MaxStun + enemy:GetStunDuration(true) + 0.5*enemy:GetSlowDuration(true)
-            end
-        end
+    specialFileName = GetScriptDirectory().."/modes/retreat_"..utils.GetHeroName(bot)
+    if pcall(tryHeroSpecialMode) then
+        specialFileName = nil
+        return specialFile:Desire(bot, nearbyEnemies, nearbyETowers, nearbyAllies)
+    else
+        specialFileName = nil
+        local retreatMode = dofile( GetScriptDirectory().."/modes/retreat" )
+        return retreatMode:Desire(bot, nearbyEnemies, nearbyETowers, nearbyAllies)
     end
-    
-    local allyTime = 0
-    for _, ally in pairs(nearbyAllies) do
-        if GetUnitToUnitDistance(bot, ally) < 1000 then
-            allyTime = allyTime + ally:GetStunDuration(true) + 0.5*ally:GetSlowDuration(true)
-        end
-    end
-
-    local enemyDamage = 0
-    for _, enemy in pairs(nearbyEnemies) do
-        if utils.NotNilOrDead(enemy) and enemy:GetHealth()/enemy:GetMaxHealth() > 0.25 then
-            local pDamage = enemy:GetEstimatedDamageToTarget(true, bot, MaxStun - allyTime, DAMAGE_TYPE_PHYSICAL)
-            local mDamage = enemy:GetEstimatedDamageToTarget(true, bot, MaxStun - allyTime, DAMAGE_TYPE_MAGICAL)
-            enemyDamage = enemyDamage + pDamage + mDamage + enemy:GetEstimatedDamageToTarget(true, bot, MaxStun - allyTime, DAMAGE_TYPE_PURE)
-            --utils.myPrint("["..utils.GetHeroName(enemy).."]: Damage: ", enemyDamage)
-        end
-    end
-    
-    --utils.myPrint("ConsiderRetreat() :: MaxStun: ", MaxStun, ", Dmg: ", enemyDamage)
-
-    if enemyDamage > 0 and enemyDamage > bot:GetHealth() then
-        --utils.myPrint(" - Retreating - could die in perfect stun/slow overlap")
-        if bot:GetHealth()/bot:GetMaxHealth() < 0.75 then
-            setHeroVar("RetreatReason", constants.RETREAT_DANGER)
-            return BOT_MODE_DESIRE_HIGH
-        end
-    end
-    
-    for _, enemy in pairs(nearbyEnemies) do
-        if bot:WasRecentlyDamagedByHero( enemy, 1.5 ) then
-            if (bot:GetHealth() + bot:GetAttackDamage()) < (enemy:GetHealth() + enemy:GetAttackDamage()) then
-                setHeroVar("RetreatReason", constants.RETREAT_DANGER)
-                return BOT_MODE_DESIRE_MODERATE
-            end
-        end
-    end
-    
-    if bot:GetHealth()/bot:GetMaxHealth() > 0.9 and bot:GetMana()/bot:GetMaxMana() > 0.5 then
-        if utils.IsTowerAttackingMe() then
-            setHeroVar("RetreatReason", constants.RETREAT_TOWER)
-            return BOT_MODE_DESIRE_HIGH 
-        end
-        return BOT_MODE_DESIRE_NONE
-    end
-
-    if bot:GetHealth()/bot:GetMaxHealth() > 0.65 and bot:GetMana()/bot:GetMaxMana() > 0.6 and 
-        GetUnitToLocationDistance(bot, GetLocationAlongLane(getHeroVar("CurLane"), 0)) > 6000 then
-        if utils.IsTowerAttackingMe() then
-            setHeroVar("RetreatReason", constants.RETREAT_TOWER)
-            return BOT_MODE_DESIRE_HIGH 
-        elseif utils.IsCreepAttackingMe() then
-            local pushing = getHeroVar("ShouldPush")
-            if not pushing then
-                setHeroVar("RetreatReason", constants.RETREAT_CREEP)
-                return BOT_MODE_DESIRE_LOW 
-            end
-        end
-        return BOT_MODE_DESIRE_NONE
-    end
-
-    if bot:GetHealth()/bot:GetMaxHealth() > 0.8 and bot:GetMana()/bot:GetMaxMana() > 0.36 and 
-        GetUnitToLocationDistance(bot, GetLocationAlongLane(getHeroVar("CurLane"), 0)) > 6000 then
-        if utils.IsTowerAttackingMe() then
-            setHeroVar("RetreatReason", constants.RETREAT_TOWER)
-            return BOT_MODE_DESIRE_HIGH
-        elseif utils.IsCreepAttackingMe() then
-            local pushing = getHeroVar("ShouldPush")
-            if not pushing then
-                setHeroVar("RetreatReason", constants.RETREAT_CREEP)
-                return BOT_MODE_DESIRE_LOW 
-            end
-        end
-        return BOT_MODE_DESIRE_NONE
-    end
-
-    local me = getHeroVar("Self")
-    if ((bot:GetHealth()/bot:GetMaxHealth()) < 0.33 and me:getCurrentMode():GetName() ~= "Jungling Mode") or
-        (bot:GetMana()/bot:GetMaxMana() < 0.07 and me:getPrevMode():GetName() == "Laning Mode" and 
-        not utils.IsCore()) then
-        setHeroVar("RetreatReason", constants.RETREAT_FOUNTAIN)
-        return BOT_MODE_DESIRE_HIGH 
-    end
-
-    if utils.IsTowerAttackingMe() then
-        if #nearbyETowers >= 1 then
-            local eTower = nearbyETowers[1]
-            if eTower:GetHealth()/eTower:GetMaxHealth() < 0.1 and not eTower:HasModifier("modifier_fountain_glyph") then
-                return BOT_MODE_DESIRE_NONE
-            end
-        end
-        setHeroVar("RetreatReason", constants.RETREAT_TOWER)
-        return BOT_MODE_DESIRE_LOW  
-    elseif utils.IsCreepAttackingMe() then
-        local pushing = getHeroVar("ShouldPush")
-        if not pushing then
-            setHeroVar("RetreatReason", constants.RETREAT_CREEP)
-            return BOT_MODE_DESIRE_LOW  
-        end
-    end
-
-    if getHeroVar("IsRetreating") then
-        if bot:GetHealth()/bot:GetMaxHealth() < 0.8 then
-            return BOT_MODE_DESIRE_MODERATE
-        elseif bot:GetHealth()/bot:GetMaxHealth() > 0.85 and 
-            bot:DistanceFromFountain() > 600 then
-            utils.myPrint("Life Sucks when they can kill you from almost full life")
-            setHeroVar("IsRetreating", false)
-        else
-            if bot:DistanceFromFountain() < 600 then
-                if bot:GetHealth() < bot:GetMaxHealth() or 
-                    bot:GetMana() < bot:GetMaxmana() then
-                    return BOT_MODE_DESIRE_MODERATE
-                end
-            end
-            setHeroVar("IsRetreating", false)
-        end
-    end
-    return BOT_MODE_DESIRE_NONE
 end
 
 -- Courier usage is done at Team wide level. We can do our own 
@@ -356,7 +242,7 @@ function ConsiderRoam(bot)
         (getHeroVar("Role") == ROLE_JUNGLER and getHeroVar("Self"):IsReadyToGank(bot)) then
         
         local roamTarget = getHeroVar("RoamTarget")
-        if roamTarget and (not roamTarget:IsNull() or HeroIsAlive(roamTarget:GetPlayerID())) then
+        if roamTarget and not roamTarget:IsNull() then
             return BOT_MODE_DESIRE_HIGH
         end
         
@@ -423,7 +309,7 @@ function ConsiderWarding(bot, playerAssignment)
     local me = getHeroVar("Self")
     
     -- we need to lane first before we know where to ward properly
-    if me:getCurrentMode():GetName() ~= "Laning Mode" then return BOT_MODE_DESIRE_NONE end
+    if me:getCurrentMode():GetName() ~= "laning" then return BOT_MODE_DESIRE_NONE end
     
     local WardCheckTimer = getHeroVar("WardCheckTimer")
     local bCheck = true

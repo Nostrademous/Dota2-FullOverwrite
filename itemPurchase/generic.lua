@@ -3,12 +3,6 @@
 --- GITHUB REPO: https://github.com/Nostrademous/Dota2-FullOverwrite
 -------------------------------------------------------------------------------
 
--------------------
-BotsInit = require( "game/botsinit" )
-local X = BotsInit.CreateGeneric()
--------------------
-
-require( GetScriptDirectory().."/special_shop_generic" )
 local utils = require( GetScriptDirectory().."/utility" )
 local items = require(GetScriptDirectory().."/itemPurchase/items" )
 local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
@@ -37,7 +31,9 @@ end
 -------------------------------------------------------------------------------
 -- Declarations
 -------------------------------------------------------------------------------
-local X = {}
+
+BotsInit = require( "game/botsinit" )
+local X = BotsInit.CreateGeneric()
 
 X.ItemsToBuyAsHardCarry = {}
 X.ItemsToBuyAsMid = {}
@@ -156,23 +152,10 @@ function X:Think(bot)
 
             -- Enough gold -> buy, remove
             if(bot:GetGold() >= GetItemCost(sNextItem)) then
-                -- Next item only available in secret shop?
-                local bInSide = IsItemPurchasedFromSideShop( sNextItem )
-                local bInSecret = IsItemPurchasedFromSecretShop( sNextItem )
-
-                if bInSide and bInSecret then
-                    if bot:DistanceFromSecretShop() < bot:DistanceFromSideShop() or
-                        special_shop_generic.GetSideShop() == nil then
-                        bInSide = false
-                    end
-                elseif bInSide and special_shop_generic.GetSideShop() == nil then
-                    bInSide = false
-                end
-
                 if bot:IsAlive() then
                     local me = getHeroVar("Self")
                     
-                    if me:getCurrentMode():GetName() ~= "Shop Mode" then
+                    if me:getCurrentMode():GetName() ~= "shop" then
                         bot:ActionImmediate_PurchaseItem(sNextItem)
                         table.remove(self.PurchaseOrder, 1)
                         UpdateTeamBuyList(sNextItem)
@@ -191,7 +174,7 @@ end
 -------------------------------------------------------------------------------
 
 function X:InitTable()
-    -- Init tables based on role
+    -- Init tables based on role    
     if (getHeroVar("Role") == role.ROLE_MID ) then
         self:SetStartingItems(self.ItemsToBuyAsMid.StartingItems)
         self:SetUtilityItems(self.ItemsToBuyAsMid.UtilityItems)
@@ -568,4 +551,9 @@ end
 
 -------------------------------------------------------------------------------
 
+--[[
+myMod.InitTable = X:InitTable
+myMod.Think = X:Think
+myMod.GetPurchaseOrder = X:GetPurchaseOrder
+--]]
 return X

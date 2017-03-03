@@ -96,28 +96,17 @@ function X:Think(bot)
     
     local target = X.me:getHeroVar("RoamTarget")
     
-    if not IsHeroAlive(target:GetPlayerID()) then
-        X.me:setHeroVar("RoamTarget", nil)
-        return
-    end
-    
     if target and not target:IsNull() then
         local dist = GetUnitToUnitDistance(bot, target)
-        
-        local timeToIntercept = dist/bot:GetCurrentMovementSpeed()
-        local timeUntilEscaped = utils.TimeForEnemyToGetIntoTheirBase(target)
-            
-        if timeUntilEscaped <= timeToIntercept then
-            if dist < 500 then
-                bot:Action_AttackUnit(target, true)
-                X.me:setHeroVar("Target", target)
-                X.me:setHeroVar("RoamTarget", nil)
-                return
-            end
-            
-            bot:Action_MoveToUnit(target)
+        if dist < 500 then
+            bot:Action_AttackUnit(target, true)
+            X.me:setHeroVar("Target", target)
+            X.me:setHeroVar("RoamTarget", nil)
+            return
         end
-    else
+        
+        bot:Action_MoveToUnit(target)
+    elseif target then
         local timeSinceSeen = GetHeroLastSeenInfo(target:GetPlayerID()).time
         if timeSinceSeen < 2 then
             bot:Action_MoveToLocation( GetHeroLastSeenInfo(target:GetPlayerID()).location )

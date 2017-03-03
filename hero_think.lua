@@ -243,7 +243,14 @@ function ConsiderRoam(bot)
         
         local roamTarget = getHeroVar("RoamTarget")
         if roamTarget and not roamTarget:IsNull() then
-            return BOT_MODE_DESIRE_HIGH
+            local dist = GetUnitToUnitDistance(bot, roamTarget)
+        
+            local timeToIntercept = dist/bot:GetCurrentMovementSpeed()
+            local timeUntilEscaped = utils.TimeForEnemyToGetIntoTheirBase(roamTarget)
+                
+            if timeUntilEscaped <= timeToIntercept then
+                return BOT_MODE_DESIRE_HIGH
+            end
         end
         
         if roamMode.FindTarget(bot) then

@@ -14,8 +14,6 @@ local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
 
 ----------
 X.me            = nil
-X.RetreatLane   = nil
-X.RetreatPos    = {}
 
 function X:GetName()
     return "retreat"
@@ -23,31 +21,32 @@ end
 
 function X:OnStart(myBot)
     X.me = myBot
-    X.RetreatLane = X.me:getHeroVar("CurLane")
     utils.IsInLane()
 end
 
 function X:OnEnd()
-    X.RetreatLane = nil
-    X.RetreatPos = {}
+    X.me:setHeroVar("RetreatLane", nil)
+    X.me:setHeroVar("RetreatPos", nil)
     X.me:setHeroVar("IsRetreating", false)
 end
 
 local function Updates(bot)
     if X.me:getHeroVar("IsInLane") then
-        X.RetreatPos = utils.PositionAlongLane(bot, X.RetreatLane)
-        --utils.myPrint("RetreatLane: ", X.RetreatLane, " -- RetreatPos: <"..X.RetreatPos..">")
+        X.me:setHeroVar("RetreatPos", utils.PositionAlongLane(bot, X.me:getHeroVar("RetreatLane")))
     end
 end
 
 local function DoFartherRetreat(bot, loc)
     Updates(bot)
+    
+    local rLane = X.me:getHeroVar("RetreatLane")
+    local rPos = X.me:getHeroVar("RetreatPos")
 
     local nextmove = loc or nil
     
     if nextmove == nil then
         if X.me:getHeroVar("IsInLane") then
-            nextmove = GetLocationAlongLane(X.RetreatLane, Max(X.RetreatPos-0.03, 0.0))
+            nextmove = GetLocationAlongLane(rLane, Max(rPos-0.03, 0.0))
         else
             nextmove = utils.Fountain(GetTeam())
         end
@@ -58,10 +57,10 @@ local function DoFartherRetreat(bot, loc)
         -- same name for bot AM and QoP, "tooltip_range" for "riki_blink_strike"
         local value = retreatAbility[2]
         -- below I test how far in units is a single 0.01 move in terms of GetLocationAlongLane()
-        local scale = utils.GetDistance(GetLocationAlongLane(X.RetreatLane, 0.5), GetLocationAlongLane(X.RetreatLane, 0.49))
+        local scale = utils.GetDistance(GetLocationAlongLane(rLane, 0.5), GetLocationAlongLane(rLane, 0.49))
         value = ((value - 15) / scale)*0.01 -- we subtract 15 to give ourselves a little rounding wiggle room
         if X.me:getHeroVar("IsInLane") then
-            nextmove = GetLocationAlongLane(X.RetreatLane, Max(X.RetreatPos-value, 0.0))
+            nextmove = GetLocationAlongLane(rLane, Max(rPos-value, 0.0))
         else
             nextmove = utils.VectorTowards(bot:GetLocation(), nextmove, value-15)
         end

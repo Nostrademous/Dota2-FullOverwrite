@@ -33,7 +33,7 @@ function GetSideShop()
 
 end
 
-local function GetSecretShop()
+function GetSecretShop()
     local bot = GetBot()
 
     if GetTeam() == TEAM_RADIANT then

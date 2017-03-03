@@ -166,9 +166,6 @@ function X:Think(bot)
         self:DoWhileDead(bot)
         return
     end
-
-    -- consider purchasing items
-    self:getHeroVar("ItemPurchaseClass"):ItemPurchaseThink(bot)
     
     -- update our building information
     buildings_status.Update()
@@ -184,6 +181,9 @@ function X:Think(bot)
     local highestDesiredMode, highestDesiredValue = think.MainThink()
     self:BeginMode(highestDesiredMode, highestDesiredValue)
     self:ExecuteMode()
+    
+    -- consider purchasing items
+    self:getHeroVar("ItemPurchaseClass"):ItemPurchaseThink(bot)
 end
 
 -------------------------------------------------------------------------------

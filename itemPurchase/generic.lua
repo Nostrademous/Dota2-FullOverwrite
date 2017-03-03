@@ -101,7 +101,8 @@ end
 -- ToDo: Selling items for better ones
 -------------------------------------------------------------------------------
 
-local function UpdateTeamBuyList(myList, sItem)
+local function UpdateTeamBuyList( sItem )
+    local myList = getHeroVar("TeamBuy")
     if #myList > 0 then
         local pos = utils.PosInTable(myList, sItem)
         if pos > 0 then
@@ -170,38 +171,11 @@ function X:Think(bot)
 
                 if bot:IsAlive() then
                     local me = getHeroVar("Self")
-                    if bInSide and me:getCurrentModeValue() < BOT_MODE_DESIRE_HIGH then
-                        if me:getCurrentMode() ~= constants.MODE_SPECIALSHOP then
-                            me:BeginMode(constants.MODE_SPECIALSHOP, BOT_MODE_DESIRE_HIGH)
-                            utils.myPrint(" STARTING TO HEAD TO SIDE SHOP ")
-                            special_shop_generic.OnStart()
-                        else
-                            local bDone = special_shop_generic.ThinkSideShop(sNextItem)
-                            if bDone then
-                                me:ClearMode()
-                                table.remove(self.PurchaseOrder, 1 )
-                                UpdateTeamBuyList(myTeamBuyList, sNextItem)
-                                bot:SetNextItemPurchaseValue( 0 )
-                            end
-                        end
-                    elseif bInSecret and me:getCurrentModeValue() < BOT_MODE_DESIRE_HIGH then
-                        if me:getCurrentMode() ~= constants.MODE_SPECIALSHOP then
-                            me:BeginMode(constants.MODE_SPECIALSHOP, BOT_MODE_DESIRE_HIGH)
-                            utils.myPrint(" STARTING TO HEAD TO SECRET SHOP ")
-                            special_shop_generic.OnStart()
-                        else
-                            local bDone = special_shop_generic.ThinkSecretShop(sNextItem)
-                            if bDone then
-                                me:ClearMode()
-                                table.remove(self.PurchaseOrder, 1 )
-                                UpdateTeamBuyList(myTeamBuyList, sNextItem)
-                                bot:SetNextItemPurchaseValue( 0 )
-                            end
-                        end
-                    else
+                    
+                    if me:getCurrentMode():GetName() ~= "Shop Mode" then
                         bot:ActionImmediate_PurchaseItem(sNextItem)
                         table.remove(self.PurchaseOrder, 1)
-                        UpdateTeamBuyList(myTeamBuyList, sNextItem)
+                        UpdateTeamBuyList(sNextItem)
                         bot:SetNextItemPurchaseValue(0)
                     end
                 end
@@ -312,6 +286,10 @@ function X:BuySupportItems()
             self.LastSupportThink = RealTime()
         end
     end
+end
+
+function X:GetPurchaseOrder()
+    return self.PurchaseOrder
 end
 
 function X:UpdatePurchaseOrder()

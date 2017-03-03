@@ -443,16 +443,12 @@ end
 
 function U.EnemyDistanceFromTheirAncient( hEnemy )
     local locAncient = GetAncient(U.GetOtherTeam()):GetLocation()
-    if U.ValidTarget( hEnemy ) then
-        return U.GetDistance( locAncient, hEnemy.Obj:GetLocation() )
+    if not hEnemy:IsNull() then
+        return U.GetDistance( locAncient, hEnemy:GetLocation() )
     else
-        local timeSinceSeen = GetHeroLastSeenInfo(hEnemy.Id).time
-        if  timeSinceSeen > 3 then
-            return 0
-        elseif timeSinceSeen <= 0.5 then
-            return U.GetDistance( locAncient, hEnemy.LocExtra1 )
-        elseif timeSinceSeen <= 3.0 then
-            return U.GetDistance( locAncient, hEnemy.LocExtra2 )
+        local timeSinceSeen = GetHeroLastSeenInfo(hEnemy:GetPlayerID()).time
+        if timeSinceSeen < 2 then
+            return U.GetDistance( locAncient, GetHeroLastSeenInfo(hEnemy:GetPlayerID()).location )
         end
     end
     return 0
@@ -460,10 +456,7 @@ end
 
 function U.TimeForEnemyToGetIntoTheirBase( hEnemy )
     local distFromBase = U.EnemyDistanceFromTheirAncient( hEnemy )
-    if U.ValidTarget( hEnemy ) then
-        return distFromBase/hEnemy.Obj:GetCurrentMovementSpeed()
-    end
-    return distFromBase/hEnemy.MoveSpeed
+    return distFromBase/hEnemy:GetCurrentMovementSpeed()
 end
 
 -- CONTRIBUTOR: Function below was coded by Platinum_dota2

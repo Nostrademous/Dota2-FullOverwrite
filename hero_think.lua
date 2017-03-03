@@ -10,6 +10,9 @@ module( "hero_think", package.seeall )
 require( GetScriptDirectory().."/constants" )
 require( GetScriptDirectory().."/item_usage" )
 
+local roamMode = dofile( GetScriptDirectory().."/modes/roam" )
+local shopMode = dofile( GetScriptDirectory().."/modes/shop" )
+
 local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
 local utils = require( GetScriptDirectory().."/utility" )
 
@@ -261,12 +264,35 @@ end
 function ConsiderSecretAndSideShop(bot)
     if bot:IsIllusion() then return BOT_MODE_DESIRE_NONE end
     
-    --[[
-    local me = getHeroVar("Self")
-    if me:getCurrentMode() == constants.MODE_SPECIALSHOP then
-        return me:getCurrentModeValue()
+    local sNextItem = getHeroVar("ItemPurchaseClass"):GetPurchaseOrder()[1]
+    
+    local bInSide = IsItemPurchasedFromSideShop( sNextItem )
+    local bInSecret = IsItemPurchasedFromSecretShop( sNextItem )
+
+    -- it's in side shop, but it's not safe to go there
+    if bInSide and shopMode.GetSideShop() == nil then
+        bInSide = false
     end
-    --]]
+    
+    -- it's in secret shop, but it's not safe to go there
+    -- FIXME: doesn't actually check for "safe to go there"
+    if bInSecret and shopMode.GetSecretShop() == nil then
+        bInSecret = false
+    end
+    
+    if bInSide and bInSecret then
+        if bot:DistanceFromSecretShop() < bot:DistanceFromSideShop() then
+            bInSide = false
+        end
+    end
+    
+    if bInSide then
+        setHeroVar("ShopType", constants.SHOP_TYPE_SIDE)
+        return BOT_MODE_DESIRE_MODERATE
+    elseif bInSecret then
+        setHeroVar("ShopType", constants.SHOP_TYPE_SECRET)
+        return BOT_MODE_DESIRE_MODERATE
+    end
     
     return BOT_MODE_DESIRE_NONE
 end
@@ -328,7 +354,13 @@ end
 function ConsiderRoam(bot)
     if getHeroVar("Role") == ROLE_ROAMER or 
         (getHeroVar("Role") == ROLE_JUNGLER and getHeroVar("Self"):IsReadyToGank(bot)) then
-        if ganking_generic.FindTarget(bot) then
+        
+        local roamTarget = getHeroVar("RoamTarget")
+        if roamTarget and (not roamTarget:IsNull() or HeroIsAlive(roamTarget:GetPlayerID())) then
+            return BOT_MODE_DESIRE_HIGH
+        end
+        
+        if roamMode.FindTarget(bot) then
             return BOT_MODE_DESIRE_HIGH
         end
     end
@@ -425,6 +457,7 @@ function ConsiderWarding(bot, playerAssignment)
                 end
 
                 if wardLoc ~= nil and utils.EnemiesNearLocation(bot, wardLoc, 2000) < 2 then
+                    setHeroVar("WardType", ward:GetName())
                     setHeroVar("WardLocation", wardLoc)
                     return BOT_MODE_DESIRE_LOW 
                 end

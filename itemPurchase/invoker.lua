@@ -65,6 +65,10 @@ function invBuy:Init()
     generic:InitTable()
 end
 
+function invBuy:GetPurchaseOrder()
+    return generic:GetPurchaseOrder()
+end
+
 function invBuy:ItemPurchaseThink(bot)
     generic:Think(bot)
 end

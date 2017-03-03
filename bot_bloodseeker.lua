@@ -163,7 +163,7 @@ end
 function bloodseekerBot:IsReadyToGank(bot)
     local rupture = bot:GetAbilityByName(BLOODSEEKER_SKILL_R)
     local thirst = bot:GetAbilityByName(BLOODSEEKER_SKILL_E)
-    return rupture:IsFullyCastable() or thirst:GetLevel() >= 3
+    return rupture:IsFullyCastable() or bot:GetCurrentMovementSpeed() >= 420
 end
 
 function bloodseekerBot:DoCleanCamp(bot, neutrals, difficulty)

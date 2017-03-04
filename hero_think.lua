@@ -77,17 +77,15 @@ end
 -- This just checks if we are given a fight target and a specific
 -- action queue to execute as part of the fight.
 function ConsiderAttacking(bot, nearbyEnemies, nearbyAllies, nearbyETowers, nearbyATowers, nearbyECreeps, nearbyACreeps)
-
-    --[[
-    local target = getHeroVar("Target")
-    if utils.ValidTarget(target) then
-        if #nearbyAllies >= 3 then
-            return BOT_MODE_DESIRE_HIGH
-        else
-            return BOT_MODE_DESIRE_MODERATE
-        end
+    specialFileName = GetScriptDirectory().."/modes/fight_"..utils.GetHeroName(bot)
+    if pcall(tryHeroSpecialMode) then
+        specialFileName = nil
+        return specialFile:Desire(bot, nearbyEnemies, nearbyAllies, nearbyETowers, nearbyATowers, nearbyECreeps, nearbyACreeps)
+    else
+        specialFileName = nil
+        local fightMode = dofile( GetScriptDirectory().."/modes/fight" )
+        return fightMode:Desire(bot, nearbyEnemies, nearbyAllies, nearbyETowers, nearbyATowers, nearbyECreeps, nearbyACreeps)
     end
-    --]]
     
     return BOT_MODE_DESIRE_NONE
 end

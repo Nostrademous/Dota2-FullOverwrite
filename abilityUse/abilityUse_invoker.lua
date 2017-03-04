@@ -217,6 +217,7 @@ function invAbility:AbilityUsageThink(bot)
     --]]
     
     -- Check if we were asked to use our global
+    --[[
     local useGlobal = getHeroVar("UseGlobal")
     if useGlobal then
         local ability = useGlobal[1]
@@ -243,6 +244,7 @@ function invAbility:AbilityUsageThink(bot)
             setHeroVar("UseGlobal", nil)
         end
     end
+    --]]
     
     castTODesire, castTOLocation = ConsiderTornado(bot, nearbyEnemyHeroes)
     castEMPDesire, castEMPLocation = ConsiderEMP(bot, nearbyEnemyHeroes)
@@ -782,9 +784,9 @@ function ConsiderTornado(bot, nearbyEnemyHeroes)
     --------- CHASING --------------------------------
     local target = getHeroVar("Target")
     if utils.ValidTarget(target) then
-        local dist = GetUnitToUnitDistance( bot, target.Obj )
+        local dist = GetUnitToUnitDistance( bot, target )
         if dist < (nDistance - 200) then
-            return BOT_ACTION_DESIRE_MODERATE, target.Obj:GetExtrapolatedLocation( dist/nSpeed + getHeroVar("AbilityDelay") )
+            return BOT_ACTION_DESIRE_MODERATE, target:GetExtrapolatedLocation( dist/nSpeed + getHeroVar("AbilityDelay") )
         end
     end
 
@@ -822,7 +824,7 @@ function ConsiderIceWall(bot, nearbyEnemyHeroes)
     --------- RETREATING -----------------------
     if getHeroVar("IsRetreating") then
         for _, npcEnemy in pairs( nearbyEnemyHeroes ) do
-            if  bot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) or GetUnitToUnitDistance(npcEnemy, bot) < 600 then
+            if  bot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) and GetUnitToUnitDistance(npcEnemy, bot) < 300 then
                 return BOT_ACTION_DESIRE_MODERATE, 0
             end
         end
@@ -832,7 +834,7 @@ function ConsiderIceWall(bot, nearbyEnemyHeroes)
     local target = getHeroVar("Target")
     if utils.ValidTarget(target) then
         --FIXME: Need to check orientation
-        if GetUnitToUnitDistance( bot, target.Obj ) < (nCastRange + nLength/2) then
+        if GetUnitToUnitDistance( bot, target ) < (nCastRange + nLength/2) then
             return BOT_ACTION_DESIRE_MODERATE, 90
         end
     end
@@ -905,7 +907,7 @@ function ConsiderSunStrike(bot)
 
     -- Get some of its values
     local nRadius = 175
-    local nDelay = 3.0 + getHeroVar("AbilityDelay") -- 0.05 cast point, 1.7 delay
+    local nDelay = 1.75 + getHeroVar("AbilityDelay") -- 0.05 cast point, 1.7 delay
     local nDamage = abilitySS:GetSpecialValueFloat("damage")
 
     --------------------------------------
@@ -914,30 +916,22 @@ function ConsiderSunStrike(bot)
     local globalEnemies = GetUnitList(UNIT_LIST_ENEMY_HEROES)
     for _, enemy in pairs(globalEnemies) do
         if enemy:GetHealth() <= nDamage then
-            if utils.IsCrowdControlled(enemy) then
-                return BOT_ACTION_DESIRE_MODERATE, enemy:GetLocation()
-            else
-                if enemy:GetMovementDirectionStability() > 0.7 then
-                    return BOT_ACTION_DESIRE_MODERATE, enemy:GetExtrapolatedLocation( nDelay  )
-                else
-                    return BOT_ACTION_DESIRE_NONE, {}
-                end
-            end
+            --if utils.IsCrowdControlled(enemy) then
+            --    return BOT_ACTION_DESIRE_MODERATE, enemy:GetLocation()
+            --else
+                return BOT_ACTION_DESIRE_MODERATE, enemy:GetExtrapolatedLocation( nDelay  )
+            --end
         end
     end
 
     --------- CHASING --------------------------------
     local target = getHeroVar("Target")
     if utils.ValidTarget(target) then
-        if utils.IsCrowdControlled(target.Obj) then
-            return BOT_ACTION_DESIRE_MODERATE, target.Obj:GetLocation()
-        else
-            if enemy:GetMovementDirectionStability() > 0.7 then
-                return BOT_ACTION_DESIRE_MODERATE, target.Obj:GetExtrapolatedLocation( nDelay )
-            else
-                return BOT_ACTION_DESIRE_NONE, {}
-            end
-        end
+        --if utils.IsCrowdControlled(target) then
+        --    return BOT_ACTION_DESIRE_MODERATE, target:GetLocation()
+        --else
+            return BOT_ACTION_DESIRE_MODERATE, target:GetExtrapolatedLocation( nDelay )
+        --end
     end
 
     return BOT_ACTION_DESIRE_NONE, {}
@@ -1024,10 +1018,10 @@ function ConsiderEMP(bot, nearbyEnemyHeroes)
     --------- CHASING --------------------------------
     local target = getHeroVar("Target")
     if utils.ValidTarget(target) then
-        if target.Obj:HasModifier("modifier_invoker_tornado") and 
-            target.Obj:GetMana() > 600 and
-            GetUnitToUnitDistance( target.Obj, bot ) < (nCastRange - (nRadius / 2)) then
-            return BOT_ACTION_DESIRE_MODERATE, target.Obj:GetLocation()
+        if target:HasModifier("modifier_invoker_tornado") and 
+            target:GetMana() > 600 and
+            GetUnitToUnitDistance( target, bot ) < (nCastRange - (nRadius / 2)) then
+            return BOT_ACTION_DESIRE_MODERATE, target:GetLocation()
         end
     end
 
@@ -1065,10 +1059,10 @@ function ConsiderGhostWalk(bot, nearbyEnemyHeroes)
     
     -- We are roaming
     local me = getHeroVar("Self")
-    if me:getCurrentMode() == constants.MODE_GANKING then
-        local target = getHeroVar("GankTarget")
-        if target.Id > 0 and utils.ValidTarget(target) then
-            local dist = GetUnitToUnitDistance(bot, target.Obj)
+    if me:getCurrentMode():GetName() == "roam" then
+        local target = getHeroVar("RoamTarget")
+        if utils.ValidTarget(target) then
+            local dist = GetUnitToUnitDistance(bot, target)
             if dist < 3200 then
                 return BOT_ACTION_DESIRE_MODERATE
             end
@@ -1120,8 +1114,8 @@ function ConsiderColdSnap(bot)
     -- If we're going after someone
     local target = getHeroVar("Target")
     if utils.ValidTarget(target) then
-        if GetUnitToUnitDistance( target.Obj, bot ) < nCastRange and CanCastColdSnapOnTarget(target.Obj) then
-            return BOT_ACTION_DESIRE_HIGH, target.Obj
+        if GetUnitToUnitDistance( target, bot ) < nCastRange and CanCastColdSnapOnTarget(target) then
+            return BOT_ACTION_DESIRE_HIGH, target
         end
     end
 

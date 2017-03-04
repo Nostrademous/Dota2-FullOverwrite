@@ -128,15 +128,11 @@ function X:DoInit(bot)
     utils.myPrint(" initialized - Lane: ", self:getHeroVar("CurLane"), ", Role: ", self:getHeroVar("Role"))
 
     self:DoHeroSpecificInit(bot)
-
-    utils.myPrint("start: ", self.Name)
     
     local itemPurchase = dofile( GetScriptDirectory().."/itemPurchase/"..self.Name )
     setHeroVar("ItemPurchaseClass", itemPurchase)
-    utils.myPrint("Initializing Purchase Table: ", itemPurchase)
+    --utils.myPrint("Initializing Purchase Table: ", itemPurchase)
     itemPurchase:Init()
-    
-    utils.myPrint("end: ", self.Name)
     
     local abilityUse = dofile( GetScriptDirectory().."/abilityUse/abilityUse_"..self.Name )
     setHeroVar("AbilityUsageClass", abilityUse)

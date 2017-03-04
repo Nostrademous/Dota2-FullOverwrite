@@ -9,6 +9,8 @@ module( "debugging", package.seeall )
 local utils = require(GetScriptDirectory() .. "/utility")
 local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
 
+local retreatMode = dofile( GetScriptDirectory().."/modes/retreat" )
+
 local last_draw_time = -500
 
 local bot_states = {}
@@ -30,7 +32,21 @@ local function updateBotStates()
     for _, ally in pairs(listAllies) do
         if ally:IsBot() and not ally:IsIllusion() and gHeroVar.HasID(ally:GetPlayerID()) then
             local hMyBot = gHeroVar.GetVar(ally:GetPlayerID(), "Self")
-            local state = hMyBot:getCurrentMode():GetName()
+            local mode = hMyBot:getCurrentMode()
+            local state = mode:GetName()
+            if state == "retreat" then 
+                state = state .. " " .. mode:PrintReason()
+            elseif state == "fight" then
+                local target = hMyBot:getHeroVar("Target")
+                if utils.ValidTarget(target) then
+                    state = state .. " " .. utils.GetHeroName(target)
+                end
+            elseif state == "roam" then
+                local target = hMyBot:getHeroVar("RoamTarget")
+                if utils.ValidTarget(target) then
+                    state = state .. " " .. utils.GetHeroName(target)
+                end
+            end
             SetBotState(hMyBot.Name, 1, state)
         end
     end

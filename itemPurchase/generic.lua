@@ -551,9 +551,4 @@ end
 
 -------------------------------------------------------------------------------
 
---[[
-myMod.InitTable = X:InitTable
-myMod.Think = X:Think
-myMod.GetPurchaseOrder = X:GetPurchaseOrder
---]]
 return X

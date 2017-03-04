@@ -6,6 +6,7 @@
 BotsInit = require( "game/botsinit" )
 local X = BotsInit.CreateGeneric()
 
+require( GetScriptDirectory().."/constants")
 require( GetScriptDirectory().."/item_usage")
 
 ----------
@@ -73,6 +74,21 @@ local function DoFartherRetreat(bot, loc)
     if item_usage.UseMovementItems(nextmove) then return end
     
     bot:Action_MoveToLocation(nextmove)
+end
+
+function X:PrintReason()
+    local reason = X.me:getHeroVar("RetreatReason")
+    if reason == constants.RETREAT_FOUNTAIN then
+        return "FOUNTAIN"
+    elseif reason == constants.RETREAT_DANGER then
+        return "DANGER"
+    elseif reason == constants.RETREAT_TOWER then
+        return "TOWER"
+    elseif reason == constants.RETREAT_CREEP then
+        return "CREEP"
+    else
+        return "<ERROR>"
+    end
 end
 
 function X:Think(bot)
@@ -206,15 +222,6 @@ function X:Desire(bot, nearbyEnemies, nearbyETowers, nearbyAllies)
         if bot:GetHealth()/bot:GetMaxHealth() < 0.75 then
             X.me:setHeroVar("RetreatReason", constants.RETREAT_DANGER)
             return BOT_MODE_DESIRE_HIGH
-        end
-    end
-    
-    for _, enemy in pairs(nearbyEnemies) do
-        if bot:WasRecentlyDamagedByHero( enemy, 1.5 ) then
-            if (bot:GetHealth() + bot:GetAttackDamage()) < (enemy:GetHealth() + enemy:GetAttackDamage()) then
-                X.me:setHeroVar("RetreatReason", constants.RETREAT_DANGER)
-                return BOT_MODE_DESIRE_MODERATE
-            end
         end
     end
     

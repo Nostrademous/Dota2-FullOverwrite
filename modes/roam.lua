@@ -73,7 +73,7 @@ function FindTarget(bot)
     end
     if (bot:GetEstimatedDamageToTarget( true, target, 5.0, DAMAGE_TYPE_ALL ) * (1 + 0.5*heroAmpFactor)) > target:GetHealth() then
         X.me:setHeroVar("RoamTarget", target)
-        utils.myPrint(" stalking "..utils.GetHeroName(target))
+        --utils.myPrint(" stalking "..utils.GetHeroName(target))
         return true
     end
     return false
@@ -96,7 +96,7 @@ function X:Think(bot)
     
     local target = X.me:getHeroVar("RoamTarget")
     
-    if target and not target:IsNull() then
+    if utils.ValidTarget(target) and target:IsAlive() then
         local dist = GetUnitToUnitDistance(bot, target)
         if dist < 500 then
             bot:Action_AttackUnit(target, true)
@@ -104,15 +104,9 @@ function X:Think(bot)
             X.me:setHeroVar("RoamTarget", nil)
             return
         end
-        
         bot:Action_MoveToUnit(target)
-    elseif target then
-        local timeSinceSeen = GetHeroLastSeenInfo(target:GetPlayerID()).time
-        if timeSinceSeen < 2 then
-            bot:Action_MoveToLocation( GetHeroLastSeenInfo(target:GetPlayerID()).location )
-        else
-            X.me:setHeroVar("RoamTarget", nil)
-        end
+    else
+        X.me:setHeroVar("RoamTarget", nil)
     end
 end
 

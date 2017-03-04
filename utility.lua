@@ -638,7 +638,7 @@ function U.AllChat(msg)
 end
 
 function U.ValidTarget(target)
-    if target and target.Obj ~= nil and not target.Obj:IsNull() then
+    if target and not target:IsNull() then
         return true
     end
     return false

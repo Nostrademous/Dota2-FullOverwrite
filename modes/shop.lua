@@ -120,7 +120,7 @@ function X:GetName()
 end
 
 function X:OnStart(myBot)
-    X.me = myBot
+    X.me = gHeroVar.GetVar(GetBot():GetPlayerID(), "Self")
     X.type = X.me:getHeroVar("ShopType")
 end
 
@@ -129,11 +129,14 @@ function X:OnEnd()
 end
 
 function X:Think(bot)
+    X.me = gHeroVar.GetVar(bot:GetPlayerID(), "Self")
     local bDone = false
     if X.type == constants.SHOP_TYPE_SIDE then
         bDone = ThinkSideShop( sNextItem )
     elseif X.type == constants.SHOP_TYPE_SECRET then
         bDone =ThinkSecretShop( sNextItem )
+    else
+        utils.myPrint("shop.lua - FIXME")
     end
     
     if bDone then

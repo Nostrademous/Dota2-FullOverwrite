@@ -18,13 +18,14 @@ function X:GetName()
 end
 
 function X:OnStart(myBot)
-    X.me = myBot
+    X.me = gHeroVar.GetVar(GetBot():GetPlayerID(), "Self")
 end
 
 function X:OnEnd()
 end
 
 function X:Think(bot)
+    X.me = gHeroVar.GetVar(bot:GetPlayerID(), "Self")
     if mods.IsRuptured(bot) then
         local tp = utils.IsItemAvailable("item_tpscroll")
         if tp then

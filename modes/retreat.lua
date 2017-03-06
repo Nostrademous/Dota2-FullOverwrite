@@ -21,11 +21,12 @@ function X:GetName()
 end
 
 function X:OnStart(myBot)
-    X.me = myBot
+    X.me = gHeroVar.GetVar(GetBot():GetPlayerID(), "Self")
     utils.IsInLane()
 end
 
 function X:OnEnd()
+    X.me = gHeroVar.GetVar(GetBot():GetPlayerID(), "Self")
     X.me:setHeroVar("RetreatLane", nil)
     X.me:setHeroVar("RetreatPos", nil)
     X.me:setHeroVar("IsRetreating", false)
@@ -34,6 +35,8 @@ end
 local function Updates(bot)
     if X.me:getHeroVar("IsInLane") then
         X.me:setHeroVar("RetreatPos", utils.PositionAlongLane(bot, X.me:getHeroVar("RetreatLane")))
+    else
+        X.me:setHeroVar("RetreatLane", LANE_MID)
     end
 end
 
@@ -92,6 +95,8 @@ function X:PrintReason()
 end
 
 function X:Think(bot)
+    X.me = gHeroVar.GetVar(bot:GetPlayerID(), "Self")
+    
     local reason = X.me:getHeroVar("RetreatReason")
     
     if reason == constants.RETREAT_FOUNTAIN then

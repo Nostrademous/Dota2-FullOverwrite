@@ -17,14 +17,17 @@ function X:GetName()
 end
 
 function X:OnStart(myBot)
-    X.me = myBot
+    X.me = gHeroVar.GetVar(GetBot():GetPlayerID(), "Self")
 end
 
 function X:OnEnd()
+    X.me = gHeroVar.GetVar(GetBot():GetPlayerID(), "Self")
     X.me:setHeroVar("Target", nil)
 end
 
 function X:Think(bot)
+    X.me = gHeroVar.GetVar(bot:GetPlayerID(), "Self")
+    
     local target = X.me:getHeroVar("Target")
     if utils.ValidTarget(target) and target:IsAlive() then
         gHeroVar.HeroAttackUnit(bot, target, true)

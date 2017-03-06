@@ -23,7 +23,6 @@ X.AttackSpeed       = 0.6
 X.CurLane           = 0
 X.ShouldPush        = false
 X.LanePos           = nil
-X.BackTimer         = -1000
 
 X.LaningStates = {
     Start       = 0,
@@ -331,7 +330,7 @@ local function CSing(bot)
 end
 
 local function GetBack(bot)
-    if GameTime() - X.BackTimer < 1 then
+    if GameTime() - X.me:getHeroVar("BackTimer") < 1 then
         return true
     end
 
@@ -357,11 +356,11 @@ local function GetBack(bot)
     end
     
     if (1.15-0.15*#X.listAllies)*estDmgToMe > bot:GetHealth() then
-        X.BackTimer = GameTime() + 3.0
+        X.me:setHeroVar("BackTimer", GameTime() + 3.0)
         return true
     end
 
-    X.BackTimer = -1000
+    X.me:setHeroVar("BackTimer", -1000)
     return false
 end
 
@@ -415,8 +414,8 @@ function X:GetName()
 end
 
 function X:OnStart(myBot)
-    X.me = myBot
-    X.BackTimer = -1000.0
+    X.me = gHeroVar.GetVar(GetBot():GetPlayerID(), "Self")
+    X.me:setHeroVar("BackTimer", -1000.0)
     X.me:setHeroVar("LaningState", X.LaningStates.Start)
 end
 
@@ -435,6 +434,8 @@ X.States = {
 ----------------------------------
 
 function X:Think(bot)
+    X.me = gHeroVar.GetVar(bot:GetPlayerID(), "Self")
+    
     LoadLaningData(bot)
     
     if GetBack(bot) then

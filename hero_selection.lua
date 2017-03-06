@@ -4,11 +4,11 @@
 -------------------------------------------------------------------------------
 
 local RadiantBots = {
-    "npc_dota_hero_drow_ranger",
-    "npc_dota_hero_crystal_maiden",
+    "npc_dota_hero_chaos_knight", --"npc_dota_hero_drow_ranger",
+    "npc_dota_hero_bane", --"npc_dota_hero_crystal_maiden",
     "npc_dota_hero_bloodseeker",
     "npc_dota_hero_invoker",
-    "npc_dota_hero_viper"
+    "npc_dota_hero_axe" --"npc_dota_hero_viper"
 }
 
 local DireBots = {
@@ -57,7 +57,7 @@ function UpdateLaneAssignments()
 			[3] = LANE_BOT,
 			[4] = LANE_MID,
 			[5] = LANE_TOP,
-		};
+		}
 	elseif ( GetTeam() == TEAM_DIRE ) then
 		return {
 			[1] = LANE_BOT,
@@ -65,6 +65,6 @@ function UpdateLaneAssignments()
 			[3] = LANE_TOP,
 			[4] = LANE_TOP,
 			[5] = LANE_TOP,
-		};
+		}
 	end
 end

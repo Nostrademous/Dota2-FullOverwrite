@@ -4,14 +4,11 @@
 -------------------------------------------------------------------------------
 
 require( GetScriptDirectory().."/constants" )
-require( GetScriptDirectory().."/item_purchase_bloodseeker" )
-require( GetScriptDirectory().."/ability_usage_bloodseeker" )
-require( GetScriptDirectory().."/jungling_generic" )
-require( GetScriptDirectory().."/debugging" )
 
 local utils = require( GetScriptDirectory().."/utility" )
-local dt = require( GetScriptDirectory().."/decision_tree" )
+local dt = require( GetScriptDirectory().."/decision" )
 local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
+local ability = require( GetScriptDirectory().."/abilityUse/abilityUse_bloodseeker" )
 
 function setHeroVar(var, value)
     local bot = GetBot()
@@ -37,16 +34,14 @@ local BLOODSEEKER_ABILITY6 = "special_bonus_all_stats_10"
 local BLOODSEEKER_ABILITY7 = "special_bonus_unique_bloodseeker"
 local BLOODSEEKER_ABILITY8 = "special_bonus_lifesteal_30"
 
-local BloodseekerAbilityPriority = {
+local AbilityPriority = {
     BLOODSEEKER_SKILL_Q,    BLOODSEEKER_SKILL_E,    BLOODSEEKER_SKILL_Q,    BLOODSEEKER_SKILL_E,    BLOODSEEKER_SKILL_Q,
     BLOODSEEKER_SKILL_R,    BLOODSEEKER_SKILL_W,    BLOODSEEKER_SKILL_E,    BLOODSEEKER_SKILL_Q,    BLOODSEEKER_ABILITY2,
     BLOODSEEKER_SKILL_W,    BLOODSEEKER_SKILL_R,    BLOODSEEKER_SKILL_W,    BLOODSEEKER_SKILL_W,    BLOODSEEKER_ABILITY4,
     BLOODSEEKER_SKILL_E,    BLOODSEEKER_SKILL_R,    BLOODSEEKER_ABILITY5,   BLOODSEEKER_ABILITY8
-};
+}
 
-local bloodseekerModeStack = { [1] = {constants.MODE_NONE, BOT_ACTION_DESIRE_NONE} }
-
-botBS = dt:new()
+local botBS = dt:new()
 
 function botBS:new(o)
     o = o or dt:new(o)
@@ -55,13 +50,18 @@ function botBS:new(o)
     return o
 end
 
-bloodseekerBot = botBS:new{modeStack = bloodseekerModeStack, abilityPriority = BloodseekerAbilityPriority}
---bloodseekerBot:printInfo()
+bloodseekerBot = botBS:new{abilityPriority = AbilityPriority}
 
-bloodseekerBot.Init = false
+function bloodseekerBot:ConsiderAbilityUse()
+    ability.AbilityUsageThink(GetBot())
+end
 
-function bloodseekerBot:ConsiderAbilityUse(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCreep, nearbyAlliedCreep, nearbyEnemyTowers, nearbyAlliedTowers)
-    ability_usage_bloodseeker.AbilityUsageThink(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCreep, nearbyAlliedCreep, nearbyEnemyTowers, nearbyAlliedTowers)
+function bloodseekerBot:GetNukeDamage(bot, target)
+    return ability.nukeDamage( bot, target )
+end
+
+function bloodseekerBot:QueueNuke(bot, target, actionQueue, engageDist)
+    return ability.queueNuke( bot, target, actionQueue, engageDist )
 end
 
 function Think()
@@ -73,82 +73,11 @@ function Think()
 
     -- if we are initialized, do the rest
     if bloodseekerBot.Init then
-        if bot:GetLevel() >= 20 and getHeroVar("Role") ~= constants.ROLE_HARDCARRY then
-            bloodseekerBot:RemoveMode(constants.MODE_JUNGLING)
+        if bot:GetLevel() >= 16 and getHeroVar("Role") ~= constants.ROLE_HARDCARRY then
             setHeroVar("Role", constants.ROLE_HARDCARRY)
             setHeroVar("CurLane", LANE_BOT) --FIXME: don't hardcode this
         end
-
-        gHeroVar.ExecuteHeroActionQueue(bot)
     end
-end
-
--- We over-write DoRetreat behavior for JUNGLER Bloodseeker
-function bloodseekerBot:DoRetreat(bot, reason)
-    -- if we got creep damage and are a JUNGLER do special stuff
-    local pushing = self:getCurrentMode() == constants.MODE_PUSHLANE
-
-    local bloodrage = bot:GetAbilityByName(BLOODSEEKER_SKILL_Q)
-    local bloodragePct =  bloodrage:GetSpecialValueInt("health_bonus_creep_pct")/100
-
-    local neutrals = bot:GetNearbyCreeps(500, true)
-    if #neutrals == 0 then
-        -- if we are retreating - piggyback on retreat logic movement code
-        if self:getCurrentMode() == constants.MODE_RETREAT then
-            -- we use '.' instead of ':' and pass 'self' so it is the correct self
-            return dt.DoRetreat(self, bot, getHeroVar("RetreatReason"))
-        end
-        return false
-    end
-    table.sort(neutrals, function(n1, n2) return n1:GetHealth() < n2:GetHealth() end)
-
-    local estimatedDamage = bot:GetEstimatedDamageToTarget(true, neutrals[1], bot:GetSecondsPerAttack(), DAMAGE_TYPE_PHYSICAL)
-    --local actualDamage = neutrals[1]:GetActualIncomingDamage(estimatedDamage, DAMAGE_TYPE_PHYSICAL)
-    local bloodrageHeal = bloodragePct * neutrals[1]:GetMaxHealth()
-
-    if reason == constants.RETREAT_CREEP and self:getCurrentMode() == constants.MODE_JUNGLING then
-        -- if our health is lower than maximum( 15% health, 100 health )
-        local healthThreshold = math.max(bot:GetMaxHealth()*0.15, 100)
-
-        if bot:GetHealth() < healthThreshold then
-            local totalCreepDamage = 0
-
-            for i, neutral in ipairs(neutrals) do
-                local estimatedNCDamage = neutral:GetEstimatedDamageToTarget(true, bot, neutral:GetSecondsPerAttack(), DAMAGE_TYPE_ALL)
-                local estimatedNCDamageTest = neutral:GetEstimatedDamageToTarget(true, bot, neutral:GetSecondsPerAttack(), DAMAGE_TYPE_PHYSICAL)
-                -- TODO: Bs backs up although he could get a netural kill and heal himself. big satyr might have been involved.. keep an eye on that
-                if (estimatedNCDamage > estimatedNCDamageTest + 20) then debugging.SetBotState(bot, 1, "IT'S MAGIC! "..estimatedNCDamage.." "..estimatedNCDamageTest) end
-                totalCreepDamage = (totalCreepDamage + estimatedNCDamage)
-            end
-
-            if (estimatedDamage < neutrals[1]:GetHealth()) and (bot:GetHealth() + bloodrageHeal) < healthThreshold
-            and (bot:GetHealth() < totalCreepDamage) then
-                debugging.SetBotState(bot, 2, "Can't do it :(")
-                setHeroVar("RetreatReason", constants.RETREAT_FOUNTAIN)
-                if ( self:HasMode(constants.MODE_RETREAT) == false ) then
-                    self:AddMode(constants.MODE_RETREAT)
-                    setHeroVar("IsInLane", false)
-                    return true
-                end
-            else
-                return false
-            end
-        end
-        -- if we are retreating - piggyback on retreat logic movement code
-        if self:getCurrentMode() == constants.MODE_RETREAT then
-            -- we use '.' instead of ':' and pass 'self' so it is the correct self
-            return dt.DoRetreat(self, bot, getHeroVar("RetreatReason"))
-        end
-
-        -- we are not retreating, allow decision tree logic to fall through
-        -- to the next level
-        return false
-    -- if we are not a jungler, invoke default DoRetreat behavior
-    else
-        -- we use '.' instead of ':' and pass 'self' so it is the correct self
-        return dt.DoRetreat(self, bot, getHeroVar("RetreatReason"))
-    end
-    return true
 end
 
 function bloodseekerBot:GetMaxClearableCampLevel(bot)
@@ -168,8 +97,7 @@ end
 
 function bloodseekerBot:IsReadyToGank(bot)
     local rupture = bot:GetAbilityByName(BLOODSEEKER_SKILL_R)
-    local thirst = bot:GetAbilityByName(BLOODSEEKER_SKILL_E)
-    return rupture:IsFullyCastable() or thirst:GetLevel() >= 3
+    return rupture:IsFullyCastable() or bot:GetCurrentMovementSpeed() >= 420
 end
 
 function bloodseekerBot:DoCleanCamp(bot, neutrals, difficulty)
@@ -201,12 +129,4 @@ function bloodseekerBot:DoCleanCamp(bot, neutrals, difficulty)
         end
     end
     -- TODO: don't attack if we should wait on all neutrals!
-end
-
-function bloodseekerBot:GetNukeDamage(bot, target)
-    return ability_usage_bloodseeker.nukeDamage( bot, target )
-end
-
-function bloodseekerBot:QueueNuke(bot, target, actionQueue, engageDist)
-    return ability_usage_bloodseeker.queueNuke( bot, target, actionQueue, engageDist )
 end

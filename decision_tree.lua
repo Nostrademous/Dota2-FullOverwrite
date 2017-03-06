@@ -40,7 +40,7 @@ local MODE_PUSHLANE   = constants.MODE_PUSHLANE
 
 local gStuck = false -- for detecting getting stuck in trees or whatever
 
-local X = { currentMode = MODE_NONE, currentModeValue = BOT_MODE_DESIRE_NONE, prevMode = MODE_NONE, modeStack = {}, abilityPriority = {} }
+local X = { currentMode = MODE_NONE, currentModeValue = BOT_MODE_DESIRE_NONE, prevMode = MODE_NONE, abilityPriority = {} }
 
 function X:new(o)
     o = o or {}
@@ -70,16 +70,6 @@ function X:setPrevMode(mode)
     self.prevMode = mode
 end
 
-function X:getModeStack()
-    return self.modeStack
-end
-
-function X:printModeStack()
-    for k,v in ipairs(self:getModeStack()) do
-        utils.myPrint("ModeStack["..k.."] - ", v[1], " with value: ", v[2])
-    end
-end
-
 function X:getAbilityPriority()
     return self.abilityPriority
 end
@@ -103,13 +93,17 @@ function X:PrintModeTransition(name)
             utils.myPrint("Retreat Reason: ", self:getHeroVar("RetreatReason"))
         end
 
+        if self:getPrevMode() == constants.MODE_RETREAT then
+            --utils.myPrint("clearing IsRetreating flag")
+            self:setHeroVar("IsRetreating", false)
+        end
+        
         if self:getCurrentMode() == constants.MODE_JUNGLING then
             self:setHeroVar("JunglingState", nil)
         end
 
-        if self:getPrevMode() == constants.MODE_RETREAT then
-            --utils.myPrint("clearing IsRetreating flag")
-            self:setHeroVar("IsRetreating", false)
+        if self:getPrevMode() == constants.MODE_SHRINE then
+            think.UpdatePlayerAssignment(GetBot(), "UseShrine", nil)
         end
 
         self:setPrevMode(self:getCurrentMode())
@@ -120,50 +114,18 @@ function X:AddMode(mode, value)
     if mode == constants.MODE_NONE then return end
 
     if mode == self:getCurrentMode() then return end
-
-    --local k = self:HasMode(mode)
-    --if k then
-    --    table.remove(self:getModeStack(), k)
-    --end
-
-    if self:getCurrentMode() == constants.MODE_SHRINE then
-        think.UpdatePlayerAssignment(GetBot(), "UseShrine", nil)
-    end
-
-    --table.insert(self:getModeStack(), 1, {mode, value})
-
-    --self:printModeStack()
-
+    
     self.currentMode = mode
     self.currentModeValue = value
-end
-
-function X:HasMode(mode)
-    for key, value in pairs(self:getModeStack()) do
-        if value[1] == mode then return key end
-    end
-    return false
 end
 
 function X:RemoveMode(mode)
     if mode == constants.MODE_NONE then return end
 
     self:setCurrentMode(constants.MODE_NONE, BOT_MODE_DESIRE_NONE)
-
-    --local k = self:HasMode(mode)
-    --if k then
-    --    utils.myPrint("Removing Mode: ", mode)
-    --    table.remove(self:getModeStack(), k)
-    --    self:setCurrentMode(self:GetMode())
-    --end
 end
 
-function X:GetMode()
-    if #self:getModeStack() == 0 then
-        return {constants.MODE_NONE, BOT_MODE_DESIRE_NONE}
-    end
-    return self:getModeStack()[1]
-end
+-------------------------------------------------------------------------------
 
 function X:setHeroVar(var, value)
     --utils.myPrint("setHeroVar: ", var, ", Value: ", value)
@@ -365,8 +327,8 @@ function X:Think(bot)
     self:ReAquireTargets(nearbyEnemyHeroes)
 
     -- do out Thinking and set our Mode
-    local highestDesiredMode, highestDesiredValue = think.MainThink(nearbyEnemyHeroes, nearbyAlliedHeroes,
-                                                                    nearbyEnemyCreep, nearbyAlliedCreep,
+    local highestDesiredMode, highestDesiredValue = think.MainThink(nearbyEnemyHeroes, nearbyAlliedHeroes, 
+                                                                    nearbyEnemyCreep, nearbyAlliedCreep, 
                                                                     nearbyEnemyTowers, nearbyAlliedTowers)
     if highestDesiredValue >= self:getCurrentModeValue() then
         self:AddMode(highestDesiredMode, highestDesiredValue)
@@ -419,7 +381,7 @@ function X:Think(bot)
 
     -- consider casting any of our abilities
     if not (bot:IsSilenced() or bot:IsHexed()) then
-        if self:ConsiderAbilityUse(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCreep,
+        if self:ConsiderAbilityUse(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCreep, 
                                    nearbyAlliedCreep, nearbyEnemyTowers, nearbyAlliedTowers) then
             return
         end
@@ -596,7 +558,7 @@ function X:DoRetreat(bot, reason)
         --utils.myPrint("STARTING TO RETREAT b/c of tower damage")
 
         local mypos = bot:GetLocation()
-        if utils.IsTowerAttackingMe(2.0) then
+        if utils.IsTowerAttackingMe() then
             local rLoc = mypos
 
             --set the target to go back
@@ -793,7 +755,7 @@ function X:DoFight(bot)
                         else
                             local dist = GetUnitToUnitDistance(bot, target.Obj)
                             if dist > 0.7*bot:GetAttackRange() then
-                                if item_usage.UseMovementItems(enemy:GetLocation()) then return true end
+                                if item_usage.UseMovementItems(target.Obj:GetLocation()) then return true end
                                 gHeroVar.HeroMoveToLocation(bot, utils.VectorTowards(bot:GetLocation(), target.Obj:GetLocation(), dist-0.7*bot:GetAttackRange()))
                             elseif dist < 0.4*bot:GetAttackRange() then
                                 gHeroVar.HeroMoveToLocation(bot, utils.VectorAway(bot:GetLocation(), target.Obj:GetLocation(), 0.7*bot:GetAttackRange()-dist))
@@ -931,9 +893,9 @@ function X:DoPushLane(bot)
     local frontier = Min(1.0, enemyFrontier)
     local dest = GetLocationAlongLane(self:getHeroVar("CurLane"), Min(1.0, frontier))
 
-    if utils.IsTowerAttackingMe(0.1) and #nearbyAlliedCreep > 0 then
+    if utils.IsTowerAttackingMe() and #nearbyAlliedCreep > 0 then
         if utils.DropTowerAggro(bot, nearbyAlliedCreep) then return true end
-    elseif utils.IsTowerAttackingMe(0.1) then
+    elseif utils.IsTowerAttackingMe() then
         self:RemoveMode(constants.MODE_PUSHLANE)
         return false
     end

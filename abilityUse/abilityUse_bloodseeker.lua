@@ -1,10 +1,10 @@
 -------------------------------------------------------------------------------
---- AUTHOR: Keithen
+--- AUTHOR: Keithen, Nostrademous
 --- GITHUB REPO: https://github.com/Nostrademous/Dota2-FullOverwrite
 -------------------------------------------------------------------------------
 
-_G._savedEnv = getfenv()
-module( "ability_usage_bloodseeker", package.seeall )
+BotsInit = require( "game/botsinit" )
+local bsAbility = BotsInit.CreateGeneric()
 
 require( GetScriptDirectory().."/fight_simul" )
 require( GetScriptDirectory().."/modifiers" )
@@ -20,7 +20,9 @@ function getHeroVar(var)
     return gHeroVar.GetVar(GetBot():GetPlayerID(), var)
 end
 
-local Abilities ={
+local bsTarget = nil
+
+local Abilities = {
     "bloodseeker_bloodrage",
     "bloodseeker_blood_bath",
     "bloodseeker_thirst",
@@ -107,12 +109,11 @@ local function UseW(bot, nearbyEnemyHeroes)
     if not abilityW:IsFullyCastable() then return false end
 
     if #nearbyEnemyHeroes == 1 and abilityR:IsFullyCastable() then
-        setHeroVar("Target", {Obj=nearbyEnemyHeroes[1], Id=nearbyEnemyHeroes[1]:GetPlayerID()})
+        setHeroVar("Target", nearbyEnemyHeroes[1])
         return false
     end
 
-    local target = getHeroVar("Target")
-    if utils.ValidTarget(target) and GetUnitToUnitDistance(bot, target.Obj) > 1500 then
+    if bsTarget and GetUnitToUnitDistance(bot, bsTarget) > 1500 then
         return false
     end
     
@@ -131,26 +132,20 @@ local function UseW(bot, nearbyEnemyHeroes)
     return false
 end
 
-local function UseUlt(bot, nearbyEnemyHeroes, nearbyEnemyTowers)
+local function UseUlt(bot)
     if not abilityR:IsFullyCastable() then return false end
 
-    local enemy = getHeroVar("Target")
-    if not utils.ValidTarget(enemy) then return false end
+    if not utils.NotNilOrDead(bsTarget) then return false end
     
-    --[[
-    if #nearbyEnemyHeroes == 0 and #nearbyEnemyTowers == 0 and (enemy:GetHealth()/enemy:GetMaxHealth()) < 0.2 then
-        return false
-    end
-    --]]
-    local timeToKillRightClicking = fight_simul.estimateTimeToKill(bot, enemy.Obj)
+    local timeToKillRightClicking = fight_simul.estimateTimeToKill(bot, bsTarget)
     --utils.myPrint("Estimating Time To Kill with Right Clicks: ", timeToKillRightClicking)
     if timeToKillRightClicking < 4.0 then
         utils.myPrint("Not Using Ult")
         return false
     end
 
-    if GetUnitToUnitDistance(enemy.Obj, bot) < (abilityR:GetCastRange() - 100) then
-        bot:Action_UseAbilityOnEntity(abilityR, enemy.Obj)
+    if GetUnitToUnitDistance(bsTarget, bot) < (abilityR:GetCastRange() - 100) then
+        bot:Action_UseAbilityOnEntity(abilityR, bsTarget)
         return true
     end
 
@@ -160,9 +155,8 @@ end
 local function UseQ(bot)
     if not abilityQ:IsFullyCastable() then return false end
 
-    local enemy = getHeroVar("Target")
-    if utils.ValidTarget(enemy) and GetUnitToUnitDistance(enemy.Obj, bot) < (abilityQ:GetCastRange() - 100) then
-        bot:Action_UseAbilityOnEntity(abilityQ, enemy.Obj)
+    if utils.NotNilOrDead(bsTarget) and GetUnitToUnitDistance(bsTarget, bot) < (abilityQ:GetCastRange() - 100) then
+        bot:Action_UseAbilityOnEntity(abilityQ, bsTarget)
         return true
     end
     
@@ -172,43 +166,44 @@ local function UseQ(bot)
     return true
 end
 
-function AbilityUsageThink(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCreep, nearbyAlliedCreep, nearbyEnemyTowers, nearbyAlliedTowers)
-    if ( GetGameState() ~= GAME_STATE_GAME_IN_PROGRESS and GetGameState() ~= GAME_STATE_PRE_GAME ) then return false end
-
-    local bot = GetBot()
+function bsAbility:AbilityUsageThink(bot)
+    -- Check if we're already using an ability
+    if bot:IsCastingAbility() or bot:IsChanneling() or bot:NumQueuedActions() > 0 then
+        return true 
+    end
     
     if abilityQ == "" then abilityQ = bot:GetAbilityByName( Abilities[1] ) end
     if abilityW == "" then abilityW = bot:GetAbilityByName( Abilities[2] ) end
     if abilityE == "" then abilityE = bot:GetAbilityByName( Abilities[3] ) end
     if abilityR == "" then abilityR = bot:GetAbilityByName( Abilities[4] ) end
 
-    if bot:IsChanneling() or bot:IsCastingAbility() then return false end
+    bsTarget = getHeroVar("Target")
+    if bsTarget == nil then bsTarget = getHeroVar("RoamTarget") end
 
-    if not utils.ValidTarget(getHeroVar("Target")) then return false end
-
-    if UseQ(bot) then return true end
+    if UseQ(bot) then return end
     
-    if #nearbyEnemyHeroes == 0 then return false end
-    
-    if #nearbyEnemyHeroes == 1 then
-        local enemy = nearbyEnemyHeroes[1]
-        local dmg, castQueue, castTime, stunTime, slowTime, engageDist = nukeDamage( bot, enemy )
+    local nearbyEnemyHeroes = bot:GetNearbyHeroes(1600, true, BOT_MODE_NONE)
+    if not bsTarget then
+        if #nearbyEnemyHeroes == 0 then return end
+        
+        if #nearbyEnemyHeroes == 1 then
+            local enemy = nearbyEnemyHeroes[1]
+            local dmg, castQueue, castTime, stunTime, slowTime, engageDist = nukeDamage( bot, enemy )
 
-        dmg = dmg + fight_simul.estimateRightClickDamage( bot, enemy, 5.0 )
+            dmg = dmg + fight_simul.estimateRightClickDamage( bot, enemy, 5.0 )
 
-        -- magic immunity is already accounted for by nukeDamage()
-        if dmg > enemy:GetHealth() then
-            local bKill = queueNuke(bot, enemy, castQueue, engageDist)
-            if bKill then
-                setHeroVar("Target", {Obj=enemy, Id=enemy:GetPlayerID()})
-                return true
+            -- magic immunity is already accounted for by nukeDamage()
+            if dmg > enemy:GetHealth() then
+                local bKill = queueNuke(bot, enemy, castQueue, engageDist)
+                if bKill then
+                    setHeroVar("Target", enemy)
+                    return 
+                end
             end
         end
     end
 
-    if UseUlt(bot, nearbyEnemyHeroes, nearbyEnemyTowers) or UseW(bot, nearbyEnemyHeroes) then return true end
-    
-    return false
+    if UseUlt(bot) or UseW(bot, nearbyEnemyHeroes) then return end
 end
 
-for k,v in pairs( ability_usage_bloodseeker ) do _G._savedEnv[k] = v end
+return bsAbility

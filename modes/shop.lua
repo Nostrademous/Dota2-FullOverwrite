@@ -1,31 +1,20 @@
 -------------------------------------------------------------------------------
 --- AUTHOR: Nostrademous
---- CONTRIBUTOR: Code based on work by Platinum_dota2
 --- GITHUB REPO: https://github.com/Nostrademous/Dota2-FullOverwrite
 -------------------------------------------------------------------------------
 
-_G._savedEnv = getfenv()
-module( "special_shop_generic", package.seeall )
+BotsInit = require( "game/botsinit" )
+local X = BotsInit.CreateGeneric()
+
+----------
 
 require( GetScriptDirectory().."/constants" )
 
-local utils = require( GetScriptDirectory().."/utility")
-local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
+local utils = require( GetScriptDirectory().."/utility" )
 
-function setHeroVar(var, value)
-    local bot = GetBot()
-    gHeroVar.SetVar(bot:GetPlayerID(), var, value)
-end
-
-function getHeroVar(var)
-    local bot = GetBot()
-    return gHeroVar.GetVar(bot:GetPlayerID(), var)
-end
-
--------------------------------------------------------------------------------
-
-function OnStart()
-end
+----------
+X.me    = nil
+X.type  = constants.SHOP_TYPE_NONE
 
 function GetSideShop()
     local bot = GetBot()
@@ -44,7 +33,7 @@ function GetSideShop()
 
 end
 
-local function GetSecretShop()
+function GetSecretShop()
     local bot = GetBot()
 
     if GetTeam() == TEAM_RADIANT then
@@ -84,6 +73,9 @@ function ThinkSecretShop( NextItem )
     if GetUnitToLocationDistance(bot, secLoc) < constants.SHOP_USE_DISTANCE then
         if bot:GetGold() >= GetItemCost( NextItem ) then
             bot:ActionImmediate_PurchaseItem( NextItem )
+            table.remove(X.me:getHeroVar("ItemPurchaseClass").PurchaseOrder , 1)
+            bot:SetNextItemPurchaseValue( 0 )
+            X.me:getHeroVar("ItemPurchaseClass"):UpdateTeamBuyList(NextItem)
             return true
         else
             return false
@@ -110,6 +102,9 @@ function ThinkSideShop( NextItem )
     if GetUnitToLocationDistance(bot, sideLoc) < constants.SHOP_USE_DISTANCE then
         if bot:GetGold() >= GetItemCost( NextItem ) then
             bot:ActionImmediate_PurchaseItem( NextItem )
+            table.remove(X.me:getHeroVar("ItemPurchaseClass").PurchaseOrder , 1)
+            bot:SetNextItemPurchaseValue( 0 )
+            X.me:getHeroVar("ItemPurchaseClass"):UpdateTeamBuyList(NextItem)
             return true
         else
             return false
@@ -120,5 +115,30 @@ function ThinkSideShop( NextItem )
     end
 end
 
---------
-for k,v in pairs( special_shop_generic ) do _G._savedEnv[k] = v end
+function X:GetName()
+    return "shop"
+end
+
+function X:OnStart(myBot)
+    X.me = myBot
+    X.type = X.me:getHeroVar("ShopType")
+end
+
+function X:OnEnd()
+    X.type = constants.SHOP_TYPE_NONE
+end
+
+function X:Think(bot)
+    local bDone = false
+    if X.type == constants.SHOP_TYPE_SIDE then
+        bDone = ThinkSideShop( sNextItem )
+    elseif X.type == constants.SHOP_TYPE_SECRET then
+        bDone =ThinkSecretShop( sNextItem )
+    end
+    
+    if bDone then
+        X.me:ClearMode()
+    end
+end
+
+return X

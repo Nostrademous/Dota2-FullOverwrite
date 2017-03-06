@@ -23,13 +23,13 @@ function X:OnStart(myBot)
 end
 
 function X:OnEnd()
-    X.me:setHeryVar("WardType", nil)
+    X.me:setHeroVar("WardType", nil)
     X.me:setHeroVar("WardLocation", nil)
     X.me:setHeroVar("WardCheckTimer", GameTime())
 end
 
 function X:Think(bot)
-    local wardType = X.me:getHeryVar("WardType") or "item_ward_observer"
+    local wardType = X.me:getHeroVar("WardType") or "item_ward_observer"
     local dest = X.me:getHeroVar("WardLocation")
     if dest ~= nil then
         local dist = GetUnitToLocationDistance(bot, dest)
@@ -40,7 +40,7 @@ function X:Think(bot)
                 X.me:ClearMode()
             end
         else
-            bot:Action_MoveToLocation(bot, dest)
+            bot:Action_MoveToLocation(dest)
         end
     end
 end

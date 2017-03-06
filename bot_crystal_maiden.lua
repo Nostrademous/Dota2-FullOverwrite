@@ -4,12 +4,11 @@
 -------------------------------------------------------------------------------
 
 require( GetScriptDirectory().."/constants" )
-require( GetScriptDirectory().."/item_purchase_crystal_maiden" )
-require( GetScriptDirectory().."/ability_usage_crystal_maiden" )
 
 local utils = require( GetScriptDirectory().."/utility" )
-local dt = require( GetScriptDirectory().."/decision_tree" )
+local dt = require( GetScriptDirectory().."/decision" )
 local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
+local ability = require( GetScriptDirectory().."/abilityUse/abilityUse_crystal_maiden" )
 
 function setHeroVar(var, value)
     local bot = GetBot()
@@ -42,9 +41,7 @@ local AbilityPriority = {
     SKILL_W,    SKILL_R,    ABILITY6,   ABILITY7
 }
 
-local cmModeStack = { [1] = {constants.MODE_NONE, BOT_ACTION_DESIRE_NONE} }
-
-botCM = dt:new()
+local botCM = dt:new()
 
 function botCM:new(o)
     o = o or dt:new(o)
@@ -53,20 +50,18 @@ function botCM:new(o)
     return o
 end
 
-cmBot = botCM:new{modeStack = cmModeStack, abilityPriority = AbilityPriority}
+local cmBot = botCM:new{abilityPriority = AbilityPriority}
 
-cmBot.Init = false
-
-function cmBot:ConsiderAbilityUse(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCreep, nearbyAlliedCreep, nearbyEnemyTowers, nearbyAlliedTowers)
-    ability_usage_crystal_maiden.AbilityUsageThink(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCreep, nearbyAlliedCreep, nearbyEnemyTowers, nearbyAlliedTowers)
+function cmBot:ConsiderAbilityUse()
+    ability.AbilityUsageThink(GetBot())
 end
 
 function cmBot:GetNukeDamage(bot, target)
-    return ability_usage_crystal_maiden.nukeDamage( bot, target )
+    return ability.nukeDamage( bot, target )
 end
 
 function cmBot:QueueNuke(bot, target, actionQueue, engageDist)
-    return ability_usage_crystal_maiden.queueNuke( bot, target, actionQueue, engageDist )
+    return ability.queueNuke( bot, target, actionQueue, engageDist )
 end
 
 function cmBot:DoHeroSpecificInit(bot)
@@ -77,9 +72,4 @@ function Think()
     local bot = GetBot()
 
     cmBot:Think(bot)
-    
-    -- if we are initialized, do the rest
-    if cmBot.Init then
-        gHeroVar.ExecuteHeroActionQueue(bot)
-    end
 end

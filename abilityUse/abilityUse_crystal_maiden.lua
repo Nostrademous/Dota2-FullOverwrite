@@ -3,23 +3,21 @@
 --- GITHUB REPO: https://github.com/Nostrademous/Dota2-FullOverwrite
 -------------------------------------------------------------------------------
 
-_G._savedEnv = getfenv()
-module( "ability_usage_crystal_maiden", package.seeall )
+BotsInit = require( "game/botsinit" )
+local cmAbility = BotsInit.CreateGeneric()
 
-require( GetScriptDirectory().."/constants" )
-require( GetScriptDirectory().."/item_usage" )
+require( GetScriptDirectory().."/fight_simul" )
+require( GetScriptDirectory().."/modifiers" )
 
 local utils = require( GetScriptDirectory().."/utility" )
 local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
 
 function setHeroVar(var, value)
-    local bot = GetBot()
-    gHeroVar.SetVar(bot:GetPlayerID(), var, value)
+    gHeroVar.SetVar(GetBot():GetPlayerID(), var, value)
 end
 
 function getHeroVar(var)
-    local bot = GetBot()
-    return gHeroVar.GetVar(bot:GetPlayerID(), var)
+    return gHeroVar.GetVar(GetBot():GetPlayerID(), var)
 end
 
 local Abilities ={
@@ -36,7 +34,7 @@ local abilityR = ""
 
 function nukeDamage( bot, enemy )
     if enemy == nil or enemy:IsNull() then return 0, {}, 0, 0, 0 end
-    
+
     local comboQueue = {}
     local manaAvailable = bot:GetMana()
     local dmgTotal = 0
@@ -44,9 +42,9 @@ function nukeDamage( bot, enemy )
     local stunTime = 0
     local slowTime = 0
     local engageDist = 10000
-    
+
     local magicImmune = utils.IsTargetMagicImmune(enemy)
-    
+
     -- Check Crystal Nova
     if abilityQ:IsFullyCastable() then
         local manaCostQ = abilityQ:GetManaCost()
@@ -61,7 +59,7 @@ function nukeDamage( bot, enemy )
             end
         end
     end
-    
+
     -- Check Frostbite
     if abilityW:IsFullyCastable() then
         local manaCostW = abilityW:GetManaCost()
@@ -76,20 +74,20 @@ function nukeDamage( bot, enemy )
             end
         end
     end
-    
+
     -- Check Freezing Field
     if abilityR:IsFullyCastable() then
         local manaCostR = abilityR:GetManaCost()
         if manaCostR <= manaAvailable then
             if not magicImmune then
                 manaAvailable = manaAvailable - manaCostR
-                
+
                 local distToEdgeOfField = 835 - GetUnitToUnitDistance(bot, enemy)
                 -- "movespeed_slow"	"-30"
                 local timeInField = 0
                 if distToEdgeOfField > 0 then timeInField = math.min(distToEdgeOfField/(enemy:GetCurrentMovementSpeed()-30), 10) end
                 if timeInField < 0 then timeInField = 0 end
-                
+
                 dmgTotal = dmgTotal + enemy:GetActualIncomingDamage(abilityR:GetSpecialValueInt("damage")*timeInField, DAMAGE_TYPE_MAGICAL)
                 castTime = castTime + abilityR:GetCastPoint()
                 slowTime = slowTime + abilityR:GetSpecialValueFloat("slow_duration")
@@ -98,13 +96,13 @@ function nukeDamage( bot, enemy )
             end
         end
     end
-    
+
     return dmgTotal, comboQueue, castTime, stunTime, slowTime, engageDist
 end
 
 function queueNuke(bot, enemy, castQueue, engageDist)
     local dist = GetUnitToUnitDistance(bot, enemy)
-    
+
     -- if out of range, attack move for one hit to get in range
     if dist < engageDist then
         bot:Action_ClearActions(false)
@@ -113,9 +111,9 @@ function queueNuke(bot, enemy, castQueue, engageDist)
         for i = #castQueue, 1, -2 do
             local skill = castQueue[i]
             local behaviorFlag = skill:GetBehavior()
-            
+
             utils.myPrint(" - skill '", skill:GetName(), "' has BehaviorFlag: ", behaviorFlag)
-            
+
             if skill:GetName() == Abilities[1] then
                 if utils.IsCrowdControlled(enemy) then
                     gHeroVar.HeroPushUseAbilityOnLocation(bot, skill, enemy:GetLocation())
@@ -138,36 +136,36 @@ function queueNuke(bot, enemy, castQueue, engageDist)
     return false
 end
 
-function AbilityUsageThink(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCreep, nearbyAlliedCreep, nearbyEnemyTowers, nearbyAlliedTowers)
-    if ( GetGameState() ~= GAME_STATE_GAME_IN_PROGRESS and GetGameState() ~= GAME_STATE_PRE_GAME ) then return false end
+function cmAbility:AbilityUsageThink(bot)
+    -- Check if we're already using an ability
+    if bot:IsCastingAbility() or bot:IsChanneling() or bot:NumQueuedActions() > 0 then
+        return true
+    end
 
-    local bot = GetBot()
-    
     if abilityQ == "" then abilityQ = bot:GetAbilityByName( Abilities[1] ) end
     if abilityW == "" then abilityW = bot:GetAbilityByName( Abilities[2] ) end
     if abilityE == "" then abilityE = bot:GetAbilityByName( Abilities[3] ) end
     if abilityR == "" then abilityR = bot:GetAbilityByName( Abilities[4] ) end
-    
+
     if not bot:IsAlive() then return false end
 
-    -- Check if we're already using an ability
-    if bot:IsCastingAbility() or bot:IsChanneling() then return false end
-    
-    if ( #nearbyEnemyHeroes == 0 and #nearbyEnemyCreep == 0 ) then return false end
+    local nearbyEnemyHeroes = bot:GetNearbyHeroes(1600, true, BOT_MODE_NONE)
+
+    if ( #nearbyEnemyHeroes == 0 ) then return false end
 
     if #nearbyEnemyHeroes >= 1 then
         local nRadius = abilityQ:GetSpecialValueInt( "radius" )
         local nCastRange = abilityQ:GetCastRange()
-    
+
         --FIXME: in the future we probably want to target a hero that has a disable to my ult, rather than weakest
         local enemy, enemyHealth = utils.GetWeakestHero(bot, nRadius + nCastRange, nearbyEnemyHeroes)
         local dmg, castQueue, castTime, stunTime, slowTime, engageDist = nukeDamage( bot, enemy )
-        
+
         local rightClickTime = stunTime + 0.5*slowTime
         if rightClickTime > 0.5 then
             dmg = dmg + fight_simul.estimateRightClickDamage( bot, enemy, rightClickTime )
         end
-        
+
         -- magic immunity is already accounted for by nukeDamage()
         if dmg > enemyHealth then
             local bKill = queueNuke(bot, enemy, castQueue, engageDist)
@@ -178,8 +176,9 @@ function AbilityUsageThink(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCre
         end
     end
 
+    local nearbyAlliedHeroes = bot:GetNearbyHeroes(1600, false, BOT_MODE_NONE)
     if UseUlt(bot, nearbyEnemyHeroes) or UseW(bot, nearbyEnemyHeroes) or UseQ(bot, nearbyEnemyHeroes, nearbyAlliedHeroes) then return true end
-    
+
     return false
 end
 
@@ -187,7 +186,7 @@ function UseQ(bot, nearbyEnemyHeroes, nearbyAlliedHeroes)
     if not abilityQ:IsFullyCastable() then
         return false
     end
-    
+
     local coreNear = false
     for _, ally in pairs(nearbyAlliedHeroes) do
         if utils.IsCore(ally) then
@@ -195,12 +194,12 @@ function UseQ(bot, nearbyEnemyHeroes, nearbyAlliedHeroes)
             break
         end
     end
-    
+
     local currManaPerct = bot:GetMana()/bot:GetMaxMana()
     local nRadius = abilityQ:GetSpecialValueInt( "radius" )
     local nDamage = abilityQ:GetSpecialValueInt( "nova_damage" )
     local nCastRange = abilityQ:GetCastRange()
-    
+
     -- If there is no Core ally around and we can kill 2+ creeps
     if not CoreNear and currManaPerct >= 0.25 then
         local locationAoE = bot:FindAoELocation( true, false, bot:GetLocation(), nCastRange, nRadius, 0, nDamage )
@@ -209,7 +208,7 @@ function UseQ(bot, nearbyEnemyHeroes, nearbyAlliedHeroes)
             return true
         end
     end
-    
+
     ------------ RETREATING -----------------------
     if getHeroVar("IsRetreating") and (#nearbyEnemyHeroes > 1 or not abilityW:IsFullyCastable()) then
         for _, npcEnemy in pairs( nearbyEnemyHeroes ) do
@@ -221,7 +220,7 @@ function UseQ(bot, nearbyEnemyHeroes, nearbyAlliedHeroes)
             end
         end
     end
-    
+
     ------------ PUSH OR DEFEND TOWER ----------------
     if getHeroVar("ShouldDefend") == true or ( getHeroVar("ShouldPush") == true and currManaPerct >= 0.4 ) then
         local locationAoE = bot:FindAoELocation( true, false, bot:GetLocation(), nCastRange, nRadius, 0, 0 )
@@ -231,7 +230,7 @@ function UseQ(bot, nearbyEnemyHeroes, nearbyAlliedHeroes)
             return true
         end
     end
-    
+
     --------- CHASING --------------------------------
     local target = getHeroVar("Target")
     if utils.ValidTarget(target) then
@@ -239,7 +238,7 @@ function UseQ(bot, nearbyEnemyHeroes, nearbyAlliedHeroes)
             bot:Action_UseAbilityOnLocation(abilityQ, target.Obj:GetLocation())
         end
     end
-    
+
     -- If we have plenty mana and high level
     if currManaPerct > 0.6 and abilityQ:GetLevel() >= 3 then
         local locationAoE = bot:FindAoELocation( true, true, bot:GetLocation(), nCastRange, nRadius, 0, 0 )
@@ -257,10 +256,10 @@ function UseW(bot, nearbyEnemyHeroes)
     if not abilityW:IsFullyCastable() then
         return false
     end
-    
+
     local nDamage = abilityW:GetSpecialValueInt("hero_damage_tooltip")
     local nCastRange = abilityW:GetCastRange()
-    
+
     ------------ RETREATING -----------------------
     if getHeroVar("IsRetreating") and (#nearbyEnemyHeroes == 1 or not abilityQ:IsFullyCastable()) then
         for _, npcEnemy in pairs( nearbyEnemyHeroes ) do
@@ -272,7 +271,7 @@ function UseW(bot, nearbyEnemyHeroes)
             end
         end
     end
-    
+
     --------- CHASING & LANE HARASSMENT --------------------------------
     local target = getHeroVar("Target")
     -- if we don't have a valid target
@@ -301,12 +300,12 @@ function UseW(bot, nearbyEnemyHeroes)
             return true
         end
     else
-        if not utils.IsCrowdControlled(target.Obj) and not utils.IsTargetMagicImmune(target.Obj) then
-            bot:Action_UseAbilityOnEntity( abilityW, target.Obj )
+        if not utils.IsCrowdControlled(target) and not utils.IsTargetMagicImmune(target) then
+            bot:Action_UseAbilityOnEntity( abilityW, target )
             return true
         end
     end
-    
+
     return false
 end
 
@@ -314,9 +313,9 @@ function UseUlt(bot, nearbyEnemyHeroes)
     if not abilityR:IsFullyCastable() then
         return false
     end
-    
+
     local nRadius = abilityR:GetSpecialValueInt("radius")
-    
+
     local enemiesInRange = {}
     local numSlowStun = 0
     for _, enemy in pairs(nearbyEnemyHeroes) do
@@ -327,13 +326,13 @@ function UseUlt(bot, nearbyEnemyHeroes)
             end
         end
     end
-    
+
     ------------ DEFEND TOWER ----------------
     if getHeroVar("ShouldDefend") and #enemiesInRange >= 1 then
         gHeroVar.HeroUseAbility(bot, abilityR)
         return true
     end
-    
+
     --------- CHASING --------------------------------
     local target = getHeroVar("Target")
     -- if we don't have a valid target
@@ -341,8 +340,8 @@ function UseUlt(bot, nearbyEnemyHeroes)
         gHeroVar.HeroUseAbility(bot, abilityR)
         return true
     end
-    
+
     return false
 end
 
-for k,v in pairs( ability_usage_crystal_maiden ) do _G._savedEnv[k] = v end
+return cmAbility

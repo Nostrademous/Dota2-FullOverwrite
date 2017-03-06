@@ -69,8 +69,6 @@ function Think()
 
     bloodseekerBot:Think(bot)
 
-    ItemPurchaseThinkBS()
-
     -- if we are initialized, do the rest
     if bloodseekerBot.Init then
         if bot:GetLevel() >= 16 and getHeroVar("Role") ~= constants.ROLE_HARDCARRY then

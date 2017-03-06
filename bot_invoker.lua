@@ -75,8 +75,6 @@ function Think()
 
     invBot:Think(bot)
 
-    ItemPurchaseThinkIN()
-
     -- if we are initialized, do the rest
     --if invBot.Init then
     --    gHeroVar.ExecuteHeroActionQueue(bot)

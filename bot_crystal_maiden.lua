@@ -78,8 +78,6 @@ function Think()
 
     cmBot:Think(bot)
 
-    ItemPurchaseThinkCM()
-
     -- if we are initialized, do the rest
     if cmBot.Init then
         gHeroVar.ExecuteHeroActionQueue(bot)

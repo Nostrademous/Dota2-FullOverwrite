@@ -61,8 +61,6 @@ function Think()
 
     viperBot:Think(bot)
 
-    ItemPurchaseThinkVI()
-
     -- if we are initialized, do the rest
     if viperBot.Init then
         gHeroVar.ExecuteHeroActionQueue(bot)

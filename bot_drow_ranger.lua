@@ -72,8 +72,6 @@ function Think()
 
     drowRangerBot:Think(bot)
 
-    ItemPurchaseThinkDR()
-
     -- if we are initialized, do the rest
     if drowRangerBot.Init then
         drowRangerBot:Determine_ShouldJungle(bot)

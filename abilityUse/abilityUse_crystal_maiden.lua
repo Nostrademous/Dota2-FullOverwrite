@@ -147,11 +147,7 @@ function cmAbility:AbilityUsageThink(bot)
     if abilityE == "" then abilityE = bot:GetAbilityByName( Abilities[3] ) end
     if abilityR == "" then abilityR = bot:GetAbilityByName( Abilities[4] ) end
 
-    if not bot:IsAlive() then return false end
-
     local nearbyEnemyHeroes = bot:GetNearbyHeroes(1600, true, BOT_MODE_NONE)
-
-    if ( #nearbyEnemyHeroes == 0 ) then return false end
 
     if #nearbyEnemyHeroes >= 1 then
         local nRadius = abilityQ:GetSpecialValueInt( "radius" )
@@ -170,14 +166,13 @@ function cmAbility:AbilityUsageThink(bot)
         if dmg > enemyHealth then
             local bKill = queueNuke(bot, enemy, castQueue, engageDist)
             if bKill then
-                setHeroVar("Target", {Obj=enemy, Id=enemy:GetPlayerID()})
+                setHeroVar("Target", enemy)
                 return true
             end
         end
     end
-
-    local nearbyAlliedHeroes = bot:GetNearbyHeroes(1600, false, BOT_MODE_NONE)
-    if UseUlt(bot, nearbyEnemyHeroes) or UseW(bot, nearbyEnemyHeroes) or UseQ(bot, nearbyEnemyHeroes, nearbyAlliedHeroes) then return true end
+    
+    if UseUlt(bot, nearbyEnemyHeroes) or UseW(bot, nearbyEnemyHeroes) or UseQ(bot, nearbyEnemyHeroes) then return true end
 
     return false
 end
@@ -187,6 +182,7 @@ function UseQ(bot, nearbyEnemyHeroes, nearbyAlliedHeroes)
         return false
     end
 
+    local nearbyAlliedHeroes = bot:GetNearbyHeroes(1200, false, BOT_MODE_NONE)
     local coreNear = false
     for _, ally in pairs(nearbyAlliedHeroes) do
         if utils.IsCore(ally) then
@@ -235,7 +231,7 @@ function UseQ(bot, nearbyEnemyHeroes, nearbyAlliedHeroes)
     local target = getHeroVar("Target")
     if utils.ValidTarget(target) then
         if bot:GetMana() >= (abilityQ:GetManaCost() + abilityW:GetManaCost()) then
-            bot:Action_UseAbilityOnLocation(abilityQ, target.Obj:GetLocation())
+            bot:Action_UseAbilityOnLocation(abilityQ, target:GetLocation())
         end
     end
 

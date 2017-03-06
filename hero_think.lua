@@ -10,6 +10,7 @@ module( "hero_think", package.seeall )
 require( GetScriptDirectory().."/constants" )
 require( GetScriptDirectory().."/item_usage" )
 
+local wardMode = dofile( GetScriptDirectory().."/modes/ward" )
 local roamMode = dofile( GetScriptDirectory().."/modes/roam" )
 local shopMode = dofile( GetScriptDirectory().."/modes/shop" )
 
@@ -309,54 +310,15 @@ end
 -- Warding is done on a per-lane basis. This evaluates if this Hero
 -- should ward, and where. (might be a team wide thing later)
 function ConsiderWarding(bot, playerAssignment)
-    if bot:IsIllusion() then return BOT_MODE_DESIRE_NONE end
-    
-    local me = getHeroVar("Self")
-    
-    -- we need to lane first before we know where to ward properly
-    if me:getCurrentMode():GetName() ~= "laning" then return BOT_MODE_DESIRE_NONE end
-    
-    local WardCheckTimer = getHeroVar("WardCheckTimer")
-    local bCheck = true
-    local newTime = GameTime()
-    if WardCheckTimer then
-        bCheck, newTime = utils.TimePassed(WardCheckTimer, 1.0)
+    specialFileName = GetScriptDirectory().."/modes/ward_"..utils.GetHeroName(bot)
+    if pcall(tryHeroSpecialMode) then
+        specialFileName = nil
+        return specialFile:Desire(bot)
+    else
+        specialFileName = nil
+        local wardMode = dofile( GetScriptDirectory().."/modes/ward" )
+        return wardMode:Desire(bot)
     end
-    if bCheck then
-        setHeroVar("WardCheckTimer", newTime)
-        local ward = item_usage.HaveWard("item_ward_observer")
-        if ward then
-            local alliedMapWards = GetUnitList(UNIT_LIST_ALLIED_WARDS)
-            if #alliedMapWards < 2 then --FIXME: don't hardcode.. you get more wards then you can use this way
-                local wardLocs = utils.GetWardingSpot(getHeroVar("CurLane"))
-
-                if wardLocs == nil or #wardLocs == 0 then return BOT_MODE_DESIRE_NONE end
-
-                -- FIXME: Consider ward expiration time
-                local wardLoc = nil
-                for _, wl in ipairs(wardLocs) do
-                    local bGoodLoc = true
-                    for _, value in ipairs(alliedMapWards) do
-                        if utils.GetDistance(value:GetLocation(), wl) < 1600 then
-                            bGoodLoc = false
-                        end
-                    end
-                    if bGoodLoc then
-                        wardLoc = wl
-                        break
-                    end
-                end
-
-                if wardLoc ~= nil and utils.EnemiesNearLocation(bot, wardLoc, 2000) < 2 then
-                    setHeroVar("WardType", ward:GetName())
-                    setHeroVar("WardLocation", wardLoc)
-                    return BOT_MODE_DESIRE_LOW 
-                end
-            end
-        end
-    end
-    
-    return BOT_MODE_DESIRE_NONE
 end
 
 for k,v in pairs( hero_think ) do _G._savedEnv[k] = v end

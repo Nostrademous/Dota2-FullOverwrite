@@ -3,22 +3,21 @@
 --- GITHUB REPO: https://github.com/Nostrademous/Dota2-FullOverwrite
 -------------------------------------------------------------------------------
 
-_G._savedEnv = getfenv()
-module( "ability_usage_viper", package.seeall )
+BotsInit = require( "game/botsinit" )
+local viperAbility = BotsInit.CreateGeneric()
 
-require( GetScriptDirectory().."/constants" )
+require( GetScriptDirectory().."/fight_simul" )
+require( GetScriptDirectory().."/modifiers" )
 
 local utils = require( GetScriptDirectory().."/utility" )
 local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
 
 function setHeroVar(var, value)
-    local bot = GetBot()
-    gHeroVar.SetVar(bot:GetPlayerID(), var, value)
+    gHeroVar.SetVar(GetBot():GetPlayerID(), var, value)
 end
 
 function getHeroVar(var)
-    local bot = GetBot()
-    return gHeroVar.GetVar(bot:GetPlayerID(), var)
+    return gHeroVar.GetVar(GetBot():GetPlayerID(), var)
 end
 
 local Abilities ={
@@ -46,11 +45,11 @@ function nukeDamage( bot, enemy )
     local stunTime = 0
     local slowTime = 0
     local engageDist = bot:GetAttackRange()+bot:GetBoundingRadius()
-    
+
     local magicImmune = utils.IsTargetMagicImmune(enemy)
-    
+
     local baseRightClickDmg = CalcRightClickDmg(bot, enemy)
-    
+
     -- Check Viper Strike
     if abilityR:IsFullyCastable() then
         local manaCostR = abilityR:GetManaCost()
@@ -65,7 +64,7 @@ function nukeDamage( bot, enemy )
             end
         end
     end
-    
+
     -- Check Poison Attack
     if abilityQ:IsFullyCastable() then
         if not magicImmune then
@@ -74,7 +73,7 @@ function nukeDamage( bot, enemy )
             if abilityR:IsFullyCastable() then
                 numCasts = math.ceil(5.1/bot:GetSecondsPerAttack())
             end
-            
+
             for i = 1, numCasts, 1 do
                 if manaCostQ <= manaAvailable then
                     manaAvailable = manaAvailable - manaCostQ
@@ -86,7 +85,7 @@ function nukeDamage( bot, enemy )
             end
         end
     end
-    
+
     return dmgTotal, comboQueue, castTime, stunTime, slowTime, engageDist
 end
 
@@ -112,27 +111,25 @@ function queueNuke(bot, enemy, castQueue, engageDist)
     return false
 end
 
-function AbilityUsageThink(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCreep, nearbyAlliedCreep, nearbyEnemyTowers, nearbyAlliedTowers)
-    if ( GetGameState() ~= GAME_STATE_GAME_IN_PROGRESS and GetGameState() ~= GAME_STATE_PRE_GAME ) then return false end
+function viperAbility:AbilityUsageThink(bot)
+    if bot:IsCastingAbility() or bot:IsChanneling() or bot:NumQueuedActions() > 0 then
+        return true
+    end
 
-    local bot = GetBot()
-    if not bot:IsAlive() then return false end
-    
     if abilityQ == "" then abilityQ = bot:GetAbilityByName( Abilities[1] ) end
     if abilityW == "" then abilityW = bot:GetAbilityByName( Abilities[2] ) end
     if abilityE == "" then abilityE = bot:GetAbilityByName( Abilities[3] ) end
     if abilityR == "" then abilityR = bot:GetAbilityByName( Abilities[4] ) end
 
-    -- Check if we're already using an ability
-    if bot:IsCastingAbility() or bot:IsChanneling() then return false end
-    
     local me = getHeroVar("Self")
     if me:getCurrentMode() == constants.MODE_RETREAT then return false end
-    
-    if ( #nearbyEnemyHeroes == 0 and #nearbyEnemyCreep == 0 ) then return false end
+
+    local nearbyEnemyHeroes = bot:GetNearbyHeroes(1600, true, BOT_MODE_NONE)
+
+    if ( #nearbyEnemyHeroes == 0 ) then return false end
 
     local target = getHeroVar("Target")
-    
+
     if not utils.ValidTarget(target) then
         target, _ = utils.GetWeakestHero(bot, bot:GetAttackRange()+200, nearbyEnemyHeroes)
         if target ~= nil then
@@ -142,7 +139,7 @@ function AbilityUsageThink(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCre
             if totalDmgPerSec*rightClickTime > target:GetHealth() then
                 local bKill = queueNuke(bot, target, castQueue, engageDist)
                 if bKill then
-                    setHeroVar("Target", {Obj=target, Id=target:GetPlayerID()})
+                    setHeroVar("Target", target)
                     return true
                 end
             end
@@ -150,7 +147,7 @@ function AbilityUsageThink(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCre
     end
 
     if UseUlt(bot) or UseQ(bot, nearbyEnemyHeroes) then return true end
-    
+
     return false
 end
 
@@ -170,22 +167,22 @@ function UseQ(bot, nearbyEnemyHeroes)
         return true
     end
     --]]
-    
-    target = getHeroVar("Target")
-    
+
+    local target = getHeroVar("Target")
+
     -- if we don't have a valid target, return
     if not utils.ValidTarget(target) then return false end
 
     -- if target is magic immune or invulnerable, return
-    if utils.IsTargetMagicImmune(target.Obj) then return false end
+    if utils.IsTargetMagicImmune(target) then return false end
 
     -- set our local var
     DoTdpsQ = abilityQ:GetSpecialValueInt("damage")
-    DoTdpsQ = target.Obj:GetActualIncomingDamage(DoTdpsQ, DAMAGE_TYPE_MAGICAL)
-    
-    if GetUnitToUnitDistance(bot, target.Obj) < (abilityQ:GetCastRange() + bot:GetBoundingRadius()) then
+    DoTdpsQ = target:GetActualIncomingDamage(DoTdpsQ, DAMAGE_TYPE_MAGICAL)
+
+    if GetUnitToUnitDistance(bot, target) < (abilityQ:GetCastRange() + bot:GetBoundingRadius()) then
         utils.TreadCycle(bot, constants.INTELLIGENCE)
-        bot:Action_UseAbilityOnEntity(abilityQ, target.Obj)
+        bot:Action_UseAbilityOnEntity(abilityQ, target)
         return true
     end
 
@@ -196,7 +193,7 @@ function HasUlt(bot)
     if not abilityR:IsFullyCastable() then
         return false
     end
-    
+
     return true
 end
 
@@ -209,8 +206,8 @@ function UseUlt(bot)
     if not utils.ValidTarget(target) then return false end
 
     -- if target is magic immune or invulnerable, return
-    if target.Obj:IsMagicImmune() or target.Obj:IsInvulnerable() then return false end
-    
+    if target:IsMagicImmune() or target:IsInvulnerable() then return false end
+
     -- set our local var
     DoTdpsUlt = abilityR:GetSpecialValueInt("damage")
 
@@ -220,12 +217,12 @@ function UseUlt(bot)
             DoTdpsUlt = DoTdpsUlt + 80
         end
     end
-    
-    DoTdpsUlt = target.Obj:GetActualIncomingDamage(DoTdpsUlt, DAMAGE_TYPE_MAGICAL)
-    
-    if GetUnitToUnitDistance(target.Obj, bot) < (abilityR:GetCastRange() + 100) then
+
+    DoTdpsUlt = target:GetActualIncomingDamage(DoTdpsUlt, DAMAGE_TYPE_MAGICAL)
+
+    if GetUnitToUnitDistance(target, bot) < (abilityR:GetCastRange() + 100) then
         utils.TreadCycle(bot, constants.INTELLIGENCE)
-        bot:Action_UseAbilityOnEntity(abilityR, target.Obj)
+        bot:Action_UseAbilityOnEntity(abilityR, target)
         return true
     end
 
@@ -246,4 +243,4 @@ function CalcRightClickDmg(bot, target)
     return actualDmg
 end
 
-for k,v in pairs( ability_usage_viper ) do _G._savedEnv[k] = v end
+return viperAbility

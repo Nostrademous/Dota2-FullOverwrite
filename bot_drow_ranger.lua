@@ -4,13 +4,11 @@
 -------------------------------------------------------------------------------
 
 require( GetScriptDirectory().."/constants" )
-require( GetScriptDirectory().."/item_purchase_drow_ranger" )
-require ( GetScriptDirectory().."/ability_usage_drow_ranger" )
-require( GetScriptDirectory().."/jungling_generic" )
 
 local utils = require( GetScriptDirectory().."/utility" )
-local dt = require( GetScriptDirectory().."/decision_tree" )
+local dt = require( GetScriptDirectory().."/decision" )
 local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
+local ability = require( GetScriptDirectory().."/abilityUse/abilityUse_drow_ranger" )
 
 function setHeroVar(var, value)
     local bot = GetBot()
@@ -43,9 +41,7 @@ local DrowRangerAbilityPriority = {
     SKILL_W,    SKILL_R,    ABILITY5,   ABILITY8
 };
 
-local drowRangerModeStack = { [1] = {constants.MODE_NONE, BOT_ACTION_DESIRE_NONE} }
-
-botDrow = dt:new()
+local botDrow = dt:new()
 
 function botDrow:new(o)
     o = o or dt:new(o)
@@ -54,60 +50,20 @@ function botDrow:new(o)
     return o
 end
 
-drowRangerBot = botDrow:new{modeStack = drowRangerModeStack, abilityPriority = DrowRangerAbilityPriority}
---drowRangerBot:printInfo()
-
-drowRangerBot.Init = false
+local drowRangerBot = botDrow:new{abilityPriority = DrowRangerAbilityPriority}
 
 function drowRangerBot:DoHeroSpecificInit(bot)
     self:setHeroVar("HasOrbAbility", SKILL_Q)
 end
 
-function drowRangerBot:ConsiderAbilityUse(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCreep, nearbyAlliedCreep, nearbyEnemyTowers, nearbyAlliedTowers)
-    ability_usage_drow_ranger.AbilityUsageThink(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCreep, nearbyAlliedCreep, nearbyEnemyTowers, nearbyAlliedTowers)
+function drowRangerBot:ConsiderAbilityUse()
+    return ability.AbilityUsageThink(GetBot())
 end
 
 function Think()
     local bot = GetBot()
 
     drowRangerBot:Think(bot)
-
-    -- if we are initialized, do the rest
-    if drowRangerBot.Init then
-        drowRangerBot:Determine_ShouldJungle(bot)
-        
-        gHeroVar.ExecuteHeroActionQueue(bot)
-    end
-end
-
--- We over-write DoRetreat behavior for JUNGLER Drow Ranger
-function drowRangerBot:DoRetreat(bot, reason)
-    -- if we got creep damage and are a JUNGLER do special stuff
-    local pushing = getHeroVar("ShouldPush")
-	local healthThreshold = math.max(bot:GetMaxHealth()*0.15, 100)
-    if reason == constants.RETREAT_CREEP and self:getCurrentMode() == constants.MODE_JUNGLING then
-        -- if our health is lower than maximum( 15% health, 100 health )
-        if bot:GetHealth() < healthThreshold then
-            setHeroVar("RetreatReason", constants.RETREAT_FOUNTAIN)
-            if ( self:HasMode(constants.MODE_RETREAT) == false ) then
-                self:AddMode(constants.MODE_RETREAT)
-                setHeroVar("IsInLane", false)
-            end
-        end
-        -- if we are retreating - piggyback on retreat logic movement code
-        if self:getCurrentMode() == constants.MODE_RETREAT then
-            -- we use '.' instead of ':' and pass 'self' so it is the correct self
-            return dt.DoRetreat(self, bot, getHeroVar("RetreatReason"))
-        end
-
-        -- we are not retreating, allow decision tree logic to fall through
-        -- to the next level
-        return false
-    -- if we are not a jungler, invoke default DoRetreat behavior
-    else
-        -- we use '.' instead of ':' and pass 'self' so it is the correct self
-        return dt.DoRetreat(self, bot, reason)
-    end
 end
 
 function drowRangerBot:GetMaxClearableCampLevel(bot)
@@ -148,23 +104,6 @@ function drowRangerBot:DoCleanCamp(bot, neutrals, difficulty)
 
         gHeroVar.HeroAttackUnit(bot, neutral, true)
         break
-    end
-end
-
-function drowRangerBot:Determine_ShouldJungle(bot)
-    local timeInMinutes = math.floor(DotaTime() / 60)
-    -- we should not jungle if we are mid... we can't give up a free lane to jungle
-    if bot:GetLevel() >= 6  and getHeroVar("Role") ~= constants.ROLE_MID then
-        local jungleMultiplier = (timeInMinutes /120) + 0.50
-        local goJungle = bot:GetNextItemPurchaseValue() - bot:GetGold() < math.max(bot:GetNextItemPurchaseValue() - bot:GetNextItemPurchaseValue() * jungleMultiplier, 300)
-        if (goJungle and bot:GetNextItemPurchaseValue() > 590 and  getHeroVar("ShouldPush") ~= true) then
-            if drowRangerBot:HasMode(constants.MODE_JUNGLING) == false then
-                drowRangerBot:AddMode(constants.MODE_JUNGLING)
-                jungling_generic.OnStart(bot)
-            end
-        else
-            drowRangerBot:RemoveMode(constants.MODE_JUNGLING)
-        end
     end
 end
 

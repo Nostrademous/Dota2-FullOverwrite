@@ -36,6 +36,9 @@ local function updateBotStates()
             local state = mode:GetName()
             if state == "retreat" then 
                 state = state .. " " .. mode:PrintReason()
+            elseif state == "laning" then
+                local cLane = hMyBot:getHeroVar("CurLane")
+                state = state .. " Lane: " .. tostring(cLane)
             elseif state == "fight" then
                 local target = hMyBot:getHeroVar("Target")
                 if utils.ValidTarget(target) then

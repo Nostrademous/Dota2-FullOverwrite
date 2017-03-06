@@ -21,18 +21,20 @@ function X:GetName()
 end
 
 function X:OnStart(myBot)
-    X.me = myBot
+    X.me = gHeroVar.GetVar(GetBot():GetPlayerID(), "Self")
     X.runeLoc = X.me:getHeroVar("RuneLoc")
     X.runeTarget = X.me:getHeroVar("RuneTarget")
 end
 
 function X:OnEnd()
+    X.me = gHeroVar.GetVar(GetBot():GetPlayerID(), "Self")
     X.me:setHeroVar("RuneTarget", nil)
     X.me:setHeroVar("RuneLoc", nil)
 end
 
 function X:Think(bot)
     assert(X.runeLoc ~= nil, "[runes.lua] Think() - runeLoc is 'false'")
+    X.me = gHeroVar.GetVar(bot:GetPlayerID(), "Self")
 
     if utils.IsBusy(bot) then return end
 

@@ -20,16 +20,19 @@ function X:GetName()
 end
 
 function X:OnStart(myBot)
-    X.me = myBot
+    X.me = gHeroVar.GetVar(GetBot():GetPlayerID(), "Self")
 end
 
 function X:OnEnd()
+    X.me = gHeroVar.GetVar(GetBot():GetPlayerID(), "Self")
     X.me:setHeroVar("WardType", nil)
     X.me:setHeroVar("WardLocation", nil)
     X.me:setHeroVar("WardCheckTimer", GameTime())
 end
 
 function X:Think(bot)
+    X.me = gHeroVar.GetVar(bot:GetPlayerID(), "Self")
+    
     local wardType = X.me:getHeroVar("WardType") or "item_ward_observer"
     local dest = X.me:getHeroVar("WardLocation")
     if dest ~= nil then

@@ -84,14 +84,17 @@ function X:GetName()
 end
 
 function X:OnStart(myBot)
-    X.me = myBot
+    X.me = gHeroVar.GetVar(GetBot():GetPlayerID(), "Self")
 end
 
 function X:OnEnd()
+    X.me = gHeroVar.GetVar(GetBot():GetPlayerID(), "Self")
     X.me:setHeroVar("RoamTarget", nil)
 end
 
 function X:Think(bot)
+    X.me = gHeroVar.GetVar(bot:GetPlayerID(), "Self")
+    
     if utils.IsBusy(bot) then return end
     
     local target = X.me:getHeroVar("RoamTarget")

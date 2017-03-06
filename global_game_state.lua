@@ -123,7 +123,7 @@ function ExpectedDpsOnBuilding(team, lane, heroes)
         end
     else -- enemy team, use estimations
         for i, hero in pairs(heroes) do
-            dps = dps + dmg_factor * hero.AttackDamage / hero.SecondsPerAttack -- TODO: results are far to high
+            dps = dps + dmg_factor * hero.AttackDamage / hero.SecondsPerAttack -- TODO: results are far to high; armor is reported as -1 !!
         end
     end
     return dps
@@ -156,7 +156,7 @@ function GetPositionBetweenBuildings(unit, team)
 end
 
 function nearBuilding(unitLoc, building)
-    return utils.GetDistance(unitLoc, building) <= 1500
+    return utils.GetDistance(unitLoc, building) <= 500
 end
 
 function numEnemiesNearBuilding(building)
@@ -167,9 +167,9 @@ function numEnemiesNearBuilding(building)
             if utils.ValidTarget(enemy) then
                 eLoc = enemy.Obj:GetLocation()
             end
-            
+
             if eLoc == nil then return 0 end
-            
+
             if building > 0 then
                 if nearBuilding(eLoc, buildings_status.GetLocation(GetTeam(), building)) then
                     num = num + 1
@@ -190,7 +190,12 @@ function DetectEnemyPushMid()
 
     local hBuilding = buildings_status.GetHandle(GetTeam(), building)
 
-    if hBuilding and hBuilding:TimeSinceDamagedByAnyHero() >= 0 and hBuilding:TimeSinceDamagedByAnyHero() < 1.5 then
+    if hBuilding == nil then return 0, building end
+
+    debugging.SetTeamState("Getting Pushed", 5, "mid: "..hBuilding:GetUnitName().." "..hBuilding:TimeSinceDamagedByAnyHero())
+    debugging.SetCircle("mid_tower", hBuilding:GetLocation(), 0, 255, 0)
+
+    if hBuilding and hBuilding:TimeSinceDamagedByAnyHero() < 1.5 then
         local num = numEnemiesNearBuilding(building)
         return num, building
     end
@@ -202,7 +207,12 @@ function DetectEnemyPushTop()
 
     local hBuilding = buildings_status.GetHandle(GetTeam(), building)
 
-    if hBuilding and hBuilding:TimeSinceDamagedByAnyHero() >= 0 and hBuilding:TimeSinceDamagedByAnyHero() < 1.5 then
+    if hBuilding == nil then return 0, building end
+
+    debugging.SetTeamState("Getting Pushed", 4, "top: "..hBuilding:GetUnitName().." "..hBuilding:TimeSinceDamagedByAnyHero())
+    debugging.SetCircle("top_tower", hBuilding:GetLocation(), 0, 255, 0)
+
+    if hBuilding and hBuilding:TimeSinceDamagedByAnyHero() < 1.5 then
         local num = numEnemiesNearBuilding(building)
         return num, building
     end
@@ -214,7 +224,12 @@ function DetectEnemyPushBot()
 
     local hBuilding = buildings_status.GetHandle(GetTeam(), building)
 
-    if hBuilding and hBuilding:TimeSinceDamagedByAnyHero() >= 0 and hBuilding:TimeSinceDamagedByAnyHero() < 1.5 then
+    if hBuilding == nil then return 0, building end
+
+    debugging.SetTeamState("Getting Pushed", 6, "bot: "..hBuilding:GetUnitName().." "..hBuilding:TimeSinceDamagedByAnyHero())
+    debugging.SetCircle("bot_tower", hBuilding:GetLocation(), 0, 255, 0)
+
+    if hBuilding and hBuilding:TimeSinceDamagedByAnyHero() < 1.5 then
         local num = numEnemiesNearBuilding(building)
         return num, building
     end
@@ -259,27 +274,27 @@ local lastGlobalFightDetermination = -1000.0
 function GlobalFightDetermination()
     local bUpdate, newTime = utils.TimePassed(lastGlobalFightDetermination, 0.25)
     if bUpdate then lastGlobalFightDetermination = newTime else return end
-    
+
     local eyeRange = 1200
     local listAllies = GetUnitList(UNIT_LIST_ALLIED_HEROES)
     for _, ally in pairs(listAllies) do
         if ally:IsAlive() and ally:IsBot() and ally:GetHealth()/ally:GetMaxHealth() > 0.4 and not ally:IsIllusion()
             and gHero.HasID(ally:GetPlayerID()) and gHero.GetVar(ally:GetPlayerID(), "Target").Id == 0 then
-            
+
             local totalNukeDmg = 0
-            
+
             local numEnemiesThatCanAttackMe = 0
             local numAlliesThatCanHelpMe = 0
-            
+
             for k, enemy in pairs(enemyData) do
-                -- get a valid enemyData enemy 
+                -- get a valid enemyData enemy
                 if type(k) == "number" and enemy.Alive then
                     local distance = 100000
                     if enemy.Obj then
                         distance = GetUnitToUnitDistance(ally, enemy.Obj)
                     else
                         if GetHeroLastSeenInfo(k).time == -1 then break end
-                        
+
                         if GetHeroLastSeenInfo(k).time <= 0.5 then
                             distance = GetUnitToLocationDistance(ally, enemy.LocExtra1)
                         elseif GetHeroLastSeenInfo(k).time <= 3.0 then
@@ -288,19 +303,19 @@ function GlobalFightDetermination()
                             break --distance = GetUnitToLocationDistance(ally, GetHeroLastSeenInfo(k).location)
                         end
                     end
-                    
+
                     local theirTimeToReachMe = distance/enemy.MoveSpeed
-                    
+
                     local timeToReach = distance/ally:GetCurrentMovementSpeed()
                     local myNukeDmg, myActionQueue, myCastTime, myStun, mySlow, myEngageDist = gHero.GetVar(ally:GetPlayerID(), "Self"):GetNukeDamage( ally, enemy.Obj )
-                    
+
                     -- update our total nuke damage
                     totalNukeDmg = totalNukeDmg + myNukeDmg
-                    
+
                     if distance <= eyeRange then
                         numEnemiesThatCanAttackMe = numEnemiesThatCanAttackMe + 1
                         --utils.myPrint(utils.GetHeroName(ally), " sees "..enemy.Name.." ", distance, " units away. Time to reach: ", timeToReach)
-                        
+
                         local allAllyStun = 0
                         local allAllySlow = 0
                         local myTimeToKillTarget = 0.0
@@ -309,12 +324,12 @@ function GlobalFightDetermination()
                         else
                             myTimeToKillTarget = enemy.Health/(ally:GetAttackDamage()/ally:GetSecondsPerAttack())/0.75
                         end
-                        
+
                         local totalTimeToKillTarget = myTimeToKillTarget
-                        
+
                         local participatingAllies = {}
                         local globalAllies = {}
-                        
+
                         for _, ally2 in pairs(listAllies) do
                             -- this 'if' is for non-implemented bot heroes that are on our team
                             if ally2:IsAlive() and ally2:IsBot() and not ally2:IsIllusion() and not gHero.HasID(ally2:GetPlayerID()) then
@@ -323,7 +338,7 @@ function GlobalFightDetermination()
                                     distToEnemy = GetUnitToUnitDistance(ally2, enemy.Obj)
                                 else
                                     if GetHeroLastSeenInfo(k) == nil then break end
-                                    
+
                                     if GetHeroLastSeenInfo(k).time <= 0.5 then
                                         distToEnemy = GetUnitToLocationDistance(ally2, enemy.LocExtra1)
                                     elseif GetHeroLastSeenInfo(k).time <= 3.0 then
@@ -333,9 +348,9 @@ function GlobalFightDetermination()
                                     end
                                 end
                                 local allyTimeToReach = distToEnemy/ally2:GetCurrentMovementSpeed()
-                                
+
                                 local globalAbility = gHero.GetVar(ally2:GetPlayerID(), "HasGlobal")
-                                
+
                                 if distToEnemy <= 2*eyeRange then
                                     --utils.myPrint("ally ", utils.GetHeroName(ally2), " is ", distToEnemy, " units away. Time to reach: ", allyTimeToReach)
                                     totalTimeToKillTarget = totalTimeToKillTarget + 8.0
@@ -344,7 +359,7 @@ function GlobalFightDetermination()
                                     table.insert(globalAllies, {ally2, globalAbility})
                                 end
                             -- this 'elseif' is for implemented bot heroes on our team
-                            elseif ally2:IsAlive() and not ally2:IsIllusion() and ally2:GetPlayerID() ~= ally:GetPlayerID() and gHero.GetVar(ally2:GetPlayerID(), "Target").Id == 0 
+                            elseif ally2:IsAlive() and not ally2:IsIllusion() and ally2:GetPlayerID() ~= ally:GetPlayerID() and gHero.GetVar(ally2:GetPlayerID(), "Target").Id == 0
                                 and (gHero.GetVar(ally2:GetPlayerID(), "GankTarget").Id == 0 or gHero.GetVar(ally2:GetPlayerID(), "GankTarget").Id == k) then
                                 local distToEnemy = 100000
                                 if enemy.Obj then
@@ -359,21 +374,21 @@ function GlobalFightDetermination()
                                         break
                                     end
                                 end
-                                
+
                                 if GetUnitToUnitDistance(ally, ally2) < eyeRange then
                                     numAlliesThatCanHelpMe = numAlliesThatCanHelpMe + 1
                                 end
-                                
+
                                 local allyTimeToReach = distToEnemy/ally2:GetCurrentMovementSpeed()
                                 local allyNukeDmg, allyActionQueue, allyCastTime, allyStun, allySlow, allyEngageDist = gHero.GetVar(ally2:GetPlayerID(), "Self"):GetNukeDamage( ally2, enemy.Obj )
-                                
+
                                 -- update our total nuke damage
                                 totalNukeDmg = totalNukeDmg + allyNukeDmg
-                                
+
                                 local globalAbility = gHero.GetVar(ally2:GetPlayerID(), "HasGlobal")
                                 if allyTimeToReach <= 6.0 then
                                     --utils.myPrint("ally ", utils.GetHeroName(ally2), " is ", distToEnemy, " units away. Time to reach: ", allyTimeToReach)
-                                    
+
                                     allAllyStun = allAllyStun + allyStun
                                     allAllySlow = allAllySlow + allySlow
                                     local allyTimeToKillTarget = 0.0
@@ -389,26 +404,26 @@ function GlobalFightDetermination()
                                 end
                             end
                         end
-                        
+
                         local numAttackers = #participatingAllies+1
                         local anticipatedTimeToKill = (totalTimeToKillTarget/numAttackers) - 2*#globalAllies
                         local totalStun = myStun + allAllyStun
                         local totalSlow = mySlow + allAllySlow
                         local timeToKillBonus = numAttackers*(totalStun + 0.5*totalSlow)
-                        
+
                         if utils.ValidTarget(enemy) then
                             -- if global we picked a 1v? fight then let it work out at the hero-level
                             if numAttackers == 1 then break end
-                                
+
                             if totalNukeDmg/#ally:GetNearbyHeroes(1200, true, BOT_MODE_NONE) >= enemy.Obj:GetHealth() then
                                 utils.myPrint(#participatingAllies+1, " of us can Nuke ", enemy.Name)
                                 utils.myPrint(utils.GetHeroName(ally), " - Engaging!")
-                                
+
                                 local allyID = ally:GetPlayerID()
                                 gHero.SetVar(allyID, "Target", {Obj=enemy.Obj, Id=k})
                                 gHero.GetVar(allyID, "Self"):AddMode(constants.MODE_FIGHT)
                                 gHero.GetVar(allyID, "Self"):QueueNuke(ally, enemy.Obj, myActionQueue, myEngageDist)
-                                
+
                                 for _, v in pairs(participatingAllies) do
                                     if gHero.GetVar(v[1]:GetPlayerID(), "GankTarget").Id == 0 then
                                         gHero.SetVar(v[1]:GetPlayerID(), "Target", {Obj=enemy.Obj, Id=k})
@@ -420,12 +435,12 @@ function GlobalFightDetermination()
                                         end
                                     end
                                 end
-                                
+
                                 for _, v in pairs(globalAllies) do
                                     gHero.SetVar(v[1]:GetPlayerID(), "UseGlobal", {v[2][1], enemy.Obj})
                                     utils.myPrint(utils.GetHeroName(v[1]).." casting global skill.")
                                 end
-                                
+
                                 return
                             elseif (anticipatedTimeToKill - timeToKillBonus) < 6.0/#ally:GetNearbyHeroes(1200, true, BOT_MODE_NONE) then
                                 utils.myPrint(#participatingAllies+#globalAllies+1, " of us can Stun for: ", totalStun, " and Slow for: ", totalSlow, ". AnticipatedTimeToKill ", enemy.Name ,": ", anticipatedTimeToKill)
@@ -443,19 +458,19 @@ function GlobalFightDetermination()
                                         end
                                     end
                                 end
-                                
+
                                 for _, v in pairs(globalAllies) do
                                     gHero.SetVar(v[1]:GetPlayerID(), "UseGlobal", {v[2][1], enemy.Obj})
                                     utils.myPrint(utils.GetHeroName(v[1]).." casting global skill.")
                                 end
-                                
+
                                 return
                             end
                         end
                     end
                 end
             end
-            
+
             if numEnemiesThatCanAttackMe > numAlliesThatCanHelpMe then
                 --utils.myPrint(utils.GetHeroName(ally), "This is a bad idea")
                 --ally:Action_ClearActions(false)

@@ -5,6 +5,7 @@
 
 require( GetScriptDirectory().."/constants" )
 require ( GetScriptDirectory().."/ability_usage_viper" )
+require ( GetScriptDirectory().."/item_purchase_viper" )
 
 local utils = require( GetScriptDirectory().."/utility" )
 local dt = require( GetScriptDirectory().."/decision_tree" )
@@ -59,7 +60,9 @@ function Think()
     local bot = GetBot()
 
     viperBot:Think(bot)
-    
+
+    ItemPurchaseThinkVI()
+
     -- if we are initialized, do the rest
     if viperBot.Init then
         gHeroVar.ExecuteHeroActionQueue(bot)

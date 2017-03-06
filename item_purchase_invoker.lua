@@ -105,9 +105,9 @@ invBuy.ItemsToBuyAsRoamer = ItemsToBuyAsRoamer
 
 ----------------------------------------------------------------------------------------------------
 
-function ItemPurchaseThink()
+function ItemPurchaseThinkIN()
     if GetGameState() == GAME_STATE_PRE_GAME and DotaTime() < -89 then return end
-    
+
     local bot = GetBot()
 
     if not init then

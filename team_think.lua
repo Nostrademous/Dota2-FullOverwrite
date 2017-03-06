@@ -1,7 +1,7 @@
 -------------------------------------------------------------------------------
 --- AUTHOR: Nostrademous
 --- GITHUB REPO: https://github.com/Nostrademous/Dota2-FullOverwrite
-------------------------------------------------------------------------------- 
+-------------------------------------------------------------------------------
 
 _G._savedEnv = getfenv()
 module( "team_think", package.seeall )
@@ -103,16 +103,16 @@ function ConsiderTeamLaneDefense()
     debugging.SetTeamState("Getting Pushed", 3, "")
 
     local lane, building, numEnemies = global_game_state.DetectEnemyPush()
-    
+
     if lane == nil or building == nil or numEnemies == nil then return end
-    
+
     local hBuilding = buildings_status.GetHandle(GetTeam(), building)
 
     if hBuilding == nil then return end
 
     local listAlliesCanReachBuilding = {}
     local listAlliesCanTPToBuildling = {}
-    
+
     local listAlly = GetUnitList(UNIT_LIST_ALLIED_HEROES)
     for _, ally in pairs(listAlly) do
         if not ally:IsIllusion() and ally:IsBot() then
@@ -175,12 +175,12 @@ end
 function ConsiderTeamRoam()
 end
 
--- If we see a rune, determine if any specific Heroes should get it 
--- (to fill a bottle for example). If not, the hero that saw it will 
+-- If we see a rune, determine if any specific Heroes should get it
+-- (to fill a bottle for example). If not, the hero that saw it will
 -- pick it up. Also consider obtaining Rune vision if lacking.
 function ConsiderTeamRune(playerAssignment)
     local listAlly = GetUnitList(UNIT_LIST_ALLIED_HEROES)
-    
+
     for _, rune in pairs(constants.RuneSpots) do
         if GetRuneStatus(rune) == RUNE_STATUS_AVAILABLE then
             local runeLoc = GetRuneSpawnLocation(rune)
@@ -195,7 +195,7 @@ function ConsiderTeamRune(playerAssignment)
                     end
                 end
             end
-            
+
             if bestAlly then
                 playerAssignment[bestAlly:GetPlayerID()].GetRune = {rune, runeLoc}
             end
@@ -204,20 +204,20 @@ function ConsiderTeamRune(playerAssignment)
 end
 
 -- If any of our Heroes needs to heal up, Shrines are an option.
--- However, we should be smart about the use and see if any other 
+-- However, we should be smart about the use and see if any other
 -- friends could benefit as well rather than just being selfish.
 function ConsiderTeamShrine(playerAssignment)
     local bestShrine = nil
     local distToShrine = 100000
     local Team = GetTeam()
-    
+
     local listAlly = GetUnitList(UNIT_LIST_ALLIED_HEROES)
     local shrineUseList = {}
-    
+
     -- determine which allies need to use the shrine and which shrine is best
     -- for them
     for _, ally in pairs(listAlly) do
-        if ally:IsAlive() and ally:IsBot() and not ally:IsIllusion() and ally:GetHealth()/ally:GetMaxHealth() < 0.3 
+        if ally:IsAlive() and ally:IsBot() and not ally:IsIllusion() and ally:GetHealth()/ally:GetMaxHealth() < 0.3
             and playerAssignment[ally:GetPlayerID()].UseShrine == nil then
             local SJ1 = GetShrine(Team, SHRINE_JUNGLE_1)
             if SJ1 and SJ1:GetHealth() > 0 and GetShrineCooldown(SJ1) == 0 then
@@ -275,18 +275,18 @@ function ConsiderTeamShrine(playerAssignment)
                     bestShrine = SB5
                 end
             end
-            
+
             if bestShrine then
                 if shrineUseList[tostring(bestShrine)] == nil then
                     shrineUseList[tostring(bestShrine)] = { shrine=bestShrine, players={} }
                 end
-                
+
                 utils.myPrint("shrineUseList["..tostring(bestShrine).."] is best for: ", ally:GetPlayerID())
                 table.insert(shrineUseList[tostring(bestShrine)].players, ally:GetPlayerID())
             end
         end
     end
-    
+
     -- Now that we have assigned each player to the best shrine we need to set the player assignments
     -- telling the hero which shrine to go to and for how many people who should wait
     for name, value in pairs(shrineUseList) do

@@ -7,7 +7,7 @@ require( GetScriptDirectory().."/constants" )
 require( GetScriptDirectory().."/item_purchase_bloodseeker" )
 require( GetScriptDirectory().."/ability_usage_bloodseeker" )
 require( GetScriptDirectory().."/jungling_generic" )
-require( GetScriptDirectory().."/constants" )
+require( GetScriptDirectory().."/debugging" )
 
 local utils = require( GetScriptDirectory().."/utility" )
 local dt = require( GetScriptDirectory().."/decision_tree" )
@@ -69,6 +69,8 @@ function Think()
 
     bloodseekerBot:Think(bot)
 
+    ItemPurchaseThinkBS()
+
     -- if we are initialized, do the rest
     if bloodseekerBot.Init then
         if bot:GetLevel() >= 20 and getHeroVar("Role") ~= constants.ROLE_HARDCARRY then
@@ -76,7 +78,7 @@ function Think()
             setHeroVar("Role", constants.ROLE_HARDCARRY)
             setHeroVar("CurLane", LANE_BOT) --FIXME: don't hardcode this
         end
-        
+
         gHeroVar.ExecuteHeroActionQueue(bot)
     end
 end
@@ -102,22 +104,26 @@ function bloodseekerBot:DoRetreat(bot, reason)
 
     local estimatedDamage = bot:GetEstimatedDamageToTarget(true, neutrals[1], bot:GetSecondsPerAttack(), DAMAGE_TYPE_PHYSICAL)
     --local actualDamage = neutrals[1]:GetActualIncomingDamage(estimatedDamage, DAMAGE_TYPE_PHYSICAL)
-    local bloodrageHeal = bloodragePct * neutrals[1]:GetMaxHealth() 
+    local bloodrageHeal = bloodragePct * neutrals[1]:GetMaxHealth()
 
     if reason == constants.RETREAT_CREEP and self:getCurrentMode() == constants.MODE_JUNGLING then
         -- if our health is lower than maximum( 15% health, 100 health )
         local healthThreshold = math.max(bot:GetMaxHealth()*0.15, 100)
-        
+
         if bot:GetHealth() < healthThreshold then
             local totalCreepDamage = 0
 
             for i, neutral in ipairs(neutrals) do
                 local estimatedNCDamage = neutral:GetEstimatedDamageToTarget(true, bot, neutral:GetSecondsPerAttack(), DAMAGE_TYPE_ALL)
+                local estimatedNCDamageTest = neutral:GetEstimatedDamageToTarget(true, bot, neutral:GetSecondsPerAttack(), DAMAGE_TYPE_PHYSICAL)
+                -- TODO: Bs backs up although he could get a netural kill and heal himself. big satyr might have been involved.. keep an eye on that
+                if (estimatedNCDamage > estimatedNCDamageTest + 20) then debugging.SetBotState(bot, 1, "IT'S MAGIC! "..estimatedNCDamage.." "..estimatedNCDamageTest) end
                 totalCreepDamage = (totalCreepDamage + estimatedNCDamage)
             end
 
             if (estimatedDamage < neutrals[1]:GetHealth()) and (bot:GetHealth() + bloodrageHeal) < healthThreshold
             and (bot:GetHealth() < totalCreepDamage) then
+                debugging.SetBotState(bot, 2, "Can't do it :(")
                 setHeroVar("RetreatReason", constants.RETREAT_FOUNTAIN)
                 if ( self:HasMode(constants.MODE_RETREAT) == false ) then
                     self:AddMode(constants.MODE_RETREAT)

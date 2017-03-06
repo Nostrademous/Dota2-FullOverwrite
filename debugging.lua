@@ -55,12 +55,11 @@ function draw()
 end
 
 -- set a line in the specified bot's text area
-function SetBotState(bot, line, text)
+function SetBotState(name, line, text)
     if line < 1 or BOT_STATES_MAX_LINES > 2 then
         print("SetBotState: line out of bounds!")
         return
     end
-    local name = utils.GetHeroName(bot)
     if bot_states[name] == nil then
         bot_states[name] = {}
     end

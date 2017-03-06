@@ -110,7 +110,7 @@ drBuy.ItemsToBuyAsRoamer = ItemsToBuyAsRoamer
 
 ----------------------------------------------------------------------------------------------------
 
-function ItemPurchaseThink()
+function ItemPurchaseThinkDR()
     if GetGameState() == GAME_STATE_PRE_GAME and DotaTime() < -89 then return end
 
     if not init then

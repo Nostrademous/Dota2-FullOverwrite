@@ -86,9 +86,9 @@ cmBuy.ItemsToBuyAsRoamer = ItemsToBuyAsRoamer
 
 ----------------------------------------------------------------------------------------------------
 
-function ItemPurchaseThink()
+function ItemPurchaseThinkCM()
     if GetGameState() == GAME_STATE_PRE_GAME and DotaTime() < -89 then return end
-    
+
 	local npcBot = GetBot()
 
 	if not init then

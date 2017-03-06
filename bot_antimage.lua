@@ -59,7 +59,7 @@ function Think()
     local bot = GetBot()
 
     amBot:Think(bot)
-    
+
     -- if we are initialized, do the rest
     if amBot.Init then
         gHeroVar.ExecuteHeroActionQueue(bot)

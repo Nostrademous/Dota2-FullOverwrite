@@ -80,6 +80,8 @@ function Think()
 
     invBot:Think(bot)
 
+    ItemPurchaseThinkIN()
+
     -- if we are initialized, do the rest
     if invBot.Init then
         gHeroVar.ExecuteHeroActionQueue(bot)
@@ -143,7 +145,7 @@ function prepNukeTOCMDB( bot )
         nukeTOCMDB = false
         return false
     end
-    
+
     if abilityTO:IsHidden() then
         if abilityR:IsFullyCastable() then
             invokeTornado(bot)
@@ -160,7 +162,7 @@ function prepNukeTOCMDB( bot )
             local nQuas = 0
             local nWex = 0
             local nExort = 0
-            
+
             for i = 0, botModifierCount-1, 1 do
                 local modName = bot:GetModifierName(i)
                 if modName == "modifier_invoker_wex_instance" then
@@ -170,10 +172,10 @@ function prepNukeTOCMDB( bot )
                 elseif modName == "modifier_invoker_exort_instance" then
                     nExort = nExort + 1
                 end
-                
+
                 if (nWex + nQuas + nExort) >= 3 then break end
             end
-                
+
             if nWex == 1 and nQuas == 1 and nExort == 1 then
                 nukeTOCMDB = true
                 return false
@@ -186,7 +188,7 @@ function prepNukeTOCMDB( bot )
             end
         end
     end
-    
+
     return false
 end
 
@@ -194,28 +196,28 @@ function nukeDamageTOCMDB( bot )
     local manaAvailable = bot:GetMana()
     local dmgTotal = 0
     local engageDist = 700
-    
+
     if (abilityTO:IsFullyCastable() and  abilityCM:IsFullyCastable() and abilityDB:IsFullyCastable()) and
        (not abilityTO:IsHidden() and not abilityCM:IsHidden() and abilityR:IsFullyCastable()) and
        (manaAvailable >= (abilityTO:GetManaCost()+abilityCM:GetManaCost()+abilityR:GetManaCost()+abilityDB:GetManaCost())) then
-    
+
         -- Tornado
         local damageTO = 70 + abilityTO:GetSpecialValueFloat("wex_damage")
         dmgTotal = dmgTotal + damageTO
-    
+
         -- Check Chaos Meteor
         local burnDuration = 3.0
         local burnDamage = burnDuration * abilityCM:GetSpecialValueFloat("burn_dps")
         local mainDamage = abilityCM:GetSpecialValueFloat("main_damage")
         dmgTotal = dmgTotal + mainDamage + burnDamage
-    
+
         -- Deafening Blast
         local damageDB = abilityDB:GetSpecialValueFloat("damage")
         dmgTotal = dmgTotal + damageDB
-        
+
         engageDist = abilityTO:GetSpecialValueInt("travel_distance")
     end
-    
+
     return dmgTotal, engageDist
 end
 
@@ -225,7 +227,7 @@ function queueNukeTOCMDB(bot, location, engageDist)
     local liftDuration = abilityTO:GetSpecialValueFloat("lift_duration")
     local tornadoSpeed = abilityTO:GetSpecialValueInt("travel_speed")
     local cmLandTime = abilityCM:GetSpecialValueFloat("land_time")
-    
+
     if dist < engageDist then
         bot:Action_ClearActions(true)
 
@@ -281,10 +283,10 @@ function Think()
     local bot = GetBot()
 
     if not bot:IsAlive() then return end
-    
+
     -- Check if we're already using an ability
     if bot:IsCastingAbility() or bot:IsChanneling() or bot:NumQueuedActions() > 0 then return end
-    
+
     if bot:GetAbilityPoints() > 0 then
         LevelUp(bot)
     end
@@ -296,7 +298,7 @@ function Think()
     if abilityTO == "" then abilityTO = bot:GetAbilityByName( "invoker_tornado" ) end
     if abilityCM == "" then abilityCM = bot:GetAbilityByName( "invoker_chaos_meteor" ) end
     if abilityDB == "" then abilityDB = bot:GetAbilityByName( "invoker_deafening_blast" ) end
-    
+
     if abilityQ:GetLevel() >= 3 then
         if nukeTOCMDB then
             local dmg, engageDist = nukeDamageTOCMDB( bot )

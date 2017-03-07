@@ -11,6 +11,7 @@ local X = BotsInit.CreateGeneric()
 require( GetScriptDirectory().."/constants" )
 
 local utils = require( GetScriptDirectory().."/utility" )
+local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
 
 ----------
 X.me    = nil

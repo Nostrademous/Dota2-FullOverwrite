@@ -34,9 +34,9 @@ function X:Desire(bot, nearbyEnemies, nearbyETowers, nearbyAllies)
 
     local defReason = me:getHeroVar("RetreatReason")
 
-	local healthThreshold = math.max(bot:GetMaxHealth()*0.15, 100)
+    local healthThreshold = math.max(bot:GetMaxHealth()*0.25, 150)
 
-    if defReason == constants.RETREAT_CREEP and me:getCurrentMode() == constants.MODE_JUNGLING then
+    if defReason == constants.RETREAT_CREEP and me:getCurrentMode():GetName() == "jungling" then
         if bot:GetHealth() >= healthThreshold then -- we're fine..
             return BOT_MODE_DESIRE_NONE
         end

@@ -108,9 +108,9 @@ function drowRangerBot:DoCleanCamp(bot, neutrals, difficulty)
 end
 
 function drowRangerBot:GetNukeDamage(bot, target)
-    return ability_usage_drow_ranger.nukeDamage( bot, target )
+    return ability.nukeDamage( bot, target )
 end
 
 function drowRangerBot:QueueNuke(bot, target, actionQueue, engageDist)
-    return ability_usage_drow_ranger.queueNuke( bot, target, actionQueue, engageDist )
+    return ability.queueNuke( bot, target, actionQueue, engageDist )
 end

@@ -58,9 +58,9 @@ function Think()
 end
 
 function viperBot:GetNukeDamage(bot, target)
-    return ability_usage_viper.nukeDamage( bot, target )
+    return ability.nukeDamage( bot, target )
 end
 
 function viperBot:QueueNuke(bot, target, actionQueue, engageDist)
-    return ability_usage_viper.queueNuke( bot, target, actionQueue, engageDist )
+    return ability.queueNuke( bot, target, actionQueue, engageDist )
 end

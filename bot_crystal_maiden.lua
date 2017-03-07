@@ -53,7 +53,7 @@ end
 local cmBot = botCM:new{abilityPriority = AbilityPriority}
 
 function cmBot:ConsiderAbilityUse()
-    ability.AbilityUsageThink(GetBot())
+    return ability.AbilityUsageThink(GetBot())
 end
 
 function cmBot:GetNukeDamage(bot, target)

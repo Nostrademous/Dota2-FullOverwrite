@@ -106,12 +106,12 @@ function X:Think(bot)
         if bot:DistanceFromFountain() >= 5000 and (bot:GetHealth()/bot:GetMaxHealth()) > 0.6 and (bot:GetMana()/bot:GetMaxMana()) > 0.6 then
             utils.myPrint("DoRetreat - Upgrading from RETREAT_FOUNTAIN to RETREAT_DANGER")
             X.me:setHeroVar("RetreatReason", constants.RETREAT_DANGER)
-            return true
+            return
         end
 
         if bot:DistanceFromFountain() > 0 or (bot:GetHealth()/bot:GetMaxHealth()) < 1.0 or (bot:GetMana()/bot:GetMaxMana()) < 1.0 then
             DoFartherRetreat(bot, utils.Fountain(GetTeam()))
-            return true
+            return
         end
         --utils.myPrint("DoRetreat - RETREAT FOUNTAIN End".." - DfF: ".. bot:DistanceFromFountain()..", H: "..bot:GetHealth())
     elseif reason == constants.RETREAT_DANGER then
@@ -129,14 +129,14 @@ function X:Think(bot)
         if bot:TimeSinceDamagedByAnyHero() < 3.0 or enemyTooClose then
             if bot:DistanceFromFountain() < 5000 and (bot:GetHealth()/bot:GetMaxHealth()) < 1.0 then
                 DoFartherRetreat(bot)
-                return true
+                return
             elseif bot:DistanceFromFountain() >= 5000 and (bot:GetHealth()/bot:GetMaxHealth()) < 0.6 then
                 DoFartherRetreat(bot)
-                return true
+                return
             end
         elseif (bot:GetHealth()/bot:GetMaxHealth()) < 0.8 then
             DoFartherRetreat(bot)
-            return true
+            return
         end
         --utils.myPrint("DoRetreat - RETREAT DANGER End".." - DfF: "..bot:DistanceFromFountain()..", H: "..bot:GetHealth())
     elseif reason == constants.RETREAT_TOWER then
@@ -157,7 +157,7 @@ function X:Think(bot)
 
             gHeroVar.HeroMoveToLocation(bot, rLoc)
             --utils.myPrint("TowerRetreat: ", d)
-            return true
+            return 
         end
         --utils.myPrint("DoRetreat - RETREAT TOWER End")
     elseif reason == constants.RETREAT_CREEP then
@@ -180,14 +180,14 @@ function X:Think(bot)
 
             gHeroVar.HeroMoveToLocation(bot, rLoc)
             
-            return true
+            return
         end
         --utils.myPrint("DoRetreat - RETREAT CREEP End")
     end
 
     -- If we got here, we are done retreating
     --utils.myPrint("done retreating from reason: "..reason)
-    return true
+    return
 end
 
 function X:Desire(bot, nearbyEnemies, nearbyETowers, nearbyAllies)

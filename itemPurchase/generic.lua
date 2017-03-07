@@ -97,7 +97,7 @@ end
 -- ToDo: Selling items for better ones
 -------------------------------------------------------------------------------
 
-local function UpdateTeamBuyList( sItem )
+function X:UpdateTeamBuyList( sItem )
     local myList = getHeroVar("TeamBuy")
     if #myList > 0 then
         local pos = utils.PosInTable(myList, sItem)

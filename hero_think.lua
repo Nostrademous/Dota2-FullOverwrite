@@ -10,6 +10,7 @@ module( "hero_think", package.seeall )
 require( GetScriptDirectory().."/constants" )
 require( GetScriptDirectory().."/item_usage" )
 
+local wardMode = dofile( GetScriptDirectory().."/modes/ward" )
 local roamMode = dofile( GetScriptDirectory().."/modes/roam" )
 local shopMode = dofile( GetScriptDirectory().."/modes/shop" )
 
@@ -146,39 +147,15 @@ end
 -- shopping at secret/side shop if we are informed that the courier
 -- will be unavailable to use for a certain period of time.
 function ConsiderSecretAndSideShop(bot)
-    if bot:IsIllusion() then return BOT_MODE_DESIRE_NONE end
-    
-    local sNextItem = getHeroVar("ItemPurchaseClass"):GetPurchaseOrder()[1]
-    
-    local bInSide = IsItemPurchasedFromSideShop( sNextItem )
-    local bInSecret = IsItemPurchasedFromSecretShop( sNextItem )
-
-    -- it's in side shop, but it's not safe to go there
-    if bInSide and shopMode.GetSideShop() == nil then
-        bInSide = false
+    specialFileName = GetScriptDirectory().."/modes/shop_"..utils.GetHeroName(bot)
+    if pcall(tryHeroSpecialMode) then
+        specialFileName = nil
+        return specialFile:Desire(bot)
+    else
+        specialFileName = nil
+        local shopMode = dofile( GetScriptDirectory().."/modes/shop" )
+        return shopMode:Desire(bot)
     end
-    
-    -- it's in secret shop, but it's not safe to go there
-    -- FIXME: doesn't actually check for "safe to go there"
-    if bInSecret and shopMode.GetSecretShop() == nil then
-        bInSecret = false
-    end
-    
-    if bInSide and bInSecret then
-        if bot:DistanceFromSecretShop() < bot:DistanceFromSideShop() then
-            bInSide = false
-        end
-    end
-    
-    if bInSide then
-        setHeroVar("ShopType", constants.SHOP_TYPE_SIDE)
-        return BOT_MODE_DESIRE_MODERATE
-    elseif bInSecret then
-        setHeroVar("ShopType", constants.SHOP_TYPE_SECRET)
-        return BOT_MODE_DESIRE_MODERATE
-    end
-    
-    return BOT_MODE_DESIRE_NONE
 end
 
 -- The decision is made at Team level. 
@@ -309,54 +286,15 @@ end
 -- Warding is done on a per-lane basis. This evaluates if this Hero
 -- should ward, and where. (might be a team wide thing later)
 function ConsiderWarding(bot, playerAssignment)
-    if bot:IsIllusion() then return BOT_MODE_DESIRE_NONE end
-    
-    local me = getHeroVar("Self")
-    
-    -- we need to lane first before we know where to ward properly
-    if me:getCurrentMode():GetName() ~= "laning" then return BOT_MODE_DESIRE_NONE end
-    
-    local WardCheckTimer = getHeroVar("WardCheckTimer")
-    local bCheck = true
-    local newTime = GameTime()
-    if WardCheckTimer then
-        bCheck, newTime = utils.TimePassed(WardCheckTimer, 1.0)
+    specialFileName = GetScriptDirectory().."/modes/ward_"..utils.GetHeroName(bot)
+    if pcall(tryHeroSpecialMode) then
+        specialFileName = nil
+        return specialFile:Desire(bot)
+    else
+        specialFileName = nil
+        local wardMode = dofile( GetScriptDirectory().."/modes/ward" )
+        return wardMode:Desire(bot)
     end
-    if bCheck then
-        setHeroVar("WardCheckTimer", newTime)
-        local ward = item_usage.HaveWard("item_ward_observer")
-        if ward then
-            local alliedMapWards = GetUnitList(UNIT_LIST_ALLIED_WARDS)
-            if #alliedMapWards < 2 then --FIXME: don't hardcode.. you get more wards then you can use this way
-                local wardLocs = utils.GetWardingSpot(getHeroVar("CurLane"))
-
-                if wardLocs == nil or #wardLocs == 0 then return BOT_MODE_DESIRE_NONE end
-
-                -- FIXME: Consider ward expiration time
-                local wardLoc = nil
-                for _, wl in ipairs(wardLocs) do
-                    local bGoodLoc = true
-                    for _, value in ipairs(alliedMapWards) do
-                        if utils.GetDistance(value:GetLocation(), wl) < 1600 then
-                            bGoodLoc = false
-                        end
-                    end
-                    if bGoodLoc then
-                        wardLoc = wl
-                        break
-                    end
-                end
-
-                if wardLoc ~= nil and utils.EnemiesNearLocation(bot, wardLoc, 2000) < 2 then
-                    setHeroVar("WardType", ward:GetName())
-                    setHeroVar("WardLocation", wardLoc)
-                    return BOT_MODE_DESIRE_LOW 
-                end
-            end
-        end
-    end
-    
-    return BOT_MODE_DESIRE_NONE
 end
 
 for k,v in pairs( hero_think ) do _G._savedEnv[k] = v end

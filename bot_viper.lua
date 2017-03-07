@@ -4,12 +4,12 @@
 -------------------------------------------------------------------------------
 
 require( GetScriptDirectory().."/constants" )
-require ( GetScriptDirectory().."/ability_usage_viper" )
 require ( GetScriptDirectory().."/item_purchase_viper" )
 
 local utils = require( GetScriptDirectory().."/utility" )
-local dt = require( GetScriptDirectory().."/decision_tree" )
+local dt = require( GetScriptDirectory().."/decision" )
 local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
+local ability = require( GetScriptDirectory().."/abilityUse/abilityUse_crystal_maiden" )
 
 local SKILL_Q = "viper_poison_attack";
 local SKILL_W = "viper_nethertoxin";
@@ -32,9 +32,7 @@ local ViperAbilityPriority = {
     SKILL_E,    SKILL_R,    ABILITY6,   ABILITY8
 };
 
-local viperModeStack = { [1] = {constants.MODE_NONE, BOT_ACTION_DESIRE_NONE} }
-
-ViperBot = dt:new()
+local ViperBot = dt:new()
 
 function ViperBot:new(o)
     o = o or dt:new(o)
@@ -43,34 +41,27 @@ function ViperBot:new(o)
     return o
 end
 
-viperBot = ViperBot:new{modeStack = viperModeStack, abilityPriority = ViperAbilityPriority}
---viperBot:printInfo();
+local viperBot = ViperBot:new{abilityPriority = ViperAbilityPriority}
 
-viperBot.Init = false
 
 function viperBot:DoHeroSpecificInit(bot)
     self:setHeroVar("HasOrbAbility", SKILL_Q)
 end
 
-function viperBot:ConsiderAbilityUse(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCreep, nearbyAlliedCreep, nearbyEnemyTowers, nearbyAlliedTowers)
-    return ability_usage_viper.AbilityUsageThink(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCreep, nearbyAlliedCreep, nearbyEnemyTowers, nearbyAlliedTowers)
+function viperBot:ConsiderAbilityUse()
+    return ability.AbilityUsageThink(GetBot())
 end
 
 function Think()
     local bot = GetBot()
 
     viperBot:Think(bot)
-
-    -- if we are initialized, do the rest
-    if viperBot.Init then
-        gHeroVar.ExecuteHeroActionQueue(bot)
-    end
 end
 
 function viperBot:GetNukeDamage(bot, target)
-    return ability_usage_viper.nukeDamage( bot, target )
+    return ability.nukeDamage( bot, target )
 end
 
 function viperBot:QueueNuke(bot, target, actionQueue, engageDist)
-    return ability_usage_viper.queueNuke( bot, target, actionQueue, engageDist )
+    return ability.queueNuke( bot, target, actionQueue, engageDist )
 end

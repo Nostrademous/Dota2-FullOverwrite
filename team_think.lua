@@ -37,7 +37,7 @@ function ConsiderGlyphUse()
             and tower:TimeSinceDamagedByCreep() < 3 then
             if GetGlyphCooldown() == 0 and (GameTime() - glyphTimer > 1.0) then
                 GetBot():ActionImmediate_Glyph()
-                glyphTimer = GameTime()
+                glyphTimer = GameTime() + 5.0
             end
         end
     end

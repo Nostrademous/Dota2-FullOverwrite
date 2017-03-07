@@ -110,7 +110,7 @@ function ThinkSideShop( NextItem )
             return false
         end
     else
-        bot:Action_MoveToLocation(secLoc)
+        bot:Action_MoveToLocation(sideLoc)
         return false
     end
 end

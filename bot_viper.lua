@@ -4,7 +4,6 @@
 -------------------------------------------------------------------------------
 
 require( GetScriptDirectory().."/constants" )
-require ( GetScriptDirectory().."/item_purchase_viper" )
 
 local utils = require( GetScriptDirectory().."/utility" )
 local dt = require( GetScriptDirectory().."/decision" )

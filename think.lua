@@ -7,7 +7,16 @@ require( GetScriptDirectory().."/constants" )
 require( GetScriptDirectory().."/team_think" )
 require( GetScriptDirectory().."/hero_think" )
 
+local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
 local utils = require( GetScriptDirectory().."/utility" )
+
+local function setHeroVar(var, value)
+    gHeroVar.SetVar(GetBot():GetPlayerID(), var, value)
+end
+
+local function getHeroVar(var)
+    return gHeroVar.GetVar(GetBot():GetPlayerID(), var)
+end
 
 local noneMode      = dofile( GetScriptDirectory().."/modes/none" )
 local wardMode      = dofile( GetScriptDirectory().."/modes/ward" )
@@ -159,17 +168,17 @@ function X.HeroThink()
         return highestDesireMode, highestDesireValue
     end
     
-    local nearbyEnemies     = bot:GetNearbyHeroes(1200, true, BOT_MODE_NONE)
-    local nearbyAllies      = bot:GetNearbyHeroes(1200, false, BOT_MODE_NONE)
-    local nearbyECreeps     = bot:GetNearbyCreeps(1200, true)
-    local nearbyACreeps     = bot:GetNearbyCreeps(1200, false)
-    local nearbyETowers     = bot:GetNearbyTowers(750, true)
-    local nearbyATowers     = bot:GetNearbyTowers(650, false)
+    setHeroVar("NearbyEnemies", bot:GetNearbyHeroes(1200, true, BOT_MODE_NONE))
+    setHeroVar("NearbyAllies", bot:GetNearbyHeroes(1200, false, BOT_MODE_NONE))
+    setHeroVar("NearbyEnemyCreep", bot:GetNearbyCreeps(1200, true))
+    setHeroVar("NearbyAlliedCreep", bot:GetNearbyCreeps(1200, false))
+    setHeroVar("NearbyEnemyTowers", bot:GetNearbyTowers(1200, true))
+    setHeroVar("NearbyAlliedTowers", bot:GetNearbyTowers(1200, false))
     
     -- Fight orchestration is done at a global Team level.
     -- This just checks if we are given a fight target and a specific
     -- action queue to execute as part of the fight.
-    evaluatedDesireValue = hero_think.ConsiderAttacking(bot, nearbyEnemies, nearbyAllies, nearbyETowers, nearbyATowers, nearbyECreeps, nearbyACreeps)
+    evaluatedDesireValue = hero_think.ConsiderAttacking(bot)
     if evaluatedDesireValue > highestDesireValue then
         highestDesireValue = evaluatedDesireValue
         highestDesireMode = fightMode
@@ -177,7 +186,7 @@ function X.HeroThink()
     
     -- Which Heroes should be present for Shrine heal is made at Team level.
     -- This just tells us if we should be part of this event.
-    evaluatedDesireValue = hero_think.ConsiderShrine(bot, playerAssignment, nearbyAllies)
+    evaluatedDesireValue = hero_think.ConsiderShrine(bot, playerAssignment)
     if evaluatedDesireValue > highestDesireValue then
         highestDesireValue = evaluatedDesireValue
         highestDesireMode = shrineMode
@@ -188,7 +197,7 @@ function X.HeroThink()
     -- in a fight but win the over-all battle. If no Team Fight Assignment, 
     -- then it is up to the Hero to manage their safety from global and
     -- tower/creep damage.
-    evaluatedDesireValue = hero_think.ConsiderRetreating(bot, nearbyEnemies, nearbyETowers, nearbyAllies)
+    evaluatedDesireValue = hero_think.ConsiderRetreating(bot)
     if evaluatedDesireValue > highestDesireValue then
         highestDesireValue = evaluatedDesireValue
         highestDesireMode = retreatMode
@@ -212,7 +221,7 @@ function X.HeroThink()
     -- The decision is made at Team level. 
     -- This just checks if the Hero is part of the push, and if so, 
     -- what lane.
-    evaluatedDesireValue = hero_think.ConsiderPushingLane(bot, nearbyEnemies, nearbyETowers, nearbyECreeps, nearbyACreeps)
+    evaluatedDesireValue = hero_think.ConsiderPushingLane(bot)
     if evaluatedDesireValue > highestDesireValue then
         highestDesireValue = evaluatedDesireValue
         highestDesireMode = pushLaneMode

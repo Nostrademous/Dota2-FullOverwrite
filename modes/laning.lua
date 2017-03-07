@@ -70,13 +70,13 @@ local function Moving(bot)
 end
 
 local function MovingToPos(bot)
-    local listAlliedCreep = bot:GetNearbyCreeps(1200, false)
+    local listAlliedCreep = X.me:getHeroVar("NearbyAlliedCreep")
     -- if we are attacked by tower, drop aggro
     if utils.IsTowerAttackingMe() and #listAlliedCreep > 0 then
         if utils.DropTowerAggro(bot, listAlliedCreep) then return end
     -- else move away
     elseif utils.IsTowerAttackingMe() then
-        local listEnemyTowers = bot:GetNearbyTowers(700, true)
+        local listEnemyTowers = X.me:getHeroVar("NearbyEnemyTowers")
         local dist = GetUnitToUnitDistance(bot, listEnemyTowers[1])
         gHeroVar.HeroMoveToLocation(bot, utils.VectorAway(bot:GetLocation(), listEnemyTowers[1]:GetLocation(), 710-dist))
         return
@@ -124,7 +124,7 @@ local function MovingToPos(bot)
 end
 
 local function DenyNearbyCreeps(bot)
-    local listAlliedCreep = bot:GetNearbyCreeps(1200, false)
+    local listAlliedCreep = X.me:getHeroVar("NearbyAlliedCreep")
     if #listAlliedCreep == 0 then
         return false
     end
@@ -201,7 +201,7 @@ local function PushCS(bot, WeakestCreep, nAc, damage, AS)
 end
 
 local function CSing(bot)
-    local listAlliedCreep = bot:GetNearbyCreeps(1200, false)
+    local listAlliedCreep = X.me:getHeroVar("NearbyAlliedCreep")
     if #listAlliedCreep == 0 then
         if not X.ShouldPush then
             X.LaningState = X.LaningStates.Moving
@@ -209,17 +209,19 @@ local function CSing(bot)
         end
     end
 
-    local listEnemyCreep = bot:GetNearbyCreeps(1200, true)
+    local listEnemyCreep = X.me:getHeroVar("NearbyEnemyCreep")
     if #listEnemyCreep == 0 then
         X.LaningState = X.LaningStates.Moving
         return
     end
     
-    local listEnemyTowers = bot:GetNearbyTowers(710, true)
+    local listEnemyTowers = X.me:getHeroVar("NearbyEnemyTowers")
     if #listEnemyTowers > 0 then
         local dist = GetUnitToUnitDistance(bot, listEnemyTowers[1])
-        gHeroVar.HeroMoveToLocation(bot, utils.VectorAway(bot:GetLocation(), listEnemyTowers[1]:GetLocation(), 710-dist))
-        return
+        if dist > 750 then
+            gHeroVar.HeroMoveToLocation(bot, utils.VectorAway(bot:GetLocation(), listEnemyTowers[1]:GetLocation(), 750-dist))
+            return
+        end
     end
 
     X.AttackRange = bot:GetAttackRange() + bot:GetBoundingRadius()
@@ -303,7 +305,7 @@ local function CSing(bot)
             approachScalar = 2.5
         end
 
-        if (not X.ShouldPush) and WeakestCreepHealth < damage*approachScalar and GetUnitToUnitDistance(bot,WeakestCreep) > X.AttackRange and EnemyTowers == nil then
+        if (not X.ShouldPush) and WeakestCreepHealth < damage*approachScalar and GetUnitToUnitDistance(bot, WeakestCreep) > X.AttackRange and #listEnemyTowers == 0 then
             local dest = utils.VectorTowards(WeakestCreep:GetLocation(),GetLocationAlongLane(X.CurLane, X.LanePos-0.03), X.AttackRange-20)
             gHeroVar.HeroMoveToLocation(bot, dest)
             return
@@ -400,8 +402,8 @@ local function LoadLaningData(bot)
         X.LaningState = X.LaningStates.Moving
     end
 
-    X.listEnemies = bot:GetNearbyHeroes(1200, true, BOT_MODE_NONE)
-    X.listAllies  = bot:GetNearbyHeroes(800, false, BOT_MODE_NONE)
+    X.listEnemies = X.me:getHeroVar("NearbyEnemies")
+    X.listAllies  = X.me:getHeroVar("NearbyAllies")
 end
 
 local function SaveLaningData()

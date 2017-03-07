@@ -11,6 +11,14 @@ require( GetScriptDirectory().."/constants")
 local retreatMode = dofile( GetScriptDirectory().."/modes/retreat" )
 local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
 
+local function setHeroVar(var, value)
+    gHeroVar.SetVar(GetBot():GetPlayerID(), var, value)
+end
+
+local function getHeroVar(var)
+    return gHeroVar.GetVar(GetBot():GetPlayerID(), var)
+end
+
 function X:GetName()
     return "retreat_bloodseeker"
 end
@@ -27,17 +35,16 @@ function X:Think(bot)
     retreatMode:Think(bot)
 end
 
-function X:Desire(bot, nearbyEnemies, nearbyETowers, nearbyAllies)
-    local me = gHeroVar.GetVar(bot:GetPlayerID(), "Self")
-    local defDesire = retreatMode:Desire(bot, nearbyEnemies, nearbyETowers, nearbyAllies)
+function X:Desire(bot)
+    local defDesire = retreatMode:Desire(bot)
     if defDesire == BOT_MODE_DESIRE_NONE then return BOT_MODE_DESIRE_NONE end
     
-    local defReason = me:getHeroVar("RetreatReason")
+    local defReason = getHeroVar("RetreatReason")
     
     if defReason == constants.RETREAT_CREEP or defReason == constants.RETREAT_FOUNTAIN then
         local neutrals = bot:GetNearbyCreeps(500, true)
         if #neutrals == 0 then
-            return retreatMode:Desire(bot, nearbyEnemies, nearbyETowers, nearbyAllies)
+            return retreatMode:Desire(bot)
         end
         table.sort(neutrals, function(n1, n2) return n1:GetHealth() < n2:GetHealth() end)
 
@@ -60,7 +67,7 @@ function X:Desire(bot, nearbyEnemies, nearbyETowers, nearbyAllies)
             if (estimatedDamage < neutrals[1]:GetHealth()) and (bot:GetHealth() + bloodrageHeal) < healthThreshold
                 and (bot:GetHealth() < totalCreepDamage) then
                 
-                return retreatMode:Desire(bot, nearbyEnemies, nearbyETowers, nearbyAllies)
+                return retreatMode:Desire(bot)
             end
         end
         return BOT_MODE_DESIRE_NONE

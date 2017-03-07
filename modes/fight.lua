@@ -9,46 +9,58 @@ local X = BotsInit.CreateGeneric()
 local utils = require( GetScriptDirectory().."/utility" )
 local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
 
-----------
-X.me            = nil
+local function setHeroVar(var, value)
+    gHeroVar.SetVar(GetBot():GetPlayerID(), var, value)
+end
+
+local function getHeroVar(var)
+    return gHeroVar.GetVar(GetBot():GetPlayerID(), var)
+end
 
 function X:GetName()
     return "fight"
 end
 
 function X:OnStart(myBot)
-    X.me = gHeroVar.GetVar(GetBot():GetPlayerID(), "Self")
 end
 
 function X:OnEnd()
-    X.me = gHeroVar.GetVar(GetBot():GetPlayerID(), "Self")
-    X.me:setHeroVar("Target", nil)
+    setHeroVar("Target", nil)
 end
 
 function X:Think(bot)
-    X.me = gHeroVar.GetVar(bot:GetPlayerID(), "Self")
-    
-    local target = X.me:getHeroVar("Target")
+    local target = getHeroVar("Target")
     if utils.ValidTarget(target) and target:IsAlive() then
         gHeroVar.HeroAttackUnit(bot, target, true)
     else
-        X.me:setHeroVar("Target", nil)
+        setHeroVar("Target", nil)
     end
 end
 
-function X:Desire(bot, nearbyEnemies, nearbyAllies, nearbyETowers, nearbyATowers, nearbyECreeps, nearbyACreeps)
-    X.me = gHeroVar.GetVar(bot:GetPlayerID(), "Self")
-    for _, enemy in pairs(nearbyEnemies) do
-        if bot:WasRecentlyDamagedByHero( enemy, 1.5 ) then
-            if #nearbyAllies*(bot:GetHealth() + bot:GetAttackDamage()) > #nearbyEnemies*(enemy:GetHealth() + enemy:GetAttackDamage()) then
-                X.me:setHeroVar("Target", enemy)
-                return BOT_MODE_DESIRE_MODERATE
-            end
+function X:Desire(bot)
+    local enemyList = getHeroVar("NearbyEnemies")
+    if #enemyList == 0 then return BOT_MODE_DESIRE_NONE end
+    
+    local enemyValue = 0
+    local allyValue = 0
+    for _, enemy in pairs(enemyList) do
+        enemyValue = enemyValue + enemy:GetHealth() + enemy:GetOffensivePower()
+    end
+    
+    for _, ally in pairs(getHeroVar("NearbyAllies")) do
+        allyValue = allyValue + ally:GetHealth() + ally:GetOffensivePower()
+    end
+    
+    if allyValue > enemyValue then
+        local target, _ = utils.GetWeakestHero(bot, bot:GetAttackRange()+bot:GetBoundingRadius(), enemyList)
+        if target then
+            setHeroVar("Target", target)
+            return BOT_MODE_DESIRE_MODERATE
         end
     end
     
-    if X.me:getHeroVar("Target") then
-        return BOT_MODE_DESIRE_LOW
+    if getHeroVar("Target") or getHeroVar("Self"):getCurrentMode():GetName() == "fight" then
+        return getHeroVar("Self"):getCurrentModeValue()
     end
     
     return BOT_MODE_DESIRE_NONE

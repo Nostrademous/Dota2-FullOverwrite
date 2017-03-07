@@ -10,28 +10,36 @@ local X = BotsInit.CreateGeneric()
 local utils = require( GetScriptDirectory().."/utility" )
 local mods  = require( GetScriptDirectory().."/modifiers" )
 
-----------
-X.me            = nil
+local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
+
+local function setHeroVar(var, value)
+    gHeroVar.SetVar(GetBot():GetPlayerID(), var, value)
+end
+
+local function getHeroVar(var)
+    return gHeroVar.GetVar(GetBot():GetPlayerID(), var)
+end
 
 function X:GetName()
     return "evasion"
 end
 
 function X:OnStart(myBot)
-    X.me = gHeroVar.GetVar(GetBot():GetPlayerID(), "Self")
 end
 
 function X:OnEnd()
 end
 
 function X:Think(bot)
-    X.me = gHeroVar.GetVar(bot:GetPlayerID(), "Self")
     if mods.IsRuptured(bot) then
         local tp = utils.IsItemAvailable("item_tpscroll")
         if tp then
             bot:Action_UseAbilityOnLocation( tp, utils.Fountain( GetTeam() ) )
         end
     end
+end
+
+function X:Desire(bot)
 end
 
 return X

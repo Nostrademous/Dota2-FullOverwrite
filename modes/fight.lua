@@ -40,7 +40,7 @@ function X:Desire(bot, nearbyEnemies, nearbyAllies, nearbyETowers, nearbyATowers
     X.me = gHeroVar.GetVar(bot:GetPlayerID(), "Self")
     for _, enemy in pairs(nearbyEnemies) do
         if bot:WasRecentlyDamagedByHero( enemy, 1.5 ) then
-            if (bot:GetHealth() + bot:GetAttackDamage()) > (enemy:GetHealth() + enemy:GetAttackDamage()) then
+            if #nearbyAllies*(bot:GetHealth() + bot:GetAttackDamage()) > #nearbyEnemies*(enemy:GetHealth() + enemy:GetAttackDamage()) then
                 X.me:setHeroVar("Target", enemy)
                 return BOT_MODE_DESIRE_MODERATE
             end

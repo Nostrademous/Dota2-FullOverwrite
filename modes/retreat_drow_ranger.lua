@@ -28,19 +28,20 @@ function X:Think(bot)
 end
 
 function X:Desire(bot, nearbyEnemies, nearbyETowers, nearbyAllies)
-    local me = gHeroVar.GetVar(bot:GetPlayerID(), "Self")
     local defDesire = retreatMode:Desire(bot, nearbyEnemies, nearbyETowers, nearbyAllies)
     if defDesire == BOT_MODE_DESIRE_NONE then return BOT_MODE_DESIRE_NONE end
 
+    --[[
+    local me = gHeroVar.GetVar(bot:GetPlayerID(), "Self")
     local defReason = me:getHeroVar("RetreatReason")
-
     local healthThreshold = math.max(bot:GetMaxHealth()*0.25, 150)
-
+    
     if defReason == constants.RETREAT_CREEP and me:getCurrentMode():GetName() == "jungling" then
         if bot:GetHealth() >= healthThreshold then -- we're fine..
             return BOT_MODE_DESIRE_NONE
         end
     end
+    --]]
 
     return defDesire
 end

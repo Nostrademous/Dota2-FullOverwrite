@@ -152,7 +152,11 @@ function X:Desire(bot)
     
     local sNextItem = X.me:getHeroVar("ItemPurchaseClass"):GetPurchaseOrder()[1]
     X.me:setHeroVar("NextShopItem", sNextItem)
-    
+
+    if bot:GetGold() < GetItemCost( sNextItem ) then
+        return BOT_MODE_DESIRE_NONE
+    end
+
     local bInSide = IsItemPurchasedFromSideShop( sNextItem )
     local bInSecret = IsItemPurchasedFromSecretShop( sNextItem )
 

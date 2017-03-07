@@ -147,39 +147,15 @@ end
 -- shopping at secret/side shop if we are informed that the courier
 -- will be unavailable to use for a certain period of time.
 function ConsiderSecretAndSideShop(bot)
-    if bot:IsIllusion() then return BOT_MODE_DESIRE_NONE end
-    
-    local sNextItem = getHeroVar("ItemPurchaseClass"):GetPurchaseOrder()[1]
-    
-    local bInSide = IsItemPurchasedFromSideShop( sNextItem )
-    local bInSecret = IsItemPurchasedFromSecretShop( sNextItem )
-
-    -- it's in side shop, but it's not safe to go there
-    if bInSide and shopMode.GetSideShop() == nil then
-        bInSide = false
+    specialFileName = GetScriptDirectory().."/modes/shop_"..utils.GetHeroName(bot)
+    if pcall(tryHeroSpecialMode) then
+        specialFileName = nil
+        return specialFile:Desire(bot)
+    else
+        specialFileName = nil
+        local shopMode = dofile( GetScriptDirectory().."/modes/shop" )
+        return shopMode:Desire(bot)
     end
-    
-    -- it's in secret shop, but it's not safe to go there
-    -- FIXME: doesn't actually check for "safe to go there"
-    if bInSecret and shopMode.GetSecretShop() == nil then
-        bInSecret = false
-    end
-    
-    if bInSide and bInSecret then
-        if bot:DistanceFromSecretShop() < bot:DistanceFromSideShop() then
-            bInSide = false
-        end
-    end
-    
-    if bInSide then
-        setHeroVar("ShopType", constants.SHOP_TYPE_SIDE)
-        return BOT_MODE_DESIRE_MODERATE
-    elseif bInSecret then
-        setHeroVar("ShopType", constants.SHOP_TYPE_SECRET)
-        return BOT_MODE_DESIRE_MODERATE
-    end
-    
-    return BOT_MODE_DESIRE_NONE
 end
 
 -- The decision is made at Team level. 

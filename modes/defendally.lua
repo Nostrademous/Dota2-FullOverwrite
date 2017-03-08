@@ -30,6 +30,7 @@ function X:Think(bot)
 end
 
 function X:Desire(bot)
+    return BOT_MODE_DESIRE_NONE
 end
 
 return X

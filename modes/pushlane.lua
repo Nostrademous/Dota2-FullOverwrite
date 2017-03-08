@@ -62,7 +62,7 @@ function X:Think(bot)
                 return
             end
         else
-            getHeroVar("Self"):RemoveMode()
+            getHeroVar("Self"):ClearMode()
             return
         end
     end

@@ -30,6 +30,13 @@ function X:Think(bot)
 end
 
 function X:Desire(bot)
+    --[[
+    local defInfo = getHeroVar("DoDefendLane")
+    if #defInfo > 0 then
+        return BOT_MODE_DESIRE_VERYHIGH
+    end
+    --]]
+    return BOT_MODE_DESIRE_NONE
 end
 
 return X

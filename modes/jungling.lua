@@ -191,6 +191,10 @@ function X:Think(bot)
 end
 
 function X:Desire(bot)
+    if getHeroVar("Role") == constants.ROLE_JUNGLER then
+        return BOT_MODE_DESIRE_MODERATE
+    end
+    return BOT_MODE_DESIRE_NONE
 end
 
 return X

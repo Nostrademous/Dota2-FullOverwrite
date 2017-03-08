@@ -34,11 +34,9 @@ local function updateBotStates()
             local hMyBot = gHeroVar.GetVar(ally:GetPlayerID(), "Self")
             local mode = hMyBot:getCurrentMode()
             local state = mode:GetName()
-            if state == "retreat" then 
-                state = state .. " " .. mode:PrintReason()
-            elseif state == "laning" then
+            if state == "laning" then
                 local cLane = hMyBot:getHeroVar("CurLane")
-                state = state .. " Lane: " .. tostring(cLane)
+                state = state .. " Lane: " .. tostring(cLane) .. " Info: " .. hMyBot:getHeroVar("LaningStateInfo")
             elseif state == "fight" then
                 local target = hMyBot:getHeroVar("Target")
                 if utils.ValidTarget(target) then

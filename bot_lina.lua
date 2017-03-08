@@ -3,13 +3,10 @@
 --- GITHUB REPO: https://github.com/Nostrademous/Dota2-FullOverwrite
 -------------------------------------------------------------------------------
 
-require( GetScriptDirectory().."/constants" )
-require( GetScriptDirectory().."/item_purchase_lina" )
-require ( GetScriptDirectory().."/ability_usage_lina" )
-
 local utils = require( GetScriptDirectory().."/utility" )
-local dt = require( GetScriptDirectory().."/decision_tree" )
+local dt = require( GetScriptDirectory().."/decision" )
 local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
+local ability = require( GetScriptDirectory().."/abilityUse/abilityUse_lina" )
 
 function setHeroVar(var, value)
     local bot = GetBot()
@@ -40,47 +37,37 @@ local LinaAbilityPriority = {
     LINA_SKILL_R,    LINA_SKILL_Q,    LINA_SKILL_E,    LINA_SKILL_E,    LINA_ABILITY1,
     LINA_SKILL_E,    LINA_SKILL_R,    LINA_SKILL_W,    LINA_SKILL_W,    LINA_ABILITY3,
     LINA_SKILL_W,    LINA_SKILL_R,    LINA_ABILITY5,   LINA_ABILITY7
-};
+}
 
-local linaModeStack = { [1] = {constants.MODE_NONE, BOT_ACTION_DESIRE_NONE} }
+local botLina = dt:new()
 
-LinaBot = dt:new()
-
-function LinaBot:new(o)
+function botLina:new(o)
     o = o or dt:new(o)
     setmetatable(o, self)
     self.__index = self
     return o
 end
 
-linaBot = LinaBot:new{modeStack = linaModeStack, abilityPriority = LinaAbilityPriority}
---linaBot:printInfo();
-
-linaBot.Init = false
+local linaBot = botLina:new{abilityPriority = LinaAbilityPriority}
 
 function linaBot:DoHeroSpecificInit(bot)
-    setHeroVar("HasStun",  {{[1]=bot:GetAbilityByName("lina_light_strike_array"), [2]=0.95}})
+    setHeroVar("HasStun",  {{[1]=bot:GetAbilityByName("lina_light_strike_array"), [2]=0.95+getHeroVar("AbilityDelay")}})
 end
 
-function linaBot:ConsiderAbilityUse(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCreep, nearbyAlliedCreep, nearbyEnemyTowers, nearbyAlliedTowers)
-    return ability_usage_lina.AbilityUsageThink(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCreep, nearbyAlliedCreep, nearbyEnemyTowers, nearbyAlliedTowers)
+function linaBot:ConsiderAbilityUse()
+    return ability.AbilityUsageThink(GetBot())
 end
 
 function linaBot:GetNukeDamage(bot, target)
-    return ability_usage_lina.nukeDamage( bot, target )
+    return ability.nukeDamage( bot, target )
 end
 
 function linaBot:QueueNuke(bot, target, actionQueue, engageDist)
-    return ability_usage_lina.queueNuke( bot, target, actionQueue, engageDist )
+    return ability.queueNuke( bot, target, actionQueue, engageDist )
 end
 
 function Think()
     local bot = GetBot()
     
     linaBot:Think(bot)
-    
-    -- if we are initialized, do the rest
-    if linaBot.Init then        
-        gHeroVar.ExecuteHeroActionQueue(bot)
-    end
 end

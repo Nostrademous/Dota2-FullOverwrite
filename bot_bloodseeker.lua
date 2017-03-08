@@ -50,10 +50,10 @@ function botBS:new(o)
     return o
 end
 
-bloodseekerBot = botBS:new{abilityPriority = AbilityPriority}
+local bloodseekerBot = botBS:new{abilityPriority = AbilityPriority}
 
 function bloodseekerBot:ConsiderAbilityUse()
-    ability.AbilityUsageThink(GetBot())
+    return ability.AbilityUsageThink(GetBot())
 end
 
 function bloodseekerBot:GetNukeDamage(bot, target)

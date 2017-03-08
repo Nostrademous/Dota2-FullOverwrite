@@ -3,7 +3,6 @@
 --- GITHUB REPO: https://github.com/Nostrademous/Dota2-FullOverwrite
 -------------------------------------------------------------------------------
 ---[[
-require( GetScriptDirectory().."/constants" )
 
 local utils = require( GetScriptDirectory().."/utility" )
 local dt = require( GetScriptDirectory().."/decision" )
@@ -74,12 +73,8 @@ function Think()
     local bot = GetBot()
 
     invBot:Think(bot)
-
-    -- if we are initialized, do the rest
-    --if invBot.Init then
-    --    gHeroVar.ExecuteHeroActionQueue(bot)
-    --end
 end
+
 ---]]
 
 --[[

@@ -4,13 +4,20 @@
 --- GITHUB REPO: https://github.com/Nostrademous/Dota2-FullOverwrite
 -------------------------------------------------------------------------------
 
-require( GetScriptDirectory().."/constants" )
-require( GetScriptDirectory().."/item_purchase_shredder" )
-require( GetScriptDirectory().."/ability_usage_shredder" )
-
 local utils = require( GetScriptDirectory().."/utility" )
-local dt = require( GetScriptDirectory().."/decision_tree" )
+local dt = require( GetScriptDirectory().."/decision" )
 local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
+local ability = require( GetScriptDirectory().."/abilityUse/abilityUse_shredder" )
+
+function setHeroVar(var, value)
+    local bot = GetBot()
+    gHeroVar.SetVar(bot:GetPlayerID(), var, value)
+end
+
+function getHeroVar(var)
+    local bot = GetBot()
+    return gHeroVar.GetVar(bot:GetPlayerID(), var)
+end
 
 local SKILL_Q   = "shredder_whirling_death"
 local SKILL_W   = "shredder_timber_chain"
@@ -31,42 +38,33 @@ local TimberAbilityPriority = {
     SKILL_R,    SKILL_E,    SKILL_E,    SKILL_W,    ABILITY2,
     SKILL_W,    SKILL_R,    SKILL_Q,    SKILL_Q,    ABILITY3,
     SKILL_Q,    SKILL_R,    ABILITY5,   ABIILTY8
-};
+}
 
-local timberModeStack = { [1] = {constants.MODE_NONE, BOT_ACTION_DESIRE_NONE} }
+local botTimber = dt:new()
 
-TimberBot = dt:new()
-
-function TimberBot:new(o)
+function botTimber:new(o)
     o = o or dt:new(o)
     setmetatable(o, self)
     self.__index = self
     return o
 end
 
-timberBot = TimberBot:new{modeStack = timberModeStack, abilityPriority = TimberAbilityPriority}
+local timberBot = botTimber:new{abilityPriority = TimberAbilityPriority}
 
-timberBot.Init = false
+function timberBot:ConsiderAbilityUse()
+    return ability.AbilityUsageThink(GetBot())
+end
 
-function timberBot:ConsiderAbilityUse(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCreep, nearbyAlliedCreep, nearbyEnemyTowers, nearbyAlliedTowers)
-    return ability_usage_shredder.AbilityUsageThink(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCreep, nearbyAlliedCreep, nearbyEnemyTowers, nearbyAlliedTowers)
+function timberBot:GetNukeDamage(bot, target)
+    return ability.nukeDamage( bot, target )
+end
+
+function timberBot:QueueNuke(bot, target, actionQueue, engageDist)
+    return ability.queueNuke( bot, target, actionQueue, engageDist )
 end
 
 function Think()
     local bot = GetBot()
 
     timberBot:Think(bot)
-    
-    -- if we are initialized, do the rest
-    if timberBot.Init then
-        gHeroVar.ExecuteHeroActionQueue(bot)
-    end
-end
-
-function timberBot:GetNukeDamage(bot, target)
-    return ability_usage_shredder.nukeDamage( bot, target )
-end
-
-function timberBot:QueueNuke(bot, target, actionQueue, engageDist)
-    return ability_usage_shredder.queueNuke( bot, target, actionQueue, engageDist )
 end

@@ -3,18 +3,25 @@
 --- GITHUB REPO: https://github.com/Nostrademous/Dota2-FullOverwrite
 -------------------------------------------------------------------------------
 
-require( GetScriptDirectory().."/constants" )
-require( GetScriptDirectory().."/item_purchase_enigma" )
-require ( GetScriptDirectory().."/ability_usage_enigma" )
-
 local utils = require( GetScriptDirectory().."/utility" )
-local dt = require( GetScriptDirectory().."/decision_tree" )
+local dt = require( GetScriptDirectory().."/decision" )
 local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
+local ability = require( GetScriptDirectory().."/abilityUse/abilityUse_enigma" )
 
-local ENIGMA_SKILL_Q = "enigma_malefice";
-local ENIGMA_SKILL_W = "enigma_demonic_conversion";
-local ENIGMA_SKILL_E = "enigma_midnight_pulse";
-local ENIGMA_SKILL_R = "enigma_black_hole";
+function setHeroVar(var, value)
+    local bot = GetBot()
+    gHeroVar.SetVar(bot:GetPlayerID(), var, value)
+end
+
+function getHeroVar(var)
+    local bot = GetBot()
+    return gHeroVar.GetVar(bot:GetPlayerID(), var)
+end
+
+local ENIGMA_SKILL_Q = "enigma_malefice"
+local ENIGMA_SKILL_W = "enigma_demonic_conversion"
+local ENIGMA_SKILL_E = "enigma_midnight_pulse"
+local ENIGMA_SKILL_R = "enigma_black_hole"
 
 local ENIGMA_ABILITY1 = "special_bonus_movement_speed_20"
 local ENIGMA_ABILITY2 = "special_bonus_magic_resistance_12"
@@ -30,43 +37,33 @@ local EnigmaAbilityPriority = {
     ENIGMA_SKILL_R,    ENIGMA_SKILL_W,    ENIGMA_SKILL_Q,    ENIGMA_SKILL_E,    ENIGMA_ABILITY1,
     ENIGMA_SKILL_Q,    ENIGMA_SKILL_R,    ENIGMA_SKILL_E,    ENIGMA_SKILL_Q,    ENIGMA_ABILITY3,
     ENIGMA_SKILL_E,    ENIGMA_SKILL_R,    ENIGMA_ABILITY6,   ENIGMA_ABILITY7
-};
+}
 
-local enigmaActionQueue = { [1] = {constants.MODE_NONE, BOT_ACTION_DESIRE_NONE} }
+local botEnigma = dt:new()
 
-enigmaBot = dt:new()
-
-function enigmaBot:new(o)
+function botEnigma:new(o)
     o = o or dt:new(o)
     setmetatable(o, self)
     self.__index = self
     return o
 end
 
-enigmaBot = enigmaBot:new{actionQueue = enigmaActionQueue, abilityPriority = EnigmaAbilityPriority}
---enigmaBot:printInfo();
+local enigmaBot = botEnigma:new{abilityPriority = EnigmaAbilityPriority}
 
-enigmaBot.Init = false;
+function enigmaBot:ConsiderAbilityUse()
+    return ability.AbilityUsageThink(GetBot())
+end
 
-function enigmaBot:ConsiderAbilityUse(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCreep, nearbyAlliedCreep, nearbyEnemyTowers, nearbyAlliedTowers)
-    ability_usage_enigma.AbilityUsageThink(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCreep, nearbyAlliedCreep, nearbyEnemyTowers, nearbyAlliedTowers)
+function enigmaBot:GetNukeDamage(bot, target)
+    return ability.nukeDamage( bot, target )
+end
+
+function enigmaBot:QueueNuke(bot, target, actionQueue, engageDist)
+    return ability.queueNuke( bot, target, actionQueue, engageDist )
 end
 
 function Think()
     local bot = GetBot()
 
     enigmaBot:Think(bot)
-    
-    -- if we are initialized, do the rest
-    if enigmaBot.Init then
-        gHeroVar.ExecuteHeroActionQueue(bot)
-    end
-end
-
-function enigmaBot:GetNukeDamage(bot, target)
-    return ability_usage_enigma.nukeDamage( bot, target )
-end
-
-function enigmaBot:QueueNuke(bot, target, actionQueue, engageDist)
-    return ability_usage_enigma.queueNuke( bot, target, actionQueue, engageDist )
 end

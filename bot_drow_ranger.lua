@@ -39,7 +39,7 @@ local DrowRangerAbilityPriority = {
     SKILL_R,    SKILL_Q,    SKILL_E,    SKILL_E,    ABILITY1,
     SKILL_W,    SKILL_R,    SKILL_E,    SKILL_W,    ABILITY3,
     SKILL_W,    SKILL_R,    ABILITY5,   ABILITY8
-};
+}
 
 local botDrow = dt:new()
 
@@ -58,6 +58,14 @@ end
 
 function drowRangerBot:ConsiderAbilityUse()
     return ability.AbilityUsageThink(GetBot())
+end
+
+function drowRangerBot:GetNukeDamage(bot, target)
+    return ability.nukeDamage( bot, target )
+end
+
+function drowRangerBot:QueueNuke(bot, target, actionQueue, engageDist)
+    return ability.queueNuke( bot, target, actionQueue, engageDist )
 end
 
 function Think()
@@ -105,12 +113,4 @@ function drowRangerBot:DoCleanCamp(bot, neutrals, difficulty)
         gHeroVar.HeroAttackUnit(bot, neutral, true)
         break
     end
-end
-
-function drowRangerBot:GetNukeDamage(bot, target)
-    return ability.nukeDamage( bot, target )
-end
-
-function drowRangerBot:QueueNuke(bot, target, actionQueue, engageDist)
-    return ability.queueNuke( bot, target, actionQueue, engageDist )
 end

@@ -3,13 +3,10 @@
 --- GITHUB REPO: https://github.com/Nostrademous/Dota2-FullOverwrite
 -------------------------------------------------------------------------------
 
-require( GetScriptDirectory().."/constants" )
-require( GetScriptDirectory().."/item_purchase_venomancer" )
-require( GetScriptDirectory().."/ability_usage_venomancer" )
-
 local utils = require( GetScriptDirectory().."/utility" )
-local dt = require( GetScriptDirectory().."/decision_tree" )
+local dt = require( GetScriptDirectory().."/decision" )
 local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
+local ability = require( GetScriptDirectory().."/abilityUse/abilityUse_venomancer" )
 
 function setHeroVar(var, value)
     local bot = GetBot()
@@ -42,9 +39,7 @@ local AbilityPriority = {
     SKILL_Q,    SKILL_R,    ABILITY5,   ABILITY8
 }
 
-local vmModeStack = { [1] = {constants.MODE_NONE, BOT_ACTION_DESIRE_NONE} }
-
-botVM = dt:new()
+local botVM = dt:new()
 
 function botVM:new(o)
     o = o or dt:new(o)
@@ -53,29 +48,22 @@ function botVM:new(o)
     return o
 end
 
-vmBot = botVM:new{modeStack = vmModeStack, abilityPriority = AbilityPriority}
+local vmBot = botVM:new{abilityPriority = AbilityPriority}
 
-vmBot.Init = false
+function vmBot:ConsiderAbilityUse()
+    ability.AbilityUsageThink(GetBot())
+end
 
-function vmBot:ConsiderAbilityUse(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCreep, nearbyAlliedCreep, nearbyEnemyTowers, nearbyAlliedTowers)
-    ability_usage_venomancer.AbilityUsageThink(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCreep, nearbyAlliedCreep, nearbyEnemyTowers, nearbyAlliedTowers)
+function vmBot:GetNukeDamage(bot, target)
+    return ability.nukeDamage( bot, target )
+end
+
+function vmBot:QueueNuke(bot, target, actionQueue, engageDist)
+    return ability.queueNuke( bot, target, actionQueue, engageDist )
 end
 
 function Think()
     local bot = GetBot()
 
     vmBot:Think(bot)
-    
-    -- if we are initialized, do the rest
-    if vmBot.Init then
-        gHeroVar.ExecuteHeroActionQueue(bot)
-    end
-end
-
-function vmBot:GetNukeDamage(bot, target)
-    return ability_usage_venomancer.nukeDamage( bot, target )
-end
-
-function vmBot:QueueNuke(bot, target, actionQueue, engageDist)
-    return ability_usage_venomancer.queueNuke( bot, target, actionQueue, engageDist )
 end

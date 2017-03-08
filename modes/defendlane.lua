@@ -10,6 +10,7 @@ local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
 local utils = require( GetScriptDirectory().."/utility" )
 require( GetScriptDirectory().."/item_usage" )
 
+X.me = nil
 
 local function setHeroVar(var, value)
     gHeroVar.SetVar(GetBot():GetPlayerID(), var, value)
@@ -30,6 +31,14 @@ end
 function X:OnEnd()
 end
 
+function X:Desire(bot)
+    local defInfo = getHeroVar("DoDefendLane")
+    if #defInfo > 0 then
+        return BOT_MODE_DESIRE_VERYHIGH
+    end
+    return BOT_MODE_DESIRE_NONE
+end
+
 function X:DefendTower(bot, hBuilding)
     gHeroVar.HeroMoveToLocation(bot, hBuilding:GetLocation()) -- hug the tower
 end
@@ -39,11 +48,11 @@ function X:Think(bot)
 
     X.me = gHeroVar.GetVar(bot:GetPlayerID(), "Self")
 
-    local data = X.me:getHeroVar("DoDefendLane") -- TEAM has made the decision.
+    local defInfo = X.me:getHeroVar("DoDefendLane") -- TEAM has made the decision.
     -- TODO: unpack function??
-    local lane = data[0]
-    local building = data[1]
-    local numEnemies = data[2]
+    local lane = defInfo[0]
+    local building = defInfo[1]
+    local numEnemies = defInfo[2]
 
     local hBuilding = buildings_status.GetHandle(GetTeam(), building)
 

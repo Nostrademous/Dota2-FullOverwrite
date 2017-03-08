@@ -81,6 +81,27 @@ function X.TeamThink()
             playerAssignment[ally:GetPlayerID()] = {}
         end
     end
+    
+    -- Record all global information used by individual heroes
+    -- Example: AOE zones 
+    local badAOEZones = {}
+    -- NOTE: an aoe will be table with { "location", "ability", "caster", "radius", "playerid" }.  
+    for _, aoe in pairs(GetAvoidanceZones()) do
+        if aoe.caster:GetTeam() ~= GetTeam() or aoe.ability:GetName() == "faceless_void_chronosphere" then
+            table.insert(badAOEZones, aoe)
+        end
+    end
+    gHeroVar.SetGlobalVar("AOEZones", badAOEZones)
+    
+    -- Example: Incoming Projectiles
+    local badProjectiles = {}
+    -- NOTE: a projectile will be a table with { "location", "ability", "velocity", "radius", "playerid" }
+    for _, projectile in pairs(GetLinearProjectiles()) do
+        if projectile.playerid ~= nil or GetTeamForPlayer(projectile.playerid) == utils.GetOtherTeam() then
+            table.insert(badProjectiles, projectile)
+        end
+    end
+    gHeroVar.SetGlobalVar("BadProjectiles", badProjectiles)
 
     -- This is at top as all item purchases are Immediate actions,
     -- and therefore won't affect any other decision making.

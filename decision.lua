@@ -86,6 +86,8 @@ function X:DoInit(bot)
     if #allyList ~= 5 then return end
 
     gHeroVar.SetGlobalVar("LastCourierBurst", -1000.0)
+    gHeroVar.SetGlobalVar("AOEZones", {})
+    gHeroVar.SetGlobalVar("BadProjectiles", {})
 
     self.Name = utils.GetHeroName(bot)
     self.pID = bot:GetPlayerID() -- do this to reduce calls to bot:GetPlayerID() in the future

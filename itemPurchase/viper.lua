@@ -96,6 +96,13 @@ function thisBot:GetPurchaseOrder()
     return generic:GetPurchaseOrder()
 end
 
+function thisBot:UpdateTeamBuyList(sItem)
+    generic:UpdateTeamBuyList( sItem )
+end
+function thisBot:UpdateTeamBuyList(sItem)
+    generic:UpdateTeamBuyList( sItem )
+end
+
 function thisBot:ItemPurchaseThink(bot)
     generic:Think(bot)
 end

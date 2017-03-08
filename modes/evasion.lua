@@ -7,8 +7,10 @@ BotsInit = require( "game/botsinit" )
 local X = BotsInit.CreateGeneric()
 
 ----------
+require( GetScriptDirectory().."/modifiers" )
+require( GetScriptDirectory().."/item_usage" )
+
 local utils     = require( GetScriptDirectory().."/utility" )
-local mods      = require( GetScriptDirectory().."/modifiers" )
 local gHeroVar  = require( GetScriptDirectory().."/global_hero_data" )
 
 local function setHeroVar(var, value)
@@ -30,15 +32,42 @@ function X:OnEnd()
 end
 
 function X:Think(bot)
-    if mods.IsRuptured(bot) then
+    if modifiers.IsRuptured(bot) then
         local tp = utils.IsItemAvailable("item_tpscroll")
         if tp then
             bot:Action_UseAbilityOnLocation( tp, utils.Fountain( GetTeam() ) )
+            return
+        else
+            utils.myPrint("FIXME: we are ruptured and don't have TP... need to implement")
+            
+            -- consider using abilities
+            local bAbilityQueued = getHeroVar("AbilityUsageClass"):AbilityUsageThink(bot)
+            if bAbilityQueued then return end
+
+            -- consider using items
+            if item_usage.UseItems() then return end
+        end
+    end
+    
+    local aoes = gHeroVar.GetGlobalVar("AOEZones")
+    if #aoes > 0 then
+        for _, aoe in pairs(aoes) do
+            local distFromCenter = GetUnitToLocationDistance(bot, aoe.location)
+            if distFromCenter < aoe.radius then
+                local escapeDist = aoe.radius - distFromCenter
+                local escapeLoc = utils.VectorAway(bot:GetLocation(), aoe.location, escapeDist + 100)
+                gHeroVar.HeroMoveToLocation(bot, escapeLoc)
+                return
+            end
         end
     end
 end
 
 function X:Desire(bot)
+    if modifiers.IsRuptured(bot) then
+        return BOT_MODE_DESIRE_ABSOLUTE
+    end
+    
     -- NOTE: a projectile will be a table with { "location", "ability", "velocity", "radius", "playerid" }
     local projectiles = gHeroVar.GetGlobalVar("BadProjectiles")
     if #projectiles > 0 then

@@ -87,7 +87,7 @@ function X.TeamThink()
     local badAOEZones = {}
     -- NOTE: an aoe will be table with { "location", "ability", "caster", "radius", "playerid" }.  
     for _, aoe in pairs(GetAvoidanceZones()) do
-        if aoe.caster:GetTeam() ~= GetTeam() or aoe.ability:GetName() == "faceless_void_chronosphere" then
+        if aoe.caster:GetTeam() ~= GetTeam() or aoe.ability == "faceless_void_chronosphere" then
             table.insert(badAOEZones, aoe)
         end
     end

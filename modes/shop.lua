@@ -135,6 +135,8 @@ function X:OnEnd()
 end
 
 function X:Think(bot)
+    if utils.IsBusy(bot) then return end
+
     local bDone = false
     if  getHeroVar("ShopType") == constants.SHOP_TYPE_SIDE then
         bDone = ThinkSideShop( getHeroVar("NextShopItem") )

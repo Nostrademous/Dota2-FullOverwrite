@@ -81,7 +81,8 @@ function X:Desire(bot)
         end
     end
     
-    if getHeroVar("Target") or getHeroVar("Self"):getCurrentMode():GetName() == "fight" then
+    local target = getHeroVar("Target")
+    if utils.ValidTarget(target) and getHeroVar("Self"):getCurrentMode():GetName() == "fight" then
         return getHeroVar("Self"):getCurrentModeValue()
     end
 

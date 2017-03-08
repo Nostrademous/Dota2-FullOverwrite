@@ -42,7 +42,7 @@ function X:Desire(bot)
     local defReason = getHeroVar("RetreatReason")
     
     if defReason == constants.RETREAT_CREEP or defReason == constants.RETREAT_FOUNTAIN then
-        local neutrals = bot:GetNearbyCreeps(500, true)
+        local neutrals = gHeroVar.GetNearbyEnemyCreep(bot, 500)
         if #neutrals == 0 then
             return retreatMode:Desire(bot)
         end

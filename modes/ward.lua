@@ -34,6 +34,8 @@ function X:OnEnd()
 end
 
 function X:Think(bot)
+    if utils.IsBusy(bot) then return end
+    
     local wardType = getHeroVar("WardType") or "item_ward_observer"
     local dest = getHeroVar("WardLocation")
     if dest ~= nil then
@@ -55,6 +57,11 @@ function X:Desire(bot)
     
     -- we need to lane first before we know where to ward properly
     if getHeroVar("CurLane") == nil or getHeroVar("CurLane") == 0 then
+        return BOT_MODE_DESIRE_NONE
+    end
+    
+    local nearbyEnemies = gHeroVar.GetNearbyEnemies(bot, bot:GetCurrentVisionRange())
+    if #nearbyEnemies > 0 then
         return BOT_MODE_DESIRE_NONE
     end
     

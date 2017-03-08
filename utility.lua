@@ -605,8 +605,16 @@ end
 
 function U.IsBusy(bot)
     if bot:IsChanneling() then return true end
-    if bot:IsCastingAbility() then return true end
-    if bot:NumQueuedActions() > 0 then return true end
+    if bot:IsCastingAbility() then
+        local target = getHeroVar("Target")        
+        if U.ValidTarget(target) and GetUnitToUnitDistance(bot, target) > 2000 then return false end
+        return true
+    end
+    if bot:NumQueuedActions() > 0 then
+        local target = getHeroVar("Target")        
+        if U.ValidTarget(target) and GetUnitToUnitDistance(bot, target) > 2000 then return false end
+        return true
+    end
     return false
 end
 

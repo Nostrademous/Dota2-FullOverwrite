@@ -10,8 +10,13 @@ local X = BotsInit.CreateGeneric()
 local utils = require( GetScriptDirectory().."/utility" )
 local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
 
-----------
-X.me = nil
+local function setHeroVar(var, value)
+    gHeroVar.SetVar(GetBot():GetPlayerID(), var, value)
+end
+
+local function getHeroVar(var)
+    return gHeroVar.GetVar(GetBot():GetPlayerID(), var)
+end
 
 local HealthFactor = 1
 local UnitPosFactor = 1
@@ -20,8 +25,7 @@ local HeroCountFactor = 0.3
 local MinRating = 1.0
 
 function FindTarget(bot)
-    X.me = gHeroVar.GetVar(bot:GetPlayerID(), "Self")
-    if not X.me:IsReadyToGank(bot) then
+    if not getHeroVar("Self"):IsReadyToGank(bot) then
         return false
     end
 
@@ -72,7 +76,7 @@ function FindTarget(bot)
         end
     end
     if (bot:GetEstimatedDamageToTarget( true, target, 5.0, DAMAGE_TYPE_ALL ) * (1 + 0.5*heroAmpFactor)) > target:GetHealth() then
-        X.me:setHeroVar("RoamTarget", target)
+        setHeroVar("RoamTarget", target)
         --utils.myPrint(" stalking "..utils.GetHeroName(target))
         return true
     end
@@ -84,32 +88,28 @@ function X:GetName()
 end
 
 function X:OnStart(myBot)
-    X.me = gHeroVar.GetVar(GetBot():GetPlayerID(), "Self")
 end
 
 function X:OnEnd()
-    X.me = gHeroVar.GetVar(GetBot():GetPlayerID(), "Self")
-    X.me:setHeroVar("RoamTarget", nil)
+    setHeroVar("RoamTarget", nil)
 end
 
-function X:Think(bot)
-    X.me = gHeroVar.GetVar(bot:GetPlayerID(), "Self")
-    
+function X:Think(bot)    
     if utils.IsBusy(bot) then return end
     
-    local target = X.me:getHeroVar("RoamTarget")
+    local target = getHeroVar("RoamTarget")
     
     if utils.ValidTarget(target) and target:IsAlive() then
         local dist = GetUnitToUnitDistance(bot, target)
         if dist < 500 then
             bot:Action_AttackUnit(target, true)
-            X.me:setHeroVar("Target", target)
-            X.me:setHeroVar("RoamTarget", nil)
+            setHeroVar("Target", target)
+            setHeroVar("RoamTarget", nil)
             return
         end
         bot:Action_MoveToUnit(target)
     else
-        X.me:setHeroVar("RoamTarget", nil)
+        setHeroVar("RoamTarget", nil)
     end
 end
 

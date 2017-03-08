@@ -1,5 +1,5 @@
 -------------------------------------------------------------------------------
---- AUTHOR: Nostrademous, dralois, eteran
+--- AUTHOR: Nostrademous, dralois
 --- GITHUB REPO: https://github.com/Nostrademous/Dota2-FullOverwrite
 -------------------------------------------------------------------------------
 
@@ -10,83 +10,82 @@ local generic = dofile( GetScriptDirectory().."/itemPurchase/generic" )
 
 generic.ItemsToBuyAsHardCarry = {
 	StartingItems = {
-		"item_stout_shield",
-		"item_flask",
-		"item_faerie_fire"
+		"item_null_talisman",
+		"item_faerie_fire",
+		"item_branches",
+		"item_bottle"
 	},
 	UtilityItems = {
 		"item_flask"
 	},
 	CoreItems = {
-		"item_power_treads_agi",
-		"item_ring_of_aquila",
-		"item_mekansm",
-		"item_dragon_lance"
+		"item_phase_boots",
+		"item_cyclone",
+		"item_blink",
+		"item_aether_lens",
+		"item_ultimate_scepter"
 	},
 	ExtensionItems = {
-		{
-			"item_ultimate_scepter",
-			"item_assault"
+		OffensiveItems = {
 		},
-		{
-			"item_heart"
+		DefensiveItems = {
 		}
 	}
 }
 generic.ItemsToBuyAsMid = {
 	StartingItems = {
-		"item_stout_shield",
-		"item_flask",
-		"item_faerie_fire"
+		"item_null_talisman",
+		"item_faerie_fire",
+		"item_branches",
+		"item_bottle"
 	},
 	UtilityItems = {
 		"item_flask"
 	},
 	CoreItems = {
-		"item_power_treads_agi",
-		"item_ring_of_aquila",
-		"item_mekansm",
-		"item_dragon_lance"
+		"item_phase_boots",
+		"item_cyclone",
+		"item_blink",
+		"item_aether_lens",
+		"item_ultimate_scepter"
 	},
 	ExtensionItems = {
-		{
-			"item_ultimate_scepter",
-			"item_assault"
+		OffensiveItems = {
 		},
-		{
-			"item_heart"
+		DefensiveItems = {
 		}
 	}
 }
-generic.ItemsToBuyAsOfflane = {
+
+generic.ItemsToBuyAsSupport = {
 	StartingItems = {
-		"item_ward_observer",
-		"item_stout_shield",
-		"item_flask",
-		"item_faerie_fire"
+		"item_tango",
+		"item_tango",
+		"item_clarity",
+		"item_clarity",
+		"item_branches",
+		"item_branches"
 	},
 	UtilityItems = {
 		"item_flask"
 	},
 	CoreItems = {
-		"item_power_treads_agi",
-		"item_ring_of_aquila",
-		"item_mekansm",
-		"item_dragon_lance"
+		"item_magic_wand",
+		"item_arcane_boots",
+		"item_cyclone",
+		"item_force_staff",
+		"item_ultimate_scepter",
+		"item_sheepstick"
 	},
 	ExtensionItems = {
-		{
-			"item_ultimate_scepter",
-			"item_butterfly",
-			"item_assault"
+		OffensiveItems = {
 		},
-		{
-			"item_pipe",
-			"item_heart",
-			"item_manta"
+		DefensiveItems = {
 		}
 	}
 }
+
+----------------------------------------------------------------------------------------------------
 
 function thisBot:Init()
     generic:InitTable()
@@ -99,12 +98,11 @@ end
 function thisBot:UpdateTeamBuyList(sItem)
     generic:UpdateTeamBuyList( sItem )
 end
-function thisBot:UpdateTeamBuyList(sItem)
-    generic:UpdateTeamBuyList( sItem )
-end
 
 function thisBot:ItemPurchaseThink(bot)
     generic:Think(bot)
 end
 
 return thisBot
+
+----------------------------------------------------------------------------------------------------

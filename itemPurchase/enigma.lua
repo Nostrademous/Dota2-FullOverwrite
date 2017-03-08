@@ -1,5 +1,5 @@
 -------------------------------------------------------------------------------
---- AUTHOR: Nostrademous
+--- AUTHOR: Keithen
 --- GITHUB REPO: https://github.com/Nostrademous/Dota2-FullOverwrite
 -------------------------------------------------------------------------------
 
@@ -8,38 +8,31 @@ local thisBot = BotsInit.CreateGeneric()
 
 local generic = dofile( GetScriptDirectory().."/itemPurchase/generic" )
 
-generic.ItemsToBuyAsSupport = {
-	StartingItems = {
-        "item_courier",
-		"item_tango",
-		"item_clarity",
-		"item_clarity",
-		"item_branches",
-		"item_branches"
+generic.ItemsToBuyAsJungler = {
+    StartingItems = {
+        "item_clarity",
+        "item_clarity",
+        "item_sobi_mask",
+        "item_ring_of_regen",
+        "item_recipe_soul_ring"
 	},
 	UtilityItems = {
-		"item_ward_observer",
-        "item_ward_sentry",
-        "item_dust"
 	},
 	CoreItems = {
-		"item_wind_lace",
-		"item_tranquil_boots",
-		"item_magic_wand",
-        "item_glimmer_cape",
-		"item_force_staff",
-		"item_ultimate_scepter",
-		"item_blink"
+        "item_arcane_boots",
+        "item_blink"
 	},
 	ExtensionItems = {
 		OffensiveItems = {
-            "item_black_king_bar"
+			"item_refresher"
 		},
 		DefensiveItems = {
-            "item_lotus_orb"
+			"item_black_king_bar"
 		}
 	}
 }
+
+----------------------------------------------------------------------------------------------------
 
 function thisBot:Init()
     generic:InitTable()
@@ -58,3 +51,5 @@ function thisBot:ItemPurchaseThink(bot)
 end
 
 return thisBot
+
+----------------------------------------------------------------------------------------------------

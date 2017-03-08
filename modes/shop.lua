@@ -13,13 +13,18 @@ require( GetScriptDirectory().."/constants" )
 local utils = require( GetScriptDirectory().."/utility" )
 local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
 
-----------
-X.me    = nil
+local function setHeroVar(var, value)
+    gHeroVar.SetVar(GetBot():GetPlayerID(), var, value)
+end
+
+local function getHeroVar(var)
+    return gHeroVar.GetVar(GetBot():GetPlayerID(), var)
+end
 
 function GetSideShop()
     local bot = GetBot()
 
-    local Enemies = bot:GetNearbyHeroes(1300, true, BOT_MODE_NONE)
+    local Enemies = getHeroVar("NearbyEnemies")
 
     if  bot:DistanceFromSideShop() > 2400 or (#Enemies > 1 and bot:DistanceFromSideShop() > 1500) then
         return nil
@@ -59,6 +64,7 @@ end
 
 function ThinkSecretShop( NextItem )
     local bot = GetBot()
+    
     if  NextItem == nil then
         return false
     end
@@ -73,9 +79,9 @@ function ThinkSecretShop( NextItem )
     if GetUnitToLocationDistance(bot, secLoc) < constants.SHOP_USE_DISTANCE then
         if bot:GetGold() >= GetItemCost( NextItem ) then
             bot:ActionImmediate_PurchaseItem( NextItem )
-            table.remove(X.me:getHeroVar("ItemPurchaseClass"):GetPurchaseOrder() , 1)
+            table.remove(getHeroVar("ItemPurchaseClass"):GetPurchaseOrder() , 1)
             bot:SetNextItemPurchaseValue( 0 )
-            X.me:getHeroVar("ItemPurchaseClass"):UpdateTeamBuyList(NextItem)
+            getHeroVar("ItemPurchaseClass"):UpdateTeamBuyList(NextItem)
             return true
         else
             return false
@@ -88,6 +94,7 @@ end
 
 function ThinkSideShop( NextItem )
     local bot = GetBot()
+
     if  NextItem == nil then
         return false
     end
@@ -102,9 +109,9 @@ function ThinkSideShop( NextItem )
     if GetUnitToLocationDistance(bot, sideLoc) < constants.SHOP_USE_DISTANCE then
         if bot:GetGold() >= GetItemCost( NextItem ) then
             bot:ActionImmediate_PurchaseItem( NextItem )
-            table.remove(X.me:getHeroVar("ItemPurchaseClass"):GetPurchaseOrder() , 1)
+            table.remove(getHeroVar("ItemPurchaseClass"):GetPurchaseOrder() , 1)
             bot:SetNextItemPurchaseValue( 0 )
-            X.me:getHeroVar("ItemPurchaseClass"):UpdateTeamBuyList(NextItem)
+            getHeroVar("ItemPurchaseClass"):UpdateTeamBuyList(NextItem)
             return true
         else
             return false
@@ -120,38 +127,33 @@ function X:GetName()
 end
 
 function X:OnStart(myBot)
-    X.me = gHeroVar.GetVar(GetBot():GetPlayerID(), "Self")
 end
 
 function X:OnEnd()
-    X.me = gHeroVar.GetVar(GetBot():GetPlayerID(), "Self")
-    X.me:setHeroVar("ShopType", constants.SHOP_TYPE_NONE)
-    X.me:setHeroVar("NextShopItem", nil)
+    setHeroVar("ShopType", constants.SHOP_TYPE_NONE)
+    setHeroVar("NextShopItem", nil)
 end
 
 function X:Think(bot)
-    X.me = gHeroVar.GetVar(bot:GetPlayerID(), "Self")
     local bDone = false
-    if  X.me:getHeroVar("ShopType") == constants.SHOP_TYPE_SIDE then
-        bDone = ThinkSideShop( X.me:getHeroVar("NextShopItem") )
-    elseif X.me:getHeroVar("ShopType") == constants.SHOP_TYPE_SECRET then
-        bDone = ThinkSecretShop( X.me:getHeroVar("NextShopItem") )
+    if  getHeroVar("ShopType") == constants.SHOP_TYPE_SIDE then
+        bDone = ThinkSideShop( getHeroVar("NextShopItem") )
+    elseif getHeroVar("ShopType") == constants.SHOP_TYPE_SECRET then
+        bDone = ThinkSecretShop( getHeroVar("NextShopItem") )
     else
         utils.myPrint("shop.lua :: Think() - FIXME")
     end
     
     if bDone then
-        X.me:ClearMode()
+        getHeroVar("Self"):ClearMode()
     end
 end
 
 function X:Desire(bot)
     if bot:IsIllusion() then return BOT_MODE_DESIRE_NONE end
     
-    X.me = gHeroVar.GetVar(GetBot():GetPlayerID(), "Self")
-    
-    local sNextItem = X.me:getHeroVar("ItemPurchaseClass"):GetPurchaseOrder()[1]
-    X.me:setHeroVar("NextShopItem", sNextItem)
+    local sNextItem = getHeroVar("ItemPurchaseClass"):GetPurchaseOrder()[1]
+    setHeroVar("NextShopItem", sNextItem)
 
     if bot:GetGold() < GetItemCost( sNextItem ) then
         return BOT_MODE_DESIRE_NONE
@@ -178,16 +180,17 @@ function X:Desire(bot)
     end
     
     if bInSide then
-        X.me:setHeroVar("ShopType", constants.SHOP_TYPE_SIDE)
+        setHeroVar("ShopType", constants.SHOP_TYPE_SIDE)
         return BOT_MODE_DESIRE_MODERATE
     elseif bInSecret then
-        X.me:setHeroVar("ShopType", constants.SHOP_TYPE_SECRET)
+        setHeroVar("ShopType", constants.SHOP_TYPE_SECRET)
         return BOT_MODE_DESIRE_MODERATE
     end
     
-    if X.me:getCurrentMode():GetName() == "shop" and
+    local me = getHeroVar("Self")
+    if me:getCurrentMode():GetName() == "shop" and
         (bInSide or bInSecret) then
-        return X.me:getCurrentModeValue()
+        return me:getCurrentModeValue()
     end
     
     return BOT_MODE_DESIRE_NONE

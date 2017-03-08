@@ -36,6 +36,51 @@ function X.GetGlobalVar(var)
     return X[var]
 end
 
+function X.GetNearbyEnemies(bot, range)
+    local startList = X[bot:GetPlayerID()].NearbyEnemies
+    local endList = {}
+    for _, val in pairs(startList) do
+        if GetUnitToUnitDistance(bot, val) <= range then
+            table.insert(endList, val)
+        end
+    end
+    return endList
+end
+
+function X.GetNearbyEnemyTowers(bot, range)
+    local startList = X[bot:GetPlayerID()].NearbyEnemyTowers
+    local endList = {}
+    for _, val in pairs(startList) do
+        if GetUnitToUnitDistance(bot, val) <= range then
+            table.insert(endList, val)
+        end
+    end
+    return endList
+end
+
+function X.GetNearbyAlliedTowers(bot, range)
+    local startList = X[bot:GetPlayerID()].NearbyAlliedTowers
+    local endList = {}
+    for _, val in pairs(startList) do
+        if GetUnitToUnitDistance(bot, val) <= range then
+            table.insert(endList, val)
+        end
+    end
+    return endList
+end
+
+function X.GetNearbyEnemyCreep(bot, range)
+    local startList = X[bot:GetPlayerID()].NearbyEnemyCreep
+    local endList = {}
+    for _, val in pairs(startList) do
+        if GetUnitToUnitDistance(bot, val) <= range then
+            table.insert(endList, val)
+        end
+    end
+    return endList
+end
+
+-------------------------------------------------------------------------------
 function X.SetHeroActionQueue(pID, aq)
     X[pID].actionQueue = {unpack(aq)}
 end

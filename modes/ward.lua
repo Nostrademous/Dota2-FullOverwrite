@@ -12,36 +12,37 @@ require( GetScriptDirectory().."/constants" )
 local utils = require( GetScriptDirectory().."/utility" )
 local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
 
-----------
-X.me            = nil
+local function setHeroVar(var, value)
+    gHeroVar.SetVar(GetBot():GetPlayerID(), var, value)
+end
+
+local function getHeroVar(var)
+    return gHeroVar.GetVar(GetBot():GetPlayerID(), var)
+end
 
 function X:GetName()
     return "ward"
 end
 
 function X:OnStart(myBot)
-    X.me = gHeroVar.GetVar(GetBot():GetPlayerID(), "Self")
 end
 
 function X:OnEnd()
-    X.me = gHeroVar.GetVar(GetBot():GetPlayerID(), "Self")
-    X.me:setHeroVar("WardType", nil)
-    X.me:setHeroVar("WardLocation", nil)
-    X.me:setHeroVar("WardCheckTimer", GameTime())
+    setHeroVar("WardType", nil)
+    setHeroVar("WardLocation", nil)
+    setHeroVar("WardCheckTimer", GameTime())
 end
 
 function X:Think(bot)
-    X.me = gHeroVar.GetVar(bot:GetPlayerID(), "Self")
-    
-    local wardType = X.me:getHeroVar("WardType") or "item_ward_observer"
-    local dest = X.me:getHeroVar("WardLocation")
+    local wardType = getHeroVar("WardType") or "item_ward_observer"
+    local dest = getHeroVar("WardLocation")
     if dest ~= nil then
         local dist = GetUnitToLocationDistance(bot, dest)
         if dist <= constants.WARD_CAST_DISTANCE then
             local ward = item_usage.HaveWard(wardType)
             if ward then
                 gHeroVar.HeroPushUseAbilityOnLocation(bot, ward, dest, constants.WARD_CAST_DISTANCE)
-                X.me:ClearMode()
+                getHeroVar("Self"):ClearMode()
             end
         else
             bot:Action_MoveToLocation(dest)
@@ -52,14 +53,12 @@ end
 function X:Desire(bot)
     if bot:IsIllusion() then return BOT_MODE_DESIRE_NONE end
     
-    X.me = gHeroVar.GetVar(bot:GetPlayerID(), "Self")
-    
     -- we need to lane first before we know where to ward properly
-    if X.me:getHeroVar("CurLane") == nil or X.me:getHeroVar("CurLane") == 0 then
+    if getHeroVar("CurLane") == nil or getHeroVar("CurLane") == 0 then
         return BOT_MODE_DESIRE_NONE
     end
     
-    local WardCheckTimer = X.me:getHeroVar("WardCheckTimer")
+    local WardCheckTimer = getHeroVar("WardCheckTimer")
     local bCheck = true
     local newTime = GameTime()
     
@@ -68,12 +67,12 @@ function X:Desire(bot)
     end
     
     if bCheck then
-        X.me:setHeroVar("WardCheckTimer", newTime)
+        setHeroVar("WardCheckTimer", newTime)
         local ward = item_usage.HaveWard("item_ward_observer")
         if ward then
             local alliedMapWards = GetUnitList(UNIT_LIST_ALLIED_WARDS)
             if #alliedMapWards < 2 then --FIXME: don't hardcode.. you get more wards then you can use this way
-                local wardLocs = utils.GetWardingSpot(X.me:getHeroVar("CurLane"))
+                local wardLocs = utils.GetWardingSpot(getHeroVar("CurLane"))
 
                 if wardLocs == nil or #wardLocs == 0 then return BOT_MODE_DESIRE_NONE end
 
@@ -93,8 +92,8 @@ function X:Desire(bot)
                 end
 
                 if wardLoc ~= nil and utils.EnemiesNearLocation(bot, wardLoc, 2000) < 2 then
-                    X.me:setHeroVar("WardType", ward:GetName())
-                    X.me:setHeroVar("WardLocation", wardLoc)
+                    setHeroVar("WardType", ward:GetName())
+                    setHeroVar("WardLocation", wardLoc)
                     return BOT_MODE_DESIRE_LOW 
                 end
             end
@@ -103,8 +102,9 @@ function X:Desire(bot)
         return BOT_MODE_DESIRE_NONE
     end
     
-    if X.me:getCurrentMode():GetName() == "ward" then
-        return X.me:getCurrentModeValue()
+    local me = getHeroVar("Self")
+    if me:getCurrentMode():GetName() == "ward" then
+        return me:getCurrentModeValue()
     end
     
     return BOT_MODE_DESIRE_NONE

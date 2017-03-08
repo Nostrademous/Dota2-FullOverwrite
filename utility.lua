@@ -744,13 +744,15 @@ function U.IsInLane()
     setHeroVar("RetreatLane", getHeroVar("CurLane"))
     setHeroVar("RetreatPos", getHeroVar("LanePos"))
 
+    local minDis = 10000
+    
     for i = 1, #U.Lanes, 1 do
-        local this = U.PositionAlongLane(bot, U.Lanes[i])
+        local lAmnt = U.PositionAlongLane(bot, U.Lanes[i])
+        local thisDis = U.GetDistance(GetLocationAlongLane(U.Lanes[i], lAmnt), bot:GetLocation())
 
-        if getHeroVar("IsInLane") then
+        if thisDis < minDis then
             setHeroVar("RetreatLane", U.Lanes[i])
-            setHeroVar("RetreatPos", thisl)
-            break
+            setHeroVar("RetreatPos", lAmnt)
         end
     end
 
@@ -1119,9 +1121,8 @@ end
 function U.HarassEnemy(bot, listEnemies)
     local enemyToHarass = nil
     
-    local listAlliedTowers = bot:GetNearbyTowers(650, false)
+    local listAlliedTowers = gHeroVar.GetNearbyAlliedTowers(bot, 600)
     for _, enemy in pairs(listEnemies) do
-    
         for _, myTower in pairs(listAlliedTowers) do
             local stunAbilities = getHeroVar("HasStun")
             if stunAbilities then
@@ -1142,29 +1143,25 @@ function U.HarassEnemy(bot, listEnemies)
             return true
         end
         
-        local heightDiff = U.GetHeightDiff(bot, enemy)
-        if heightDiff > 0 then
-            enemyToHarass = enemy
-            break
-        end
-        
         if (bot:GetHealth() + bot:GetAttackDamage()) < (enemy:GetHealth() + enemy:GetAttackDamage()) and
+            GetUnitToUnitDistance(bot, enemy) < (bot:GetAttackRange() + bot:GetBoundingRadius()) and 
             #listEnemies == 1 then -- and enemy:GetAttackRange() <= bot:GetAttackRange() then
             enemyToHarass = enemy
+            break
         end
     end
     
     -- if we have an orb effect (won't aggro creep), use it
     if U.UseOrbEffect(bot) then return true end
     
-    -- if we are high-ground and they are low ground, harrass
+    -- if we can harass, do it
     if enemyToHarass then
         gHeroVar.HeroAttackUnit(bot, enemyToHarass, true)
         return true
     end
     
-    local listEnemyCreep = bot:GetNearbyCreeps(1200, true)
-    local listAlliedCreep = bot:GetNearbyCreeps(1200, false)
+    local listEnemyCreep = getHeroVar("NearbyEnemyCreep")
+    local listAlliedCreep = getHeroVar("NearbyAlliedCreep")
     if #listEnemies > 0 and (#listEnemyCreep < (#listAlliedCreep-1) or #listEnemyCreep == 0) and
         GetUnitToUnitDistance(bot, listEnemies[1]) < (bot:GetAttackRange()+bot:GetBoundingRadius()) then
         gHeroVar.HeroAttackUnit(bot, listEnemies[1], true)
@@ -1195,7 +1192,7 @@ end
 -- takes a "RANGE", returns hero handle and health value of that hero
 -- FIXME - make it handle heroes that went invisible if we have detection
 function U.GetWeakestHero(bot, r, heroList)
-    local EnemyHeroes = heroList or bot:GetNearbyHeroes(r, true, BOT_MODE_NONE)
+    local EnemyHeroes = heroList or getHeroVar("NearbyEnemies")
 
     if EnemyHeroes == nil or #EnemyHeroes == 0 then
         return nil, 10000

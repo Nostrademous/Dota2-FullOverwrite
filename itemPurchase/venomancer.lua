@@ -23,23 +23,25 @@ generic.ItemsToBuyAsSupport = {
         "item_dust"
 	},
 	CoreItems = {
-		"item_wind_lace",
+		"item_infused_raindrop",
 		"item_tranquil_boots",
-		"item_magic_wand",
-        "item_glimmer_cape",
+		"item_veil_of_discord",
 		"item_force_staff",
-		"item_ultimate_scepter",
-		"item_blink"
+		"item_ultimate_scepter"
 	},
 	ExtensionItems = {
 		OffensiveItems = {
+            "item_blink",
             "item_black_king_bar"
 		},
 		DefensiveItems = {
+            "item_ghost",
             "item_lotus_orb"
 		}
 	}
 }
+
+----------------------------------------------------------------------------------------------------
 
 function thisBot:Init()
     generic:InitTable()
@@ -58,3 +60,5 @@ function thisBot:ItemPurchaseThink(bot)
 end
 
 return thisBot
+
+----------------------------------------------------------------------------------------------------

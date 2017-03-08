@@ -114,6 +114,12 @@ function ConsiderTeamLaneDefense()
     local listAlliesCanTPToBuildling = {}
 
     local listAlly = GetUnitList(UNIT_LIST_ALLIED_HEROES)
+
+    for _, ally in pairs(listAlly) do
+        gHeroVar.SetVar(ally:GetPlayerID(), "DoDefendLane", {}) -- reset this for all and refill
+        debugging.SetBotState(utils.GetHeroName(ally), 2, "")
+    end
+
     for _, ally in pairs(listAlly) do
         if not ally:IsIllusion() and ally:IsBot() then
             if ally:GetHealth()/ally:GetMaxHealth() >= 0.5 then
@@ -139,11 +145,13 @@ function ConsiderTeamLaneDefense()
         local numGoing = 0
         for _, ally in pairs(listAlliesCanReachBuilding) do
             gHeroVar.SetVar(ally:GetPlayerID(), "DoDefendLane", {lane, building, numEnemies})
+            debugging.SetBotState(utils.GetHeroName(ally), 2, "Defending (walk)")
             numGoing = numGoing + 1
             if numGoing >= (numEnemies - 1) then break end
         end
         for _, ally in pairs(listAlliesCanTPToBuildling) do
             gHeroVar.SetVar(ally:GetPlayerID(), "DoDefendLane", {lane, building, numEnemies})
+            debugging.SetBotState(utils.GetHeroName(ally), 2, "Defending (tp)")
             numGoing = numGoing + 1
             if numGoing >= (numEnemies - 1) then break end
         end

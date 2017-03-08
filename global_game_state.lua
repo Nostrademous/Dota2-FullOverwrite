@@ -156,7 +156,7 @@ function GetPositionBetweenBuildings(unit, team)
 end
 
 function nearBuilding(unitLoc, building)
-    return utils.GetDistance(unitLoc, building) <= 500
+    return utils.GetDistance(unitLoc, building) <= 1000
 end
 
 function numEnemiesNearBuilding(building)
@@ -164,7 +164,7 @@ function numEnemiesNearBuilding(building)
     for k, enemy in pairs(enemyData) do
         if type(k) == "number" then
             local eLoc = enemy.LocExtra1
-            if utils.ValidTarget(enemy) then
+            if utils.ValidTarget(enemy.Obj) then
                 eLoc = enemy.Obj:GetLocation()
             end
 
@@ -192,7 +192,7 @@ function DetectEnemyPushMid()
 
     if hBuilding == nil then return 0, building end
 
-    debugging.SetTeamState("Getting Pushed", 5, "mid: "..hBuilding:GetUnitName().." "..hBuilding:TimeSinceDamagedByAnyHero())
+    debugging.SetTeamState("Getting Pushed", 5, "mid: "..hBuilding:GetUnitName().." "..hBuilding:TimeSinceDamagedByAnyHero().." "..numEnemiesNearBuilding(building))
     debugging.SetCircle("mid_tower", hBuilding:GetLocation(), 0, 255, 0)
 
     if hBuilding and hBuilding:TimeSinceDamagedByAnyHero() < 1.5 then
@@ -209,7 +209,7 @@ function DetectEnemyPushTop()
 
     if hBuilding == nil then return 0, building end
 
-    debugging.SetTeamState("Getting Pushed", 4, "top: "..hBuilding:GetUnitName().." "..hBuilding:TimeSinceDamagedByAnyHero())
+    debugging.SetTeamState("Getting Pushed", 4, "top: "..hBuilding:GetUnitName().." "..hBuilding:TimeSinceDamagedByAnyHero().." "..numEnemiesNearBuilding(building))
     debugging.SetCircle("top_tower", hBuilding:GetLocation(), 0, 255, 0)
 
     if hBuilding and hBuilding:TimeSinceDamagedByAnyHero() < 1.5 then
@@ -226,7 +226,7 @@ function DetectEnemyPushBot()
 
     if hBuilding == nil then return 0, building end
 
-    debugging.SetTeamState("Getting Pushed", 6, "bot: "..hBuilding:GetUnitName().." "..hBuilding:TimeSinceDamagedByAnyHero())
+    debugging.SetTeamState("Getting Pushed", 6, "bot: "..hBuilding:GetUnitName().." "..hBuilding:TimeSinceDamagedByAnyHero().." "..numEnemiesNearBuilding(building))
     debugging.SetCircle("bot_tower", hBuilding:GetLocation(), 0, 255, 0)
 
     if hBuilding and hBuilding:TimeSinceDamagedByAnyHero() < 1.5 then

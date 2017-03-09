@@ -26,9 +26,11 @@ end
 
 function X:OnStart(myBot)
     X.me = myBot
+    utisl.myPrint("Defense mode activated!")
 end
 
 function X:OnEnd()
+    utisl.myPrint("Defense mode ended!")
 end
 
 function X:Desire(bot)
@@ -44,8 +46,6 @@ function X:DefendTower(bot, hBuilding)
 end
 
 function X:Think(bot)
-    print("defendlane think")
-
     X.me = gHeroVar.GetVar(bot:GetPlayerID(), "Self")
 
     local defInfo = X.me:getHeroVar("DoDefendLane") -- TEAM has made the decision.
@@ -67,9 +67,10 @@ function X:Think(bot)
     if timeToReachBuilding <= 5.0 then
         X:DefendTower(bot, hBuilding, {})
     else
-        if bot:IsChanneling() or bot:IsCastingAbility() then return true end -- TODO: return true or false?
-        local tp = utils.HaveItem(bot, "item_travel_boots_1") or utils.HaveItem(bot, "item_travel_boots_2") or utils.HaveItem(bot, "item_tpscroll")
-        bot:Action_UseAbilityOnLocation(tp, dest)
+        if bot:IsChanneling() or bot:IsCastingAbility() then return true end
+        local tp = utils.HaveItem(bot, "item_travel_boots_1") or utils.HaveItem(bot, "item_travel_boots_2") or utils.HaveItem(bot, "item_tpscroll") -- TODO: more generic
+        if tp == nil then return false end -- something went wrong.. wait for TEAM to assign us to a new job
+        bot:Action_UseAbilityOnLocation(tp, hBuilding:GetLocation())
         utils.myPrint("TPing")
     end
 

@@ -104,21 +104,22 @@ function ConsiderTeamLaneDefense()
 
     local lane, building, numEnemies = global_game_state.DetectEnemyPush()
 
+    local listAlly = GetUnitList(UNIT_LIST_ALLIED_HEROES)
+
+    for _, ally in pairs(listAlly) do
+        gHeroVar.SetVar(ally:GetPlayerID(), "DoDefendLane", {}) -- reset this for all
+        debugging.SetBotState(utils.GetHeroName(ally), 2, "")
+    end
+
     if lane == nil or building == nil or numEnemies == nil then return end
 
     local hBuilding = buildings_status.GetHandle(GetTeam(), building)
 
     if hBuilding == nil then return end
 
+    local listAlliesAtBuilding = {}
     local listAlliesCanReachBuilding = {}
     local listAlliesCanTPToBuildling = {}
-
-    local listAlly = GetUnitList(UNIT_LIST_ALLIED_HEROES)
-
-    for _, ally in pairs(listAlly) do
-        gHeroVar.SetVar(ally:GetPlayerID(), "DoDefendLane", {}) -- reset this for all and refill
-        debugging.SetBotState(utils.GetHeroName(ally), 2, "")
-    end
 
     for _, ally in pairs(listAlly) do
         if not ally:IsIllusion() and ally:IsBot() then
@@ -126,10 +127,12 @@ function ConsiderTeamLaneDefense()
                 local distFromBuilding = GetUnitToUnitDistance(ally, hBuilding)
                 local timeToReachBuilding = distFromBuilding/ally:GetCurrentMovementSpeed()
 
-                if timeToReachBuilding <= 5.0 then
+                if timeToReachBuilding <= 3.0 then
+                    table.insert(listAlliesAtBuilding, ally)
+                elseif timeToReachBuilding <= 10.0 then
                     table.insert(listAlliesCanReachBuilding, ally)
                 else
-                    local haveTP = utils.HaveItem(ally, "item_tpscroll")
+                    local haveTP = utils.HaveItem(ally, "item_tpscroll") -- TODO: check tp boots, NP tp spell (utils?)
                     if haveTP and haveTP:IsFullyCastable() then
                         table.insert(listAlliesCanTPToBuildling, ally)
                     end
@@ -138,22 +141,33 @@ function ConsiderTeamLaneDefense()
         end
     end
 
-    debugging.SetTeamState("Getting Pushed", 2, string.format("Defense: %d enemies. %d allies near, %d more could tp", numEnemies, #listAlliesCanReachBuilding, #listAlliesCanTPToBuildling))
+    debugging.SetTeamState("Getting Pushed", 2, string.format("Def: %d enemies. %d close, %d near, %d could tp", numEnemies, #listAlliesAtBuilding, #listAlliesCanReachBuilding, #listAlliesCanTPToBuildling))
 
-    if (#listAlliesCanReachBuilding + #listAlliesCanTPToBuildling) >= (numEnemies - 1) then
+    local numNeeded = Max(numEnemies - 1, 1)
+
+    if (#listAlliesAtBuilding + #listAlliesCanReachBuilding + #listAlliesCanTPToBuildling) >= (numEnemies - 1) then
         debugging.SetTeamState("Getting Pushed", 3, "Mounting a defense!")
         local numGoing = 0
-        for _, ally in pairs(listAlliesCanReachBuilding) do
+        for _, ally in pairs(listAlliesAtBuilding) do -- make everyone sitting on the tower defend it
             gHeroVar.SetVar(ally:GetPlayerID(), "DoDefendLane", {lane, building, numEnemies})
-            debugging.SetBotState(utils.GetHeroName(ally), 2, "Defending (walk)")
+            debugging.SetBotState(utils.GetHeroName(ally), 2, "Defending (already there)")
             numGoing = numGoing + 1
-            if numGoing >= (numEnemies - 1) then break end
         end
-        for _, ally in pairs(listAlliesCanTPToBuildling) do
-            gHeroVar.SetVar(ally:GetPlayerID(), "DoDefendLane", {lane, building, numEnemies})
-            debugging.SetBotState(utils.GetHeroName(ally), 2, "Defending (tp)")
-            numGoing = numGoing + 1
-            if numGoing >= (numEnemies - 1) then break end
+        if numGoing < numNeeded then -- still need more?
+            for _, ally in pairs(listAlliesCanReachBuilding) do -- get the guys around
+                gHeroVar.SetVar(ally:GetPlayerID(), "DoDefendLane", {lane, building, numEnemies})
+                debugging.SetBotState(utils.GetHeroName(ally), 2, "Defending (walk)")
+                numGoing = numGoing + 1
+                if numGoing >= numNeeded then break end -- k, thats enough
+            end
+        end
+        if numGoing < numNeeded then -- still more?
+            for _, ally in pairs(listAlliesCanTPToBuildling) do -- tp them in
+                gHeroVar.SetVar(ally:GetPlayerID(), "DoDefendLane", {lane, building, numEnemies})
+                debugging.SetBotState(utils.GetHeroName(ally), 2, "Defending (tp)")
+                numGoing = numGoing + 1
+                if numGoing >= numNeeded then break end -- k, thats enough
+            end
         end
     else -- TODO: do we need to tell our allies to be carefull?
         debugging.SetTeamState("Getting Pushed", 3, "Goodbye, little tower.")

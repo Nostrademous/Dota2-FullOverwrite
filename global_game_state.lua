@@ -296,7 +296,7 @@ function GlobalFightDetermination()
                             -- if global we picked a 1v? fight then let it work out at the hero-level
                             if numAttackers == 1 then break end
                                 
-                            if totalNukeDmg/#ally:GetNearbyHeroes(1200, true, BOT_MODE_NONE) >= enemy.Obj:GetHealth() then
+                            if totalNukeDmg/#gHeroVar.GetNearbyEnemies(ally, 1200) >= enemy.Obj:GetHealth() then
                                 utils.myPrint(#participatingAllies+1, " of us can Nuke ", enemy.Name)
                                 utils.myPrint(utils.GetHeroName(ally), " - Engaging!")
                                 
@@ -323,7 +323,7 @@ function GlobalFightDetermination()
                                 end
                                 
                                 return
-                            elseif (anticipatedTimeToKill - timeToKillBonus) < 6.0/#ally:GetNearbyHeroes(1200, true, BOT_MODE_NONE) then
+                            elseif (anticipatedTimeToKill - timeToKillBonus) < 6.0/#gHeroVar.GetNearbyEnemies(ally, 1200) then
                                 utils.myPrint(#participatingAllies+#globalAllies+1, " of us can Stun for: ", totalStun, " and Slow for: ", totalSlow, ". AnticipatedTimeToKill ", enemy.Name ,": ", anticipatedTimeToKill)
                                 utils.myPrint(utils.GetHeroName(ally), " - Engaging! Anticipated Time to kill: ", anticipatedTimeToKill)
                                 gHero.SetVar(ally:GetPlayerID(), "Target", {Obj=enemy.Obj, Id=k})

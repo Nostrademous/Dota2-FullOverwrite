@@ -7,7 +7,32 @@ require( GetScriptDirectory().."/constants" )
 require( GetScriptDirectory().."/team_think" )
 require( GetScriptDirectory().."/hero_think" )
 
+local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
 local utils = require( GetScriptDirectory().."/utility" )
+
+local function setHeroVar(var, value)
+    gHeroVar.SetVar(GetBot():GetPlayerID(), var, value)
+end
+
+local function getHeroVar(var)
+    return gHeroVar.GetVar(GetBot():GetPlayerID(), var)
+end
+
+local noneMode      = dofile( GetScriptDirectory().."/modes/none" )
+local wardMode      = dofile( GetScriptDirectory().."/modes/ward" )
+local shopMode      = dofile( GetScriptDirectory().."/modes/shop" )
+local roamMode      = dofile( GetScriptDirectory().."/modes/roam" )
+local laningMode    = dofile( GetScriptDirectory().."/modes/laning" )
+local runeMode      = dofile( GetScriptDirectory().."/modes/runes" )
+local jungleMode    = dofile( GetScriptDirectory().."/modes/jungling" )
+local retreatMode   = dofile( GetScriptDirectory().."/modes/retreat" )
+local evasionMode   = dofile( GetScriptDirectory().."/modes/evasion" )
+local roshanMode    = dofile( GetScriptDirectory().."/modes/roshan" )
+local shrineMode    = dofile( GetScriptDirectory().."/modes/shrine" )
+local fightMode     = dofile( GetScriptDirectory().."/modes/fight" )
+local pushLaneMode  = dofile( GetScriptDirectory().."/modes/pushlane" )
+local defendLaneMode= dofile( GetScriptDirectory().."/modes/defendlane" )
+local defendAllyMode= dofile( GetScriptDirectory().."/modes/defendally" )
 
 local freqTeamThink = 0.25
 local lastTeamThink = -1000.0
@@ -33,7 +58,7 @@ function X.UpdatePlayerAssignment(bot, var, value)
     playerAssignment[bot:GetPlayerID()][var] = value
 end
 
-function X.MainThink(nearbyEnemies, nearbyAllies, nearbyECreeps, nearbyACreeps, nearbyETowers, nearbyATowers)
+function X.MainThink()
     
     -- Exercise TeamThink() at coded frequency
     if GameTime() > lastTeamThink then
@@ -44,8 +69,7 @@ function X.MainThink(nearbyEnemies, nearbyAllies, nearbyECreeps, nearbyACreeps, 
     -- Exercise individual Hero think at every frame (if possible).
     -- HeroThink() will check assignments from TeamThink()
     -- for that individual Hero that it should perform, if any.
-    local bot = GetBot()
-    return X.HeroThink(bot, nearbyEnemies, nearbyAllies, nearbyECreeps, nearbyACreeps, nearbyETowers, nearbyATowers)
+    return X.HeroThink()
 end
 
 function X.TeamThink()
@@ -57,6 +81,27 @@ function X.TeamThink()
             playerAssignment[ally:GetPlayerID()] = {}
         end
     end
+    
+    -- Record all global information used by individual heroes
+    -- Example: AOE zones 
+    local badAOEZones = {}
+    -- NOTE: an aoe will be table with { "location", "ability", "caster", "radius", "playerid" }.  
+    for _, aoe in pairs(GetAvoidanceZones()) do
+        if aoe.caster:GetTeam() ~= GetTeam() or aoe.ability == "faceless_void_chronosphere" then
+            table.insert(badAOEZones, aoe)
+        end
+    end
+    gHeroVar.SetGlobalVar("AOEZones", badAOEZones)
+    
+    -- Example: Incoming Projectiles
+    local badProjectiles = {}
+    -- NOTE: a projectile will be a table with { "location", "ability", "velocity", "radius", "playerid" }
+    for _, projectile in pairs(GetLinearProjectiles()) do
+        if projectile.playerid ~= nil or GetTeamForPlayer(projectile.playerid) == utils.GetOtherTeam() then
+            table.insert(badProjectiles, projectile)
+        end
+    end
+    gHeroVar.SetGlobalVar("BadProjectiles", badProjectiles)
 
     -- This is at top as all item purchases are Immediate actions,
     -- and therefore won't affect any other decision making.
@@ -120,10 +165,12 @@ function X.TeamThink()
     team_think.ConsiderTeamShrine(playerAssignment)
 end
 
-function X.HeroThink(bot, nearbyEnemies, nearbyAllies, nearbyECreeps, nearbyACreeps, nearbyETowers, nearbyATowers)
+function X.HeroThink()
+    local bot = GetBot()
+    
     --utils.myPrint("HeroThink()")
     local highestDesireValue = 0.0
-    local highestDesireMode = constants.MODE_NONE
+    local highestDesireMode = noneMode
     
     local evaluatedDesireValue = BOT_MODE_DESIRE_NONE 
     
@@ -133,7 +180,7 @@ function X.HeroThink(bot, nearbyEnemies, nearbyAllies, nearbyECreeps, nearbyACre
     evaluatedDesireValue = hero_think.ConsiderEvading(bot)
     if evaluatedDesireValue > highestDesireValue then
         highestDesireValue = evaluatedDesireValue
-        highestDesireMode = constants.MODE_EVADE
+        highestDesireMode = evasionMode
     end
     
     -- If we really want to evade ( >= 0.9 ); short-circuit 
@@ -145,18 +192,18 @@ function X.HeroThink(bot, nearbyEnemies, nearbyAllies, nearbyECreeps, nearbyACre
     -- Fight orchestration is done at a global Team level.
     -- This just checks if we are given a fight target and a specific
     -- action queue to execute as part of the fight.
-    evaluatedDesireValue = hero_think.ConsiderAttacking(bot, nearbyEnemies, nearbyAllies, nearbyETowers, nearbyATowers, nearbyECreeps, nearbyACreeps)
+    evaluatedDesireValue = hero_think.ConsiderAttacking(bot)
     if evaluatedDesireValue > highestDesireValue then
         highestDesireValue = evaluatedDesireValue
-        highestDesireMode = constants.MODE_FIGHT
+        highestDesireMode = fightMode
     end
     
     -- Which Heroes should be present for Shrine heal is made at Team level.
     -- This just tells us if we should be part of this event.
-    evaluatedDesireValue = hero_think.ConsiderShrine(bot, playerAssignment, nearbyAllies)
+    evaluatedDesireValue = hero_think.ConsiderShrine(bot, playerAssignment)
     if evaluatedDesireValue > highestDesireValue then
         highestDesireValue = evaluatedDesireValue
-        highestDesireMode = constants.MODE_SHRINE
+        highestDesireMode = shrineMode
     end
     
     -- Determine if we should retreat. Team Fight Assignements can 
@@ -164,10 +211,10 @@ function X.HeroThink(bot, nearbyEnemies, nearbyAllies, nearbyECreeps, nearbyACre
     -- in a fight but win the over-all battle. If no Team Fight Assignment, 
     -- then it is up to the Hero to manage their safety from global and
     -- tower/creep damage.
-    evaluatedDesireValue = hero_think.ConsiderRetreating(bot, nearbyEnemies, nearbyETowers, nearbyAllies)
+    evaluatedDesireValue = hero_think.ConsiderRetreating(bot)
     if evaluatedDesireValue > highestDesireValue then
         highestDesireValue = evaluatedDesireValue
-        highestDesireMode = constants.MODE_RETREAT
+        highestDesireMode = retreatMode
     end
     
     -- If we really want to Attack, Use Shrine or Retreat ( >= 0.75 ); 
@@ -182,16 +229,16 @@ function X.HeroThink(bot, nearbyEnemies, nearbyAllies, nearbyECreeps, nearbyACre
     evaluatedDesireValue = hero_think.ConsiderSecretAndSideShop(bot)
     if evaluatedDesireValue > highestDesireValue then
         highestDesireValue = evaluatedDesireValue
-        highestDesireMode = constants.MODE_SPECIALSHOP
+        highestDesireMode = shopMode
     end
     
     -- The decision is made at Team level. 
     -- This just checks if the Hero is part of the push, and if so, 
     -- what lane.
-    evaluatedDesireValue = hero_think.ConsiderPushingLane(bot, nearbyEnemies, nearbyETowers, nearbyECreeps, nearbyACreeps)
+    evaluatedDesireValue = hero_think.ConsiderPushingLane(bot)
     if evaluatedDesireValue > highestDesireValue then
         highestDesireValue = evaluatedDesireValue
-        highestDesireMode = constants.MODE_PUSHLANE
+        highestDesireMode = pushLaneMode
     end
     
     -- The decision is made at Team level.
@@ -200,7 +247,7 @@ function X.HeroThink(bot, nearbyEnemies, nearbyAllies, nearbyECreeps, nearbyACre
     evaluatedDesireValue = hero_think.ConsiderDefendingLane(bot)
     if evaluatedDesireValue > highestDesireValue then
         highestDesireValue = evaluatedDesireValue
-        highestDesireMode = constants.MODE_DEFENDLANE
+        highestDesireMode = defendLaneMode
     end
     
     -- This is a localized lane decision. An ally defense can turn into an 
@@ -210,7 +257,7 @@ function X.HeroThink(bot, nearbyEnemies, nearbyAllies, nearbyECreeps, nearbyACre
     evaluatedDesireValue = hero_think.ConsiderDefendingAlly(bot)
     if evaluatedDesireValue > highestDesireValue then
         highestDesireValue = evaluatedDesireValue
-        highestDesireMode = constants.MODE_DEFENDALLY
+        highestDesireMode = defendAllyMode
     end
     
     -- Roaming decision are made at the Team level to keep all relevant
@@ -219,7 +266,7 @@ function X.HeroThink(bot, nearbyEnemies, nearbyAllies, nearbyECreeps, nearbyACre
     evaluatedDesireValue = hero_think.ConsiderRoam(bot)
     if evaluatedDesireValue > highestDesireValue then
         highestDesireValue = evaluatedDesireValue
-        highestDesireMode = constants.MODE_GANKING
+        highestDesireMode = roamMode
     end
     
     -- The decision if and who should get Rune is made Team wide.
@@ -227,7 +274,7 @@ function X.HeroThink(bot, nearbyEnemies, nearbyAllies, nearbyECreeps, nearbyACre
     evaluatedDesireValue = hero_think.ConsiderRune(bot, playerAssignment)
     if evaluatedDesireValue > highestDesireValue then
         highestDesireValue = evaluatedDesireValue
-        highestDesireMode = constants.MODE_RUNEPICKUP
+        highestDesireMode = runeMode
     end
     
     -- The decision to Roshan is done in TeamThink().
@@ -235,7 +282,7 @@ function X.HeroThink(bot, nearbyEnemies, nearbyAllies, nearbyECreeps, nearbyACre
     evaluatedDesireValue = hero_think.ConsiderRoshan(bot)
     if evaluatedDesireValue > highestDesireValue then
         highestDesireValue = evaluatedDesireValue
-        highestDesireMode = constants.MODE_ROSHAN
+        highestDesireMode = roshanMode
     end
     
     -- Farming assignments are made Team Wide.
@@ -243,7 +290,7 @@ function X.HeroThink(bot, nearbyEnemies, nearbyAllies, nearbyECreeps, nearbyACre
     evaluatedDesireValue = hero_think.ConsiderJungle(bot, playerAssignment)
     if evaluatedDesireValue > highestDesireValue then
         highestDesireValue = evaluatedDesireValue
-        highestDesireMode = constants.MODE_JUNGLING
+        highestDesireMode = jungleMode
     end
     
     -- Laning assignments are made Team Wide for Pushing & Defending.
@@ -252,7 +299,7 @@ function X.HeroThink(bot, nearbyEnemies, nearbyAllies, nearbyECreeps, nearbyACre
     evaluatedDesireValue = hero_think.ConsiderLaning(bot, playerAssignment)
     if evaluatedDesireValue > highestDesireValue then
         highestDesireValue = evaluatedDesireValue
-        highestDesireMode = constants.MODE_LANING
+        highestDesireMode = laningMode
     end
     
     -- Warding is done on a per-lane basis. This evaluates if this Hero
@@ -260,7 +307,7 @@ function X.HeroThink(bot, nearbyEnemies, nearbyAllies, nearbyECreeps, nearbyACre
     evaluatedDesireValue = hero_think.ConsiderWarding(bot, playerAssignment)
     if evaluatedDesireValue > highestDesireValue then
         highestDesireValue = evaluatedDesireValue
-        highestDesireMode = constants.MODE_WARD
+        highestDesireMode = wardMode
     end
     
     return highestDesireMode, highestDesireValue

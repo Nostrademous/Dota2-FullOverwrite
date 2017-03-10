@@ -36,6 +36,79 @@ function X.GetGlobalVar(var)
     return X[var]
 end
 
+function X.GetNearbyEnemies(bot, range)
+    local endList = bot:GetNearbyHeroes(range, true, BOT_MODE_NONE)
+    --local startList = X[bot:GetPlayerID()].NearbyEnemies
+    --local endList = {}
+    --for _, val in pairs(startList) do
+    --    if GetUnitToUnitDistance(bot, val) <= range then
+    --        table.insert(endList, val)
+    --    end
+    --end
+    return endList
+end
+
+function X.GetNearbyAllies(bot, range)
+    local endList = bot:GetNearbyHeroes(range, false, BOT_MODE_NONE)
+    --local startList = X[bot:GetPlayerID()].NearbyAllies
+    --local endList = {}
+    --for _, val in pairs(startList) do
+    --    if GetUnitToUnitDistance(bot, val) <= range then
+    --        table.insert(endList, val)
+    --    end
+    --end
+    return endList
+end
+
+function X.GetNearbyEnemyTowers(bot, range)
+    local endList = bot:GetNearbyTowers(range, true)
+    --local startList = X[bot:GetPlayerID()].NearbyEnemyTowers
+    --local endList = {}
+    --for _, val in pairs(startList) do
+    --    if GetUnitToUnitDistance(bot, val) <= range then
+    --        table.insert(endList, val)
+    --    end
+    --end
+    return endList
+end
+
+function X.GetNearbyAlliedTowers(bot, range)
+    local endList = bot:GetNearbyTowers(range, false)
+    -- local startList = X[bot:GetPlayerID()].NearbyAlliedTowers
+    -- local endList = {}
+    -- for _, val in pairs(startList) do
+        -- if GetUnitToUnitDistance(bot, val) <= range then
+            -- table.insert(endList, val)
+        -- end
+    -- end
+    return endList
+end
+
+function X.GetNearbyEnemyCreep(bot, range)
+    local endList = bot:GetNearbyCreeps(range, true)
+    -- local startList = X[bot:GetPlayerID()].NearbyEnemyCreep
+    -- local endList = {}
+    -- for _, val in pairs(startList) do
+        -- if GetUnitToUnitDistance(bot, val) <= range then
+            -- table.insert(endList, val)
+        -- end
+    -- end
+    return endList
+end
+
+function X.GetNearbyAlliedCreep(bot, range)
+    local endList = bot:GetNearbyCreeps(range, false)
+    -- local startList = X[bot:GetPlayerID()].NearbyEnemyCreep
+    -- local endList = {}
+    -- for _, val in pairs(startList) do
+        -- if GetUnitToUnitDistance(bot, val) <= range then
+            -- table.insert(endList, val)
+        -- end
+    -- end
+    return endList
+end
+
+-------------------------------------------------------------------------------
 function X.SetHeroActionQueue(pID, aq)
     X[pID].actionQueue = {unpack(aq)}
 end

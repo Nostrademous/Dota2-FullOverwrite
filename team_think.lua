@@ -36,7 +36,7 @@ function ConsiderGlyphUse()
             and tower:TimeSinceDamagedByCreep() < 3 then
             if GetGlyphCooldown() == 0 and (GameTime() - glyphTimer > 1.0) then
                 GetBot():ActionImmediate_Glyph()
-                glyphTimer = GameTime()
+                glyphTimer = GameTime() + 5.0
             end
         end
     end
@@ -48,6 +48,7 @@ end
 -- Team items like Tome of Knowledge, Wards, Dust/Sentry, and
 -- even stuff like picking up Gem, Aegis, Cheese, etc.
 function ConsiderTeamWideItemAcquisition(playerAssignment)
+    --[[
     local listAlly = GetUnitList(UNIT_LIST_ALLIED_HEROES)
 
     -- only add TeamBuy if list is 'nil' or empty
@@ -68,6 +69,7 @@ function ConsiderTeamWideItemAcquisition(playerAssignment)
             tomes = tomes - 1
         end
     end
+    --]]
 end
 
 -- This is at top as all courier actions are Immediate actions,
@@ -189,6 +191,16 @@ function ConsiderTeamRune(playerAssignment)
             
             if bestAlly then
                 playerAssignment[bestAlly:GetPlayerID()].GetRune = {rune, runeLoc}
+            end
+        elseif GetRuneStatus(rune) == RUNE_STATUS_MISSING then
+            for _, ally in pairs(listAlly) do
+                if not ally:IsIllusion() and ally:IsBot() then
+                    if playerAssignment[ally:GetPlayerID()].GetRune ~= nil then
+                        if playerAssignment[ally:GetPlayerID()].GetRune[1] == rune then
+                            playerAssignment[ally:GetPlayerID()].GetRune = nil
+                        end
+                    end
+                end
             end
         end
     end

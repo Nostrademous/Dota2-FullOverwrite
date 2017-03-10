@@ -3,9 +3,9 @@
 --- GITHUB REPO: https://github.com/Nostrademous/Dota2-FullOverwrite
 -------------------------------------------------------------------------------
 
--------
-_G._savedEnv = getfenv()
-module( "jungling_generic", package.seeall )
+BotsInit = require( "game/botsinit" )
+local X = BotsInit.CreateGeneric()
+
 ----------
 local utils = require( GetScriptDirectory().."/utility")
 require( GetScriptDirectory().."/constants" )
@@ -13,20 +13,17 @@ require( GetScriptDirectory().."/jungle_status")
 
 local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
 
-function setHeroVar(var, value)
-    local bot = GetBot()
-    gHeroVar.SetVar(bot:GetPlayerID(), var, value)
+local function setHeroVar(var, value)
+    gHeroVar.SetVar(GetBot():GetPlayerID(), var, value)
 end
 
-function getHeroVar(var)
-    local bot = GetBot()
-    return gHeroVar.GetVar(bot:GetPlayerID(), var)
+local function getHeroVar(var)
+    return gHeroVar.GetVar(GetBot():GetPlayerID(), var)
 end
+
 ----------
 
-local EyeRange = 1200
-
-local JunglingStates={
+local JunglingStates = {
     FindCamp    = 0,
     MoveToCamp  = 1,
     WaitForSpawn= 2,
@@ -34,10 +31,16 @@ local JunglingStates={
     CleanCamp   = 4
 }
 
-function OnStart(bot)
+function X:GetName()
+    return "jungling"
+end
+
+function X:OnStart(myBot)
     setHeroVar("JunglingState", JunglingStates.FindCamp)
     setHeroVar("move_ticks", 0)
-    -- TODO: help lanes
+end
+
+function X:OnEnd()
 end
 
 ----------------------------------
@@ -71,8 +74,8 @@ local function FindCamp(bot)
         utils.myPrint("moves to camp")
     end
     setHeroVar("currentCamp", camp)
-    setHeroVar("move_ticks", 0)
     setHeroVar("JunglingState", JunglingStates.MoveToCamp)
+    setHeroVar("move_ticks", 0)
 end
 
 local function MoveToCamp(bot)
@@ -82,26 +85,17 @@ local function MoveToCamp(bot)
     end
     
     if GetUnitToLocationDistance(bot, getHeroVar("currentCamp")[constants.VECTOR]) > 200 then
-        local ticks = getHeroVar("move_ticks")
-        if ticks > 50 then -- don't do this every frame
+        if getHeroVar("move_ticks") > 50 then -- don't do this every frame
             setHeroVar("JunglingState", JunglingStates.FindCamp) -- crossing the jungle takes a lot of time. Check for camps that may have spawned
             return
         else
-            setHeroVar("move_ticks", ticks + 1)
+            setHeroVar("move_ticks", getHeroVar("move_ticks") + 1)
         end
         gHeroVar.HeroMoveToLocation(bot, getHeroVar("currentCamp")[constants.VECTOR])
         return
     end
 
-    --[[
-    local allNeutrals = GetUnitList(UNIT_LIST_NEUTRAL_CREEPS)
-    for _, n in ipairs(allNeutrals) do
-        if GetUnitToUnitDistance(bot, n) < EyeRange then
-            table.insert(neutrals, n)
-        end
-    end
-    --]]
-    local neutrals = bot:GetNearbyCreeps(EyeRange, true)
+    local neutrals = gHeroVar.GetNearbyEnemyCreep(bot, 900)
     if #neutrals == 0 then -- no creeps here
         local jungle = jungle_status.GetJungle(GetTeam()) or {}
         jungle = FindCampsByMaxDifficulty(jungle, getHeroVar("Self"):GetMaxClearableCampLevel(bot))
@@ -147,12 +141,12 @@ local function CleanCamp(bot)
     local stacktime = getHeroVar("currentCamp")[constants.STACK_TIME]
     if dtime >= stacktime and dtime <= stacktime + 1 then
         setHeroVar("JunglingState", JunglingStates.Stack)
-        utils.myPrint("stacks")
+        --utils.myPrint("stacks")
         setHeroVar("waituntil", utils.NextNeutralSpawn())
         return
     end
 
-    local neutrals = bot:GetNearbyCreeps(EyeRange, true)
+    local neutrals = gHeroVar.GetNearbyEnemyCreep(bot, 900)
     if #neutrals == 0 then -- we did it
         local camp, _ = utils.NearestNeutralCamp(bot, jungle_status.GetJungle(GetTeam())) -- we might not have killed the `currentCamp`
         -- we could have been killing lane creeps, don't mistaken for neutral
@@ -169,7 +163,7 @@ end
 ----------------------------------
 
 function FindCampsByMaxDifficulty(jungle, difficulty)
-    result = {}
+    local result = {}
     for i,camp in pairs(jungle) do
         if camp[constants.DIFFICULTY] <= difficulty then
             result[#result+1] = camp
@@ -181,25 +175,26 @@ end
 ----------------------------------
 
 local States = {
-[JunglingStates.FindCamp]=FindCamp,
-[JunglingStates.MoveToCamp]=MoveToCamp,
-[JunglingStates.WaitForSpawn]=WaitForSpawn,
-[JunglingStates.Stack]=Stack,
-[JunglingStates.CleanCamp]=CleanCamp
+    [JunglingStates.FindCamp]       = FindCamp,
+    [JunglingStates.MoveToCamp]     = MoveToCamp,
+    [JunglingStates.WaitForSpawn]   = WaitForSpawn,
+    [JunglingStates.Stack]          = Stack,
+    [JunglingStates.CleanCamp]      = CleanCamp
 }
 
 ----------------------------------
 
-function Think(bot)
-    if getHeroVar("JunglingState") == nil then
-        OnStart(bot)
-    end
-    
-    if bot:IsCastingAbility() or bot:IsChanneling() then return end
+function X:Think(bot)
+    if utils.IsBusy(bot) then return end
 
     States[getHeroVar("JunglingState")](bot)
 end
 
+function X:Desire(bot)
+    if getHeroVar("Role") == constants.ROLE_JUNGLER then
+        return BOT_MODE_DESIRE_MODERATE
+    end
+    return BOT_MODE_DESIRE_NONE
+end
 
---------
-for k,v in pairs( jungling_generic ) do _G._savedEnv[k] = v end
+return X

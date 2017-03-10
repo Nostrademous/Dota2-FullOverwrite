@@ -4,11 +4,11 @@
 -------------------------------------------------------------------------------
 
 require( GetScriptDirectory().."/constants" )
-require ( GetScriptDirectory().."/ability_usage_viper" )
 
 local utils = require( GetScriptDirectory().."/utility" )
-local dt = require( GetScriptDirectory().."/decision_tree" )
+local dt = require( GetScriptDirectory().."/decision" )
 local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
+local ability = require( GetScriptDirectory().."/abilityUse/abilityUse_viper" )
 
 local SKILL_Q = "viper_poison_attack";
 local SKILL_W = "viper_nethertoxin";
@@ -29,47 +29,37 @@ local ViperAbilityPriority = {
     SKILL_R,    SKILL_W,    SKILL_W,    SKILL_Q,    ABILITY2,
     SKILL_Q,    SKILL_R,    SKILL_Q,    SKILL_E,    ABILITY4,
     SKILL_E,    SKILL_R,    ABILITY6,   ABILITY8
-};
+}
 
-local viperModeStack = { [1] = {constants.MODE_NONE, BOT_ACTION_DESIRE_NONE} }
+local botViper = dt:new()
 
-ViperBot = dt:new()
-
-function ViperBot:new(o)
+function botViper:new(o)
     o = o or dt:new(o)
     setmetatable(o, self)
     self.__index = self
     return o
 end
 
-viperBot = ViperBot:new{modeStack = viperModeStack, abilityPriority = ViperAbilityPriority}
---viperBot:printInfo();
-
-viperBot.Init = false
+local viperBot = botViper:new{abilityPriority = ViperAbilityPriority}
 
 function viperBot:DoHeroSpecificInit(bot)
     self:setHeroVar("HasOrbAbility", SKILL_Q)
 end
 
-function viperBot:ConsiderAbilityUse(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCreep, nearbyAlliedCreep, nearbyEnemyTowers, nearbyAlliedTowers)
-    return ability_usage_viper.AbilityUsageThink(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCreep, nearbyAlliedCreep, nearbyEnemyTowers, nearbyAlliedTowers)
+function viperBot:ConsiderAbilityUse()
+    return ability.AbilityUsageThink(GetBot())
+end
+
+function viperBot:GetNukeDamage(bot, target)
+    return ability.nukeDamage( bot, target )
+end
+
+function viperBot:QueueNuke(bot, target, actionQueue, engageDist)
+    return ability.queueNuke( bot, target, actionQueue, engageDist )
 end
 
 function Think()
     local bot = GetBot()
 
     viperBot:Think(bot)
-    
-    -- if we are initialized, do the rest
-    if viperBot.Init then
-        gHeroVar.ExecuteHeroActionQueue(bot)
-    end
-end
-
-function viperBot:GetNukeDamage(bot, target)
-    return ability_usage_viper.nukeDamage( bot, target )
-end
-
-function viperBot:QueueNuke(bot, target, actionQueue, engageDist)
-    return ability_usage_viper.queueNuke( bot, target, actionQueue, engageDist )
 end

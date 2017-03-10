@@ -443,16 +443,12 @@ end
 
 function U.EnemyDistanceFromTheirAncient( hEnemy )
     local locAncient = GetAncient(U.GetOtherTeam()):GetLocation()
-    if U.ValidTarget( hEnemy ) then
-        return U.GetDistance( locAncient, hEnemy.Obj:GetLocation() )
+    if not hEnemy:IsNull() then
+        return U.GetDistance( locAncient, hEnemy:GetLocation() )
     else
-        local timeSinceSeen = GetHeroLastSeenInfo(hEnemy.Id).time
-        if  timeSinceSeen > 3 then
-            return 0
-        elseif timeSinceSeen <= 0.5 then
-            return U.GetDistance( locAncient, hEnemy.LocExtra1 )
-        elseif timeSinceSeen <= 3.0 then
-            return U.GetDistance( locAncient, hEnemy.LocExtra2 )
+        local timeSinceSeen = GetHeroLastSeenInfo(hEnemy:GetPlayerID()).time
+        if timeSinceSeen < 2 then
+            return U.GetDistance( locAncient, GetHeroLastSeenInfo(hEnemy:GetPlayerID()).location )
         end
     end
     return 0
@@ -460,10 +456,7 @@ end
 
 function U.TimeForEnemyToGetIntoTheirBase( hEnemy )
     local distFromBase = U.EnemyDistanceFromTheirAncient( hEnemy )
-    if U.ValidTarget( hEnemy ) then
-        return distFromBase/hEnemy.Obj:GetCurrentMovementSpeed()
-    end
-    return distFromBase/hEnemy.MoveSpeed
+    return distFromBase/hEnemy:GetCurrentMovementSpeed()
 end
 
 -- CONTRIBUTOR: Function below was coded by Platinum_dota2
@@ -492,7 +485,7 @@ end
 function U.AreTreesBetweenMeAndLoc(loc, lineOfSightThickness)
     local npcBot = GetBot()
 
-    local trees = npcBot:GetNearbyTrees(GetUnitToLocationDistance(npcBot, loc))
+    local trees = npcBot:GetNearbyTrees(Min(1600, GetUnitToLocationDistance(npcBot, loc)))
 
     --check if there are trees between us and location with line-of-sight thickness
     for _, tree in ipairs(trees) do
@@ -527,7 +520,7 @@ end
 function U.AreEnemyCreepsBetweenMeAndLoc(loc, lineOfSightThickness)
     local npcBot = GetBot()
 
-    local eCreeps = npcBot:GetNearbyCreeps(GetUnitToLocationDistance(npcBot, loc), true)
+    local eCreeps = npcBot:GetNearbyCreeps(Min(1600, GetUnitToLocationDistance(npcBot, loc)), true)
 
     --check if there are enemy creeps between us and location with line-of-sight thickness
     for _, eCreep in ipairs(eCreeps) do
@@ -562,7 +555,7 @@ end
 function U.AreFriendlyCreepsBetweenMeAndLoc(loc, lineOfSightThickness)
     local npcBot = GetBot()
 
-    local fCreeps = npcBot:GetNearbyCreeps(GetUnitToLocationDistance(npcBot, loc), false)
+    local fCreeps = npcBot:GetNearbyCreeps(Min(1600, GetUnitToLocationDistance(npcBot, loc)), false)
 
     --check if there are enemy creeps between us and location with line-of-sight thickness
     for _, fCreep in ipairs(fCreeps) do
@@ -612,8 +605,16 @@ end
 
 function U.IsBusy(bot)
     if bot:IsChanneling() then return true end
-    if bot:IsCastingAbility() then return true end
-    if bot:NumQueuedActions() > 0 then return true end
+    if bot:IsCastingAbility() then
+        local target = getHeroVar("Target")        
+        if U.ValidTarget(target) and GetUnitToUnitDistance(bot, target) > 2000 then return false end
+        return true
+    end
+    if bot:NumQueuedActions() > 0 then
+        local target = getHeroVar("Target")        
+        if U.ValidTarget(target) and GetUnitToUnitDistance(bot, target) > 2000 then return false end
+        return true
+    end
     return false
 end
 
@@ -645,20 +646,20 @@ function U.AllChat(msg)
 end
 
 function U.ValidTarget(target)
-    if target.Obj ~= nil and not target.Obj:IsNull() then
+    if target and not target:IsNull() then
         return true
     end
     return false
 end
 
 function U.NotNilOrDead(unit)
-    if unit==nil then
-        return false;
+    if unit == nil or unit:IsNull() then
+        return false
     end
     if unit:IsAlive() then
-        return true;
+        return true
     end
-    return false;
+    return false
 end
 
 function U.TimePassed(prevTime, amount)
@@ -751,13 +752,15 @@ function U.IsInLane()
     setHeroVar("RetreatLane", getHeroVar("CurLane"))
     setHeroVar("RetreatPos", getHeroVar("LanePos"))
 
+    local minDis = 10000
+    
     for i = 1, #U.Lanes, 1 do
-        local this = U.PositionAlongLane(bot, U.Lanes[i])
+        local lAmnt = U.PositionAlongLane(bot, U.Lanes[i])
+        local thisDis = U.GetDistance(GetLocationAlongLane(U.Lanes[i], lAmnt), bot:GetLocation())
 
-        if getHeroVar("IsInLane") then
+        if thisDis < minDis then
             setHeroVar("RetreatLane", U.Lanes[i])
-            setHeroVar("RetreatPos", thisl)
-            break
+            setHeroVar("RetreatPos", lAmnt)
         end
     end
 
@@ -1097,7 +1100,7 @@ end
 
 function U.IsTowerAttackingMe()
     local bot = GetBot()
-    local nearEnemyTowers = bot:GetNearbyTowers(750, true)
+    local nearEnemyTowers = gHeroVar.GetNearbyEnemyTowers(bot, 750)
 
     -- if there are no towers then the answer is no
     if #nearEnemyTowers == 0 then return false end
@@ -1123,14 +1126,58 @@ function U.IsCreepAttackingMe(fTime)
     return false
 end
 
---[[
-function U.EnemiesThatCanAttackMe(bot, nearbyEnemies)
-    local listEnemies = {}
-    for _, enemy in pairs(nearbyEnemies) do
+function U.HarassEnemy(bot, listEnemies)
+    local enemyToHarass = nil
+    
+    local listAlliedTowers = gHeroVar.GetNearbyAlliedTowers(bot, 600)
+    for _, enemy in pairs(listEnemies) do
+        for _, myTower in pairs(listAlliedTowers) do
+            local stunAbilities = getHeroVar("HasStun")
+            if stunAbilities then
+                for _, stun in pairs(stunAbilities) do
+                    if not enemy:IsStunned() and stun[1]:IsFullyCastable() then
+                        local behaviorFlag = stun[1]:GetBehavior()
+                        if U.CheckFlag(behaviorFlag, ABILITY_BEHAVIOR_UNIT_TARGET) then
+                            bot:Action_UseAbilityOnEntity(stun[1], enemy)
+                            return true
+                        elseif U.CheckFlag(behaviorFlag, ABILITY_BEHAVIOR_POINT) then
+                            bot:Action_UseAbilityOnLocation(stun[1], enemy:GetExtrapolatedLocation(stun[2]+getHeroVar("AbilityDelay")))
+                            return true
+                        end
+                    end
+                end
+            end
+            gHeroVar.HeroAttackUnit(bot, enemy, true)
+            return true
+        end
         
+        if (bot:GetHealth() + bot:GetAttackDamage()) < (enemy:GetHealth() + enemy:GetAttackDamage()) and
+            GetUnitToUnitDistance(bot, enemy) < (bot:GetAttackRange() + bot:GetBoundingRadius()) and 
+            #listEnemies == 1 then -- and enemy:GetAttackRange() <= bot:GetAttackRange() then
+            enemyToHarass = enemy
+            break
+        end
     end
+    
+    -- if we have an orb effect (won't aggro creep), use it
+    if U.UseOrbEffect(bot) then return true end
+    
+    -- if we can harass, do it
+    if enemyToHarass then
+        gHeroVar.HeroAttackUnit(bot, enemyToHarass, true)
+        return true
+    end
+    
+    local listEnemyCreep = gHeroVar.GetNearbyEnemyCreep(bot, 1200)
+    local listAlliedCreep = gHeroVar.GetNearbyAlliedCreep(bot, 1200)
+    if #listEnemies > 0 and (#listEnemyCreep < (#listAlliedCreep-1) or #listEnemyCreep == 0) and
+        GetUnitToUnitDistance(bot, listEnemies[1]) < (bot:GetAttackRange()+bot:GetBoundingRadius()) then
+        gHeroVar.HeroAttackUnit(bot, listEnemies[1], true)
+        return true
+    end
+    
+    return false
 end
---]]
 
 -- returns a VECTOR() with location being the center point of provided hero array
 function U.GetCenter(Heroes)
@@ -1153,7 +1200,7 @@ end
 -- takes a "RANGE", returns hero handle and health value of that hero
 -- FIXME - make it handle heroes that went invisible if we have detection
 function U.GetWeakestHero(bot, r, heroList)
-    local EnemyHeroes = heroList or bot:GetNearbyHeroes(r, true, BOT_MODE_NONE)
+    local EnemyHeroes = heroList or gHeroVar.GetNearbyEnemyCreep(bot, 1200)
 
     if EnemyHeroes == nil or #EnemyHeroes == 0 then
         return nil, 10000
@@ -1163,7 +1210,7 @@ function U.GetWeakestHero(bot, r, heroList)
     local LowestHealth = 10000
 
     for _, hero in ipairs(EnemyHeroes) do
-        if GetUnitToUnitDistance(bot, hero) <= r and hero:IsAlive() then
+        if U.ValidTarget(hero) and GetUnitToUnitDistance(bot, hero) <= r and hero:IsAlive() then
             if hero:GetHealth() < LowestHealth then
                 LowestHealth = hero:GetHealth()
                 WeakestHero = hero
@@ -1454,13 +1501,13 @@ function U.CourierThink(npcBot)
     end
 end
 
-function U.GetNearestTree(npcBot)
-    local trees = npcBot:GetNearbyTrees(700)
+function U.GetNearestTree(bot)
+    local trees = bot:GetNearbyTrees(700)
 
     for _, tree in ipairs(trees) do
         local treeLoc = GetTreeLocation(tree)
         --U.myPrint("Tree Loc: <", treeLoc[1], ", ", treeLoc[2], ", ", treeLoc[3], ">")
-        if U.GetHeightDiff(npcBot, treeLoc[3]) == 0 then
+        if U.GetHeightDiff(bot, treeLoc[3]) == 0 then
             return tree
         end
     end

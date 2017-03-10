@@ -3,9 +3,8 @@
 --- GITHUB REPO: https://github.com/Nostrademous/Dota2-FullOverwrite
 -------------------------------------------------------------------------------
 
-require( GetScriptDirectory().."/special_shop_generic" )
 local utils = require( GetScriptDirectory().."/utility" )
-local items = require(GetScriptDirectory().."/items" )
+local items = require(GetScriptDirectory().."/itemPurchase/items" )
 local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
 local enemyData = require( GetScriptDirectory().."/enemy_data" )
 
@@ -32,7 +31,9 @@ end
 -------------------------------------------------------------------------------
 -- Declarations
 -------------------------------------------------------------------------------
-local X = {}
+
+BotsInit = require( "game/botsinit" )
+local X = BotsInit.CreateGeneric()
 
 X.ItemsToBuyAsHardCarry = {}
 X.ItemsToBuyAsMid = {}
@@ -54,17 +55,6 @@ X.ExtensionItems = {
 X.LastThink = -1000.0
 X.LastSupportThink = -1000.0
 X.LastExtensionThink = -1000.0
-
--------------------------------------------------------------------------------
--- Init
--------------------------------------------------------------------------------
-
-function X:new(o)
-    o = o or {}
-    setmetatable(o, self)
-    self.__index = self
-    return o
-end
 
 -------------------------------------------------------------------------------
 -- Properties
@@ -107,7 +97,8 @@ end
 -- ToDo: Selling items for better ones
 -------------------------------------------------------------------------------
 
-local function UpdateTeamBuyList(myList, sItem)
+function X:UpdateTeamBuyList( sItem )
+    local myList = getHeroVar("TeamBuy")
     if #myList > 0 then
         local pos = utils.PosInTable(myList, sItem)
         if pos > 0 then
@@ -121,9 +112,6 @@ function X:Think(bot)
     -- throttle think for better performance
     if tDelta > 0.1 then
         if ( GetGameState() ~= GAME_STATE_GAME_IN_PROGRESS and GetGameState() ~= GAME_STATE_PRE_GAME ) then return end
-
-        -- Initialization
-        self:Init()
 
         -- Put Team-wide Logic Assigned Items in our list
         local myTeamBuyList = getHeroVar("TeamBuy")
@@ -164,55 +152,14 @@ function X:Think(bot)
 
             -- Enough gold -> buy, remove
             if(bot:GetGold() >= GetItemCost(sNextItem)) then
-                -- Next item only available in secret shop?
-                local bInSide = IsItemPurchasedFromSideShop( sNextItem )
-                local bInSecret = IsItemPurchasedFromSecretShop( sNextItem )
-
-                if bInSide and bInSecret then
-                    if bot:DistanceFromSecretShop() < bot:DistanceFromSideShop() or
-                        special_shop_generic.GetSideShop() == nil then
-                        bInSide = false
-                    end
-                elseif bInSide and special_shop_generic.GetSideShop() == nil then
-                    bInSide = false
-                end
-
                 if bot:IsAlive() then
                     local me = getHeroVar("Self")
-                    if bInSide and me:getCurrentModeValue() < BOT_MODE_DESIRE_HIGH then
-                        if me:getCurrentMode() ~= constants.MODE_SPECIALSHOP then
-                            me:AddMode(constants.MODE_SPECIALSHOP, BOT_MODE_DESIRE_HIGH)
-                            utils.myPrint(" STARTING TO HEAD TO SIDE SHOP ")
-                            special_shop_generic.OnStart()
-                        else
-                            local bDone = special_shop_generic.ThinkSideShop(sNextItem)
-                            if bDone then
-                                me:RemoveMode(constants.MODE_SPECIALSHOP)
-                                table.remove(self.PurchaseOrder, 1 )
-                                UpdateTeamBuyList(myTeamBuyList, sNextItem)
-                                bot:SetNextItemPurchaseValue( 0 )
-                            end
-                        end
-                    elseif bInSecret and me:getCurrentModeValue() < BOT_MODE_DESIRE_HIGH then
-                        if me:getCurrentMode() ~= constants.MODE_SPECIALSHOP then
-                            me:AddMode(constants.MODE_SPECIALSHOP, BOT_MODE_DESIRE_HIGH)
-                            utils.myPrint(" STARTING TO HEAD TO SECRET SHOP ")
-                            special_shop_generic.OnStart()
-                        else
-                            local bDone = special_shop_generic.ThinkSecretShop(sNextItem)
-                            if bDone then
-                                me:RemoveMode(constants.MODE_SPECIALSHOP)
-                                table.remove(self.PurchaseOrder, 1 )
-                                UpdateTeamBuyList(myTeamBuyList, sNextItem)
-                                bot:SetNextItemPurchaseValue( 0 )
-                            end
-                        end
-                    else
+                    
+                    if me:getCurrentMode():GetName() ~= "shop" then
                         bot:ActionImmediate_PurchaseItem(sNextItem)
                         table.remove(self.PurchaseOrder, 1)
-                        UpdateTeamBuyList(myTeamBuyList, sNextItem)
+                        UpdateTeamBuyList(sNextItem)
                         bot:SetNextItemPurchaseValue(0)
-                        me:RemoveMode(constants.MODE_SPECIALSHOP)
                     end
                 end
 
@@ -227,66 +174,44 @@ end
 -------------------------------------------------------------------------------
 
 function X:InitTable()
-    -- Don't do this before the game starts
-    if ( GetGameState() ~= GAME_STATE_GAME_IN_PROGRESS and GetGameState() ~= GAME_STATE_PRE_GAME ) then return false end
-
-    if not gHeroVar.HasID(GetBot():GetPlayerID()) or getHeroVar("Role") == nil then return false end
-
-    -- Tables already initialized, bail
-    if #self.StartingItems > 0
-        or #self.UtilityItems > 0
-        or #self.CoreItems > 0
-        or #self.ExtensionItems.OffensiveItems > 0
-        or #self.ExtensionItems.DefensiveItems > 0 then
-        return false
-    else
-        -- Init tables based on role
-        if (getHeroVar("Role") == role.ROLE_MID ) then
-            self:SetStartingItems(self.ItemsToBuyAsMid.StartingItems)
-            self:SetUtilityItems(self.ItemsToBuyAsMid.UtilityItems)
-            self:SetCoreItems(self.ItemsToBuyAsMid.CoreItems)
-            self:SetExtensionItems(self.ItemsToBuyAsMid.ExtensionItems)
-            return true
-        elseif (getHeroVar("Role") == role.ROLE_HARDCARRY ) then
-            self:SetStartingItems(self.ItemsToBuyAsHardCarry.StartingItems)
-            self:SetUtilityItems(self.ItemsToBuyAsHardCarry.UtilityItems)
-            self:SetCoreItems(self.ItemsToBuyAsHardCarry.CoreItems)
-            self:SetExtensionItems(self.ItemsToBuyAsHardCarry.ExtensionItems)
-            return true
-        elseif (getHeroVar("Role") == role.ROLE_OFFLANE ) then
-            self:SetStartingItems(self.ItemsToBuyAsOfflane.StartingItems)
-            self:SetUtilityItems(self.ItemsToBuyAsOfflane.UtilityItems)
-            self:SetCoreItems(self.ItemsToBuyAsOfflane.CoreItems)
-            self:SetExtensionItems(self.ItemsToBuyAsOfflane.ExtensionItems)
-            return true
-        elseif (getHeroVar("Role") == role.ROLE_HARDSUPPORT
-            or getHeroVar("Role") == role.ROLE_SEMISUPPORT ) then
-            self:SetStartingItems(self.ItemsToBuyAsSupport.StartingItems)
-            self:SetUtilityItems(self.ItemsToBuyAsSupport.UtilityItems)
-            self:SetCoreItems(self.ItemsToBuyAsSupport.CoreItems)
-            self:SetExtensionItems(self.ItemsToBuyAsSupport.ExtensionItems)
-            return true
-        elseif (getHeroVar("Role") == role.ROLE_JUNGLER ) then
-            self:SetStartingItems(self.ItemsToBuyAsJungler.StartingItems)
-            self:SetUtilityItems(self.ItemsToBuyAsJungler.UtilityItems)
-            self:SetCoreItems(self.ItemsToBuyAsJungler.CoreItems)
-            self:SetExtensionItems(self.ItemsToBuyAsJungler.ExtensionItems)
-            return true
-        elseif (getHeroVar("Role") == role.ROLE_ROAMER ) then
-            self:SetStartingItems(self.ItemsToBuyAsRoamer.StartingItems)
-            self:SetUtilityItems(self.ItemsToBuyAsRoamer.UtilityItems)
-            self:SetCoreItems(self.ItemsToBuyAsRoamer.CoreItems)
-            self:SetExtensionItems(self.ItemsToBuyAsRoamer.ExtensionItems)
-            return true
-        end
-    end
-end
-
-function X:Init()
-    local bInit = getHeroVar("ItemPurchaseInitialized")
-    if bInit == nil then
-        utils.myPrint(" Initializing Item Purchase class - Role: ", getHeroVar("Role"))
-        setHeroVar("ItemPurchaseInitialized", true)
+    -- Init tables based on role    
+    if (getHeroVar("Role") == role.ROLE_MID ) then
+        self:SetStartingItems(self.ItemsToBuyAsMid.StartingItems)
+        self:SetUtilityItems(self.ItemsToBuyAsMid.UtilityItems)
+        self:SetCoreItems(self.ItemsToBuyAsMid.CoreItems)
+        self:SetExtensionItems(self.ItemsToBuyAsMid.ExtensionItems)
+        return true
+    elseif (getHeroVar("Role") == role.ROLE_HARDCARRY ) then
+        self:SetStartingItems(self.ItemsToBuyAsHardCarry.StartingItems)
+        self:SetUtilityItems(self.ItemsToBuyAsHardCarry.UtilityItems)
+        self:SetCoreItems(self.ItemsToBuyAsHardCarry.CoreItems)
+        self:SetExtensionItems(self.ItemsToBuyAsHardCarry.ExtensionItems)
+        return true
+    elseif (getHeroVar("Role") == role.ROLE_OFFLANE ) then
+        self:SetStartingItems(self.ItemsToBuyAsOfflane.StartingItems)
+        self:SetUtilityItems(self.ItemsToBuyAsOfflane.UtilityItems)
+        self:SetCoreItems(self.ItemsToBuyAsOfflane.CoreItems)
+        self:SetExtensionItems(self.ItemsToBuyAsOfflane.ExtensionItems)
+        return true
+    elseif (getHeroVar("Role") == role.ROLE_HARDSUPPORT
+        or getHeroVar("Role") == role.ROLE_SEMISUPPORT ) then
+        self:SetStartingItems(self.ItemsToBuyAsSupport.StartingItems)
+        self:SetUtilityItems(self.ItemsToBuyAsSupport.UtilityItems)
+        self:SetCoreItems(self.ItemsToBuyAsSupport.CoreItems)
+        self:SetExtensionItems(self.ItemsToBuyAsSupport.ExtensionItems)
+        return true
+    elseif (getHeroVar("Role") == role.ROLE_JUNGLER ) then
+        self:SetStartingItems(self.ItemsToBuyAsJungler.StartingItems)
+        self:SetUtilityItems(self.ItemsToBuyAsJungler.UtilityItems)
+        self:SetCoreItems(self.ItemsToBuyAsJungler.CoreItems)
+        self:SetExtensionItems(self.ItemsToBuyAsJungler.ExtensionItems)
+        return true
+    elseif (getHeroVar("Role") == role.ROLE_ROAMER ) then
+        self:SetStartingItems(self.ItemsToBuyAsRoamer.StartingItems)
+        self:SetUtilityItems(self.ItemsToBuyAsRoamer.UtilityItems)
+        self:SetCoreItems(self.ItemsToBuyAsRoamer.CoreItems)
+        self:SetExtensionItems(self.ItemsToBuyAsRoamer.ExtensionItems)
+        return true
     end
 end
 
@@ -344,6 +269,10 @@ function X:BuySupportItems()
             self.LastSupportThink = RealTime()
         end
     end
+end
+
+function X:GetPurchaseOrder()
+    return self.PurchaseOrder
 end
 
 function X:UpdatePurchaseOrder()

@@ -35,7 +35,7 @@ function UseRegenItems()
     -- if we are under effect of a shrine, exit early
     if bot:HasModifier("modifier_filler_heal") then return false end
     
-    local Enemies = bot:GetNearbyHeroes(850, true, BOT_MODE_NONE)
+    local Enemies = gHeroVar.GetNearbyEnemies(bot, 850)
 
     local bottle = utils.HaveItem(bot, "item_bottle")
     if bottle ~= nil and bottle:GetCurrentCharges() > 0 and not bot:HasModifier("modifier_bottle_regeneration")
@@ -58,7 +58,7 @@ function UseRegenItems()
     if not bot:HasModifier("modifier_fountain_aura_buff") then
 
         local mekansm = utils.HaveItem(bot, "item_mekansm")
-        local Allies = bot:GetNearbyHeroes(900, false, BOT_MODE_NONE)
+        local Allies = gHeroVar.GetNearbyAllies(bot, 900)
         if mekansm ~= nil and mekansm:IsFullyCastable() then
             if (bot:GetHealth()/bot:GetMaxHealth()) < 0.15 then
                 gHeroVar.HeroUseAbility(bot, mekansm)
@@ -148,8 +148,8 @@ function UseRegenItemsOnAlly()
     -- if we are under effect of a shrine, exit early
     if bot:HasModifier("modifier_filler_heal") then return false end
     
-    local Enemies = bot:GetNearbyHeroes(850, true, BOT_MODE_NONE)
-	local Allies = bot:GetNearbyHeroes(850, false,  BOT_MODE_NONE)
+    local Enemies = gHeroVar.GetNearbyEnemies(bot, 850)
+	local Allies = gHeroVar.GetNearbyAllies(bot, 850)
 	
 	local lowestHealthAlly = nil
 	local lowestManaAlly = nil
@@ -247,7 +247,7 @@ function UseTeamItems()
 
     if not bot:HasModifier("modifier_fountain_aura_buff") then
         local mekansm = utils.HaveItem(bot, "item_mekansm")
-        local Allies = bot:GetNearbyHeroes(900, false, BOT_MODE_NONE)
+        local Allies = gHeroVar.GetNearbyEnemies(bot, 900)
         if mekansm ~= nil and mekansm:IsFullyCastable() then
             if (bot:GetHealth()/bot:GetMaxHealth()) < 0.15 then
                 gHeroVar.HeroUseAbility(bot, mekansm)
@@ -472,7 +472,7 @@ function UseMidas()
     local bot = GetBot()
     local midas = utils.HaveItem(bot, "item_hand_of_midas")
     if midas ~= nil and midas:IsFullyCastable() then
-        local creeps = bot:GetNearbyCreeps(600, true)
+        local creeps = gHeroVar.GetNearbyEnemyCreeps(bot, 600)
         if #creeps > 1 then
             table.sort(creeps, function(n1, n2) return n1:GetHealth() > n2:GetHealth() end)
             bot:Action_UseAbilityOnEntity(midas, creeps[1])

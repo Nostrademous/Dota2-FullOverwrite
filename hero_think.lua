@@ -10,6 +10,8 @@ module( "hero_think", package.seeall )
 require( GetScriptDirectory().."/constants" )
 require( GetScriptDirectory().."/item_usage" )
 
+local roamMode = dofile( GetScriptDirectory().."/modes/roam" )
+
 local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
 local utils = require( GetScriptDirectory().."/utility" )
 
@@ -21,56 +23,49 @@ local function getHeroVar(var)
     return gHeroVar.GetVar(GetBot():GetPlayerID(), var)
 end
 
+local specialFile = nil
+local specialFileName = nil
+function tryHeroSpecialMode()
+    specialFile = dofile(specialFileName)
+end
+
 -- Consider incoming projectiles or nearby AOE and if we can evade.
 -- This is of highest importance b/c if we are stunned/disabled we 
 -- cannot do any of the other actions we might be asked to perform.
 function ConsiderEvading(bot)
-    local listProjectiles = GetLinearProjectiles()
-    local listAOEAreas = GetAvoidanceZones()
-    
-    -- NOTE: a projectile will be a table with { "location", "ability", "velocity", "radius" }
-    --for _, projectile in pairs(listProjectiles) do
-        --utils.myPrint("Ability: ", projectile.ability:GetName())
-        --utils.myPrint("Velocity: ", projectile.velocity)
-    --end
-    
-    -- NOTE: the tracking projectile will be a table with { "location", "ability", "is_dodgeable", "is_attack" }.
-    --local listTrackingProjectiles = bot:GetIncomingTrackingProjectiles()
-    --for _, projectile in pairs(listTrackingProjectiles) do
-    --    utils.myPrint("Tracking Ability: ", projectile.ability:GetName(), ", Dodgeable: ", projectile.is_dodgeable)
-    --end
-    
-    -- NOTE: an aoe will be table with { "location", "ability", "caster", "radius" }.
-    setHeroVar("nearbyAOEs", {})
-    for _, aoe in pairs(listAOEAreas) do
-        if aoe.caster:GetTeam() ~= GetTeam() then
-            utils.myPrint("Ability: ", aoe.ability:GetName())
-            table.insert(getHeroVar("nearbyAOEs"), aoe)
+    if bot.evasionMode ~= nil then
+        return bot.evasionMode:Desire(bot)
+    else
+        specialFileName = GetScriptDirectory().."/modes/evasion_"..utils.GetHeroName(bot)
+        if pcall(tryHeroSpecialMode) then
+            specialFileName = nil
+            bot.evasionMode = specialFile
+            return bot.evasionMode:Desire(bot)
+        else
+            specialFileName = nil
+            bot.evasionMode = dofile( GetScriptDirectory().."/modes/evasion" )
+            return bot.evasionMode:Desire(bot)
         end
     end
-    
-    local aoes = getHeroVar("nearbyAOEs")
-    if #aoes > 0 then
-        for _, aoe in pairs(aoes) do
-            if GetUnitToLocationDistance(bot, aoe.location) < aoe.radius then
-                return BOT_MODE_DESIRE_ABSOLUTE
-            end
-        end
-    end
-    
     return BOT_MODE_DESIRE_NONE
 end
 
 -- Fight orchestration is done at a global Team level.
 -- This just checks if we are given a fight target and a specific
 -- action queue to execute as part of the fight.
-function ConsiderAttacking(bot, nearbyEnemies, nearbyAllies, nearbyETowers, nearbyATowers, nearbyECreeps, nearbyACreeps)
-    local target = getHeroVar("Target")
-    if target and utils.ValidTarget(target) then
-        if #nearbyAllies >= 3 then
-            return BOT_MODE_DESIRE_HIGH
+function ConsiderAttacking(bot)
+    if bot.fightMode ~= nil then
+        return bot.fightMode:Desire(bot)
+    else
+        specialFileName = GetScriptDirectory().."/modes/fight_"..utils.GetHeroName(bot)
+        if pcall(tryHeroSpecialMode) then
+            specialFileName = nil
+            bot.fightMode = specialFile
+            return bot.fightMode:Desire(bot)
         else
-            return BOT_MODE_DESIRE_MODERATE
+            specialFileName = nil
+            bot.fightMode = dofile( GetScriptDirectory().."/modes/fight" )
+            return bot.fightMode:Desire(bot)
         end
     end
     
@@ -79,10 +74,11 @@ end
 
 -- Which Heroes should be present for Shrine heal is made at Team level.
 -- This just tells us if we should be part of this event.
-function ConsiderShrine(bot, playerAssignment, nearbyAllies)
+function ConsiderShrine(bot, playerAssignment)
     if bot:IsIllusion() then return BOT_MODE_DESIRE_NONE end
     
-     if playerAssignment[bot:GetPlayerID()].UseShrine ~= nil then
+    --[[
+    if playerAssignment[bot:GetPlayerID()].UseShrine ~= nil then
         local useShrine = playerAssignment[bot:GetPlayerID()].UseShrine
         local numAllies = 0
         for _, ally in pairs(nearbyAllies) do
@@ -92,11 +88,11 @@ function ConsiderShrine(bot, playerAssignment, nearbyAllies)
                 end
             end
         end
-        
+
         if not getHeroVar("Shrine") then
             setHeroVar("Shrine", useShrine.shrine)
         end
-        
+
         if numAllies == #useShrine.allies then
             setHeroVar("ShrineMode", {constants.SHRINE_USE, useShrine.allies})
             return BOT_MODE_DESIRE_ABSOLUTE
@@ -105,7 +101,8 @@ function ConsiderShrine(bot, playerAssignment, nearbyAllies)
             setHeroVar("ShrineMode", {constants.SHRINE_WAITING, useShrine.allies})
             return BOT_ACTION_DESIRE_VERYHIGH
         end
-     end
+    end
+    --]]
     
     return BOT_MODE_DESIRE_NONE
 end
@@ -115,109 +112,21 @@ end
 -- in a fight but win the over-all battle. If no Team Fight Assignment, 
 -- then it is up to the Hero to manage their safety from global and
 -- tower/creep damage.
-function ConsiderRetreating(bot, nearbyEnemies, nearbyETowers, nearbyAllies)
-
-    local MaxStun = 3   
-    for _, enemy in pairs(nearbyEnemies) do
-        if utils.NotNilOrDead(enemy) and enemy:GetHealth()/enemy:GetMaxHealth() > 0.25 then
-            if getHeroVar("HasEscape") then
-                MaxStun = MaxStun + enemy:GetStunDuration(true)
-            else
-                MaxStun = MaxStun + enemy:GetStunDuration(true) + 0.5*enemy:GetSlowDuration(true)
-            end
+function ConsiderRetreating(bot)
+    if bot.retreatMode ~= nil then
+        return bot.retreatMode:Desire(bot)
+    else
+        specialFileName = GetScriptDirectory().."/modes/retreat_"..utils.GetHeroName(bot)
+        if pcall(tryHeroSpecialMode) then
+            specialFileName = nil
+            bot.retreatMode = specialFile
+            return bot.retreatMode:Desire(bot)
+        else
+            specialFileName = nil
+            bot.retreatMode = dofile( GetScriptDirectory().."/modes/retreat" )
+            return bot.retreatMode:Desire(bot)
         end
     end
-    
-    local allyTime = 0
-    for _, ally in pairs(nearbyAllies) do
-        if GetUnitToUnitDistance(bot, ally) < 1000 then
-            allyTime = allyTime + ally:GetStunDuration(true) + 0.5*ally:GetSlowDuration(true)
-        end
-    end
-
-    local enemyDamage = 0
-    for _, enemy in pairs(nearbyEnemies) do
-        if utils.NotNilOrDead(enemy) and enemy:GetHealth()/enemy:GetMaxHealth() > 0.25 then
-            local pDamage = enemy:GetEstimatedDamageToTarget(true, bot, MaxStun - allyTime, DAMAGE_TYPE_PHYSICAL)
-            local mDamage = enemy:GetEstimatedDamageToTarget(true, bot, MaxStun - allyTime, DAMAGE_TYPE_MAGICAL)
-            enemyDamage = enemyDamage + pDamage + mDamage + enemy:GetEstimatedDamageToTarget(true, bot, MaxStun - allyTime, DAMAGE_TYPE_PURE)
-            --utils.myPrint("["..utils.GetHeroName(enemy).."]: Damage: ", enemyDamage)
-        end
-    end
-    
-    --utils.myPrint("ConsiderRetreat() :: MaxStun: ", MaxStun, ", Dmg: ", enemyDamage)
-
-    if enemyDamage > 0 and enemyDamage > bot:GetHealth() then
-        --utils.myPrint(" - Retreating - could die in perfect stun/slow overlap")
-        if bot:GetHealth()/bot:GetMaxHealth() < 0.75 then
-            setHeroVar("RetreatReason", constants.RETREAT_DANGER)
-            return BOT_MODE_DESIRE_HIGH
-        end
-    end
-    
-    if bot:GetHealth()/bot:GetMaxHealth() > 0.9 and bot:GetMana()/bot:GetMaxMana() > 0.5 then
-        if utils.IsTowerAttackingMe() then
-            setHeroVar("RetreatReason", constants.RETREAT_TOWER)
-            return BOT_MODE_DESIRE_HIGH 
-        end
-        return BOT_MODE_DESIRE_NONE
-    end
-
-    if bot:GetHealth()/bot:GetMaxHealth() > 0.65 and bot:GetMana()/bot:GetMaxMana() > 0.6 and 
-        GetUnitToLocationDistance(bot, GetLocationAlongLane(getHeroVar("CurLane"), 0)) > 6000 then
-        if utils.IsTowerAttackingMe() then
-            setHeroVar("RetreatReason", constants.RETREAT_TOWER)
-            return BOT_MODE_DESIRE_HIGH 
-        elseif utils.IsCreepAttackingMe() then
-            local pushing = getHeroVar("ShouldPush")
-            if not pushing then
-                setHeroVar("RetreatReason", constants.RETREAT_CREEP)
-                return BOT_MODE_DESIRE_LOW 
-            end
-        end
-        return BOT_MODE_DESIRE_NONE
-    end
-
-    if bot:GetHealth()/bot:GetMaxHealth() > 0.8 and bot:GetMana()/bot:GetMaxMana() > 0.36 and 
-        GetUnitToLocationDistance(bot, GetLocationAlongLane(getHeroVar("CurLane"), 0)) > 6000 then
-        if utils.IsTowerAttackingMe() then
-            setHeroVar("RetreatReason", constants.RETREAT_TOWER)
-            return BOT_MODE_DESIRE_HIGH
-        elseif utils.IsCreepAttackingMe() then
-            local pushing = getHeroVar("ShouldPush")
-            if not pushing then
-                setHeroVar("RetreatReason", constants.RETREAT_CREEP)
-                return BOT_MODE_DESIRE_LOW 
-            end
-        end
-        return BOT_MODE_DESIRE_NONE
-    end
-
-    local me = getHeroVar("Self")
-    if ((bot:GetHealth()/bot:GetMaxHealth()) < 0.33 and me:getCurrentMode() ~= constants.MODE_JUNGLING) or
-        (bot:GetMana()/bot:GetMaxMana() < 0.07 and me:getPrevMode() == constants.MODE_LANING and 
-        not utils.IsCore()) then
-        setHeroVar("RetreatReason", constants.RETREAT_FOUNTAIN)
-        return BOT_MODE_DESIRE_NONE 
-    end
-
-    if utils.IsTowerAttackingMe() then
-        if #nearbyETowers >= 1 then
-            local eTower = nearbyETowers[1]
-            if eTower:GetHealth()/eTower:GetMaxHealth() < 0.1 and not eTower:HasModifier("modifier_fountain_glyph") then
-                return BOT_MODE_DESIRE_NONE
-            end
-        end
-        setHeroVar("RetreatReason", constants.RETREAT_TOWER)
-        return BOT_MODE_DESIRE_LOW  
-    elseif utils.IsCreepAttackingMe() then
-        local pushing = getHeroVar("ShouldPush")
-        if not pushing then
-            setHeroVar("RetreatReason", constants.RETREAT_CREEP)
-            return BOT_MODE_DESIRE_LOW  
-        end
-    end
-
     return BOT_MODE_DESIRE_NONE
 end
 
@@ -225,41 +134,41 @@ end
 -- shopping at secret/side shop if we are informed that the courier
 -- will be unavailable to use for a certain period of time.
 function ConsiderSecretAndSideShop(bot)
-    if bot:IsIllusion() then return BOT_MODE_DESIRE_NONE end
-    
-    local me = getHeroVar("Self")
-    if me:getCurrentMode() == constants.MODE_SPECIALSHOP then
-        return me:getCurrentModeValue()
+    if bot.shopMode ~= nil then
+        return bot.shopMode:Desire(bot)
+    else
+        specialFileName = GetScriptDirectory().."/modes/shop_"..utils.GetHeroName(bot)
+        if pcall(tryHeroSpecialMode) then
+            specialFileName = nil
+            bot.shopMode = specialFile
+            return bot.shopMode:Desire(bot)
+        else
+            specialFileName = nil
+            bot.shopMode = dofile( GetScriptDirectory().."/modes/shop" )
+            return bot.shopMode:Desire(bot)
+        end
     end
-    
     return BOT_MODE_DESIRE_NONE
 end
 
 -- The decision is made at Team level. 
 -- This just checks if the Hero is part of the push, and if so, 
 -- what lane.
-function ConsiderPushingLane(bot, nearbyEnemies, nearbyETowers, nearbyECreeps, nearbyACreeps)
-    -- don't push for at least first 3 minutes
-    if DotaTime() < 3*60 then return BOT_MODE_DESIRE_NONE end
-
-    if getHeroVar("Role") == constants.ROLE_JUNGLER and DotaTime() < 10*60 then
-        return BOT_MODE_DESIRE_NONE
-    end
-    
-    -- this is hero-specific push-lane determination
-    if #nearbyETowers > 0 then
-        if ( nearbyETowers[1]:GetHealth() / nearbyETowers[1]:GetMaxHealth() ) < 0.1 and
-            not nearbyETowers[1]:HasModifier("modifier_fountain_glyph") then
-            return BOT_MODE_DESIRE_HIGH
+function ConsiderPushingLane(bot)
+    if bot.pushlaneMode ~= nil then
+        return bot.pushlaneMode:Desire(bot)
+    else
+        specialFileName = GetScriptDirectory().."/modes/pushlane_"..utils.GetHeroName(bot)
+        if pcall(tryHeroSpecialMode) then
+            specialFileName = nil
+            bot.pushlaneMode = specialFile
+            return bot.pushlaneMode:Desire(bot)
         else
-            return BOT_MODE_DESIRE_NONE
+            specialFileName = nil
+            bot.pushlaneMode = dofile( GetScriptDirectory().."/modes/pushlane" )
+            return bot.pushlaneMode:Desire(bot)
         end
     end
-
-    if #nearbyACreeps > 1 and #nearbyECreeps == 0 and #nearbyEnemies == 0 then
-        return BOT_MODE_DESIRE_MODERATE
-    end
-
     return BOT_MODE_DESIRE_NONE
 end
 
@@ -267,9 +176,19 @@ end
 -- This just checks if the Hero is part of the defense, and 
 -- where to go to defend if so.
 function ConsiderDefendingLane(bot)
-    local defInfo = getHeroVar("DoDefendLane")
-    if #defInfo > 0 then
-        return BOT_MODE_DESIRE_VERYHIGH
+    if bot.defendLane ~= nil then
+        return bot.defendLane:Desire(bot)
+    else
+        specialFileName = GetScriptDirectory().."/modes/defendlane_"..utils.GetHeroName(bot)
+        if pcall(tryHeroSpecialMode) then
+            specialFileName = nil
+            bot.defendLane = specialFile
+            return bot.defendLane:Desire(bot)
+        else
+            specialFileName = nil
+            bot.defendLane = dofile( GetScriptDirectory().."/modes/defendlane" )
+            return bot.defendLane:Desire(bot)
+        end
     end
     return BOT_MODE_DESIRE_NONE
 end
@@ -279,6 +198,20 @@ end
 -- Team level. If not a fight, then this is just a "buy my retreating
 -- friend some time to go heal up / retreat".
 function ConsiderDefendingAlly(bot)
+    if bot.defendAlly ~= nil then
+        return bot.defendAlly:Desire(bot)
+    else
+        specialFileName = GetScriptDirectory().."/modes/defendally_"..utils.GetHeroName(bot)
+        if pcall(tryHeroSpecialMode) then
+            specialFileName = nil
+            bot.defendAlly = specialFile
+            return bot.defendAlly:Desire(bot)
+        else
+            specialFileName = nil
+            bot.defendAlly = dofile( GetScriptDirectory().."/modes/defendally" )
+            return bot.defendAlly:Desire(bot)
+        end
+    end
     return BOT_MODE_DESIRE_NONE
 end
 
@@ -288,7 +221,20 @@ end
 function ConsiderRoam(bot)
     if getHeroVar("Role") == ROLE_ROAMER or 
         (getHeroVar("Role") == ROLE_JUNGLER and getHeroVar("Self"):IsReadyToGank(bot)) then
-        if ganking_generic.FindTarget(bot) then
+        
+        local roamTarget = getHeroVar("RoamTarget")
+        if roamTarget and not roamTarget:IsNull() then
+            local dist = GetUnitToUnitDistance(bot, roamTarget)
+        
+            local timeToIntercept = dist/bot:GetCurrentMovementSpeed()
+            local timeUntilEscaped = utils.TimeForEnemyToGetIntoTheirBase(roamTarget)
+                
+            if timeUntilEscaped <= timeToIntercept then
+                return BOT_MODE_DESIRE_HIGH
+            end
+        end
+        
+        if roamMode.FindTarget(bot) then
             return BOT_MODE_DESIRE_HIGH
         end
     end
@@ -300,15 +246,17 @@ end
 function ConsiderRune(bot, playerAssignment)
     if GetGameState() ~= GAME_STATE_GAME_IN_PROGRESS then return BOT_MODE_DESIRE_NONE end
     
-    if bot:IsIllusion() then return BOT_MODE_DESIRE_NONE end
-    
-    if playerAssignment[bot:GetPlayerID()].GetRune ~= nil then
-        local runeInfo = playerAssignment[bot:GetPlayerID()].GetRune
-        if runeInfo[1] == nil or GetRuneStatus(runeInfo[1]) == RUNE_STATUS_MISSING then
+    local playerRuneAssignment = playerAssignment[bot:GetPlayerID()].GetRune
+    if playerRuneAssignment ~= nil then
+        if playerRuneAssignment[1] == nil or GetRuneStatus(playerRuneAssignment[1]) == RUNE_STATUS_MISSING or
+            GetUnitToLocationDistance(bot, playerRuneAssignment[2]) > 3600 then
+            playerAssignment[bot:GetPlayerID()].GetRune = nil
+            setHeroVar("RuneTarget", nil)
+            setHeroVar("RuneLoc", nil)
             return BOT_MODE_DESIRE_NONE
         else
-            setHeroVar("RuneTarget", runeInfo[1])
-            setHeroVar("RuneLoc", runeInfo[2])
+            setHeroVar("RuneTarget", playerRuneAssignment[1])
+            setHeroVar("RuneLoc", playerRuneAssignment[2])
             return BOT_MODE_DESIRE_HIGH 
         end
     end
@@ -319,14 +267,39 @@ end
 -- The decision to Roshan is done in TeamThink().
 -- This just checks if this Hero should be part of the effort.
 function ConsiderRoshan(bot)
+    if bot.roshanMode ~= nil then
+        return bot.roshanMode:Desire(bot)
+    else
+        specialFileName = GetScriptDirectory().."/modes/roshan_"..utils.GetHeroName(bot)
+        if pcall(tryHeroSpecialMode) then
+            specialFileName = nil
+            bot.roshanMode = specialFile
+            return bot.roshanMode:Desire(bot)
+        else
+            specialFileName = nil
+            bot.roshanMode = dofile( GetScriptDirectory().."/modes/roshan" )
+            return bot.roshanMode:Desire(bot)
+        end
+    end
     return BOT_MODE_DESIRE_NONE
 end
 
 -- Farming assignments are made Team Wide.
 -- This just tells the Hero where he should Jungle.
 function ConsiderJungle(bot, playerAssignment)
-    if getHeroVar("Role") == constants.ROLE_JUNGLER then
-        return BOT_MODE_DESIRE_MODERATE
+    if bot.junglingMode ~= nil then
+        return bot.junglingMode:Desire(bot)
+    else
+        specialFileName = GetScriptDirectory().."/modes/jungling_"..utils.GetHeroName(bot)
+        if pcall(tryHeroSpecialMode) then
+            specialFileName = nil
+            bot.junglingMode = specialFile
+            return bot.junglingMode:Desire(bot)
+        else
+            specialFileName = nil
+            bot.junglingMode = dofile( GetScriptDirectory().."/modes/jungling" )
+            return bot.junglingMode:Desire(bot)
+        end
     end
     return BOT_MODE_DESIRE_NONE
 end
@@ -338,59 +311,41 @@ function ConsiderLaning(bot, playerAssignment)
     if playerAssignment[bot:GetPlayerID()].Lane ~= nil then
         setHeroVar("CurLane", playerAssignment[bot:GetPlayerID()].Lane)
     end
-    return BOT_MODE_DESIRE_VERYLOW 
+    
+    if bot.laningMode ~= nil then
+        return bot.laningMode:Desire(bot)
+    else
+        specialFileName = GetScriptDirectory().."/modes/laning_"..utils.GetHeroName(bot)
+        if pcall(tryHeroSpecialMode) then
+            specialFileName = nil
+            bot.laningMode = specialFile
+            return bot.laningMode:Desire(bot)
+        else
+            specialFileName = nil
+            bot.laningMode = dofile( GetScriptDirectory().."/modes/laning" )
+            return bot.laningMode:Desire(bot)
+        end
+    end
+    return BOT_MODE_DESIRE_NONE
 end
 
 -- Warding is done on a per-lane basis. This evaluates if this Hero
 -- should ward, and where. (might be a team wide thing later)
 function ConsiderWarding(bot, playerAssignment)
-    if bot:IsIllusion() then return BOT_MODE_DESIRE_NONE end
-    
-    local me = getHeroVar("Self")
-    
-    -- we need to lane first before we know where to ward properly
-    if me:getCurrentMode() ~= constants.MODE_LANING then return BOT_MODE_DESIRE_NONE end
-    
-    local WardCheckTimer = getHeroVar("WardCheckTimer")
-    local bCheck = true
-    local newTime = GameTime()
-    if WardCheckTimer then
-        bCheck, newTime = utils.TimePassed(WardCheckTimer, 1.0)
-    end
-    if bCheck then
-        setHeroVar("WardCheckTimer", newTime)
-        local ward = item_usage.HaveWard("item_ward_observer")
-        if ward then
-            local alliedMapWards = GetUnitList(UNIT_LIST_ALLIED_WARDS)
-            if #alliedMapWards < 2 then --FIXME: don't hardcode.. you get more wards then you can use this way
-                local wardLocs = utils.GetWardingSpot(getHeroVar("CurLane"))
-
-                if wardLocs == nil or #wardLocs == 0 then return BOT_MODE_DESIRE_NONE end
-
-                -- FIXME: Consider ward expiration time
-                local wardLoc = nil
-                for _, wl in ipairs(wardLocs) do
-                    local bGoodLoc = true
-                    for _, value in ipairs(alliedMapWards) do
-                        if utils.GetDistance(value:GetLocation(), wl) < 1600 then
-                            bGoodLoc = false
-                        end
-                    end
-                    if bGoodLoc then
-                        wardLoc = wl
-                        break
-                    end
-                end
-
-                if wardLoc ~= nil and utils.EnemiesNearLocation(bot, wardLoc, 2000) < 2 then
-                    setHeroVar("WardLocation", wardLoc)
-                    utils.InitPath()
-                    return BOT_MODE_DESIRE_LOW 
-                end
-            end
+    if bot.wardMode ~= nil then
+        return bot.wardMode:Desire(bot)
+    else
+        specialFileName = GetScriptDirectory().."/modes/ward_"..utils.GetHeroName(bot)
+        if pcall(tryHeroSpecialMode) then
+            specialFileName = nil
+            bot.wardMode = specialFile
+            return bot.wardMode:Desire(bot)
+        else
+            specialFileName = nil
+            bot.wardMode = dofile( GetScriptDirectory().."/modes/ward" )
+            return bot.wardMode:Desire(bot)
         end
     end
-    
     return BOT_MODE_DESIRE_NONE
 end
 

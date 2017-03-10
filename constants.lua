@@ -157,7 +157,10 @@ RuneSpots = {
 -------------------------------------------------------------------------------
 -- SHOPS
 -------------------------------------------------------------------------------
-SHOP_USE_DISTANCE = 200
+SHOP_USE_DISTANCE   = 200
+SHOP_TYPE_NONE      = 0
+SHOP_TYPE_SECRET    = 1
+SHOP_TYPE_SIDE      = 2
 SIDE_SHOP_TOP = Vector(-7220, 4430)
 SIDE_SHOP_BOT = Vector(7249, -4113)
 SECRET_SHOP_RADIANT = Vector(-4472, 1328)

@@ -9,7 +9,7 @@ require( GetScriptDirectory().."/buildings_status" )
 require( GetScriptDirectory().."/item_usage" )
 require( GetScriptDirectory().."/debugging" )
 
-local none = dofile( GetScriptDirectory().."/modes/none" )
+none = dofile( GetScriptDirectory().."/modes/none" )
 
 local utils = require( GetScriptDirectory().."/utility" )
 local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
@@ -63,6 +63,7 @@ end
 function X:ClearMode()
     self.currentMode = none
     self.currentModeValue = BOT_MODE_DESIRE_NONE
+    self:ExecuteMode()
 end
 
 -------------------------------------------------------------------------------
@@ -182,6 +183,13 @@ function X:Think(bot)
     -- update our building information
     buildings_status.Update()
     
+    -- consider using abilities
+    local bAbilityQueued = self:getHeroVar("AbilityUsageClass"):AbilityUsageThink(bot)
+    if bAbilityQueued then return end
+
+    -- consider using items
+    if item_usage.UseItems() then return end
+    
     -- do out Thinking and set our Mode
     local highestDesiredMode, highestDesiredValue = think.MainThink()
     self:BeginMode(highestDesiredMode, highestDesiredValue)
@@ -189,13 +197,6 @@ function X:Think(bot)
     
     -- consider purchasing items
     self:getHeroVar("ItemPurchaseClass"):ItemPurchaseThink(bot)
-    
-    -- consider using abilities
-    local bAbilityQueued = self:getHeroVar("AbilityUsageClass"):AbilityUsageThink(bot)
-    if bAbilityQueued then return end
-
-    -- consider using items
-    if item_usage.UseItems() then return end
 end
 
 -------------------------------------------------------------------------------
@@ -204,6 +205,7 @@ end
 
 function X:DoWhileDead(bot)
     self:ClearMode()
+    bot:Action_ClearActions(true)
 
     utils.MoveItemsFromStashToInventory(bot)
     local bb = self:ConsiderBuyback(bot)

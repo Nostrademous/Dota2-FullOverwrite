@@ -60,7 +60,7 @@ function X:Desire(bot)
         return BOT_MODE_DESIRE_NONE
     end
     
-    local nearbyEnemies = gHeroVar.GetNearbyEnemies(bot, bot:GetCurrentVisionRange())
+    local nearbyEnemies = gHeroVar.GetNearbyEnemies(bot, Min(1600, bot:GetCurrentVisionRange()))
     if #nearbyEnemies > 0 then
         return BOT_MODE_DESIRE_NONE
     end

@@ -33,29 +33,40 @@ end
 -- This is of highest importance b/c if we are stunned/disabled we 
 -- cannot do any of the other actions we might be asked to perform.
 function ConsiderEvading(bot)
-    specialFileName = GetScriptDirectory().."/modes/evasion_"..utils.GetHeroName(bot)
-    if pcall(tryHeroSpecialMode) then
-        specialFileName = nil
-        return specialFile:Desire(bot)
+    if bot.evasionMode ~= nil then
+        return bot.evasionMode:Desire(bot)
     else
-        specialFileName = nil
-        local evasionMode = dofile( GetScriptDirectory().."/modes/evasion" )
-        return evasionMode:Desire(bot)
+        specialFileName = GetScriptDirectory().."/modes/evasion_"..utils.GetHeroName(bot)
+        if pcall(tryHeroSpecialMode) then
+            specialFileName = nil
+            bot.evasionMode = specialFile
+            return bot.evasionMode:Desire(bot)
+        else
+            specialFileName = nil
+            bot.evasionMode = dofile( GetScriptDirectory().."/modes/evasion" )
+            return bot.evasionMode:Desire(bot)
+        end
     end
+    return BOT_MODE_DESIRE_NONE
 end
 
 -- Fight orchestration is done at a global Team level.
 -- This just checks if we are given a fight target and a specific
 -- action queue to execute as part of the fight.
 function ConsiderAttacking(bot)
-    specialFileName = GetScriptDirectory().."/modes/fight_"..utils.GetHeroName(bot)
-    if pcall(tryHeroSpecialMode) then
-        specialFileName = nil
-        return specialFile:Desire(bot)
+    if bot.fightMode ~= nil then
+        return bot.fightMode:Desire(bot)
     else
-        specialFileName = nil
-        local fightMode = dofile( GetScriptDirectory().."/modes/fight" )
-        return fightMode:Desire(bot)
+        specialFileName = GetScriptDirectory().."/modes/fight_"..utils.GetHeroName(bot)
+        if pcall(tryHeroSpecialMode) then
+            specialFileName = nil
+            bot.fightMode = specialFile
+            return bot.fightMode:Desire(bot)
+        else
+            specialFileName = nil
+            bot.fightMode = dofile( GetScriptDirectory().."/modes/fight" )
+            return bot.fightMode:Desire(bot)
+        end
     end
     
     return BOT_MODE_DESIRE_NONE
@@ -102,60 +113,84 @@ end
 -- then it is up to the Hero to manage their safety from global and
 -- tower/creep damage.
 function ConsiderRetreating(bot)
-    specialFileName = GetScriptDirectory().."/modes/retreat_"..utils.GetHeroName(bot)
-    if pcall(tryHeroSpecialMode) then
-        specialFileName = nil
-        return specialFile:Desire(bot)
+    if bot.retreatMode ~= nil then
+        return bot.retreatMode:Desire(bot)
     else
-        specialFileName = nil
-        local retreatMode = dofile( GetScriptDirectory().."/modes/retreat" )
-        return retreatMode:Desire(bot)
+        specialFileName = GetScriptDirectory().."/modes/retreat_"..utils.GetHeroName(bot)
+        if pcall(tryHeroSpecialMode) then
+            specialFileName = nil
+            bot.retreatMode = specialFile
+            return bot.retreatMode:Desire(bot)
+        else
+            specialFileName = nil
+            bot.retreatMode = dofile( GetScriptDirectory().."/modes/retreat" )
+            return bot.retreatMode:Desire(bot)
+        end
     end
+    return BOT_MODE_DESIRE_NONE
 end
 
 -- Courier usage is done at Team wide level. We can do our own 
 -- shopping at secret/side shop if we are informed that the courier
 -- will be unavailable to use for a certain period of time.
 function ConsiderSecretAndSideShop(bot)
-    specialFileName = GetScriptDirectory().."/modes/shop_"..utils.GetHeroName(bot)
-    if pcall(tryHeroSpecialMode) then
-        specialFileName = nil
-        return specialFile:Desire(bot)
+    if bot.shopMode ~= nil then
+        return bot.shopMode:Desire(bot)
     else
-        specialFileName = nil
-        local shopMode = dofile( GetScriptDirectory().."/modes/shop" )
-        return shopMode:Desire(bot)
+        specialFileName = GetScriptDirectory().."/modes/shop_"..utils.GetHeroName(bot)
+        if pcall(tryHeroSpecialMode) then
+            specialFileName = nil
+            bot.shopMode = specialFile
+            return bot.shopMode:Desire(bot)
+        else
+            specialFileName = nil
+            bot.shopMode = dofile( GetScriptDirectory().."/modes/shop" )
+            return bot.shopMode:Desire(bot)
+        end
     end
+    return BOT_MODE_DESIRE_NONE
 end
 
 -- The decision is made at Team level. 
 -- This just checks if the Hero is part of the push, and if so, 
 -- what lane.
 function ConsiderPushingLane(bot)
-    specialFileName = GetScriptDirectory().."/modes/pushlane_"..utils.GetHeroName(bot)
-    if pcall(tryHeroSpecialMode) then
-        specialFileName = nil
-        return specialFile:Desire(bot)
+    if bot.pushlaneMode ~= nil then
+        return bot.pushlaneMode:Desire(bot)
     else
-        specialFileName = nil
-        local pushlaneMode = dofile( GetScriptDirectory().."/modes/pushlane" )
-        return pushlaneMode:Desire(bot)
+        specialFileName = GetScriptDirectory().."/modes/pushlane_"..utils.GetHeroName(bot)
+        if pcall(tryHeroSpecialMode) then
+            specialFileName = nil
+            bot.pushlaneMode = specialFile
+            return bot.pushlaneMode:Desire(bot)
+        else
+            specialFileName = nil
+            bot.pushlaneMode = dofile( GetScriptDirectory().."/modes/pushlane" )
+            return bot.pushlaneMode:Desire(bot)
+        end
     end
+    return BOT_MODE_DESIRE_NONE
 end
 
 -- The decision is made at Team level.
 -- This just checks if the Hero is part of the defense, and 
 -- where to go to defend if so.
 function ConsiderDefendingLane(bot)
-    specialFileName = GetScriptDirectory().."/modes/defendlane_"..utils.GetHeroName(bot)
-    if pcall(tryHeroSpecialMode) then
-        specialFileName = nil
-        return specialFile:Desire(bot)
+    if bot.defendLane ~= nil then
+        return bot.defendLane:Desire(bot)
     else
-        specialFileName = nil
-        local defendLane = dofile( GetScriptDirectory().."/modes/defendlane" )
-        return defendLane:Desire(bot)
+        specialFileName = GetScriptDirectory().."/modes/defendlane_"..utils.GetHeroName(bot)
+        if pcall(tryHeroSpecialMode) then
+            specialFileName = nil
+            bot.defendLane = specialFile
+            return bot.defendLane:Desire(bot)
+        else
+            specialFileName = nil
+            bot.defendLane = dofile( GetScriptDirectory().."/modes/defendlane" )
+            return bot.defendLane:Desire(bot)
+        end
     end
+    return BOT_MODE_DESIRE_NONE
 end
 
 -- This is a localized lane decision. An ally defense can turn into an 
@@ -163,15 +198,21 @@ end
 -- Team level. If not a fight, then this is just a "buy my retreating
 -- friend some time to go heal up / retreat".
 function ConsiderDefendingAlly(bot)
-    specialFileName = GetScriptDirectory().."/modes/defendally_"..utils.GetHeroName(bot)
-    if pcall(tryHeroSpecialMode) then
-        specialFileName = nil
-        return specialFile:Desire(bot)
+    if bot.defendAlly ~= nil then
+        return bot.defendAlly:Desire(bot)
     else
-        specialFileName = nil
-        local defendAlly = dofile( GetScriptDirectory().."/modes/defendally" )
-        return defendAlly:Desire(bot)
+        specialFileName = GetScriptDirectory().."/modes/defendally_"..utils.GetHeroName(bot)
+        if pcall(tryHeroSpecialMode) then
+            specialFileName = nil
+            bot.defendAlly = specialFile
+            return bot.defendAlly:Desire(bot)
+        else
+            specialFileName = nil
+            bot.defendAlly = dofile( GetScriptDirectory().."/modes/defendally" )
+            return bot.defendAlly:Desire(bot)
+        end
     end
+    return BOT_MODE_DESIRE_NONE
 end
 
 -- Roaming decision are made at the Team level to keep all relevant
@@ -226,29 +267,41 @@ end
 -- The decision to Roshan is done in TeamThink().
 -- This just checks if this Hero should be part of the effort.
 function ConsiderRoshan(bot)
-    specialFileName = GetScriptDirectory().."/modes/roshan_"..utils.GetHeroName(bot)
-    if pcall(tryHeroSpecialMode) then
-        specialFileName = nil
-        return specialFile:Desire(bot)
+    if bot.roshanMode ~= nil then
+        return bot.roshanMode:Desire(bot)
     else
-        specialFileName = nil
-        local roshanMode = dofile( GetScriptDirectory().."/modes/roshan" )
-        return roshanMode:Desire(bot)
+        specialFileName = GetScriptDirectory().."/modes/roshan_"..utils.GetHeroName(bot)
+        if pcall(tryHeroSpecialMode) then
+            specialFileName = nil
+            bot.roshanMode = specialFile
+            return bot.roshanMode:Desire(bot)
+        else
+            specialFileName = nil
+            bot.roshanMode = dofile( GetScriptDirectory().."/modes/roshan" )
+            return bot.roshanMode:Desire(bot)
+        end
     end
+    return BOT_MODE_DESIRE_NONE
 end
 
 -- Farming assignments are made Team Wide.
 -- This just tells the Hero where he should Jungle.
 function ConsiderJungle(bot, playerAssignment)
-    specialFileName = GetScriptDirectory().."/modes/jungling_"..utils.GetHeroName(bot)
-    if pcall(tryHeroSpecialMode) then
-        specialFileName = nil
-        return specialFile:Desire(bot)
+    if bot.junglingMode ~= nil then
+        return bot.junglingMode:Desire(bot)
     else
-        specialFileName = nil
-        local junglingMode = dofile( GetScriptDirectory().."/modes/jungling" )
-        return junglingMode:Desire(bot)
+        specialFileName = GetScriptDirectory().."/modes/jungling_"..utils.GetHeroName(bot)
+        if pcall(tryHeroSpecialMode) then
+            specialFileName = nil
+            bot.junglingMode = specialFile
+            return bot.junglingMode:Desire(bot)
+        else
+            specialFileName = nil
+            bot.junglingMode = dofile( GetScriptDirectory().."/modes/jungling" )
+            return bot.junglingMode:Desire(bot)
+        end
     end
+    return BOT_MODE_DESIRE_NONE
 end
 
 -- Laning assignments are made Team Wide for Pushing & Defending.
@@ -259,29 +312,41 @@ function ConsiderLaning(bot, playerAssignment)
         setHeroVar("CurLane", playerAssignment[bot:GetPlayerID()].Lane)
     end
     
-    specialFileName = GetScriptDirectory().."/modes/laning_"..utils.GetHeroName(bot)
-    if pcall(tryHeroSpecialMode) then
-        specialFileName = nil
-        return specialFile:Desire(bot)
+    if bot.laningMode ~= nil then
+        return bot.laningMode:Desire(bot)
     else
-        specialFileName = nil
-        local laningMode = dofile( GetScriptDirectory().."/modes/laning" )
-        return laningMode:Desire(bot)
+        specialFileName = GetScriptDirectory().."/modes/laning_"..utils.GetHeroName(bot)
+        if pcall(tryHeroSpecialMode) then
+            specialFileName = nil
+            bot.laningMode = specialFile
+            return bot.laningMode:Desire(bot)
+        else
+            specialFileName = nil
+            bot.laningMode = dofile( GetScriptDirectory().."/modes/laning" )
+            return bot.laningMode:Desire(bot)
+        end
     end
+    return BOT_MODE_DESIRE_NONE
 end
 
 -- Warding is done on a per-lane basis. This evaluates if this Hero
 -- should ward, and where. (might be a team wide thing later)
 function ConsiderWarding(bot, playerAssignment)
-    specialFileName = GetScriptDirectory().."/modes/ward_"..utils.GetHeroName(bot)
-    if pcall(tryHeroSpecialMode) then
-        specialFileName = nil
-        return specialFile:Desire(bot)
+    if bot.wardMode ~= nil then
+        return bot.wardMode:Desire(bot)
     else
-        specialFileName = nil
-        local wardMode = dofile( GetScriptDirectory().."/modes/ward" )
-        return wardMode:Desire(bot)
+        specialFileName = GetScriptDirectory().."/modes/ward_"..utils.GetHeroName(bot)
+        if pcall(tryHeroSpecialMode) then
+            specialFileName = nil
+            bot.wardMode = specialFile
+            return bot.wardMode:Desire(bot)
+        else
+            specialFileName = nil
+            bot.wardMode = dofile( GetScriptDirectory().."/modes/ward" )
+            return bot.wardMode:Desire(bot)
+        end
     end
+    return BOT_MODE_DESIRE_NONE
 end
 
 for k,v in pairs( hero_think ) do _G._savedEnv[k] = v end

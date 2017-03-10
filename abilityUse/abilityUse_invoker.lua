@@ -174,9 +174,7 @@ end
 
 function invAbility:AbilityUsageThink(bot)    
     -- Check if we're already using an ability
-    if bot:IsCastingAbility() or bot:IsChanneling() or bot:NumQueuedActions() > 0 then
-        return true 
-    end
+    if utils.IsBusy(bot) then return true end
 
     if abilityQ == "" then abilityQ = bot:GetAbilityByName( "invoker_quas" ) end
     if abilityW == "" then abilityW = bot:GetAbilityByName( "invoker_wex" ) end
@@ -193,9 +191,9 @@ function invAbility:AbilityUsageThink(bot)
     if abilitySS == "" then abilitySS = bot:GetAbilityByName( "invoker_sun_strike" ) end
     if abilityFS == "" then abilityFS = bot:GetAbilityByName( "invoker_forge_spirit" ) end
     
-    local nearbyEnemyHeroes = bot:GetNearbyHeroes(1200, true, BOT_MODE_NONE)
-    local nearbyEnemyCreep  = bot:GetNearbyCreeps(1200, true)
-    local nearbyEnemyTowers = bot:GetNearbyTowers(750, true)
+    local nearbyEnemyHeroes = gHeroVar.GetNearbyEnemies(bot, 1200)
+    local nearbyEnemyCreep  = gHeroVar.GetNearbyEnemyCreep(bot, 1200)
+    local nearbyEnemyTowers = gHeroVar.GetNearbyEnemyTowers(bot, 750)
 
     --[[
     if abilityQ:GetLevel() >= 3 then
@@ -750,7 +748,7 @@ function ConsiderTornado(bot)
     --------------------------------------
 
     -- Check for a channeling enemy
-    local nearbyEnemyHeroes = gHeroVar.GetNearbyEnemies(bot, nCastRange + nDistance/2.0)
+    local nearbyEnemyHeroes = gHeroVar.GetNearbyEnemies(bot, Min(1600, nCastRange + nDistance/2.0))
     
     for _, npcEnemy in pairs( nearbyEnemyHeroes ) do
         if npcEnemy:IsChanneling() then
@@ -876,7 +874,7 @@ function ConsiderChaosMeteor(bot)
     --------------------------------------
     
     --------- TEAM FIGHT -----------------------------
-    local nearbyEnemyHeroes = gHeroVar.GetNearbyEnemies(bot, nCastRange)
+    local nearbyEnemyHeroes = gHeroVar.GetNearbyEnemies(bot, Min(1600, nCastRange))
     if #nearbyEnemyHeroes >= 2 then
         local locationAoE = bot:FindAoELocation( true, true, bot:GetLocation(), nCastRange, nTravelDistance, nDelay, 0 )
         if locationAoE.count >= 2 then
@@ -971,7 +969,7 @@ function ConsiderDeafeningBlast(bot)
     --------------------------------------
     
     --------- TEAM FIGHT -----------------------------
-    local nearbyEnemyHeroes = gHeroVar.GetNearbyEnemies(bot, nCastRange)
+    local nearbyEnemyHeroes = gHeroVar.GetNearbyEnemies(bot, Min(1600, nCastRange))
     if #nearbyEnemyHeroes >= 2 then
         local locationAoE = bot:FindAoELocation( true, true, bot:GetLocation(), nCastRange, nRadius, 0, 0 )
         if locationAoE.count >= 2 then
@@ -1013,7 +1011,7 @@ function ConsiderEMP(bot)
     --------------------------------------
     
     --------- TEAM FIGHT -----------------------------
-    local nearbyEnemyHeroes = gHeroVar.GetNearbyEnemies(bot, nCastRange + nRadius)
+    local nearbyEnemyHeroes = gHeroVar.GetNearbyEnemies(bot, Min(1600, nCastRange + nRadius))
     if #nearbyEnemyHeroes >= 3 then
         local locationAoE = bot:FindAoELocation( true, true, bot:GetLocation(), nCastRange, nRadius, 2.95 + getHeroVar("AbilityDelay"), 0 )
         if locationAoE.count >= 3 then
@@ -1106,7 +1104,7 @@ function ConsiderColdSnap(bot)
     --------------------------------------
 
     -- Check for a channeling enemy
-    local nearbyEnemyHeroes = gHeroVar.GetNearbyEnemies(bot, nCastRange)
+    local nearbyEnemyHeroes = gHeroVar.GetNearbyEnemies(bot, Min(1600, nCastRange))
     for _, npcEnemy in pairs( nearbyEnemyHeroes ) do
         if npcEnemy:IsChanneling() then
             if abilityTO:IsFullyCastable() and not abilityTO:IsHidden() then

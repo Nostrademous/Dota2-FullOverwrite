@@ -68,13 +68,13 @@ local function Moving(bot)
     local dest = GetLocationAlongLane(CurLane, Min(1.0, frontier))
     gHeroVar.HeroMoveToLocation(bot, dest)
 
-    if #getHeroVar("NearbyEnemyCreep") > 0 then
+    if #gHeroVar.GetNearbyEnemyCreep(bot, 1200) > 0 then
         LaningState = LaningStates.MovingToPos
     end
 end
 
 local function MovingToPos(bot)
-    local listAlliedCreep = getHeroVar("NearbyAlliedCreep")
+    local listAlliedCreep = gHeroVar.GetNearbyAlliedCreep(bot, 1200)
     -- if we are attacked by tower, drop aggro
     if utils.IsTowerAttackingMe() and #listAlliedCreep > 0 then
         if utils.DropTowerAggro(bot, listAlliedCreep) then
@@ -82,14 +82,14 @@ local function MovingToPos(bot)
         end
     -- else move away
     elseif utils.IsTowerAttackingMe() then
-        local listEnemyTowers = getHeroVar("NearbyEnemyTowers")
+        local listEnemyTowers = gHeroVar.GetNearbyEnemyTowers(bot, 1200)
         local dist = GetUnitToUnitDistance(bot, listEnemyTowers[1])
         gHeroVar.HeroMoveToLocation(bot, utils.VectorAway(bot:GetLocation(), listEnemyTowers[1]:GetLocation(), 710-dist))
         return
     end
 
     -- if we are close to tower, don't get into tower range
-    local listEnemyTowers = bot:GetNearbyTowers(710, true)
+    local listEnemyTowers = gHeroVar.GetNearbyEnemyTowers(bot, 710)
     if #listEnemyTowers > 0 then
         local dist = GetUnitToUnitDistance(bot, listEnemyTowers[1])
         if dist < 710 then
@@ -101,7 +101,7 @@ local function MovingToPos(bot)
 
     local bNeedToGoHigher = false
     local higherDest = nil
-    local listEnemyCreep = bot:GetNearbyCreeps(1200, true)
+    local listEnemyCreep = gHeroVar.GetNearbyEnemyCreep(bot, 1200)
     for _, eCreep in ipairs(listEnemyCreep) do
         if eCreep:GetHealth()/eCreep:GetMaxHealth() <= 0.5 and utils.GetHeightDiff(bot, eCreep) < 0 then
             bNeedToGoHigher = true
@@ -130,7 +130,7 @@ local function MovingToPos(bot)
 end
 
 local function DenyNearbyCreeps(bot)
-    local listAlliedCreep = getHeroVar("NearbyAlliedCreep")
+    local listAlliedCreep = gHeroVar.GetNearbyAlliedCreep(bot, 1200)
     if #listAlliedCreep == 0 then
         return false
     end
@@ -177,7 +177,7 @@ local function DenyNearbyCreeps(bot)
     -- try to keep lane equilibrium
     if WeakestCreep ~= nil then
         local healthRatio = WeakestCreep:GetHealth()/WeakestCreep:GetMaxHealth()
-        if healthRatio < 0.5 and WeakestCreepHealth > 2.5*damage and #listAlliedCreep >= #getHeroVar("NearbyEnemyCreep") then
+        if healthRatio < 0.5 and WeakestCreepHealth > 2.5*damage and #listAlliedCreep >= #gHeroVar.GetNearbyEnemyCreep(bot, 1200) then
             gHeroVar.HeroAttackUnit(bot, WeakestCreep, true)
         end
     end
@@ -207,7 +207,7 @@ local function PushCS(bot, WeakestCreep, nAc, damage, AS)
 end
 
 local function CSing(bot)
-    local listAlliedCreep = getHeroVar("NearbyAlliedCreep")
+    local listAlliedCreep = gHeroVar.GetNearbyAlliedCreep(bot, 1200)
     if #listAlliedCreep == 0 then
         if not ShouldPush then
             LaningState = LaningStates.Moving
@@ -215,13 +215,13 @@ local function CSing(bot)
         end
     end
 
-    local listEnemyCreep = getHeroVar("NearbyEnemyCreep")
+    local listEnemyCreep = gHeroVar.GetNearbyEnemyCreep(bot, 1200)
     if #listEnemyCreep == 0 then
         LaningState = LaningStates.Moving
         return
     end
     
-    local listEnemyTowers = getHeroVar("NearbyEnemyTowers")
+    local listEnemyTowers = gHeroVar.GetNearbyEnemyTowers(bot, 1200)
     if #listEnemyTowers > 0 then
         local dist = GetUnitToUnitDistance(bot, listEnemyTowers[1])
         if dist > 750 then
@@ -429,8 +429,8 @@ local function LoadLaningData(bot)
         LaningState = LaningStates.Moving
     end
 
-    listEnemies = getHeroVar("NearbyEnemies")
-    listAllies  = getHeroVar("NearbyAllies")
+    listEnemies = gHeroVar.GetNearbyEnemies(bot, 1200)
+    listAllies  = gHeroVar.GetNearbyAllies(bot, 1200)
 end
 
 local function SaveLaningData()

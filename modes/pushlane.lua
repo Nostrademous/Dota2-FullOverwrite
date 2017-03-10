@@ -52,7 +52,7 @@ function X:Think(bot)
     local frontier = Min(1.0, enemyFrontier)
     local dest = GetLocationAlongLane(getHeroVar("CurLane"), Min(1.0, frontier))
     
-    local nearbyAlliedCreep = getHeroVar("NearbyAlliedCreep")
+    local nearbyAlliedCreep = gHeroVar.GetNearbyEnemyCreep(bot, 900)
     if utils.IsTowerAttackingMe() and #nearbyAlliedCreep > 0 then
         if utils.DropTowerAggro(bot, nearbyAlliedCreep) then return end
     end
@@ -62,7 +62,7 @@ function X:Think(bot)
         gHeroVar.HeroAttackUnit(bot, Towers[1], false)
     end
     
-    local nearbyEnemyCreep = getHeroVar("NearbyEnemyCreep")
+    local nearbyEnemyCreep = gHeroVar.GetNearbyEnemyCreep(bot, 1200)
     if #nearbyEnemyCreep > 0 then
         if #nearbyAlliedCreep > 0 then
             if #Towers > 0 then
@@ -142,12 +142,12 @@ function X:Desire(bot)
             return BOT_MODE_DESIRE_HIGH
         end
         
-        if utils.IsTowerAttackingMe() and #getHeroVar("NearbyAlliedCreep") == 0 then
+        if utils.IsTowerAttackingMe() and #gHeroVar.GetNearbyAlliedCreep(bot, 1000) == 0 then
             return BOT_MODE_DESIRE_NONE
         end
     end
 
-    if #getHeroVar("NearbyAlliedCreep") > 1 and #getHeroVar("NearbyEnemyCreep") == 0 then
+    if #gHeroVar.GetNearbyAlliedCreep(bot, 1000) > 1 and #gHeroVar.GetNearbyEnemyCreep(bot, 1200) == 0 then
         return BOT_MODE_DESIRE_MODERATE
     end
     

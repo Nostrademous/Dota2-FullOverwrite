@@ -189,13 +189,6 @@ function X.HeroThink()
         return highestDesireMode, highestDesireValue
     end
     
-    setHeroVar("NearbyEnemies", bot:GetNearbyHeroes(1200, true, BOT_MODE_NONE))
-    setHeroVar("NearbyAllies", bot:GetNearbyHeroes(1200, false, BOT_MODE_NONE))
-    setHeroVar("NearbyEnemyCreep", bot:GetNearbyCreeps(1200, true))
-    setHeroVar("NearbyAlliedCreep", bot:GetNearbyCreeps(1200, false))
-    setHeroVar("NearbyEnemyTowers", bot:GetNearbyTowers(1200, true))
-    setHeroVar("NearbyAlliedTowers", bot:GetNearbyTowers(1200, false))
-    
     -- Fight orchestration is done at a global Team level.
     -- This just checks if we are given a fight target and a specific
     -- action queue to execute as part of the fight.

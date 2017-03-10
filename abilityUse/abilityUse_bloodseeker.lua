@@ -167,10 +167,9 @@ local function UseQ(bot)
 end
 
 function bsAbility:AbilityUsageThink(bot)
-    -- Check if we're already using an ability
-    if bot:IsCastingAbility() or bot:IsChanneling() or bot:NumQueuedActions() > 0 then
-        return true 
-    end
+    if utils.IsBusy(bot) then return true end
+    
+    if getHeroVar("IsRetreating") then return true end
     
     if abilityQ == "" then abilityQ = bot:GetAbilityByName( Abilities[1] ) end
     if abilityW == "" then abilityW = bot:GetAbilityByName( Abilities[2] ) end
@@ -182,7 +181,7 @@ function bsAbility:AbilityUsageThink(bot)
 
     if UseQ(bot) then return end
     
-    local nearbyEnemyHeroes = bot:GetNearbyHeroes(1600, true, BOT_MODE_NONE)
+    local nearbyEnemyHeroes = gHeroVar.GetNearbyEnemies(bot, 1600)
     if not bsTarget then
         if #nearbyEnemyHeroes == 0 then return end
         

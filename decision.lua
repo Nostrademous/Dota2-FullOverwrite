@@ -183,17 +183,21 @@ function X:Think(bot)
     -- update our building information
     buildings_status.Update()
     
+    -- consider using items
+    if not utils.IsBusy(bot) then
+        if item_usage.UseItems() then return end
+    end
+    
     -- do out Thinking and set our Mode
     local highestDesiredMode, highestDesiredValue = think.MainThink()
     self:BeginMode(highestDesiredMode, highestDesiredValue)
     self:ExecuteMode()
     
     -- consider using abilities
-    local bAbilityQueued = self:getHeroVar("AbilityUsageClass"):AbilityUsageThink(bot)
-    if bAbilityQueued then return end
-
-    -- consider using items
-    if item_usage.UseItems() then return end
+    if not utils.IsBusy(bot) then
+        local bAbilityQueued = self:getHeroVar("AbilityUsageClass"):AbilityUsageThink(bot)
+        if bAbilityQueued then return end
+    end
     
     -- consider purchasing items
     self:getHeroVar("ItemPurchaseClass"):ItemPurchaseThink(bot)

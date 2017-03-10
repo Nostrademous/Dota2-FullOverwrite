@@ -4,12 +4,10 @@
 -------------------------------------------------------------------------------
 ---[[
 
-require( GetScriptDirectory().."/abilityUse/abilityUse_invoker" )
-
 local utils = require( GetScriptDirectory().."/utility" )
 local dt = require( GetScriptDirectory().."/decision" )
 local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
-
+local ability = require( GetScriptDirectory().."/abilityUse/abilityUse_invoker" )
 
 function setHeroVar(var, value)
     local bot = GetBot()
@@ -55,15 +53,15 @@ end
 local invBot = botInv:new{abilityPriority = AbilityPriority}
 
 function invBot:ConsiderAbilityUse()
-    return abilityUse_invoker.AbilityUsageThink(GetBot())
+    return ability.AbilityUsageThink(GetBot())
 end
 
 function invBot:GetNukeDamage(bot, target)
-    return abilityUse_invoker.nukeDamage( bot, target )
+    return ability.nukeDamage( bot, target )
 end
 
 function invBot:QueueNuke(bot, target, actionQueue, engageDist)
-    return abilityUse_invoker.queueNuke( bot, target, actionQueue, engageDist )
+    return ability.queueNuke( bot, target, actionQueue, engageDist )
 end
 
 function invBot:DoHeroSpecificInit(bot)

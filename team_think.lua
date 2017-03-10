@@ -49,6 +49,7 @@ end
 -- Team items like Tome of Knowledge, Wards, Dust/Sentry, and
 -- even stuff like picking up Gem, Aegis, Cheese, etc.
 function ConsiderTeamWideItemAcquisition(playerAssignment)
+    --[[
     local listAlly = GetUnitList(UNIT_LIST_ALLIED_HEROES)
 
     -- only add TeamBuy if list is 'nil' or empty
@@ -69,6 +70,7 @@ function ConsiderTeamWideItemAcquisition(playerAssignment)
             tomes = tomes - 1
         end
     end
+    --]]
 end
 
 -- This is at top as all courier actions are Immediate actions,

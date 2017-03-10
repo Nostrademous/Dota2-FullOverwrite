@@ -95,7 +95,7 @@ local function MoveToCamp(bot)
         return
     end
 
-    local neutrals = getHeroVar("NearbyEnemyCreep")
+    local neutrals = gHeroVar.GetNearbyEnemyCreep(bot, 900)
     if #neutrals == 0 then -- no creeps here
         local jungle = jungle_status.GetJungle(GetTeam()) or {}
         jungle = FindCampsByMaxDifficulty(jungle, getHeroVar("Self"):GetMaxClearableCampLevel(bot))

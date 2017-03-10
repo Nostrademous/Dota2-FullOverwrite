@@ -485,7 +485,7 @@ end
 function U.AreTreesBetweenMeAndLoc(loc, lineOfSightThickness)
     local npcBot = GetBot()
 
-    local trees = npcBot:GetNearbyTrees(GetUnitToLocationDistance(npcBot, loc))
+    local trees = npcBot:GetNearbyTrees(Min(1600, GetUnitToLocationDistance(npcBot, loc)))
 
     --check if there are trees between us and location with line-of-sight thickness
     for _, tree in ipairs(trees) do
@@ -520,7 +520,7 @@ end
 function U.AreEnemyCreepsBetweenMeAndLoc(loc, lineOfSightThickness)
     local npcBot = GetBot()
 
-    local eCreeps = npcBot:GetNearbyCreeps(GetUnitToLocationDistance(npcBot, loc), true)
+    local eCreeps = npcBot:GetNearbyCreeps(Min(1600, GetUnitToLocationDistance(npcBot, loc)), true)
 
     --check if there are enemy creeps between us and location with line-of-sight thickness
     for _, eCreep in ipairs(eCreeps) do
@@ -555,7 +555,7 @@ end
 function U.AreFriendlyCreepsBetweenMeAndLoc(loc, lineOfSightThickness)
     local npcBot = GetBot()
 
-    local fCreeps = npcBot:GetNearbyCreeps(GetUnitToLocationDistance(npcBot, loc), false)
+    local fCreeps = npcBot:GetNearbyCreeps(Min(1600, GetUnitToLocationDistance(npcBot, loc)), false)
 
     --check if there are enemy creeps between us and location with line-of-sight thickness
     for _, fCreep in ipairs(fCreeps) do
@@ -605,8 +605,16 @@ end
 
 function U.IsBusy(bot)
     if bot:IsChanneling() then return true end
-    if bot:IsCastingAbility() then return true end
-    if bot:NumQueuedActions() > 0 then return true end
+    if bot:IsCastingAbility() then
+        local target = getHeroVar("Target")        
+        if U.ValidTarget(target) and GetUnitToUnitDistance(bot, target) > 2000 then return false end
+        return true
+    end
+    if bot:NumQueuedActions() > 0 then
+        local target = getHeroVar("Target")        
+        if U.ValidTarget(target) and GetUnitToUnitDistance(bot, target) > 2000 then return false end
+        return true
+    end
     return false
 end
 
@@ -1092,7 +1100,7 @@ end
 
 function U.IsTowerAttackingMe()
     local bot = GetBot()
-    local nearEnemyTowers = bot:GetNearbyTowers(750, true)
+    local nearEnemyTowers = gHeroVar.GetNearbyEnemyTowers(bot, 750)
 
     -- if there are no towers then the answer is no
     if #nearEnemyTowers == 0 then return false end
@@ -1160,8 +1168,8 @@ function U.HarassEnemy(bot, listEnemies)
         return true
     end
     
-    local listEnemyCreep = getHeroVar("NearbyEnemyCreep")
-    local listAlliedCreep = getHeroVar("NearbyAlliedCreep")
+    local listEnemyCreep = gHeroVar.GetNearbyEnemyCreep(bot, 1200)
+    local listAlliedCreep = gHeroVar.GetNearbyAlliedCreep(bot, 1200)
     if #listEnemies > 0 and (#listEnemyCreep < (#listAlliedCreep-1) or #listEnemyCreep == 0) and
         GetUnitToUnitDistance(bot, listEnemies[1]) < (bot:GetAttackRange()+bot:GetBoundingRadius()) then
         gHeroVar.HeroAttackUnit(bot, listEnemies[1], true)
@@ -1192,7 +1200,7 @@ end
 -- takes a "RANGE", returns hero handle and health value of that hero
 -- FIXME - make it handle heroes that went invisible if we have detection
 function U.GetWeakestHero(bot, r, heroList)
-    local EnemyHeroes = heroList or getHeroVar("NearbyEnemies")
+    local EnemyHeroes = heroList or gHeroVar.GetNearbyEnemyCreep(bot, 1200)
 
     if EnemyHeroes == nil or #EnemyHeroes == 0 then
         return nil, 10000
@@ -1202,7 +1210,7 @@ function U.GetWeakestHero(bot, r, heroList)
     local LowestHealth = 10000
 
     for _, hero in ipairs(EnemyHeroes) do
-        if GetUnitToUnitDistance(bot, hero) <= r and hero:IsAlive() then
+        if U.ValidTarget(hero) and GetUnitToUnitDistance(bot, hero) <= r and hero:IsAlive() then
             if hero:GetHealth() < LowestHealth then
                 LowestHealth = hero:GetHealth()
                 WeakestHero = hero
@@ -1493,13 +1501,13 @@ function U.CourierThink(npcBot)
     end
 end
 
-function U.GetNearestTree(npcBot)
-    local trees = npcBot:GetNearbyTrees(700)
+function U.GetNearestTree(bot)
+    local trees = bot:GetNearbyTrees(700)
 
     for _, tree in ipairs(trees) do
         local treeLoc = GetTreeLocation(tree)
         --U.myPrint("Tree Loc: <", treeLoc[1], ", ", treeLoc[2], ", ", treeLoc[3], ">")
-        if U.GetHeightDiff(npcBot, treeLoc[3]) == 0 then
+        if U.GetHeightDiff(bot, treeLoc[3]) == 0 then
             return tree
         end
     end

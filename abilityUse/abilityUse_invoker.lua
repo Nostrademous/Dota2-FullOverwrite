@@ -174,9 +174,7 @@ end
 
 function invAbility:AbilityUsageThink(bot)    
     -- Check if we're already using an ability
-    if bot:IsCastingAbility() or bot:IsChanneling() or bot:NumQueuedActions() > 0 then
-        return true 
-    end
+    if utils.IsBusy(bot) then return true end
 
     if abilityQ == "" then abilityQ = bot:GetAbilityByName( "invoker_quas" ) end
     if abilityW == "" then abilityW = bot:GetAbilityByName( "invoker_wex" ) end
@@ -193,9 +191,9 @@ function invAbility:AbilityUsageThink(bot)
     if abilitySS == "" then abilitySS = bot:GetAbilityByName( "invoker_sun_strike" ) end
     if abilityFS == "" then abilityFS = bot:GetAbilityByName( "invoker_forge_spirit" ) end
     
-    local nearbyEnemyHeroes = bot:GetNearbyHeroes(1200, true, BOT_MODE_NONE)
-    local nearbyEnemyCreep  = bot:GetNearbyCreeps(1200, true)
-    local nearbyEnemyTowers = bot:GetNearbyTowers(750, true)
+    local nearbyEnemyHeroes = gHeroVar.GetNearbyEnemies(bot, 1200)
+    local nearbyEnemyCreep  = gHeroVar.GetNearbyEnemyCreep(bot, 1200)
+    local nearbyEnemyTowers = gHeroVar.GetNearbyEnemyTowers(bot, 750)
 
     --[[
     if abilityQ:GetLevel() >= 3 then
@@ -246,16 +244,16 @@ function invAbility:AbilityUsageThink(bot)
     end
     --]]
     
-    castTODesire, castTOLocation = ConsiderTornado(bot, nearbyEnemyHeroes)
-    castEMPDesire, castEMPLocation = ConsiderEMP(bot, nearbyEnemyHeroes)
-    castCMDesire, castCMLocation = ConsiderChaosMeteor(bot, nearbyEnemyHeroes)
-    castDBDesire, castDBLocation = ConsiderDeafeningBlast(bot, nearbyEnemyHeroes)
+    castTODesire, castTOLocation = ConsiderTornado(bot)
+    castEMPDesire, castEMPLocation = ConsiderEMP(bot)
+    castCMDesire, castCMLocation = ConsiderChaosMeteor(bot)
+    castDBDesire, castDBLocation = ConsiderDeafeningBlast(bot)
     castSSDesire, castSSLocation = ConsiderSunStrike(bot)
     castCSDesire, castCSTarget = ConsiderColdSnap(bot)
-    castACDesire, castACTarget = ConsiderAlacrity(bot, nearbyEnemyHeroes, nearbyEnemyCreep, nearbyEnemyTowers)
+    castACDesire, castACTarget = ConsiderAlacrity(bot, nearbyEnemyCreep, nearbyEnemyTowers)
     castGWDesire = ConsiderGhostWalk(bot, nearbyEnemyHeroes)
     castIWDesire, castIWFacing = ConsiderIceWall(bot, nearbyEnemyHeroes)
-    castFSDesire = ConsiderForgedSpirit(bot, nearbyEnemyHeroes, nearbyEnemyCreep, nearbyEnemyTowers)
+    castFSDesire = ConsiderForgedSpirit(bot, nearbyEnemyCreep, nearbyEnemyTowers)
 
     --[[
     print("TO "..castTODesire)
@@ -720,7 +718,7 @@ function CanCastDeafeningBlastOnTarget( target )
     return target:CanBeSeen() and not target:IsMagicImmune() and not target:IsInvulnerable()
 end
 
-function ConsiderTornado(bot, nearbyEnemyHeroes)
+function ConsiderTornado(bot)
     if not quasTrained() or not wexTrained() then
         return BOT_ACTION_DESIRE_NONE, {}
     end
@@ -750,6 +748,8 @@ function ConsiderTornado(bot, nearbyEnemyHeroes)
     --------------------------------------
 
     -- Check for a channeling enemy
+    local nearbyEnemyHeroes = gHeroVar.GetNearbyEnemies(bot, Min(1600, nCastRange + nDistance/2.0))
+    
     for _, npcEnemy in pairs( nearbyEnemyHeroes ) do
         if npcEnemy:IsChanneling() then
             if abilityCS:IsFullyCastable() and abilityTO:IsHidden() then
@@ -843,7 +843,7 @@ function ConsiderIceWall(bot, nearbyEnemyHeroes)
 end
 
 
-function ConsiderChaosMeteor(bot, nearbyEnemyHeroes)
+function ConsiderChaosMeteor(bot)
     if not exortTrained() or not wexTrained() then
         return BOT_ACTION_DESIRE_NONE, {}
     end
@@ -874,6 +874,7 @@ function ConsiderChaosMeteor(bot, nearbyEnemyHeroes)
     --------------------------------------
     
     --------- TEAM FIGHT -----------------------------
+    local nearbyEnemyHeroes = gHeroVar.GetNearbyEnemies(bot, Min(1600, nCastRange))
     if #nearbyEnemyHeroes >= 2 then
         local locationAoE = bot:FindAoELocation( true, true, bot:GetLocation(), nCastRange, nTravelDistance, nDelay, 0 )
         if locationAoE.count >= 2 then
@@ -907,7 +908,7 @@ function ConsiderSunStrike(bot)
 
     -- Get some of its values
     local nRadius = 175
-    local nDelay = 1.75 + getHeroVar("AbilityDelay") -- 0.05 cast point, 1.7 delay
+    local nDelay = 2.3 + getHeroVar("AbilityDelay") -- 0.05 cast point, 1.7 delay
     local nDamage = abilitySS:GetSpecialValueFloat("damage")
 
     --------------------------------------
@@ -919,14 +920,15 @@ function ConsiderSunStrike(bot)
             --if utils.IsCrowdControlled(enemy) then
             --    return BOT_ACTION_DESIRE_MODERATE, enemy:GetLocation()
             --else
-                return BOT_ACTION_DESIRE_MODERATE, enemy:GetExtrapolatedLocation( nDelay  )
+                --utils.myPrint("nDelay: ", nDelay, ", loc: ", tostring(enemy:GetExtrapolatedLocation( nDelay )))
+                return BOT_ACTION_DESIRE_MODERATE, enemy:GetExtrapolatedLocation( nDelay )
             --end
         end
     end
 
     --------- CHASING --------------------------------
     local target = getHeroVar("Target")
-    if utils.ValidTarget(target) then
+    if utils.ValidTarget(target) and target:GetHealth()/target:GetMaxHealth() <= 0.5 then
         --if utils.IsCrowdControlled(target) then
         --    return BOT_ACTION_DESIRE_MODERATE, target:GetLocation()
         --else
@@ -937,7 +939,7 @@ function ConsiderSunStrike(bot)
     return BOT_ACTION_DESIRE_NONE, {}
 end
 
-function ConsiderDeafeningBlast(bot, nearbyEnemyHeroes)
+function ConsiderDeafeningBlast(bot)
     if not quasTrained() or  not wexTrained() or not exortTrained() then
         return BOT_ACTION_DESIRE_NONE, {}
     end
@@ -967,6 +969,7 @@ function ConsiderDeafeningBlast(bot, nearbyEnemyHeroes)
     --------------------------------------
     
     --------- TEAM FIGHT -----------------------------
+    local nearbyEnemyHeroes = gHeroVar.GetNearbyEnemies(bot, Min(1600, nCastRange))
     if #nearbyEnemyHeroes >= 2 then
         local locationAoE = bot:FindAoELocation( true, true, bot:GetLocation(), nCastRange, nRadius, 0, 0 )
         if locationAoE.count >= 2 then
@@ -977,7 +980,7 @@ function ConsiderDeafeningBlast(bot, nearbyEnemyHeroes)
     return BOT_ACTION_DESIRE_NONE, {}
 end
 
-function ConsiderEMP(bot, nearbyEnemyHeroes)
+function ConsiderEMP(bot)
     if not wexTrained() then
         return BOT_ACTION_DESIRE_NONE, {}
     end
@@ -1008,6 +1011,7 @@ function ConsiderEMP(bot, nearbyEnemyHeroes)
     --------------------------------------
     
     --------- TEAM FIGHT -----------------------------
+    local nearbyEnemyHeroes = gHeroVar.GetNearbyEnemies(bot, Min(1600, nCastRange + nRadius))
     if #nearbyEnemyHeroes >= 3 then
         local locationAoE = bot:FindAoELocation( true, true, bot:GetLocation(), nCastRange, nRadius, 2.95 + getHeroVar("AbilityDelay"), 0 )
         if locationAoE.count >= 3 then
@@ -1100,8 +1104,8 @@ function ConsiderColdSnap(bot)
     --------------------------------------
 
     -- Check for a channeling enemy
-    local tableNearbyEnemyHeroes = bot:GetNearbyHeroes( nCastRange, true, BOT_MODE_NONE )
-    for _,npcEnemy in pairs( tableNearbyEnemyHeroes ) do
+    local nearbyEnemyHeroes = gHeroVar.GetNearbyEnemies(bot, Min(1600, nCastRange))
+    for _, npcEnemy in pairs( nearbyEnemyHeroes ) do
         if npcEnemy:IsChanneling() then
             if abilityTO:IsFullyCastable() and not abilityTO:IsHidden() then
                 return BOT_ACTION_DESIRE_NONE, nil
@@ -1122,7 +1126,7 @@ function ConsiderColdSnap(bot)
     return BOT_ACTION_DESIRE_NONE, nil
 end
 
-function ConsiderAlacrity(bot, nearbyEnemyHeroes, nearbyEnemyCreep, nearbyEnemyTowers)
+function ConsiderAlacrity(bot, nearbyEnemyCreep, nearbyEnemyTowers)
     if not wexTrained() or not exortTrained() then
         return BOT_ACTION_DESIRE_NONE, nil
     end
@@ -1162,7 +1166,7 @@ function ConsiderAlacrity(bot, nearbyEnemyHeroes, nearbyEnemyCreep, nearbyEnemyT
 
     --------- ROSHAN --------------------------------
     local me = getHeroVar("Self")
-    if me:getCurrentMode() == constants.MODE_ROSHAN then
+    if me:getCurrentMode():GetName() == "roshan" then
         local npcTarget = bot:GetTarget()
         if utils.NotNilOrDead(npcTarget) then
             return BOT_ACTION_DESIRE_LOW, bot
@@ -1172,7 +1176,7 @@ function ConsiderAlacrity(bot, nearbyEnemyHeroes, nearbyEnemyCreep, nearbyEnemyT
     return BOT_ACTION_DESIRE_NONE, nil
 end
 
-function ConsiderForgedSpirit(bot, nearbyEnemyHeroes, nearbyEnemyCreep, nearbyEnemyTowers)
+function ConsiderForgedSpirit(bot, nearbyEnemyCreep, nearbyEnemyTowers)
     if not quasTrained() or not exortTrained() then
         return BOT_ACTION_DESIRE_NONE
     end
@@ -1194,7 +1198,7 @@ function ConsiderForgedSpirit(bot, nearbyEnemyHeroes, nearbyEnemyCreep, nearbyEn
 
     --------- ROSHAN --------------------------------
     local me = getHeroVar("Self")
-    if me:getCurrentMode() == constants.MODE_ROSHAN then
+    if me:getCurrentMode():GetName() == "roshan" then
         local npcTarget = bot:GetTarget()
         if utils.NotNilOrDead(npcTarget) then
             return BOT_ACTION_DESIRE_LOW
@@ -1209,14 +1213,14 @@ function ConsiderForgedSpirit(bot, nearbyEnemyHeroes, nearbyEnemyCreep, nearbyEn
     -- If we're pushing or defending a lane and can hit 4+ creeps, go for it
     if manaRatio > 0.6 and (getHeroVar("ShouldDefend") or getHeroVar("ShouldPush")) then
         if #nearbyEnemyCreep >= 3 or #nearbyEnemyTowers > 0 then
-            return BOT_ACTION_DESIRE_LOW
+            return BOT_ACTION_DESIRE_MODERATE
         end
     end
 
     --------- CHASING --------------------------------
     local target = getHeroVar("Target")
     if utils.ValidTarget(target) then
-        if abilityCS:IsFullyCastable() then
+        if abilityFS:IsFullyCastable() then
             return BOT_ACTION_DESIRE_MODERATE
         end
     end

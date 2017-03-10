@@ -180,19 +180,16 @@ local function UseE(bot, nearbyEnemyTowers, nearbyAlliedCreep)
 end
 
 function drAbility:AbilityUsageThink(bot)
-    -- Check if we're already using an ability
-    if bot:IsCastingAbility() or bot:IsChanneling() or bot:NumQueuedActions() > 0 then
-        return true
-    end
+    if utils.IsBusy(bot) then return true end
 
     if abilityQ == "" then abilityQ = bot:GetAbilityByName( Abilities[1] ) end
     if abilityW == "" then abilityW = bot:GetAbilityByName( Abilities[2] ) end
     if abilityE == "" then abilityE = bot:GetAbilityByName( Abilities[3] ) end
     if abilityR == "" then abilityR = bot:GetAbilityByName( Abilities[4] ) end
 
-    local nearbyEnemyHeroes = bot:GetNearbyHeroes(1600, true, BOT_MODE_NONE)
+    local nearbyEnemyHeroes = gHeroVar.GetNearbyEnemies(bot, 1200)
 
-    if ( #nearbyEnemyHeroes == 0 ) then return false end
+    if not nearbyEnemyHeroes or #nearbyEnemyHeroes == 0 then return false end
 
     local target = getHeroVar("Target")
     if not utils.ValidTarget(target) then
@@ -212,11 +209,15 @@ function drAbility:AbilityUsageThink(bot)
         end
     end
 
-    if UseE(bot) then return true end
+    if getHeroVar("IsRetreating") then
+        if UseW(bot, nearbyEnemyHeroes) then return true end
+    else
+        if UseE(bot) then return true end
 
-    if UseW(bot, nearbyEnemyHeroes) then return true end
+        if UseW(bot, nearbyEnemyHeroes) then return true end
 
-    if UseQ(bot, nearbyEnemyHeroes) then return true end
+        if UseQ(bot, nearbyEnemyHeroes) then return true end
+    end
 
     return false
 end

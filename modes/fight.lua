@@ -60,7 +60,7 @@ function X:Desire(bot)
         return BOT_MODE_DESIRE_NONE
     end
     
-    local enemyList = getHeroVar("NearbyEnemies")
+    local enemyList = gHeroVar.GetNearbyEnemies(bot, 1200)
     if #enemyList == 0 then return BOT_MODE_DESIRE_NONE end
     
     local enemyValue = 0
@@ -69,7 +69,8 @@ function X:Desire(bot)
         enemyValue = enemyValue + enemy:GetHealth() + enemy:GetOffensivePower()
     end
     
-    for _, ally in pairs(getHeroVar("NearbyAllies")) do
+    local allyList = gHeroVar.GetNearbyAllies(bot, 900)
+    for _, ally in pairs(allyList) do
         allyValue = allyValue + ally:GetHealth() + ally:GetOffensivePower()
     end
     
@@ -81,7 +82,8 @@ function X:Desire(bot)
         end
     end
     
-    if getHeroVar("Target") or getHeroVar("Self"):getCurrentMode():GetName() == "fight" then
+    local target = getHeroVar("Target")
+    if utils.ValidTarget(target) and getHeroVar("Self"):getCurrentMode():GetName() == "fight" then
         return getHeroVar("Self"):getCurrentModeValue()
     end
 

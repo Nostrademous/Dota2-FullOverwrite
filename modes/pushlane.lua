@@ -22,12 +22,16 @@ function X:GetName()
 end
 
 function X:OnStart(myBot)
+    setHeroVar("ShouldPush", true)
 end
 
 function X:OnEnd()
+    setHeroVar("ShouldPush", false)
 end
 
 function X:Think(bot)
+
+    if utils.IsBusy(bot) then return end
     
     local Towers = gHeroVar.GetNearbyEnemyTowers(bot, 750)
     local Shrines = bot:GetNearbyShrines(750, true)
@@ -48,18 +52,31 @@ function X:Think(bot)
     local frontier = Min(1.0, enemyFrontier)
     local dest = GetLocationAlongLane(getHeroVar("CurLane"), Min(1.0, frontier))
     
-    local nearbyAlliedCreep = getHeroVar("NearbyAlliedCreep")
+    local nearbyAlliedCreep = gHeroVar.GetNearbyEnemyCreep(bot, 900)
     if utils.IsTowerAttackingMe() and #nearbyAlliedCreep > 0 then
         if utils.DropTowerAggro(bot, nearbyAlliedCreep) then return end
     end
     
-    local nearbyEnemyCreep = getHeroVar("NearbyEnemyCreep")
+    if #Towers > 0 and Towers[1]:GetHealth()/Towers[1]:GetMaxHealth() < 0.1 and
+        not Towers[1]:HasModifier("modifier_fountain_glyph") then
+        gHeroVar.HeroAttackUnit(bot, Towers[1], false)
+    end
+    
+    local nearbyEnemyCreep = gHeroVar.GetNearbyEnemyCreep(bot, 1200)
     if #nearbyEnemyCreep > 0 then
         if #nearbyAlliedCreep > 0 then
-            creep, _ = utils.GetWeakestCreep(nearbyEnemyCreep)
-            if creep then
-                gHeroVar.HeroAttackUnit(bot, creep, true)
-                return
+            if #Towers > 0 then
+                local dist = GetUnitToUnitDistance(bot, Towers[1])
+                if dist < 750 then
+                    gHeroVar.HeroMoveToLocation(bot, utils.VectorAway(bot:GetLocation(), Towers[1]:GetLocation(), 750-dist))
+                    return
+                end
+            else
+                creep, _ = utils.GetWeakestCreep(nearbyEnemyCreep)
+                if creep then
+                    gHeroVar.HeroAttackUnit(bot, creep, true)
+                    return
+                end
             end
         else
             getHeroVar("Self"):ClearMode()
@@ -103,8 +120,6 @@ function X:Think(bot)
     end
     
     bot:Action_MoveToLocation(dest)
-    
-    return
 end
 
 function X:Desire(bot)
@@ -115,6 +130,10 @@ function X:Desire(bot)
         return BOT_MODE_DESIRE_NONE
     end
 
+    if getHeroVar("Role") == constants.ROLE_JUNGLER then
+        return BOT_MODE_DESIRE_NONE
+    end
+    
     -- this is hero-specific push-lane determination
     local nearbyETowers = gHeroVar.GetNearbyEnemyTowers(bot, Max(750, bot:GetAttackRange()))
     if #nearbyETowers > 0 then
@@ -123,12 +142,12 @@ function X:Desire(bot)
             return BOT_MODE_DESIRE_HIGH
         end
         
-        if utils.IsTowerAttackingMe() and #getHeroVar("NearbyAlliedCreep") == 0 then
+        if utils.IsTowerAttackingMe() and #gHeroVar.GetNearbyAlliedCreep(bot, 1000) == 0 then
             return BOT_MODE_DESIRE_NONE
         end
     end
 
-    if #getHeroVar("NearbyAlliedCreep") > 1 and #getHeroVar("NearbyEnemyCreep") == 0 then
+    if #gHeroVar.GetNearbyAlliedCreep(bot, 1000) > 1 and #gHeroVar.GetNearbyEnemyCreep(bot, 1200) == 0 then
         return BOT_MODE_DESIRE_MODERATE
     end
     

@@ -55,6 +55,8 @@ function X:PrintReason()
 end
 
 function X:Think(bot)
+
+    if utils.IsBusy(bot) then return end
     
     Updates(bot)
     
@@ -62,7 +64,7 @@ function X:Think(bot)
     local rPos = getHeroVar("RetreatPos")
 
     nextmove = GetLocationAlongLane(rLane, 0.0)
-    if getHeroVar("IsInLane") then
+    if getHeroVar("IsInLane") and rPos < 0.75 then
         nextmove = GetLocationAlongLane(rLane, Max(rPos-0.03, 0.0))
     end
 
@@ -90,14 +92,16 @@ function X:Think(bot)
 end
 
 function X:Desire(bot)
+    local enemies = gHeroVar.GetNearbyEnemies(bot, 1200)
+    local allies  = gHeroVar.GetNearbyAllies(bot, 1200)
+    local eTowers = gHeroVar.GetNearbyEnemyTowers(bot, 900)
 
-    local nEnemies = #getHeroVar("NearbyEnemies")
-    local nAllies  = #getHeroVar("NearbyAllies")
-    local nETowers = #gHeroVar.GetNearbyEnemyTowers(bot, 900)
+    local nEnemies = #enemies
+    local nAllies  = #allies
+    local nETowers = #eTowers
 
     if not utils.IsCore(bot) and (bot:GetHealth()/bot:GetMaxHealth() < 0.4 or (nAllies == 0 and nEnemies > 1)) then
         setHeroVar("IsRetreating", true)
-        setHeroVar("RetreatReason", constants.RETREAT_FOUNTAIN)
 		return BOT_MODE_DESIRE_HIGH
 	end
     
@@ -119,7 +123,7 @@ function X:Desire(bot)
         return BOT_MODE_DESIRE_HIGH
     end
     
-    if (bot:GetHealth()<(bot:GetMaxHealth()*0.17*(nEnemies-nAllies+1) + nEnemies*110)) or ((bot:GetHealth()/bot:GetMaxHealth())<0.33) or 
+    if (bot:GetHealth()<(bot:GetMaxHealth()*0.17*(nEnemies-nAllies+1) + nETowers*110)) or ((bot:GetHealth()/bot:GetMaxHealth()) < 0.33) or 
         (bot:GetMana()/bot:GetMaxMana() < 0.07 and getHeroVar("Self"):getCurrentMode():GetName() == "laning") then
 		setHeroVar("IsRetreating", true)
 		return BOT_MODE_DESIRE_HIGH
@@ -128,16 +132,16 @@ function X:Desire(bot)
 	if nAllies < 2 then
 		local MaxStun = 0
 		
-		for _,enemy in pairs(getHeroVar("NearbyEnemies")) do
+		for _,enemy in pairs(enemies) do
 			if utils.NotNilOrDead(enemy) and enemy:GetHealth()/enemy:GetMaxHealth() > 0.4 then
 				MaxStun = Max(MaxStun, Max(enemy:GetStunDuration(true), enemy:GetSlowDuration(true)/1.5))
 			end
 		end
 	
 		local enemyDamage = 0
-		for _,enemy in pairs(getHeroVar("NearbyEnemies")) do
+		for _,enemy in pairs(enemies) do
 			if utils.NotNilOrDead(enemy) and enemy:GetHealth()/enemy:GetMaxHealth() > 0.4 then
-				local damage = enemy:GetEstimatedDamageToTarget(true, bot, MaxStun,DAMAGE_TYPE_ALL)
+				local damage = enemy:GetEstimatedDamageToTarget(true, bot, MaxStun, DAMAGE_TYPE_ALL)
 				enemyDamage = enemyDamage + damage
 			end
 		end

@@ -9,7 +9,7 @@ require( GetScriptDirectory().."/buildings_status" )
 require( GetScriptDirectory().."/item_usage" )
 require( GetScriptDirectory().."/debugging" )
 
-local none = dofile( GetScriptDirectory().."/modes/none" )
+none = dofile( GetScriptDirectory().."/modes/none" )
 
 local utils = require( GetScriptDirectory().."/utility" )
 local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
@@ -64,6 +64,7 @@ end
 function X:ClearMode()
     self.currentMode = none
     self.currentModeValue = BOT_MODE_DESIRE_NONE
+    self:ExecuteMode()
 end
 
 -------------------------------------------------------------------------------
@@ -208,6 +209,7 @@ end
 
 function X:DoWhileDead(bot)
     self:ClearMode()
+    bot:Action_ClearActions(true)
 
     utils.MoveItemsFromStashToInventory(bot)
     local bb = self:ConsiderBuyback(bot)

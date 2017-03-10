@@ -3,10 +3,20 @@
 --- GITHUB REPO: https://github.com/Nostrademous/Dota2-FullOverwrite
 -------------------------------------------------------------------------------
 
-require( GetScriptDirectory().."/constants" )
-require ( GetScriptDirectory().."/ability_usage_antimage" )
-local dt = require( GetScriptDirectory().."/decision_tree" )
+local utils = require( GetScriptDirectory().."/utility" )
+local dt = require( GetScriptDirectory().."/decision" )
 local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
+local ability = require( GetScriptDirectory().."/abilityUse/abilityUse_antimage" )
+
+function setHeroVar(var, value)
+    local bot = GetBot()
+    gHeroVar.SetVar(bot:GetPlayerID(), var, value)
+end
+
+function getHeroVar(var)
+    local bot = GetBot()
+    return gHeroVar.GetVar(bot:GetPlayerID(), var)
+end
 
 local SKILL_Q = "antimage_mana_break";
 local SKILL_W = "antimage_blink";
@@ -27,26 +37,29 @@ local AntimageAbilityPriority = {
     SKILL_R,    SKILL_Q,    SKILL_W,    SKILL_W,    ABILITY1,
     SKILL_W,    SKILL_R,    SKILL_E,    SKILL_E,    ABILITY4,
     SKILL_E,    SKILL_R,    ABILITY6,   ABILITY8
-};
+}
 
-local antimageModeStack = { [1] = {constants.MODE_NONE, BOT_ACTION_DESIRE_NONE} }
+local botAM = dt:new()
 
-AMBot = dt:new()
-
-function AMBot:new(o)
+function botAM:new(o)
     o = o or dt:new(o)
     setmetatable(o, self)
     self.__index = self
     return o
 end
 
-amBot = AMBot:new{modeStack = antimageModeStack, abilityPriority = AntimageAbilityPriority}
---AMBot:printInfo();
+local amBot = botAM:new{abilityPriority = AntimageAbilityPriority}
 
-amBot.Init = false
+function amBot:ConsiderAbilityUse()
+    return ability.AbilityUsageThink(GetBot())
+end
 
-function amBot:ConsiderAbilityUse(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCreep, nearbyAlliedCreep, nearbyEnemyTowers, nearbyAlliedTowers)
-    ability_usage_antimage.AbilityUsageThink(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCreep, nearbyAlliedCreep, nearbyEnemyTowers, nearbyAlliedTowers)
+function amBot:GetNukeDamage(bot, target)
+    return ability.nukeDamage( bot, target )
+end
+
+function amBot:QueueNuke(bot, target, actionQueue, engageDist)
+    return ability.queueNuke( bot, target, actionQueue, engageDist )
 end
 
 function amBot:DoHeroSpecificInit(bot)
@@ -59,17 +72,4 @@ function Think()
     local bot = GetBot()
 
     amBot:Think(bot)
-
-    -- if we are initialized, do the rest
-    if amBot.Init then
-        gHeroVar.ExecuteHeroActionQueue(bot)
-    end
-end
-
-function amBot:GetNukeDamage(bot, target)
-    return ability_usage_antimage.nukeDamage( bot, target )
-end
-
-function amBot:QueueNuke(bot, target, actionQueue, engageDist)
-    return ability_usage_antimage.queueNuke( bot, target, actionQueue, engageDist )
 end

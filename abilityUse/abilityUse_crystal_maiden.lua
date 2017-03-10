@@ -137,17 +137,16 @@ function queueNuke(bot, enemy, castQueue, engageDist)
 end
 
 function cmAbility:AbilityUsageThink(bot)
-    -- Check if we're already using an ability
-    if bot:IsCastingAbility() or bot:IsChanneling() or bot:NumQueuedActions() > 0 then
-        return true
-    end
+    if utils.IsBusy(bot) then return true end
 
     if abilityQ == "" then abilityQ = bot:GetAbilityByName( Abilities[1] ) end
     if abilityW == "" then abilityW = bot:GetAbilityByName( Abilities[2] ) end
     if abilityE == "" then abilityE = bot:GetAbilityByName( Abilities[3] ) end
     if abilityR == "" then abilityR = bot:GetAbilityByName( Abilities[4] ) end
 
-    local nearbyEnemyHeroes = bot:GetNearbyHeroes(1600, true, BOT_MODE_NONE)
+    local nearbyEnemyHeroes = gHeroVar.GetNearbyEnemies(bot, 1200)
+    
+    if not nearbyEnemyHeroes then return false end
 
     if #nearbyEnemyHeroes >= 1 then
         local nRadius = abilityQ:GetSpecialValueInt( "radius" )
@@ -177,12 +176,12 @@ function cmAbility:AbilityUsageThink(bot)
     return false
 end
 
-function UseQ(bot, nearbyEnemyHeroes, nearbyAlliedHeroes)
+function UseQ(bot, nearbyEnemyHeroes)
     if not abilityQ:IsFullyCastable() then
         return false
     end
 
-    local nearbyAlliedHeroes = bot:GetNearbyHeroes(1200, false, BOT_MODE_NONE)
+    local nearbyAlliedHeroes = gHeroVar.GetNearbyAllies(bot, 1000)
     local coreNear = false
     for _, ally in pairs(nearbyAlliedHeroes) do
         if utils.IsCore(ally) then

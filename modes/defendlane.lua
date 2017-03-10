@@ -26,11 +26,11 @@ end
 
 function X:OnStart(myBot)
     X.me = myBot
-    utisl.myPrint("Defense mode activated!")
+    utils.myPrint("Defense mode activated!")
 end
 
 function X:OnEnd()
-    utisl.myPrint("Defense mode ended!")
+    utils.myPrint("Defense mode ended!")
 end
 
 function X:Desire(bot)
@@ -69,9 +69,12 @@ function X:Think(bot)
     else
         if bot:IsChanneling() or bot:IsCastingAbility() then return true end
         local tp = utils.HaveItem(bot, "item_travel_boots_1") or utils.HaveItem(bot, "item_travel_boots_2") or utils.HaveItem(bot, "item_tpscroll") -- TODO: more generic
-        if tp == nil then return false end -- something went wrong.. wait for TEAM to assign us to a new job
-        bot:Action_UseAbilityOnLocation(tp, hBuilding:GetLocation())
-        utils.myPrint("TPing")
+        if tp == nil then
+            X:DefendTower(bot, hBuilding, {})
+        else
+            bot:Action_UseAbilityOnLocation(tp, hBuilding:GetLocation())
+            utils.myPrint("TPing")
+        end
     end
 
     return true

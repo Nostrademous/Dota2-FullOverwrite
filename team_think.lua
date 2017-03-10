@@ -145,25 +145,34 @@ function ConsiderTeamLaneDefense()
 
     local numNeeded = Max(numEnemies - 1, 1)
 
-    if (#listAlliesAtBuilding + #listAlliesCanReachBuilding + #listAlliesCanTPToBuildling) >= (numEnemies - 1) then
+    utils.myPrint(string.format("Ok, so lane %d is getting pushed by %d enemies. We have %d %d %d allies ready.", lane, numEnemies, #listAlliesAtBuilding, #listAlliesCanReachBuilding, #listAlliesCanTPToBuildling))
+
+    if (#listAlliesAtBuilding + #listAlliesCanReachBuilding + #listAlliesCanTPToBuildling) >= numNeeded then
         debugging.SetTeamState("Getting Pushed", 3, "Mounting a defense!")
+        utils.myPrint("Mounting a defense")
         local numGoing = 0
+        utils.myPrint("At Tower:")
         for _, ally in pairs(listAlliesAtBuilding) do -- make everyone sitting on the tower defend it
             gHeroVar.SetVar(ally:GetPlayerID(), "DoDefendLane", {lane, building, numEnemies})
+            utils.myPrint("assigned "..utils.GetHeroName(ally))
             debugging.SetBotState(utils.GetHeroName(ally), 2, "Defending (already there)")
             numGoing = numGoing + 1
         end
         if numGoing < numNeeded then -- still need more?
+            utils.myPrint("can reach Tower:")
             for _, ally in pairs(listAlliesCanReachBuilding) do -- get the guys around
                 gHeroVar.SetVar(ally:GetPlayerID(), "DoDefendLane", {lane, building, numEnemies})
+                utils.myPrint("assigned "..utils.GetHeroName(ally))
                 debugging.SetBotState(utils.GetHeroName(ally), 2, "Defending (walk)")
                 numGoing = numGoing + 1
                 if numGoing >= numNeeded then break end -- k, thats enough
             end
         end
         if numGoing < numNeeded then -- still more?
+            utils.myPrint("tp to Tower:")
             for _, ally in pairs(listAlliesCanTPToBuildling) do -- tp them in
                 gHeroVar.SetVar(ally:GetPlayerID(), "DoDefendLane", {lane, building, numEnemies})
+                utils.myPrint("assigned "..utils.GetHeroName(ally))
                 debugging.SetBotState(utils.GetHeroName(ally), 2, "Defending (tp)")
                 numGoing = numGoing + 1
                 if numGoing >= numNeeded then break end -- k, thats enough
@@ -171,6 +180,7 @@ function ConsiderTeamLaneDefense()
         end
     else -- TODO: do we need to tell our allies to be carefull?
         debugging.SetTeamState("Getting Pushed", 3, "Goodbye, little tower.")
+        utils.myPrint("Goodbye, little tower.")
     end
 end
 

@@ -1200,7 +1200,7 @@ end
 -- takes a "RANGE", returns hero handle and health value of that hero
 -- FIXME - make it handle heroes that went invisible if we have detection
 function U.GetWeakestHero(bot, r, heroList)
-    local EnemyHeroes = heroList or gHeroVar.GetNearbyEnemyCreep(bot, 1200)
+    local EnemyHeroes = heroList or gHeroVar.GetNearbyEnemies(bot, 1200)
 
     if EnemyHeroes == nil or #EnemyHeroes == 0 then
         return nil, 10000

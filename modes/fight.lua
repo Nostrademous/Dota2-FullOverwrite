@@ -63,16 +63,21 @@ function X:Desire(bot)
     local enemyList = gHeroVar.GetNearbyEnemies(bot, 1200)
     if #enemyList == 0 then return BOT_MODE_DESIRE_NONE end
     
+    local eTowers = gHeroVar.GetNearbyEnemyTowers(bot, 900)
+    local aTowers = gHeroVar.GetNearbyAlliedTowers(bot, 600)
+    
     local enemyValue = 0
     local allyValue = 0
     for _, enemy in pairs(enemyList) do
         enemyValue = enemyValue + enemy:GetHealth() + enemy:GetOffensivePower()
     end
+    enemyValue = enemyValue + #eTowers*110
     
     local allyList = gHeroVar.GetNearbyAllies(bot, 900)
     for _, ally in pairs(allyList) do
         allyValue = allyValue + ally:GetHealth() + ally:GetOffensivePower()
     end
+    allyValue = allyValue + #aTowers*110
     
     if allyValue > enemyValue then
         local target, _ = utils.GetWeakestHero(bot, bot:GetAttackRange()+bot:GetBoundingRadius(), enemyList)
@@ -80,10 +85,13 @@ function X:Desire(bot)
             setHeroVar("Target", target)
             return BOT_MODE_DESIRE_MODERATE
         end
+    else
+        return BOT_MODE_DESIRE_NONE
     end
     
     local target = getHeroVar("Target")
-    if utils.ValidTarget(target) and getHeroVar("Self"):getCurrentMode():GetName() == "fight" then
+    if utils.ValidTarget(target) and getHeroVar("Self"):getCurrentMode():GetName() == "fight" and
+        #eTowers == 0 then
         return getHeroVar("Self"):getCurrentModeValue()
     end
 

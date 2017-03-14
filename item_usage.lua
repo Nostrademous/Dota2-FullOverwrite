@@ -472,7 +472,7 @@ function UseMidas()
     local bot = GetBot()
     local midas = utils.HaveItem(bot, "item_hand_of_midas")
     if midas ~= nil and midas:IsFullyCastable() then
-        local creeps = gHeroVar.GetNearbyEnemyCreeps(bot, 600)
+        local creeps = gHeroVar.GetNearbyEnemyCreep(bot, 600)
         if #creeps > 1 then
             table.sort(creeps, function(n1, n2) return n1:GetHealth() > n2:GetHealth() end)
             bot:Action_UseAbilityOnEntity(midas, creeps[1])

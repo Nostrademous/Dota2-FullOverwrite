@@ -1,5 +1,5 @@
 -------------------------------------------------------------------------------
---- AUTHOR: Nostrademous
+--- AUTHOR: Keithen
 --- GITHUB REPO: https://github.com/Nostrademous/Dota2-FullOverwrite
 -------------------------------------------------------------------------------
 
@@ -26,11 +26,9 @@ end
 
 function X:OnStart(myBot)
     X.me = myBot
-    utils.myPrint("Defense mode activated!")
 end
 
 function X:OnEnd()
-    utils.myPrint("Defense mode ended!")
 end
 
 function X:Desire(bot)
@@ -50,15 +48,15 @@ function X:Think(bot)
 
     local defInfo = X.me:getHeroVar("DoDefendLane") -- TEAM has made the decision.
     -- TODO: unpack function??
-    local lane = defInfo[0]
-    local building = defInfo[1]
-    local numEnemies = defInfo[2]
+    local lane = defInfo[1]
+    local building = defInfo[2]
+    local numEnemies = defInfo[3]
 
     local hBuilding = buildings_status.GetHandle(GetTeam(), building)
 
     if hBuilding == nil then
         X.me:setHeroVar("DoDefendLane", {})
-        return false
+        return
     end
 
     local distFromBuilding = GetUnitToUnitDistance(bot, hBuilding)
@@ -77,7 +75,7 @@ function X:Think(bot)
         end
     end
 
-    return true
+    return
 end
 
 return X

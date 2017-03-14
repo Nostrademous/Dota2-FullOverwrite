@@ -113,6 +113,11 @@ function ConsiderTeamLaneDefense()
         debugging.SetBotState(utils.GetHeroName(ally), 2, "")
     end
 
+    -- reset some states
+    global_game_state.LaneState(LANE_TOP).dontdefend = false
+    global_game_state.LaneState(LANE_MID).dontdefend = false
+    global_game_state.LaneState(LANE_BOT).dontdefend = false
+
     if lane == nil or building == nil or numEnemies == nil then return end
 
     local hBuilding = buildings_status.GetHandle(GetTeam(), building)
@@ -159,7 +164,7 @@ function ConsiderTeamLaneDefense()
         debugging.SetTeamState("Getting Pushed", 3, "Mounting a defense!")
         utils.myPrint("Mounting a defense")
         local numGoing = 0
-        for _, ally in pairs(listAlliesAtBuilding) do -- make everyone sitting on the tower defend it
+        for _, ally in pairs(defending) do -- reassign defending heros
             gHeroVar.SetVar(ally:GetPlayerID(), "DoDefendLane", {lane, building, numEnemies})
             utils.myPrint("reassigned "..utils.GetHeroName(ally))
             debugging.SetBotState(utils.GetHeroName(ally), 2, "Defending (already defending)")
@@ -191,7 +196,8 @@ function ConsiderTeamLaneDefense()
                 if numGoing >= numNeeded then break end -- k, thats enough
             end
         end
-    else -- TODO: do we need to tell our allies to be carefull?
+    else
+        global_game_state.LaneState(lane).dontdefend = true -- run away!
         debugging.SetTeamState("Getting Pushed", 3, "Goodbye, little tower.")
         utils.myPrint("Goodbye, little tower.")
     end

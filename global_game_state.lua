@@ -7,6 +7,14 @@ local gHero = require( GetScriptDirectory().."/global_hero_data" )
 local utils = require( GetScriptDirectory().."/utility" )
 local enemyData = require( GetScriptDirectory().."/enemy_data" )
 
+local laneStates = {[LANE_TOP] = {dontdefend = false},
+                    [LANE_MID] = {dontdefend = false},
+                    [LANE_BOT] = {dontdefend = false}}
+
+-- TODO: used for reading and writing. not really good.
+function LaneState(lane)
+    return laneStates[lane]
+end
 
 function EvaluateGameState()
     -- TODO: rate limiting

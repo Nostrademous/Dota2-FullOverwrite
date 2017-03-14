@@ -171,20 +171,22 @@ function numEnemiesNearBuilding(building)
     local num = 0
     for k, enemy in pairs(enemyData) do
         if type(k) == "number" then
-            local eLoc = enemy.LocExtra1
-            if utils.ValidTarget(enemy.Obj) then
-                eLoc = enemy.Obj:GetLocation()
-            end
-
-            if eLoc == nil then return 0 end
-
-            if building > 0 then
-                if nearBuilding(eLoc, buildings_status.GetLocation(GetTeam(), building)) then
-                    num = num + 1
+            if enemy.Alive then
+                local eLoc = enemy.LocExtra1
+                if utils.ValidTarget(enemy.Obj) then
+                    eLoc = enemy.Obj:GetLocation()
                 end
-            else
-                if nearBuilding(eLoc, GetAncient(GetTeam()):GetLocation()) then
-                    num = num + 1
+
+                if eLoc == nil then return 0 end
+
+                if building > 0 then
+                    if nearBuilding(eLoc, buildings_status.GetLocation(GetTeam(), building)) then
+                        num = num + 1
+                    end
+                else
+                    if nearBuilding(eLoc, GetAncient(GetTeam()):GetLocation()) then
+                        num = num + 1
+                    end
                 end
             end
         end

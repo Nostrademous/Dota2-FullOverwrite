@@ -123,36 +123,47 @@ function ConsiderTeamLaneDefense()
     local listAlliesCanReachBuilding = {}
     local listAlliesCanTPToBuildling = {}
 
+    local defending = {}
+
     for _, ally in pairs(listAlly) do
         if not ally:IsIllusion() and ally:IsBot() then
-            if ally:GetHealth()/ally:GetMaxHealth() >= 0.5 then
-                local distFromBuilding = GetUnitToUnitDistance(ally, hBuilding)
-                local timeToReachBuilding = distFromBuilding/ally:GetCurrentMovementSpeed()
+            if gHeroVar.GetVar(ally:GetPlayerID(), "Self"):getCurrentMode():GetName() == "defendlane" then
+                table.insert(defending, ally)
+            else
+                if ally:GetHealth()/ally:GetMaxHealth() >= 0.5 then
+                    local distFromBuilding = GetUnitToUnitDistance(ally, hBuilding)
+                    local timeToReachBuilding = distFromBuilding/ally:GetCurrentMovementSpeed()
 
-                if timeToReachBuilding <= 3.0 then
-                    table.insert(listAlliesAtBuilding, ally)
-                elseif timeToReachBuilding <= 10.0 then
-                    table.insert(listAlliesCanReachBuilding, ally)
-                else
-                    local haveTP = utils.HaveItem(ally, "item_tpscroll") -- TODO: check tp boots, NP tp spell (utils?)
-                    if haveTP and haveTP:IsFullyCastable() then
-                        table.insert(listAlliesCanTPToBuildling, ally)
+                    if timeToReachBuilding <= 3.0 then
+                        table.insert(listAlliesAtBuilding, ally)
+                    elseif timeToReachBuilding <= 10.0 then
+                        table.insert(listAlliesCanReachBuilding, ally)
+                    else
+                        local haveTP = utils.HaveItem(ally, "item_tpscroll") -- TODO: check tp boots, NP tp spell (utils?)
+                        if haveTP and haveTP:IsFullyCastable() then
+                            table.insert(listAlliesCanTPToBuildling, ally)
+                        end
                     end
                 end
             end
         end
     end
 
-    debugging.SetTeamState("Getting Pushed", 2, string.format("Def: %d enemies. %d close, %d near, %d could tp", numEnemies, #listAlliesAtBuilding, #listAlliesCanReachBuilding, #listAlliesCanTPToBuildling))
+    debugging.SetTeamState("Getting Pushed", 2, string.format("Def: %d enemies. %d defending, %d close, %d near, %d could tp", numEnemies, #defending, #listAlliesAtBuilding, #listAlliesCanReachBuilding, #listAlliesCanTPToBuildling))
 
-    local numNeeded = Max(numEnemies - 1, 1)
+    local numNeeded = Max(Max(numEnemies - 1, 1) - #defending, 0)
 
-    utils.myPrint(string.format("Ok, so lane %d is getting pushed by %d enemies. We have %d %d %d allies ready.", lane, numEnemies, #listAlliesAtBuilding, #listAlliesCanReachBuilding, #listAlliesCanTPToBuildling))
+    utils.myPrint(string.format("Ok, so lane %d is getting pushed by %d enemies. We have %d %d %d %d allies ready.", lane, numEnemies, #defending, #listAlliesAtBuilding, #listAlliesCanReachBuilding, #listAlliesCanTPToBuildling))
 
     if (#listAlliesAtBuilding + #listAlliesCanReachBuilding + #listAlliesCanTPToBuildling) >= numNeeded then
         debugging.SetTeamState("Getting Pushed", 3, "Mounting a defense!")
         utils.myPrint("Mounting a defense")
         local numGoing = 0
+        for _, ally in pairs(listAlliesAtBuilding) do -- make everyone sitting on the tower defend it
+            gHeroVar.SetVar(ally:GetPlayerID(), "DoDefendLane", {lane, building, numEnemies})
+            utils.myPrint("reassigned "..utils.GetHeroName(ally))
+            debugging.SetBotState(utils.GetHeroName(ally), 2, "Defending (already defending)")
+        end
         utils.myPrint("At Tower:")
         for _, ally in pairs(listAlliesAtBuilding) do -- make everyone sitting on the tower defend it
             gHeroVar.SetVar(ally:GetPlayerID(), "DoDefendLane", {lane, building, numEnemies})

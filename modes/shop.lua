@@ -183,10 +183,18 @@ function X:Desire(bot)
     
     if bInSide then
         setHeroVar("ShopType", constants.SHOP_TYPE_SIDE)
-        return BOT_MODE_DESIRE_MODERATE
+        if GetItemCost( sNextItem ) >= 2000 then
+            return BOT_MODE_DESIRE_HIGH
+        else
+            return BOT_MODE_DESIRE_MODERATE
+        end
     elseif bInSecret then
         setHeroVar("ShopType", constants.SHOP_TYPE_SECRET)
-        return BOT_MODE_DESIRE_MODERATE
+        if GetItemCost( sNextItem ) >= 2000 then
+            return BOT_MODE_DESIRE_HIGH
+        else
+            return BOT_MODE_DESIRE_MODERATE
+        end
     end
     
     local me = getHeroVar("Self")

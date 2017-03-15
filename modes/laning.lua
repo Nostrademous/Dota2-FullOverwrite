@@ -83,18 +83,19 @@ local function MovingToPos(bot)
         end
     -- else move away
     elseif utils.IsTowerAttackingMe() then
-        local listEnemyTowers = gHeroVar.GetNearbyEnemyTowers(bot, 1200)
+        local listEnemyTowers = gHeroVar.GetNearbyEnemyTowers(bot, 800)
         local dist = GetUnitToUnitDistance(bot, listEnemyTowers[1])
-        gHeroVar.HeroMoveToLocation(bot, utils.VectorAway(bot:GetLocation(), listEnemyTowers[1]:GetLocation(), 710-dist))
+        gHeroVar.HeroMoveToLocation(bot, utils.VectorAway(bot:GetLocation(), listEnemyTowers[1]:GetLocation(), 800-dist))
         return
     end
 
     -- if we are close to tower, don't get into tower range
-    local listEnemyTowers = gHeroVar.GetNearbyEnemyTowers(bot, 710)
+    local listEnemyTowers = gHeroVar.GetNearbyEnemyTowers(bot, 800)
     if #listEnemyTowers > 0 then
         local dist = GetUnitToUnitDistance(bot, listEnemyTowers[1])
-        if dist < 710 then
-            gHeroVar.HeroMoveToLocation(bot, utils.VectorAway(bot:GetLocation(), listEnemyTowers[1]:GetLocation(), 710-dist))
+        if dist < 800 then
+            gHeroVar.HeroMoveToLocation(bot, utils.VectorAway(bot:GetLocation(), listEnemyTowers[1]:GetLocation(), 800-dist))
+            return
         end
     end
     

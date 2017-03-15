@@ -262,7 +262,7 @@ function ConsiderTeamShrine(playerAssignment)
                 local dist = GetUnitToUnitDistance(ally, SJ1)
                 if dist < distToShrine then
                     distToShrine = dist
-                    bestShrine = SJ1
+                    bestShrine = SHRINE_JUNGLE_1
                 end
             end
             local SJ2 = GetShrine(Team, SHRINE_JUNGLE_2)
@@ -270,7 +270,7 @@ function ConsiderTeamShrine(playerAssignment)
                 local dist = GetUnitToUnitDistance(ally, SJ2)
                 if dist < distToShrine then
                     distToShrine = dist
-                    bestShrine = SJ2
+                    bestShrine = SHRINE_JUNGLE_2
                 end
             end
             local SB1 = GetShrine(Team, SHRINE_BASE_1)
@@ -278,7 +278,7 @@ function ConsiderTeamShrine(playerAssignment)
                 local dist = GetUnitToUnitDistance(ally, SB1)
                 if dist < distToShrine then
                     distToShrine = dist
-                    bestShrine = SB1
+                    bestShrine = SHRINE_BASE_1
                 end
             end
             local SB2 = GetShrine(Team, SHRINE_BASE_2)
@@ -286,7 +286,7 @@ function ConsiderTeamShrine(playerAssignment)
                 local dist = GetUnitToUnitDistance(ally, SB2)
                 if dist < distToShrine then
                     distToShrine = dist
-                    bestShrine = SB2
+                    bestShrine = SHRINE_BASE_2
                 end
             end
             local SB3 = GetShrine(Team, SHRINE_BASE_3)
@@ -294,7 +294,7 @@ function ConsiderTeamShrine(playerAssignment)
                 local dist = GetUnitToUnitDistance(ally, SB3)
                 if dist < distToShrine then
                     distToShrine = dist
-                    bestShrine = SB3
+                    bestShrine = SHRINE_BASE_3
                 end
             end
             local SB4 = GetShrine(Team, SHRINE_BASE_4)
@@ -302,7 +302,7 @@ function ConsiderTeamShrine(playerAssignment)
                 local dist = GetUnitToUnitDistance(ally, SB4)
                 if dist < distToShrine then
                     distToShrine = dist
-                    bestShrine = SB4
+                    bestShrine = SHRINE_BASE_4
                 end
             end
             local SB5 = GetShrine(Team, SHRINE_BASE_5)
@@ -310,29 +310,14 @@ function ConsiderTeamShrine(playerAssignment)
                 local dist = GetUnitToUnitDistance(ally, SB5)
                 if dist < distToShrine then
                     distToShrine = dist
-                    bestShrine = SB5
+                    bestShrine = SHRINE_BASE_5
                 end
             end
 
-            if bestShrine then
-                if shrineUseList[tostring(bestShrine)] == nil then
-                    shrineUseList[tostring(bestShrine)] = { shrine=bestShrine, players={} }
-                end
-
-                utils.myPrint("shrineUseList["..tostring(bestShrine).."] is best for: ", ally:GetPlayerID())
-                table.insert(shrineUseList[tostring(bestShrine)].players, ally:GetPlayerID())
-            end
-        end
-    end
-
-    -- Now that we have assigned each player to the best shrine we need to set the player assignments
-    -- telling the hero which shrine to go to and for how many people who should wait
-    for name, value in pairs(shrineUseList) do
-        for _, ally in pairs(listAlly) do
-            --utils.myPrint("Checking player '", ally:GetPlayerID(), "' for shrine ", name)
-            if utils.InTable(value.players, ally:GetPlayerID()) then
-                --utils.myPrint("Assigning ", utils.GetHeroName(ally), " to shrine: ", name)
-                playerAssignment[ally:GetPlayerID()].UseShrine = {shrine=value.shrine, allies=value.players}
+            if bestShrine and (not ally.useShrine or ally.useShrine == -1) then
+                utils.myPrint("Adding ID: '", ally:GetPlayerID(), "' to Shrine: ", bestShrine)
+                table.insert(global_game_state.GetShrineState(bestShrine).pidsLookingForHeal, ally:GetPlayerID())
+                ally.useShrine = bestShrine
             end
         end
     end

@@ -76,33 +76,25 @@ end
 -- This just tells us if we should be part of this event.
 function ConsiderShrine(bot, playerAssignment)
     if bot:IsIllusion() then return BOT_MODE_DESIRE_NONE end
+
+    --if playerAssignment[bot:GetPlayerID()].UseShrine ~= nil then
+    --    bot.useShrine = playerAssignment[bot:GetPlayerID()].UseShrine
+    --end
     
-    --[[
-    if playerAssignment[bot:GetPlayerID()].UseShrine ~= nil then
-        local useShrine = playerAssignment[bot:GetPlayerID()].UseShrine
-        local numAllies = 0
-        for _, ally in pairs(nearbyAllies) do
-            if utils.InTable(useShrine.allies , ally:GetPlayerID()) then
-                if GetUnitToUnitDistance(ally, useShrine.shrine) < 400 then
-                    numAllies = numAllies + 1
-                end
-            end
-        end
-
-        if not getHeroVar("Shrine") then
-            setHeroVar("Shrine", useShrine.shrine)
-        end
-
-        if numAllies == #useShrine.allies then
-            setHeroVar("ShrineMode", {constants.SHRINE_USE, useShrine.allies})
-            return BOT_MODE_DESIRE_ABSOLUTE
+    if bot.shrineMode ~= nil then
+        return bot.shrineMode:Desire(bot)
+    else
+        specialFileName = GetScriptDirectory().."/modes/shrine_"..utils.GetHeroName(bot)
+        if pcall(tryHeroSpecialMode) then
+            specialFileName = nil
+            bot.shrineMode = specialFile
+            return bot.shrineMode:Desire(bot)
         else
-            --utils.myPrint("NumAllies: ", numAllies, ", #useShrine.allies: ", #useShrine.allies)
-            setHeroVar("ShrineMode", {constants.SHRINE_WAITING, useShrine.allies})
-            return BOT_ACTION_DESIRE_VERYHIGH
+            specialFileName = nil
+            bot.shrineMode = dofile( GetScriptDirectory().."/modes/shrine" )
+            return bot.shrineMode:Desire(bot)
         end
     end
-    --]]
     
     return BOT_MODE_DESIRE_NONE
 end

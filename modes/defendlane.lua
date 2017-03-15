@@ -8,7 +8,7 @@ local X = BotsInit.CreateGeneric()
 
 local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
 local utils = require( GetScriptDirectory().."/utility" )
-require( GetScriptDirectory().."/item_usage" )
+require( GetScriptDirectory().."/buildings_status" )
 
 local function setHeroVar(var, value)
     gHeroVar.SetVar(GetBot():GetPlayerID(), var, value)
@@ -23,9 +23,13 @@ function X:GetName()
 end
 
 function X:OnStart(myBot)
+    local bot = GetBot()
+    bot.defendLane = true
 end
 
 function X:OnEnd()
+    local bot = GetBot()
+    bot.defendLane = false
 end
 
 function X:Desire(bot)
@@ -64,15 +68,20 @@ function X:DefendTower(bot, hBuilding)
     if #enemies > 0 and #allies >= #enemies then -- we are good to go
         gHeroVar.HeroAttackUnit(bot, enemies[1], true) -- Charge! at the closes enemy
     else -- stay back
+        local closestEnemyDist = 10000
         if #enemies > 0 then
-            local dist = GetUnitToUnitDistance(bot, enemies[1])
-            if dist < 900 then -- they are too close
-                gHeroVar.HeroMoveToLocation(bot, utils.VectorAway(bot:GetLocation(), enemies[1]:GetLocation(), 950-dist))
-            end -- else do nothing. abilityUse should handle this
-        elseif #eCreep > 0 then
+            closestEnemyDist = GetUnitToUnitDistance(bot, enemies[1])
+            if closestEnemyDist < 900 then -- they are too close
+                gHeroVar.HeroMoveToLocation(bot, utils.VectorAway(bot:GetLocation(), enemies[1]:GetLocation(), 950-closestEnemyDist))
+                return
+            end
+        end
+        
+        if #eCreep > 0 then
             local weakestCreep, _ = utils.GetWeakestCreep(eCreep)
-            if weakestCreep then
+            if weakestCreep and GetUnitToUnitDistance(bot, weakestCreep) < closestEnemyDist then
                 gHeroVar.HeroAttackUnit(bot, weakestCreep, true)
+                return
             end
         end
     end
@@ -102,7 +111,7 @@ function X:Think(bot)
     if timeToReachBuilding <= 5.0 then
         X:DefendTower(bot, hBuilding)
     else
-        if bot:IsChanneling() or bot:IsCastingAbility() then return true end
+        if utils.IsBusy(bot) then return end
         local tp = utils.GetTeleportationAbility(bot)
         if tp == nil then
             X:DefendTower(bot, hBuilding)

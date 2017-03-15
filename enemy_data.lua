@@ -16,9 +16,8 @@ local UpdateFreq2 = 3.0
 -------------------------------------------------------------------------------
 
 function EnemyData.PurgeEnemy(id)
-    EnemyData[id] = {  Name = "", Time1 = -100, Time2 = -100, Obj = nil, Level = 1,
-                       Alive = true, Health = -1, MaxHealth = -1, Mana = -1, Items = {},
-                       MoveSpeed = 400, LocExtra1 = Vector(0,0), LocExtra2 = Vector(0,0),
+    EnemyData[id] = {  Name = "", Time1 = -100, Time2 = -100, Level = 1,
+                       Alive = true, Health = -1, MaxHealth = -1, Mana = -1, Items = {}, MoveSpeed = 300, 
                        PhysDmg2 = {}, MagicDmg2 = {}, PureDmg2 = {}, AllDmg2 = {},
                        PhysDmg10 = {}, MagicDmg10 = {}, PureDmg10 = {}, AllDmg10 = {},
                        AttackDamage = 0, SecondsPerAttack = 1
@@ -39,9 +38,6 @@ function EnemyData.CheckAlive()
         else
             EnemyData[id].Alive = false
         end
-        
-        -- invalidate our object handle
-        EnemyData[id].Obj = nil
     end
 end
 
@@ -65,30 +61,25 @@ function EnemyData.UpdateEnemyInfo(timeFreq)
         local pid = enemy:GetPlayerID()
 
         EnemyData[pid].Name = utils.GetHeroName(enemy)
-        EnemyData[pid].Obj = enemy
 
-        if (RealTime() - EnemyData[pid].Time1) >= UpdateFreq1 then
-            EnemyData[pid].Time1        = RealTime()
+        if (GameTime() - EnemyData[pid].Time1) >= UpdateFreq1 then
+            EnemyData[pid].Time1        = GameTime()
             EnemyData[pid].Level        = enemy:GetLevel()
             EnemyData[pid].Health       = enemy:GetHealth()
             EnemyData[pid].MaxHealth    = enemy:GetMaxHealth()
             EnemyData[pid].Mana         = enemy:GetMana()
             EnemyData[pid].MaxMana      = enemy:GetMaxMana()
-            EnemyData[pid].MoveSpeed    = enemy:GetCurrentMovementSpeed() or 400
-            EnemyData[pid].LocExtra1    = enemy:GetExtrapolatedLocation(0.5) -- 1/2 second
-            EnemyData[pid].LocExtra2    = enemy:GetExtrapolatedLocation(3.0) -- 3 second
+            EnemyData[pid].MoveSpeed    = enemy:GetCurrentMovementSpeed()
 
-            if (RealTime() - EnemyData[pid].Time2) >= UpdateFreq2 then
-                EnemyData[pid].Time2 = RealTime()
+            if (GameTime() - EnemyData[pid].Time2) >= UpdateFreq2 then
+                EnemyData[pid].Time2 = GameTime()
                 
-                --[[
                 for i = 0, 5, 1 do
                     local item = enemy:GetItemInSlot(i)
                     if item ~= nil then
                         EnemyData[pid].Items[i] = item:GetName()
                     end
                 end
-                --]]
 
                 EnemyData[pid].SlowDur = enemy:GetSlowDuration(false) -- FIXME: does this count abilities only, or Items too?
                 EnemyData[pid].StunDur = enemy:GetStunDuration(false) -- FIXME: does this count abilities only, or Items too?
@@ -114,28 +105,7 @@ function EnemyData.UpdateEnemyInfo(timeFreq)
     end
 end
 
-local function GetEnemyFutureLocation(ePID, fTime)
-    for k, v in pairs(EnemyData) do
-        if type(k) == "number"  and k == ePID then
-            if fTime <= 0.5 then
-                return v.LocExtra1
-            elseif fTime <= 3.0 then
-                return v.LocExtra2
-            else
-                return nil
-            end
-        end
-    end
-    return nil
-end
-
-function EnemyData.PredictedLocation(targetID, fTime)
-    if targetID == 0 or (targetID > 0 and not IsHeroAlive(targetID)) then return nil end
-
-    return GetEnemyFutureLocation(targetID, fTime)
-end
-
-function EnemyData.GetEnemyDmgs(ePID, fDuration)
+function EnemyData.GetEnemyDmgs(pid, fDuration)
     local physDmg2 = 0
     local magicDmg2 = 0
     local pureDmg2 = 0
@@ -144,18 +114,16 @@ function EnemyData.GetEnemyDmgs(ePID, fDuration)
     local magicDmg10 = 0
     local pureDmg10 = 0
     local allDmg10 = 0
-    local pid = GetBot():GetPlayerID()
     for k, v in pairs(EnemyData) do
-        if type(k) == "number"  and k == ePID then
-            physDmg2    = v.PhysDmg2[pid] or 0
-            magicDmg2   = v.MagicDmg2[pid] or 0
-            pureDmg2    = v.PureDmg2[pid] or 0
-            allDmg2     = v.AllDmg2[pid] or 0
-            physDmg10   = v.PhysDmg10[pid] or 0
-            magicDmg10  = v.MagicDmg10[pid] or 0
-            pureDmg10   = v.PureDmg10[pid] or 0
-            allDmg10    = v.AllDmg10[pid] or 0
-            break
+        if type(k) == "number" and v.PhysDmg2[pid] then
+            physDmg2    = physDmg2 + v.PhysDmg2[pid]
+            magicDmg2   = magicDmg2 + v.MagicDmg2[pid]
+            pureDmg2    = pureDmg2 + v.PureDmg2[pid]
+            allDmg2     = allDmg2 + v.AllDmg2[pid]
+            physDmg10   = physDmg10 + v.PhysDmg10[pid]
+            magicDmg10  = magicDmg10 + v.MagicDmg10[pid]
+            pureDmg10   = pureDmg10 + v.PureDmg10[pid]
+            allDmg10    = allDmg10 + v.AllDmg10[pid]
         end
     end
 
@@ -238,13 +206,14 @@ end
 
 function EnemyData.PrintEnemyInfo()
     for k, v in pairs(EnemyData) do
-        if type(k) == "number" then
+        if type(k) == "number" and v.Name ~= "" then
             print("")
             print("     Name: ", v.Name)
             print("    Level: ", v.Level)
             print("Last Seen: ", v.Time1)
             print("   Health: ", v.Health)
             print("     Mana: ", v.Mana)
+            print("       MS: ", v.MoveSpeed)
 
             local iStr = ""
             for k2, v2 in pairs(v.Items) do

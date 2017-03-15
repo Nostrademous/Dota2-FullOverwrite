@@ -11,6 +11,28 @@ local laneStates = {[LANE_TOP] = {dontdefend = false},
                     [LANE_MID] = {dontdefend = false},
                     [LANE_BOT] = {dontdefend = false}}
 
+                    
+local shrineStates = {
+    [SHRINE_BASE_1]     = {handle = GetShrine(GetTeam(), SHRINE_BASE_1), pidsLookingForHeal = {}},
+    [SHRINE_BASE_2]     = {handle = GetShrine(GetTeam(), SHRINE_BASE_2), pidsLookingForHeal = {}},
+    [SHRINE_BASE_3]     = {handle = GetShrine(GetTeam(), SHRINE_BASE_3), pidsLookingForHeal = {}},
+    [SHRINE_BASE_4]     = {handle = GetShrine(GetTeam(), SHRINE_BASE_4), pidsLookingForHeal = {}},
+    [SHRINE_BASE_5]     = {handle = GetShrine(GetTeam(), SHRINE_BASE_5), pidsLookingForHeal = {}},
+    [SHRINE_JUNGLE_1]   = {handle = GetShrine(GetTeam(), SHRINE_JUNGLE_1), pidsLookingForHeal = {}},
+    [SHRINE_JUNGLE_2]   = {handle = GetShrine(GetTeam(), SHRINE_JUNGLE_2), pidsLookingForHeal = {}}
+}
+
+function GetShrineState(shrineID)
+    return shrineStates[shrineID]
+end
+
+function RemovePIDFromShrine(shrineID, pid)
+    local pidLoc = utils.PosInTable(shrineStates[shrineID].pidsLookingForHeal, pid)
+    if pidLoc >= 0 then
+        table.remove(shrineStates[shrineID].pidsLookingForHeal, pidLoc)
+    end
+end
+
 -- TODO: used for reading and writing. not really good.
 function LaneState(lane)
     return laneStates[lane]

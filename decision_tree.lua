@@ -415,24 +415,6 @@ function X:Think(bot)
     end
 end
 
-function X:Think2(bot)
-
-    if ( self:Determine_DoAlliesNeedHelp(bot) ) then
-        local bRet = self:DoDefendAlly(bot)
-        if bRet then return end
-    end
-
-    if ( self:GetMode() == MODE_ROSHAN or self:Determine_ShouldTeamRoshan(bot) ) then
-        local bRet = self:DoRoshan(bot)
-        if bRet then return end
-    end
-
-    if ( self:Determine_ShouldRoam(bot) ) then
-        local bRet = self:DoRoam(bot)
-        if bRet then return end
-    end
-end
-
 -------------------------------------------------------------------------------
 -- FUNCTION DEFINITIONS - OVER-LOAD THESE IN HERO LUA IF YOU DESIRE
 -------------------------------------------------------------------------------

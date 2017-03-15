@@ -108,7 +108,7 @@ function X:UpdateTeamBuyList( sItem )
 end
 
 function X:Think(bot)
-    local tDelta = RealTime() - self.LastThink
+    local tDelta = GameTime() - self.LastThink
     -- throttle think for better performance
     if tDelta > 0.1 then
         if ( GetGameState() ~= GAME_STATE_GAME_IN_PROGRESS and GetGameState() ~= GAME_STATE_PRE_GAME ) then return end
@@ -163,7 +163,7 @@ function X:Think(bot)
                     end
                 end
 
-                self.LastThink = RealTime()
+                self.LastThink = GameTime()
             end
         end
     end
@@ -230,7 +230,7 @@ function X:BuySupportItems()
                 Buying consumable items like raindrops if there is a lot of magical damage
                 Buying salves/whatever for cores if it makes sense
     --]]
-        local tDelta = RealTime() - self.LastSupportThink
+        local tDelta = GameTime() - self.LastSupportThink
         -- throttle support item decisions to every 10s
         if tDelta > 10.0 then
             if GetNumCouriers() == 0 then
@@ -266,7 +266,7 @@ function X:BuySupportItems()
             end
 
             -- next support item think in 10 sec
-            self.LastSupportThink = RealTime()
+            self.LastSupportThink = GameTime()
         end
     end
 end
@@ -281,13 +281,13 @@ function X:UpdatePurchaseOrder()
         -- Still core items to buy?
         if( #self.CoreItems == 0) then
             -- Otherwise consider buying extension items
-            local tDelta = RealTime() - self.LastExtensionThink
+            local tDelta = GameTime() - self.LastExtensionThink
             -- last think over 10s ago?
             if tDelta > 10.0 then
                 -- consider buying extensions
                 self:ConsiderBuyingExtensions(bot)
                 -- update last think time
-                self.LastExtensionThink = RealTime()
+                self.LastExtensionThink = GameTime()
             end
         else
             -- get next starting item in parts

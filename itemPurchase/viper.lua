@@ -21,11 +21,11 @@ generic.ItemsToBuyAsHardCarry = {
 		"item_power_treads_agi",
 		"item_ring_of_aquila",
 		"item_mekansm",
-		"item_dragon_lance"
+		"item_dragon_lance",
+        "item_ultimate_scepter"
 	},
 	ExtensionItems = {
 		{
-			"item_ultimate_scepter",
 			"item_assault"
 		},
 		{
@@ -46,11 +46,11 @@ generic.ItemsToBuyAsMid = {
 		"item_power_treads_agi",
 		"item_ring_of_aquila",
 		"item_mekansm",
-		"item_dragon_lance"
+		"item_dragon_lance",
+        "item_ultimate_scepter"
 	},
 	ExtensionItems = {
 		{
-			"item_ultimate_scepter",
 			"item_assault"
 		},
 		{
@@ -72,11 +72,11 @@ generic.ItemsToBuyAsOfflane = {
 		"item_power_treads_agi",
 		"item_ring_of_aquila",
 		"item_mekansm",
-		"item_dragon_lance"
+		"item_dragon_lance",
+        "item_ultimate_scepter"
 	},
 	ExtensionItems = {
-		{
-			"item_ultimate_scepter",
+        {
 			"item_butterfly",
 			"item_assault"
 		},

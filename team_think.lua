@@ -101,16 +101,12 @@ end
 -- Determine which lanes should be defended and which Heroes should
 -- be part of the defense.
 function ConsiderTeamLaneDefense()
-    debugging.SetTeamState("Getting Pushed", 2, "")
-    debugging.SetTeamState("Getting Pushed", 3, "")
-
     local lane, building, numEnemies = global_game_state.DetectEnemyPush()
 
     local listAlly = GetUnitList(UNIT_LIST_ALLIED_HEROES)
 
     for _, ally in pairs(listAlly) do
         gHeroVar.SetVar(ally:GetPlayerID(), "DoDefendLane", {}) -- reset this for all
-        debugging.SetBotState(utils.GetHeroName(ally), 2, "")
     end
 
     -- reset some states
@@ -154,52 +150,33 @@ function ConsiderTeamLaneDefense()
         end
     end
 
-    debugging.SetTeamState("Getting Pushed", 2, string.format("Def: %d enemies. %d defending, %d close, %d near, %d could tp", numEnemies, #defending, #listAlliesAtBuilding, #listAlliesCanReachBuilding, #listAlliesCanTPToBuildling))
-
     local numNeeded = Max(Max(numEnemies - 1, 1) - #defending, 0)
 
-    utils.myPrint(string.format("Ok, so lane %d is getting pushed by %d enemies. We have %d %d %d %d allies ready.", lane, numEnemies, #defending, #listAlliesAtBuilding, #listAlliesCanReachBuilding, #listAlliesCanTPToBuildling))
-
     if (#listAlliesAtBuilding + #listAlliesCanReachBuilding + #listAlliesCanTPToBuildling) >= numNeeded then
-        debugging.SetTeamState("Getting Pushed", 3, "Mounting a defense!")
-        utils.myPrint("Mounting a defense")
         local numGoing = 0
         for _, ally in pairs(defending) do -- reassign defending heros
             gHeroVar.SetVar(ally:GetPlayerID(), "DoDefendLane", {lane, building, numEnemies})
-            utils.myPrint("reassigned "..utils.GetHeroName(ally))
-            debugging.SetBotState(utils.GetHeroName(ally), 2, "Defending (already defending)")
         end
-        utils.myPrint("At Tower:")
         for _, ally in pairs(listAlliesAtBuilding) do -- make everyone sitting on the tower defend it
             gHeroVar.SetVar(ally:GetPlayerID(), "DoDefendLane", {lane, building, numEnemies})
-            utils.myPrint("assigned "..utils.GetHeroName(ally))
-            debugging.SetBotState(utils.GetHeroName(ally), 2, "Defending (already there)")
             numGoing = numGoing + 1
         end
         if numGoing < numNeeded then -- still need more?
-            utils.myPrint("can reach Tower:")
             for _, ally in pairs(listAlliesCanReachBuilding) do -- get the guys around
                 gHeroVar.SetVar(ally:GetPlayerID(), "DoDefendLane", {lane, building, numEnemies})
-                utils.myPrint("assigned "..utils.GetHeroName(ally))
-                debugging.SetBotState(utils.GetHeroName(ally), 2, "Defending (walk)")
                 numGoing = numGoing + 1
                 if numGoing >= numNeeded then break end -- k, thats enough
             end
         end
         if numGoing < numNeeded then -- still more?
-            utils.myPrint("tp to Tower:")
             for _, ally in pairs(listAlliesCanTPToBuildling) do -- tp them in
                 gHeroVar.SetVar(ally:GetPlayerID(), "DoDefendLane", {lane, building, numEnemies})
-                utils.myPrint("assigned "..utils.GetHeroName(ally))
-                debugging.SetBotState(utils.GetHeroName(ally), 2, "Defending (tp)")
                 numGoing = numGoing + 1
                 if numGoing >= numNeeded then break end -- k, thats enough
             end
         end
     else
         global_game_state.LaneState(lane).dontdefend = true -- run away!
-        debugging.SetTeamState("Getting Pushed", 3, "Goodbye, little tower.")
-        utils.myPrint("Goodbye, little tower.")
     end
 end
 

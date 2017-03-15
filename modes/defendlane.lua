@@ -88,7 +88,6 @@ function X:Think(bot)
             vec = vec * 575 / #vec -- resize to 575 units (max tp range from tower)
             pos = pos + vec
             bot:Action_UseAbilityOnLocation(tp, pos)
-            utils.myPrint("TPing")
         end
     end
 

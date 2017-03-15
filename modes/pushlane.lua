@@ -35,7 +35,7 @@ function X:Think(bot)
 
     if utils.IsCrowdControlled(bot) then return end
 
-    local Towers = gHeroVar.GetNearbyEnemyTowers(bot, 750)
+    local Towers = gHeroVar.GetNearbyEnemyTowers(bot, 800)
     local Shrines = bot:GetNearbyShrines(750, true)
     local Barracks = bot:GetNearbyBarracks(750, true)
     local Ancient = GetAncient(utils.GetOtherTeam())
@@ -57,12 +57,21 @@ function X:Think(bot)
     local nearbyAlliedCreep = gHeroVar.GetNearbyAlliedCreep(bot, 900)
 
     if utils.IsTowerAttackingMe() and #nearbyAlliedCreep > 0 then
-        if utils.DropTowerAggro(bot, nearbyAlliedCreep) then return end
+        if utils.DropTowerAggro(bot, nearbyAlliedCreep) then
+            return
+        else
+            local dist = GetUnitToUnitDistance(bot, Towers[1])
+            if dist < 800 then
+                gHeroVar.HeroMoveToLocation(bot, utils.VectorAway(bot:GetLocation(), Towers[1]:GetLocation(), 800-dist))
+                return
+            end
+        end
     end
 
     if #Towers > 0 and Towers[1]:GetHealth()/Towers[1]:GetMaxHealth() < 0.1 and
         not Towers[1]:HasModifier("modifier_fountain_glyph") then
         gHeroVar.HeroAttackUnit(bot, Towers[1], false)
+        return
     end
 
     -- TODO: should be reworked with proper tower aggro thinking
@@ -71,8 +80,8 @@ function X:Think(bot)
         if #nearbyAlliedCreep > 0 or frontier < 0.25 then
             if #Towers > 0 and #nearbyAlliedCreep < 2 then
                 local dist = GetUnitToUnitDistance(bot, Towers[1])
-                if dist < 750 then
-                    gHeroVar.HeroMoveToLocation(bot, utils.VectorAway(bot:GetLocation(), Towers[1]:GetLocation(), 750-dist))
+                if dist < 800 then
+                    gHeroVar.HeroMoveToLocation(bot, utils.VectorAway(bot:GetLocation(), Towers[1]:GetLocation(), 800-dist))
                     return
                 end
             else

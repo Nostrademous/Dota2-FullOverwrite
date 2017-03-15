@@ -1271,9 +1271,14 @@ function U.IsCrowdControlled(enemy)
 end
 
 function U.DropTowerAggro(bot, nearbyAlliedCreep)
-    if #nearbyAlliedCreep > 0 then
-        gHeroVar.HeroAttackUnit(bot, nearbyAlliedCreep[1], true)
-        return true
+    local nearbyTowers = gHeroVar.GetNearbyEnemyTowers(bot, 750)
+    if #nearbyAlliedCreep > 0 and #nearbyTowers == 1 then
+        for _, aCreep in pairs(nearbyAlliedCreep) do
+            if GetUnitToUnitDistance(aCreep, nearbyTowers[1]) < 700 then
+                gHeroVar.HeroAttackUnit(bot, aCreep, true)
+                return true
+            end
+        end
     end
     return false
 end

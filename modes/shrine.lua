@@ -139,7 +139,7 @@ function X:Desire(bot)
     end
     
     if bot:HasModifier("modifier_filler_heal") and 
-        (bot:GetHealth() ~= bot:GetMaxHealth() or bot:GetMana() ~= bot:GetMaxMan()) then
+        (bot:GetHealth() ~= bot:GetMaxHealth() or bot:GetMana() ~= bot:GetMaxMana()) then
         -- TODO: we shouldn't return here really, we can do all kinds of things,
         -- just need to stay in range of heal radius while we are not full health/mana
         return BOT_MODE_DESIRE_VERYHIGH

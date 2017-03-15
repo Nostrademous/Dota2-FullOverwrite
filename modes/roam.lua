@@ -102,12 +102,12 @@ function X:Think(bot)
     if utils.ValidTarget(target) and target:IsAlive() then
         local dist = GetUnitToUnitDistance(bot, target)
         if dist < 500 then
-            bot:Action_AttackUnit(target, true)
+            gHeroVar.HeroAttackUnit(bot, target, true)
             setHeroVar("Target", target)
             setHeroVar("RoamTarget", nil)
             return
         end
-        bot:Action_MoveToUnit(target)
+        gHeroVar.HeroMoveToLocation(bot, target:GetLocation())
     else
         setHeroVar("RoamTarget", nil)
     end

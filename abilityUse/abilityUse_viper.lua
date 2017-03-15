@@ -114,7 +114,9 @@ end
 function viperAbility:AbilityUsageThink(bot)
     if utils.IsBusy(bot) then return true end
     
-    if getHeroVar("IsRetreating") then return true end
+    if getHeroVar("IsRetreating") then return false end
+    
+    if utils.IsCrowdControlled(bot) then return false end
 
     if abilityQ == "" then abilityQ = bot:GetAbilityByName( Abilities[1] ) end
     if abilityW == "" then abilityW = bot:GetAbilityByName( Abilities[2] ) end
@@ -131,7 +133,7 @@ function viperAbility:AbilityUsageThink(bot)
     local target = getHeroVar("Target")
 
     if not utils.ValidTarget(target) then
-        target, _ = utils.GetWeakestHero(bot, bot:GetAttackRange()+200, nearbyEnemyHeroes)
+        target, _ = utils.GetWeakestHero(bot, bot:GetAttackRange()+bot:GetBoundingRadius()+25, nearbyEnemyHeroes)
         if target ~= nil then
             local dmg, castQueue, castTime, stunTime, slowTime, engageDist = nukeDamage( bot, target )
             local rightClickTime = stunTime + slowTime -- in Viper's case we don't discount the slow as he can cast it indefinitely (mana providing)

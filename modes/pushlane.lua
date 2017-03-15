@@ -32,12 +32,14 @@ end
 function X:Think(bot)
 
     if utils.IsBusy(bot) then return end
-    
+
+    if utils.IsCrowdControlled(bot) then return end
+
     local Towers = gHeroVar.GetNearbyEnemyTowers(bot, 750)
     local Shrines = bot:GetNearbyShrines(750, true)
     local Barracks = bot:GetNearbyBarracks(750, true)
     local Ancient = GetAncient(utils.GetOtherTeam())
-    
+
     if #Towers == 0 and #Shrines == 0 and #Barracks == 0 then
         if GetUnitToLocationDistance(bot, Ancient:GetLocation()) < 500 then
             if utils.NotNilOrDead(Ancient) and not Ancient:HasModifier("modifier_fountain_glyph") then
@@ -46,7 +48,7 @@ function X:Think(bot)
             end
         end
     end
-    
+
     -- we are pushing lane but no structures nearby, so push forward in lane
     local enemyFrontier = GetLaneFrontAmount(utils.GetOtherTeam(), getHeroVar("CurLane"), false)
     local frontier = Min(1.0, enemyFrontier)
@@ -57,7 +59,7 @@ function X:Think(bot)
     if utils.IsTowerAttackingMe() and #nearbyAlliedCreep > 0 then
         if utils.DropTowerAggro(bot, nearbyAlliedCreep) then return end
     end
-    
+
     if #Towers > 0 and Towers[1]:GetHealth()/Towers[1]:GetMaxHealth() < 0.1 and
         not Towers[1]:HasModifier("modifier_fountain_glyph") then
         gHeroVar.HeroAttackUnit(bot, Towers[1], false)
@@ -66,7 +68,7 @@ function X:Think(bot)
     -- TODO: should be reworked with proper tower aggro thinking
     local nearbyEnemyCreep = gHeroVar.GetNearbyEnemyCreep(bot, 1200)
     if #nearbyEnemyCreep > 0 then
-        if #nearbyAlliedCreep > 0 then
+        if #nearbyAlliedCreep > 0 or frontier < 0.25 then
             if #Towers > 0 and #nearbyAlliedCreep < 2 then
                 local dist = GetUnitToUnitDistance(bot, Towers[1])
                 if dist < 750 then
@@ -86,7 +88,7 @@ function X:Think(bot)
         end
     end
 
-    if #Towers > 0 and (#nearbyAlliedCreep > 1 or 
+    if #Towers > 0 and (#nearbyAlliedCreep > 1 or
         (#nearbyAlliedCreep == 1 and nearbyAlliedCreep[1]:GetHealth() > 162) or
         Towers[1]:GetHealth()/Towers[1]:GetMaxHealth() < 0.1) then
         for _, tower in ipairs(Towers) do
@@ -95,8 +97,8 @@ function X:Think(bot)
                 return
             else
                 local dist = GetUnitToUnitDistance(bot, Towers[1])
-                if dist < 710 then
-                    gHeroVar.HeroMoveToLocation(bot, utils.VectorAway(bot:GetLocation(), Towers[1]:GetLocation(), 710-dist))
+                if dist < 750 then
+                    gHeroVar.HeroMoveToLocation(bot, utils.VectorAway(bot:GetLocation(), Towers[1]:GetLocation(), 750-dist))
                     return
                 end
             end
@@ -120,8 +122,8 @@ function X:Think(bot)
             end
         end
     end
-    
-    bot:Action_MoveToLocation(dest)
+
+    gHeroVar.HeroMoveToLocation(bot, dest)
 end
 
 function X:Desire(bot)
@@ -136,6 +138,12 @@ function X:Desire(bot)
         return BOT_MODE_DESIRE_NONE
     end
     
+    -- push enemies out of our base
+    local enemyFrontier = GetLaneFrontAmount(utils.GetOtherTeam(), getHeroVar("CurLane"), false)
+    if enemyFrontier < 0.25 then
+        return BOT_MODE_DESIRE_MODERATE
+    end
+
     -- this is hero-specific push-lane determination
     local nearbyETowers = gHeroVar.GetNearbyEnemyTowers(bot, Max(750, bot:GetAttackRange()))
     if #nearbyETowers > 0 then
@@ -143,7 +151,7 @@ function X:Desire(bot)
             not nearbyETowers[1]:HasModifier("modifier_fountain_glyph") then
             return BOT_MODE_DESIRE_HIGH
         end
-        
+
         if utils.IsTowerAttackingMe() and #gHeroVar.GetNearbyAlliedCreep(bot, 1000) == 0 then
             return BOT_MODE_DESIRE_NONE
         end
@@ -152,12 +160,12 @@ function X:Desire(bot)
     if #gHeroVar.GetNearbyAlliedCreep(bot, 1000) > 1 and #gHeroVar.GetNearbyEnemyCreep(bot, 1200) == 0 then
         return BOT_MODE_DESIRE_MODERATE
     end
-    
+
     local me = getHeroVar("Self")
     if me:getCurrentMode():GetName() == "pushlane" then
         return me:getCurrentModeValue()
     end
-    
+
     return BOT_MODE_DESIRE_NONE
 end
 

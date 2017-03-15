@@ -1431,6 +1431,17 @@ function U.GetTeleportationAbility(npcBot)
     if tp ~= nil and tp:IsFullyCastable() then
         return tp
     end
+    
+    tp = U.HaveItem(npcBot, "item_travel_boots_1")
+    if tp ~= nil and tp:IsFullyCastable() then
+        return tp
+    end
+    
+    tp = U.HaveItem(npcBot, "item_travel_boots_2")
+    if tp ~= nil and tp:IsFullyCastable() then
+        return tp
+    end
+    
     return nil
 end
 

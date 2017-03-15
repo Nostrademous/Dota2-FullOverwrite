@@ -175,6 +175,8 @@ end
 function invAbility:AbilityUsageThink(bot)    
     -- Check if we're already using an ability
     if utils.IsBusy(bot) then return true end
+    
+    if utils.IsCrowdControlled(bot) then return false end
 
     if abilityQ == "" then abilityQ = bot:GetAbilityByName( "invoker_quas" ) end
     if abilityW == "" then abilityW = bot:GetAbilityByName( "invoker_wex" ) end
@@ -253,7 +255,7 @@ function invAbility:AbilityUsageThink(bot)
     castACDesire, castACTarget = ConsiderAlacrity(bot, nearbyEnemyCreep, nearbyEnemyTowers)
     castGWDesire = ConsiderGhostWalk(bot, nearbyEnemyHeroes)
     castIWDesire, castIWFacing = ConsiderIceWall(bot, nearbyEnemyHeroes)
-    castFSDesire = ConsiderForgedSpirit(bot, nearbyEnemyCreep, nearbyEnemyTowers)
+    castFSDesire = ConsiderForgedSpirit(bot, nearbyEnemyHeroes, nearbyEnemyCreep, nearbyEnemyTowers)
 
     --[[
     print("TO "..castTODesire)
@@ -378,12 +380,14 @@ function invAbility:AbilityUsageThink(bot)
         if castGWDesire > 0 then
             --utils.myPrint("I want to Ghost Walk")
             if not abilityGW:IsHidden() then
+                bot:ActionPush_Delay( 0.1 )
                 bot:ActionPush_UseAbility( abilityGW )
                 return true
             elseif abilityR:IsFullyCastable() then
                 bot:Action_ClearActions(true)
                 invokeGhostWalk(bot)
                 bot:ActionQueue_UseAbility( abilityGW )
+                bot:ActionQueue_Delay( 0.1 )
                 return true
             end
         end
@@ -422,7 +426,7 @@ function invAbility:AbilityUsageThink(bot)
         if not getHeroVar("nukeTOCMDB") then
             if ConsiderOrbs(bot) then return true end
         end
-        
+    else
         if ConsiderShowUp(bot, nearbyEnemyHeroes) then return true end
     end
     
@@ -446,10 +450,7 @@ end
 function ConsiderShowUp(bot, nearbyEnemyHeroes)
     if inGhostWalk(bot) then
         if #nearbyEnemyHeroes <= 1 or bot:HasModifier("modifier_item_dust") then
-            gHeroVar.HeroUseAbility(bot, abilityW )
-            gHeroVar.HeroUseAbility(bot, abilityW )
-            gHeroVar.HeroUseAbility(bot, abilityW )
-            return true
+            return tripleWexBuff(bot)
         end
     end
     
@@ -908,7 +909,7 @@ function ConsiderSunStrike(bot)
 
     -- Get some of its values
     local nRadius = 175
-    local nDelay = 2.3 + getHeroVar("AbilityDelay") -- 0.05 cast point, 1.7 delay
+    local nDelay = 1.75 + getHeroVar("AbilityDelay") -- 0.05 cast point, 1.7 delay
     local nDamage = abilitySS:GetSpecialValueFloat("damage")
 
     --------------------------------------
@@ -1055,7 +1056,7 @@ function ConsiderGhostWalk(bot, nearbyEnemyHeroes)
     -- WE ARE RETREATNG AND THEY ARE ON US
     if getHeroVar("IsRetreating") then
         for _, npcEnemy in pairs( nearbyEnemyHeroes ) do
-            if bot:WasRecentlyDamagedByHero( npcEnemy, 1.0 ) and GetUnitToUnitDistance( npcEnemy, bot ) < 600 then
+            if bot:WasRecentlyDamagedByHero( npcEnemy, 1.0 ) or GetUnitToUnitDistance( npcEnemy, bot ) < 600 then
                 return BOT_ACTION_DESIRE_HIGH
             end
         end
@@ -1176,13 +1177,13 @@ function ConsiderAlacrity(bot, nearbyEnemyCreep, nearbyEnemyTowers)
     return BOT_ACTION_DESIRE_NONE, nil
 end
 
-function ConsiderForgedSpirit(bot, nearbyEnemyCreep, nearbyEnemyTowers)
+function ConsiderForgedSpirit(bot, nearbyEnemyHeroes, nearbyEnemyCreep, nearbyEnemyTowers)
     if not quasTrained() or not exortTrained() then
         return BOT_ACTION_DESIRE_NONE
     end
 
     -- Make sure it's castable
-    if abilityFS:IsFullyCastable() then
+    if not abilityFS:IsFullyCastable() then
         return BOT_ACTION_DESIRE_NONE
     end
     
@@ -1210,9 +1211,11 @@ function ConsiderForgedSpirit(bot, nearbyEnemyCreep, nearbyEnemyTowers)
     --------------------------------------
     local manaRatio = bot:GetMana()/bot:GetMaxMana()
     
-    -- If we're pushing or defending a lane and can hit 4+ creeps, go for it
-    if manaRatio > 0.6 and (getHeroVar("ShouldDefend") or getHeroVar("ShouldPush")) then
-        if #nearbyEnemyCreep >= 3 or #nearbyEnemyTowers > 0 then
+    -- If we're pushing or defending a lane, go for it
+    local me = getHeroVar("Self")
+    if manaRatio > 0.4 and (me:getCurrentMode():GetName() == "pushlane" or 
+        me:getCurrentMode():GetName() == "defendlane") then
+        if #nearbyEnemyHeroes > 0 or #nearbyEnemyCreep >= 3 or #nearbyEnemyTowers > 0 then
             return BOT_ACTION_DESIRE_MODERATE
         end
     end
@@ -1220,9 +1223,7 @@ function ConsiderForgedSpirit(bot, nearbyEnemyCreep, nearbyEnemyTowers)
     --------- CHASING --------------------------------
     local target = getHeroVar("Target")
     if utils.ValidTarget(target) then
-        if abilityFS:IsFullyCastable() then
-            return BOT_ACTION_DESIRE_MODERATE
-        end
+        return BOT_ACTION_DESIRE_MODERATE
     end
 
     return BOT_ACTION_DESIRE_NONE

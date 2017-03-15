@@ -40,7 +40,17 @@ function X:Desire(bot)
 end
 
 function X:DefendTower(bot, hBuilding)
-    gHeroVar.HeroMoveToLocation(bot, hBuilding:GetLocation()) -- hug the tower
+    -- TODO: all of this should use the fighting system.
+    local enemies = gHeroVar.GetNearbyEnemies(bot, 1500)
+    local allies = gHeroVar.GetNearbyAllies(bot, 1500)
+    if #allies >= #enemies then -- we are good to go
+        gHeroVar.HeroAttackUnit(bot, enemies[1], true) -- Charge! at the closes enemy
+    else -- stay back
+        local dist = GetUnitToUnitDistance(bot, enemies[1])
+        if dist < 900 then -- they are to close
+            gHeroVar.HeroMoveToLocation(bot, utils.VectorAway(bot:GetLocation(), enemies[1]:GetLocation(), 950-dist))
+        end -- else do nothing. abilityUse should handle this
+    end
 end
 
 function X:Think(bot)
@@ -70,7 +80,14 @@ function X:Think(bot)
         if tp == nil then
             X:DefendTower(bot, hBuilding, {})
         else
-            bot:Action_UseAbilityOnLocation(tp, hBuilding:GetLocation())
+            -- calculate position for a defensive teleport
+            -- TODO: consider hiding in trees, position of enemy
+            -- TODO: is there, should there be a utils function for this?
+            local pos = hBuilding:GetLocation()
+            local vec = utils.Fountain(GetTeam()) - pos
+            vec = vec * 575 / #vec -- resize to 575 units (max tp range from tower)
+            pos = pos + vec
+            bot:Action_UseAbilityOnLocation(tp, pos)
             utils.myPrint("TPing")
         end
     end

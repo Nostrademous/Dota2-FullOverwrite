@@ -131,7 +131,7 @@ function ConsiderTeamLaneDefense()
     local defending = {}
 
     for _, ally in pairs(listAlly) do
-        if not ally:IsIllusion() and ally:IsBot() then
+        if not ally:IsIllusion() and ally:IsBot() and ally:IsAlive() then -- TODO: is IsAlive needed?
             if gHeroVar.GetVar(ally:GetPlayerID(), "Self"):getCurrentMode():GetName() == "defendlane" then
                 table.insert(defending, ally)
             else

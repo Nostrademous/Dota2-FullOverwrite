@@ -51,8 +51,9 @@ function X:Think(bot)
     local enemyFrontier = GetLaneFrontAmount(utils.GetOtherTeam(), getHeroVar("CurLane"), false)
     local frontier = Min(1.0, enemyFrontier)
     local dest = GetLocationAlongLane(getHeroVar("CurLane"), Min(1.0, frontier))
-    
-    local nearbyAlliedCreep = gHeroVar.GetNearbyEnemyCreep(bot, 900)
+
+    local nearbyAlliedCreep = gHeroVar.GetNearbyAlliedCreep(bot, 900)
+
     if utils.IsTowerAttackingMe() and #nearbyAlliedCreep > 0 then
         if utils.DropTowerAggro(bot, nearbyAlliedCreep) then return end
     end
@@ -61,11 +62,12 @@ function X:Think(bot)
         not Towers[1]:HasModifier("modifier_fountain_glyph") then
         gHeroVar.HeroAttackUnit(bot, Towers[1], false)
     end
-    
+
+    -- TODO: should be reworked with proper tower aggro thinking
     local nearbyEnemyCreep = gHeroVar.GetNearbyEnemyCreep(bot, 1200)
     if #nearbyEnemyCreep > 0 then
         if #nearbyAlliedCreep > 0 then
-            if #Towers > 0 then
+            if #Towers > 0 and #nearbyAlliedCreep < 2 then
                 local dist = GetUnitToUnitDistance(bot, Towers[1])
                 if dist < 750 then
                     gHeroVar.HeroMoveToLocation(bot, utils.VectorAway(bot:GetLocation(), Towers[1]:GetLocation(), 750-dist))
@@ -125,8 +127,8 @@ end
 function X:Desire(bot)
     -- don't push for at least first 3 minutes
     if DotaTime() < 3*60 then return BOT_MODE_DESIRE_NONE end
-    
-    if #gHeroVar.GetNearbyEnemies(bot, 900) > 0 then
+
+    if #gHeroVar.GetNearbyEnemies(bot, 900) > 0 then -- TODO: what about allies?
         return BOT_MODE_DESIRE_NONE
     end
 

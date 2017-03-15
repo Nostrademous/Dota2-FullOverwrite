@@ -7,6 +7,8 @@ module( "buildings_status", package.seeall )
  TYPE_SHRINE = "shrine"
  TYPE_ANCIENT = "ancient"
 
+-- TODO: this system is are really ugly.
+
 local buildings = {
     {["ApiID"]=TOWER_TOP_1, ["Type"]=TYPE_TOWER}, -- 1
     {["ApiID"]=TOWER_TOP_2, ["Type"]=TYPE_TOWER},
@@ -19,13 +21,13 @@ local buildings = {
     {["ApiID"]=TOWER_BOT_3, ["Type"]=TYPE_TOWER},
     {["ApiID"]=TOWER_BASE_1, ["Type"]=TYPE_TOWER}, -- 10
     {["ApiID"]=TOWER_BASE_2, ["Type"]=TYPE_TOWER}, -- 11
-    {["ApiID"]=BARRACKS_TOP_MELEE, ["Type"]=TYPE_MELEE},
+    {["ApiID"]=BARRACKS_TOP_MELEE, ["Type"]=TYPE_MELEE}, -- 12
     {["ApiID"]=BARRACKS_TOP_RANGED, ["Type"]=TYPE_RANGED},
-    {["ApiID"]=BARRACKS_MID_MELEE, ["Type"]=TYPE_MELEE},
+    {["ApiID"]=BARRACKS_MID_MELEE, ["Type"]=TYPE_MELEE}, -- 14
     {["ApiID"]=BARRACKS_MID_RANGED, ["Type"]=TYPE_RANGED},
-    {["ApiID"]=BARRACKS_BOT_MELEE, ["Type"]=TYPE_MELEE},
+    {["ApiID"]=BARRACKS_BOT_MELEE, ["Type"]=TYPE_MELEE}, -- 16
     {["ApiID"]=BARRACKS_BOT_RANGED, ["Type"]=TYPE_RANGED},
-    {["ApiID"]=0, ["Type"]=TYPE_ANCIENT},
+    {["ApiID"]=0, ["Type"]=TYPE_ANCIENT}, -- 18
     {["ApiID"]=SHRINE_JUNGLE_1, ["Type"]=TYPE_SHRINE},
     {["ApiID"]=SHRINE_JUNGLE_2, ["Type"]=TYPE_SHRINE},
     {["ApiID"]=SHRINE_BASE_1, ["Type"]=TYPE_SHRINE},
@@ -34,6 +36,8 @@ local buildings = {
     {["ApiID"]=SHRINE_BASE_4, ["Type"]=TYPE_SHRINE},
     {["ApiID"]=SHRINE_BASE_5, ["Type"]=TYPE_SHRINE}
 }
+
+local offsetByLane = {[LANE_TOP] = 0, [LANE_MID] = 3, [LANE_BOT] = 6}
 
 local tableBuildings = {}
 
@@ -109,7 +113,7 @@ function Update(forceUpdate)
 end
 
 function GetHealth(team, id, cacheOnly)
-    cacheOnly = cacheOnly or true
+    if cacheOnly == nil then cacheOnly = true end -- thats -not- the same as 'cacheOnly = cacheOnly or true'
     local seen = tableBuildings[team][id].LastSeenHealth
     if cacheOnly then return seen end
     if seen <= 0 then return -1 end
@@ -135,7 +139,7 @@ end
 function GetHandle(team, id)
     local building = tableBuildings[team][id]
     if building == nil then return nil end
-    
+
     if building.Type == TYPE_TOWER then
         return GetTower(team, building.ApiID)
     elseif building.Type == TYPE_MELEE then
@@ -164,6 +168,10 @@ function GetType(team, id)
     return tableBuildings[team][id].Type
 end
 
+function GetApiID(team, id)
+    return tableBuildings[team][id].ApiID
+end
+
 function GetDestroyableTowers(team)
     local ids = {}
     for _, id in pairs(towers) do
@@ -185,22 +193,44 @@ function printBuildings()
     end
 end
 
--- check tower dependencies (glyph doesn't matter)
-function GetVulnerableBuildingIDs(team)
+-- TODO: ugly.
+-- check tower dependencies (glyph doesn't matter). Lane can be nil, to get all lanes' towers
+-- throne is considered to be on all lanes
+function GetVulnerableBuildingIDs(team, lane)
     local ids = {}
     -- TODO: use a method that isn't depending on exact order in tableBuildings
     for j = 0,6,3 do -- for all lanes
-        for i = 1,3,1 do -- towers from t1 to t3
-            if GetHealth(team, i+j) > 0 then
-                ids[#ids+1] = i+j
-                break
+        if lane == nil or j == offsetByLane[lane] then
+            for i = 1,3,1 do -- towers from t1 to t3
+                if GetHealth(team, i+j) > 0 then
+                    ids[#ids+1] = i+j
+                    break
+                end
             end
         end
     end
+    if GetHealth(team, 3) <= 0 and lane == nil or lane == LANE_TOP then -- t3 top
+        if GetHealth(team, 12) > 0 then ids[#ids+1] = 12 end -- melee
+        if GetHealth(team, 13) > 0 then ids[#ids+1] = 12 end -- ranged
+    end
+    if GetHealth(team, 6) <= 0 and lane == nil or lane == LANE_MID then -- t3 mid
+        if GetHealth(team, 14) > 0 then ids[#ids+1] = 12 end -- melee
+        if GetHealth(team, 15) > 0 then ids[#ids+1] = 12 end -- ranged
+    end
+    if GetHealth(team, 9) <= 0 and lane == nil or lane == LANE_BOT then -- t3 bot
+        if GetHealth(team, 16) > 0 then ids[#ids+1] = 12 end -- melee
+        if GetHealth(team, 17) > 0 then ids[#ids+1] = 12 end -- ranged
+    end
+    -- t4s
+    if GetHealth(team, 3) <= 0 or GetHealth(team, 6) <= 0 or GetHealth(team, 9) <= 0 and lane == nil or lane == LANE_MID then -- check t3s
+        if GetHealth(team, 10) > 0 then ids[#ids+1] = 10 end
+        if GetHealth(team, 11) > 0 then ids[#ids+1] = 11 end
+    end
+    -- throne
+    if GetHealth(team, 10) <= 0 or GetHealth(team, 11) <= 0 and lane == nil or lane == LANE_MID then -- check t4s
+        ids[#ids+1] = 18
+    end
     -- TODO: check shrines (outside base)
-    -- TODO: check rax
-    -- TODO: check t4s
-    -- TODO: check throne
     return ids
 end
 

@@ -20,7 +20,8 @@ function EnemyData.PurgeEnemy(id)
                        Alive = true, Health = -1, MaxHealth = -1, Mana = -1, Items = {},
                        MoveSpeed = 400, LocExtra1 = Vector(0,0), LocExtra2 = Vector(0,0),
                        PhysDmg2 = {}, MagicDmg2 = {}, PureDmg2 = {}, AllDmg2 = {},
-                       PhysDmg10 = {}, MagicDmg10 = {}, PureDmg10 = {}, AllDmg10 = {}
+                       PhysDmg10 = {}, MagicDmg10 = {}, PureDmg10 = {}, AllDmg10 = {},
+                       AttackDamage = 0, SecondsPerAttack = 1
                     }
 end
 
@@ -93,6 +94,9 @@ function EnemyData.UpdateEnemyInfo(timeFreq)
                 EnemyData[pid].StunDur = enemy:GetStunDuration(false) -- FIXME: does this count abilities only, or Items too?
                 EnemyData[pid].HasSilence = enemy:HasSilence(false) -- FIXME: does this count abilities only, or Items too?
                 EnemyData[pid].HasTruestrike = enemy:IsUnableToMiss()
+
+                EnemyData[pid].AttackDamage = enemy:GetAttackDamage()
+                EnemyData[pid].SecondsPerAttack = enemy:GetSecondsPerAttack()
 
                 local allies = GetUnitList(UNIT_LIST_ALLIED_HEROES)
                 for _, ally in pairs(allies) do

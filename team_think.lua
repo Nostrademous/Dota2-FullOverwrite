@@ -1,13 +1,14 @@
 -------------------------------------------------------------------------------
 --- AUTHOR: Nostrademous
 --- GITHUB REPO: https://github.com/Nostrademous/Dota2-FullOverwrite
-------------------------------------------------------------------------------- 
+-------------------------------------------------------------------------------
 
 _G._savedEnv = getfenv()
 module( "team_think", package.seeall )
 
 require( GetScriptDirectory().."/buildings_status" )
 require( GetScriptDirectory().."/global_game_state" )
+require( GetScriptDirectory().."/debugging" )
 
 local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
 local utils = require( GetScriptDirectory().."/utility" )
@@ -101,26 +102,45 @@ end
 -- be part of the defense.
 function ConsiderTeamLaneDefense()
     local lane, building, numEnemies = global_game_state.DetectEnemyPush()
-    
+
+    local listAlly = GetUnitList(UNIT_LIST_ALLIED_HEROES)
+
+    for _, ally in pairs(listAlly) do
+        gHeroVar.SetVar(ally:GetPlayerID(), "DoDefendLane", {}) -- reset this for all
+    end
+
+    -- reset some states
+    global_game_state.LaneState(LANE_TOP).dontdefend = false
+    global_game_state.LaneState(LANE_MID).dontdefend = false
+    global_game_state.LaneState(LANE_BOT).dontdefend = false
+
     if lane == nil or building == nil or numEnemies == nil then return end
-    
+
     local hBuilding = buildings_status.GetHandle(GetTeam(), building)
-    
+
+    if hBuilding == nil then return end
+
+    local listAlliesAtBuilding = {}
     local listAlliesCanReachBuilding = {}
     local listAlliesCanTPToBuildling = {}
-    
-    local listAlly = GetUnitList(UNIT_LIST_ALLIED_HEROES)
+
+    local defending = {}
+
     for _, ally in pairs(listAlly) do
-        if not ally:IsIllusion() and ally:IsBot() then
-            if lane and (not hBuilding == nil or hBuilding:TimeSinceDamagedByAnyHero() > 5.0) then
+        if not ally:IsIllusion() and ally:IsBot() and ally:IsAlive() then -- TODO: is IsAlive needed?
+            if gHeroVar.GetVar(ally:GetPlayerID(), "Self"):getCurrentMode():GetName() == "defendlane" then
+                table.insert(defending, ally)
+            else
                 if ally:GetHealth()/ally:GetMaxHealth() >= 0.5 then
                     local distFromBuilding = GetUnitToUnitDistance(ally, hBuilding)
                     local timeToReachBuilding = distFromBuilding/ally:GetCurrentMovementSpeed()
 
-                    if timeToReachBuilding <= 5.0 then
+                    if timeToReachBuilding <= 3.0 then
+                        table.insert(listAlliesAtBuilding, ally)
+                    elseif timeToReachBuilding <= 10.0 then
                         table.insert(listAlliesCanReachBuilding, ally)
                     else
-                        local haveTP = utils.HaveItem(ally, "item_tpscroll")
+                        local haveTP = utils.HaveItem(ally, "item_tpscroll") -- TODO: check tp boots, NP tp spell (utils?)
                         if haveTP and haveTP:IsFullyCastable() then
                             table.insert(listAlliesCanTPToBuildling, ally)
                         end
@@ -129,19 +149,34 @@ function ConsiderTeamLaneDefense()
             end
         end
     end
-    
-    if (#listAlliesCanReachBuilding + #listAlliesCanTPToBuildling) >= (numEnemies - 1) then
+
+    local numNeeded = Max(Max(numEnemies - 1, 1) - #defending, 0)
+
+    if (#listAlliesAtBuilding + #listAlliesCanReachBuilding + #listAlliesCanTPToBuildling) >= numNeeded then
         local numGoing = 0
-        for _, ally in pairs(listAlliesCanReachBuilding) do
+        for _, ally in pairs(defending) do -- reassign defending heros
+            gHeroVar.SetVar(ally:GetPlayerID(), "DoDefendLane", {lane, building, numEnemies})
+        end
+        for _, ally in pairs(listAlliesAtBuilding) do -- make everyone sitting on the tower defend it
             gHeroVar.SetVar(ally:GetPlayerID(), "DoDefendLane", {lane, building, numEnemies})
             numGoing = numGoing + 1
-            if numGoing >= (numEnemies - 1) then break end
         end
-        for _, ally in pairs(listAlliesCanTPToBuildling) do
-            gHeroVar.SetVar(ally:GetPlayerID(), "DoDefendLane", {lane, building, numEnemies})
-            numGoing = numGoing + 1
-            if numGoing >= (numEnemies - 1) then break end
+        if numGoing < numNeeded then -- still need more?
+            for _, ally in pairs(listAlliesCanReachBuilding) do -- get the guys around
+                gHeroVar.SetVar(ally:GetPlayerID(), "DoDefendLane", {lane, building, numEnemies})
+                numGoing = numGoing + 1
+                if numGoing >= numNeeded then break end -- k, thats enough
+            end
         end
+        if numGoing < numNeeded then -- still more?
+            for _, ally in pairs(listAlliesCanTPToBuildling) do -- tp them in
+                gHeroVar.SetVar(ally:GetPlayerID(), "DoDefendLane", {lane, building, numEnemies})
+                numGoing = numGoing + 1
+                if numGoing >= numNeeded then break end -- k, thats enough
+            end
+        end
+    else
+        global_game_state.LaneState(lane).dontdefend = true -- run away!
     end
 end
 
@@ -168,12 +203,12 @@ end
 function ConsiderTeamRoam()
 end
 
--- If we see a rune, determine if any specific Heroes should get it 
--- (to fill a bottle for example). If not, the hero that saw it will 
+-- If we see a rune, determine if any specific Heroes should get it
+-- (to fill a bottle for example). If not, the hero that saw it will
 -- pick it up. Also consider obtaining Rune vision if lacking.
 function ConsiderTeamRune(playerAssignment)
     local listAlly = GetUnitList(UNIT_LIST_ALLIED_HEROES)
-    
+
     for _, rune in pairs(constants.RuneSpots) do
         if GetRuneStatus(rune) == RUNE_STATUS_AVAILABLE then
             local runeLoc = GetRuneSpawnLocation(rune)
@@ -188,7 +223,7 @@ function ConsiderTeamRune(playerAssignment)
                     end
                 end
             end
-            
+
             if bestAlly then
                 playerAssignment[bestAlly:GetPlayerID()].GetRune = {rune, runeLoc}
             end
@@ -207,20 +242,20 @@ function ConsiderTeamRune(playerAssignment)
 end
 
 -- If any of our Heroes needs to heal up, Shrines are an option.
--- However, we should be smart about the use and see if any other 
+-- However, we should be smart about the use and see if any other
 -- friends could benefit as well rather than just being selfish.
 function ConsiderTeamShrine(playerAssignment)
     local bestShrine = nil
     local distToShrine = 100000
     local Team = GetTeam()
-    
+
     local listAlly = GetUnitList(UNIT_LIST_ALLIED_HEROES)
     local shrineUseList = {}
-    
+
     -- determine which allies need to use the shrine and which shrine is best
     -- for them
     for _, ally in pairs(listAlly) do
-        if ally:IsAlive() and ally:IsBot() and not ally:IsIllusion() and ally:GetHealth()/ally:GetMaxHealth() < 0.3 
+        if ally:IsAlive() and ally:IsBot() and not ally:IsIllusion() and ally:GetHealth()/ally:GetMaxHealth() < 0.3
             and playerAssignment[ally:GetPlayerID()].UseShrine == nil then
             local SJ1 = GetShrine(Team, SHRINE_JUNGLE_1)
             if SJ1 and SJ1:GetHealth() > 0 and GetShrineCooldown(SJ1) == 0 then
@@ -278,18 +313,18 @@ function ConsiderTeamShrine(playerAssignment)
                     bestShrine = SB5
                 end
             end
-            
+
             if bestShrine then
                 if shrineUseList[tostring(bestShrine)] == nil then
                     shrineUseList[tostring(bestShrine)] = { shrine=bestShrine, players={} }
                 end
-                
+
                 utils.myPrint("shrineUseList["..tostring(bestShrine).."] is best for: ", ally:GetPlayerID())
                 table.insert(shrineUseList[tostring(bestShrine)].players, ally:GetPlayerID())
             end
         end
     end
-    
+
     -- Now that we have assigned each player to the best shrine we need to set the player assignments
     -- telling the hero which shrine to go to and for how many people who should wait
     for name, value in pairs(shrineUseList) do

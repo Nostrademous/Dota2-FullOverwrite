@@ -10,6 +10,7 @@ local X = BotsInit.CreateGeneric()
 ----------
 local utils = require( GetScriptDirectory().."/utility")
 local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
+require( GetScriptDirectory().."/global_game_state" )
 
 local function setHeroVar(var, value)
     gHeroVar.SetVar(GetBot():GetPlayerID(), var, value)
@@ -479,6 +480,10 @@ function X:Think(bot)
 end
 
 function X:Desire(bot)
+    local curLane = getHeroVar("CurLane")
+    if curLane ~= nil and curLane ~= 0 and global_game_state.LaneState(getHeroVar("CurLane")).dontdefend then
+        return BOT_MODE_DESIRE_NONE
+    end
     return BOT_MODE_DESIRE_VERYLOW
 end
 

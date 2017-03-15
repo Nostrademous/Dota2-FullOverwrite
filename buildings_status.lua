@@ -211,15 +211,15 @@ function GetVulnerableBuildingIDs(team, lane)
     end
     if GetHealth(team, 3) <= 0 and lane == nil or lane == LANE_TOP then -- t3 top
         if GetHealth(team, 12) > 0 then ids[#ids+1] = 12 end -- melee
-        if GetHealth(team, 13) > 0 then ids[#ids+1] = 12 end -- ranged
+        if GetHealth(team, 13) > 0 then ids[#ids+1] = 13 end -- ranged
     end
     if GetHealth(team, 6) <= 0 and lane == nil or lane == LANE_MID then -- t3 mid
-        if GetHealth(team, 14) > 0 then ids[#ids+1] = 12 end -- melee
-        if GetHealth(team, 15) > 0 then ids[#ids+1] = 12 end -- ranged
+        if GetHealth(team, 14) > 0 then ids[#ids+1] = 14 end -- melee
+        if GetHealth(team, 15) > 0 then ids[#ids+1] = 15 end -- ranged
     end
     if GetHealth(team, 9) <= 0 and lane == nil or lane == LANE_BOT then -- t3 bot
-        if GetHealth(team, 16) > 0 then ids[#ids+1] = 12 end -- melee
-        if GetHealth(team, 17) > 0 then ids[#ids+1] = 12 end -- ranged
+        if GetHealth(team, 16) > 0 then ids[#ids+1] = 16 end -- melee
+        if GetHealth(team, 17) > 0 then ids[#ids+1] = 17 end -- ranged
     end
     -- t4s
     if GetHealth(team, 3) <= 0 or GetHealth(team, 6) <= 0 or GetHealth(team, 9) <= 0 and lane == nil or lane == LANE_MID then -- check t3s

@@ -47,7 +47,7 @@ function X:Desire(bot)
     local me = getHeroVar("Self")
     if me:getCurrentMode():GetName() == "defendlane" and
         (#gHeroVar.GetNearbyEnemyCreep(bot, 1500) > 0 or
-        #gHeroVar.GetnearbyEnemies(bot, 1500)) and
+        #gHeroVar.GetNearbyEnemies(bot, 1500)) and
         hBuilding ~= nil and GetUnitToUnitDistance(bot, hBuilding) < 900 then
         return me:getCurrentModeValue()
     end

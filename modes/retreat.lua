@@ -86,6 +86,8 @@ function X:Think(bot)
 
     --utils.myPrint("MyLanePos: ", tostring(bot:GetLocation()), ", RetreatPos: ", tostring(nextmove))
     
+    if item_usage.UseRegenItems() then return end
+    
     if item_usage.UseMovementItems(nextmove) then return end
     
     bot:Action_MoveToLocation(nextmove)

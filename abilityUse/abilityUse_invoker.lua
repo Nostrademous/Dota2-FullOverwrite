@@ -172,7 +172,7 @@ function queueNukeTOCMDB(bot, location, engageDist)
     return false
 end
 
-function invAbility:AbilityUsageThink(bot)    
+function invAbility:AbilityUsageThink(bot)
     -- Check if we're already using an ability
     if utils.IsBusy(bot) then return true end
     

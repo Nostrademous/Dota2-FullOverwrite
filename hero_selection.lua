@@ -18,7 +18,8 @@ local Pos_1_Pool = {
 }
 
 local Pos_2_Pool = {
-    "npc_dota_hero_invoker"
+    "npc_dota_hero_invoker",
+    "npc_dota_hero_lina"
 }
 
 local Pos_3_Pool = {

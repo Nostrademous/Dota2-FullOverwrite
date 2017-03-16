@@ -26,26 +26,26 @@ local abilityR = ""
 
 function UseQ(bot)
     if not abilityQ:IsFullyCastable() then
-        return false
-    end
+        return false;
+    end;
     
     --Code for lasthitting creeps as my first try
-    local daggerRange = abilityQ:GetCastRange()
-    local daggerDamage = 65 + abilityQ:GetSpecialValueInt("attack_factor_tooltip") * bot:GetAttackDamage()
-    local inRangeEnemyCreeps = gHeroVar.GetNearbyEnemyCreep(bot, daggerRange)
+    local daggerRange = abilityQ:GetCastRange();
+    local daggerDamage = 65 + abilityQ:GetSpecialValueInt("attack_factor_tooltip") / 100 * bot:GetAttackDamage();
+    local inRangeEnemyCreeps = gHeroVar.GetNearbyEnemyCreep(bot, daggerRange);
     
-    local daggerTarget, _ = utils.GetWeakestCreep(inRangeEnemyCreeps)
+    local daggerTarget, _ = utils.GetWeakestCreep(inRangeEnemyCreeps);
     --Need to check if there is an actual creep with the lowest health
     if (daggerTarget ~= nil) then
         local trueDaggerDamage = daggerTarget:GetActualIncomingDamage( daggerDamage, DAMAGE_TYPE_PHYSICAL);
         if (daggerTarget:GetHealth() <= trueDaggerDamage) then
-            bot:Action_UseAbilityOnEntity(abilityQ, daggerTarget)
-            return true
-        end
+            bot:Action_UseAbilityOnEntity(abilityQ, daggerTarget);
+            return true;
+        end;
         
-    end
-    return false
-end
+    end;
+    return false;
+end;
 
 function genericAbility:AbilityUsageThink(bot)
     -- Check if we're already using an ability

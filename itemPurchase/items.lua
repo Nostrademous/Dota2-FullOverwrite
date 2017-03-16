@@ -158,7 +158,7 @@ X["item_assault"] = { "item_platemail", "item_chainmail", "item_hyperstone", "it
 
 X["item_black_king_bar"] = { "item_mithril_hammer", "item_ogre_axe", "item_recipe_black_king_bar" }
 
-X["item_blade_mail"] = { "item_broadsword", "item_blades_of_attack", "item_chainmail" }
+X["item_blade_mail"] = { "item_broadsword", "item_robe", "item_chainmail" }
 
 X["item_boots_of_travel_1"] = { "item_boots", "item_recipe_travel_boots" }
 

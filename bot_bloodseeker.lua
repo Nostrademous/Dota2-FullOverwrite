@@ -20,25 +20,25 @@ function getHeroVar(var)
     return gHeroVar.GetVar(bot:GetPlayerID(), var)
 end
 
-local BLOODSEEKER_SKILL_Q = "bloodseeker_bloodrage";
-local BLOODSEEKER_SKILL_W = "bloodseeker_blood_bath";
-local BLOODSEEKER_SKILL_E = "bloodseeker_thirst";
-local BLOODSEEKER_SKILL_R = "bloodseeker_rupture";
+local SKILL_Q = "bloodseeker_bloodrage";
+local SKILL_W = "bloodseeker_blood_bath";
+local SKILL_E = "bloodseeker_thirst";
+local SKILL_R = "bloodseeker_rupture";
 
-local BLOODSEEKER_ABILITY1 = "special_bonus_attack_damage_25"
-local BLOODSEEKER_ABILITY2 = "special_bonus_hp_200"
-local BLOODSEEKER_ABILITY3 = "special_bonus_attack_speed_30"
-local BLOODSEEKER_ABILITY4 = "special_bonus_unique_bloodseeker_2"
-local BLOODSEEKER_ABILITY5 = "special_bonus_unique_bloodseeker_3"
-local BLOODSEEKER_ABILITY6 = "special_bonus_all_stats_10"
-local BLOODSEEKER_ABILITY7 = "special_bonus_unique_bloodseeker"
-local BLOODSEEKER_ABILITY8 = "special_bonus_lifesteal_30"
+local ABILITY1 = "special_bonus_attack_damage_25"
+local ABILITY2 = "special_bonus_hp_200"
+local ABILITY3 = "special_bonus_attack_speed_30"
+local ABILITY4 = "special_bonus_unique_bloodseeker_2"
+local ABILITY5 = "special_bonus_unique_bloodseeker_3"
+local ABILITY6 = "special_bonus_all_stats_10"
+local ABILITY7 = "special_bonus_unique_bloodseeker"
+local ABILITY8 = "special_bonus_lifesteal_30"
 
 local AbilityPriority = {
-    BLOODSEEKER_SKILL_Q,    BLOODSEEKER_SKILL_E,    BLOODSEEKER_SKILL_Q,    BLOODSEEKER_SKILL_E,    BLOODSEEKER_SKILL_Q,
-    BLOODSEEKER_SKILL_R,    BLOODSEEKER_SKILL_W,    BLOODSEEKER_SKILL_E,    BLOODSEEKER_SKILL_Q,    BLOODSEEKER_ABILITY2,
-    BLOODSEEKER_SKILL_W,    BLOODSEEKER_SKILL_R,    BLOODSEEKER_SKILL_W,    BLOODSEEKER_SKILL_W,    BLOODSEEKER_ABILITY4,
-    BLOODSEEKER_SKILL_E,    BLOODSEEKER_SKILL_R,    BLOODSEEKER_ABILITY5,   BLOODSEEKER_ABILITY8
+    SKILL_Q,    SKILL_E,    SKILL_Q,    SKILL_E,    SKILL_Q,
+    SKILL_R,    SKILL_W,    SKILL_E,    SKILL_Q,    ABILITY2,
+    SKILL_W,    SKILL_R,    SKILL_W,    SKILL_W,    ABILITY4,
+    SKILL_E,    SKILL_R,    ABILITY5,   ABILITY8
 }
 
 local botBS = dt:new()
@@ -83,7 +83,7 @@ function bloodseekerBot:GetMaxClearableCampLevel(bot)
         return constants.CAMP_EASY
     end
 
-    local bloodrage = bot:GetAbilityByName(BLOODSEEKER_SKILL_Q)
+    local bloodrage = bot:GetAbilityByName(SKILL_Q)
     if bloodrage:GetLevel() >= 4 then
         return constants.CAMP_ANCIENT
     elseif utils.HaveItem(bot, "item_iron_talon") and bloodrage:GetLevel() >= 2 then
@@ -94,13 +94,13 @@ function bloodseekerBot:GetMaxClearableCampLevel(bot)
 end
 
 function bloodseekerBot:IsReadyToGank(bot)
-    local rupture = bot:GetAbilityByName(BLOODSEEKER_SKILL_R)
+    local rupture = bot:GetAbilityByName(SKILL_R)
     return rupture:IsFullyCastable() or bot:GetCurrentMovementSpeed() >= 420
 end
 
 function bloodseekerBot:DoCleanCamp(bot, neutrals, difficulty)
     local bloodraged =  bot:HasModifier("modifier_bloodseeker_bloodrage")
-    local bloodrage = bot:GetAbilityByName(BLOODSEEKER_SKILL_Q)
+    local bloodrage = bot:GetAbilityByName(SKILL_Q)
     if not bloodraged and bloodrage:IsCooldownReady() then -- bloodrage all the time
         bot:Action_UseAbilityOnEntity(bloodrage, bot)
     end
@@ -110,6 +110,7 @@ function bloodseekerBot:DoCleanCamp(bot, neutrals, difficulty)
         local it_target = neutrals[#neutrals] -- neutral with most health
         if it_target:GetHealth() > 0.5 * it_target:GetMaxHealth() then -- is it worth it? TODO: add a absolute minimum / use it on big guys only
             bot:Action_UseAbilityOnEntity(it, it_target)
+            return
         end
     end
     for i, neutral in ipairs(neutrals) do

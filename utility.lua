@@ -1199,8 +1199,8 @@ end
 
 -- takes a "RANGE", returns hero handle and health value of that hero
 -- FIXME - make it handle heroes that went invisible if we have detection
-function U.GetWeakestHero(bot, r, heroList)
-    local EnemyHeroes = heroList or gHeroVar.GetNearbyEnemies(bot, 1200)
+function U.GetWeakestHero(bot, r)
+    local EnemyHeroes = gHeroVar.GetNearbyEnemies(bot, r)
 
     if EnemyHeroes == nil or #EnemyHeroes == 0 then
         return nil, 10000
@@ -1210,7 +1210,7 @@ function U.GetWeakestHero(bot, r, heroList)
     local LowestHealth = 10000
 
     for _, hero in ipairs(EnemyHeroes) do
-        if U.ValidTarget(hero) and GetUnitToUnitDistance(bot, hero) <= r and hero:IsAlive() then
+        if U.ValidTarget(hero) and hero:IsAlive() then
             if hero:GetHealth() < LowestHealth then
                 LowestHealth = hero:GetHealth()
                 WeakestHero = hero

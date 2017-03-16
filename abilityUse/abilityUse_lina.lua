@@ -118,20 +118,20 @@ local function queueNuke(bot, enemy, castQueue, engageDist)
 
             utils.myPrint(" - skill '", skill:GetName(), "' has BehaviorFlag: ", behaviorFlag)
 
-            if skill:GetName() == Abilities[2] then
+            if skill:GetName() == "lina_light_strike_array" then
                 if utils.IsCrowdControlled(enemy) then
                     gHeroVar.HeroPushUseAbilityOnLocation(bot, skill, enemy:GetLocation())
                 else
                     gHeroVar.HeroPushUseAbilityOnLocation(bot, skill, enemy:GetExtrapolatedLocation(0.95))
                 end
-            elseif skill:GetName() == Abilities[1] then
+            elseif skill:GetName() == "lina_dragon_slave" then
                 if utils.IsCrowdControlled(enemy) then
                     gHeroVar.HeroPushUseAbilityOnLocation(bot, skill, enemy:GetLocation())
                 else
                     -- account for 0.45 cast point and speed of wave (1200) needed to travel the distance between us
                     gHeroVar.HeroPushUseAbilityOnLocation(bot, skill, enemy:GetExtrapolatedLocation(0.45 + dist/1200))
                 end
-            elseif skill:GetName() == Abilities[4] then
+            elseif skill:GetName() == "lina_laguna_blade" then
                 bot:ActionPush_UseAbilityOnEntity(skill, enemy)
             end
         end

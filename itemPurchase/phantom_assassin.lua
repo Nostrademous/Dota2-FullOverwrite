@@ -11,34 +11,33 @@ local generic = dofile( GetScriptDirectory().."/itemPurchase/generic" )
 generic.ItemsToBuyAsHardCarry = {
     StartingItems = {
         "item_tango",
-        "item_flask",
         "item_stout_shield",
-        "item_branches",
-        "item_branches"
+		"item_quelling_blade"
 	},
 	UtilityItems = {
         "item_infused_raindrop"
 	},
 	CoreItems = {
+		"item_ring_of_health",
         "item_boots",
-        "item_blight_stone",
-        "item_poor_mans_shield",
-        "item_phase_boots",
-        "item_armlet",
-        "item_desolator",
+		"item_bfury",
+		"item_power_treads_agility",
+		"item_lifesteal",
+		"item_basher",
         "item_black_king_bar",
-        "item_basher",
-        "item_abyssal_blade"
+        "item_abyssal_blade",
+		"item_satanic"
 	},
 	ExtensionItems = {
 		OffensiveItems = {
 			"item_assault",
             "item_boots_of_travel_1",
-            "item_rapier"
+            "item_monkey_king_bar"
 		},
 		DefensiveItems = {
-            "item_satanic",
-            "item_skadi"
+            "item_skadi",
+			"item_ultimate_scepter",
+			"item_heart"
 		}
 	}
 }

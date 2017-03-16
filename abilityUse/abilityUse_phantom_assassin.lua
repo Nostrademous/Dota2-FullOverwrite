@@ -76,6 +76,8 @@ function UseW(bot)
     local inRangeEnemyHeroes = gHeroVar.GetNearbyEnemies(bot, phantomStrikeCastRange);
     local creepTarget, _ = utils.GetWeakestCreep(inRangeEnemyCreeps);
     local scariestHeroTarget = nil;
+    local modeName = getHeroVar("Self"):getCurrentMode():GetName();
+
     
     
     if (#inRangeEnemyHeroes > 0) then
@@ -89,7 +91,7 @@ function UseW(bot)
     --Need to check if there is an actual hero scary hero within phantom_assassin_phantom_strike range
     if (scariestHeroTarget ~= nil) then
         if (not utils.IsTargetMagicImmune(scariestHeroTarget)) then   
-            local trueTotalAttackDamage = GetActualIncomingDamage(totalAttackDamage, DAMAGE_TYPE_PHYSICAL);
+            local trueTotalAttackDamage = scariestHeroTarget:GetActualIncomingDamage(totalAttackDamage, DAMAGE_TYPE_PHYSICAL);
             if (scariestHeroTarget:GetHealth() <= trueTotalAttackDamage) then
                 bot:Action_UseAbilityOnEntity(abilityW, scariestHeroTarget);
                 return true;
@@ -100,7 +102,14 @@ function UseW(bot)
    --phantom_assassin_phantom_strike to roshan
    
    --phantom_assassin_phantom_strike to farm
-   
+   if (modeName == "jungling") then
+        if (creepTarget ~= nil) then
+            if (not utils.IsTargetMagicImmune(creepTarget)) then   
+                bot:Action_UseAbilityOnEntity(abilityW, creepTarget);
+                return true;
+            end;
+        end; 
+   end;
    --phantom_assassin_phantom_strike to escape
    
 return false;

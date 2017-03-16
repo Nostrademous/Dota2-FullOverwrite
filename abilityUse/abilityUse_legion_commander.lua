@@ -161,12 +161,6 @@ function ConsiderW()
 		end
 	end
     
-    if modeName == "jungling" and HealthPerc <= 0.4+#enemies*0.05+0.2*ManaPerc then
-        if not utils.IsTargetMagicImmune(bot) then
-            return BOT_ACTION_DESIRE_HIGH, bot
-        end
-	end
-    
     --------------------------------------
 	-- Mode based usage
 	--------------------------------------
@@ -210,7 +204,7 @@ function ConsiderW()
 	-- If we're farming
     local creeps = gHeroVar.GetNearbyEnemyCreep( bot, 900 )
 	if modeName == "laning" or modeName == "jungling" then
-		if #creeps >= 2 then
+		if #creeps >= 2 and HealthPerc < 0.5 then
 			if ManaPerc > 0.4 then
                 if not utils.IsTargetMagicImmune( bot ) then
                     return BOT_ACTION_DESIRE_LOW, bot

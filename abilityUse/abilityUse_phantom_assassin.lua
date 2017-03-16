@@ -62,7 +62,7 @@ function UseQ(bot)
         end;
     end;
     
-    return false;
+return false;
 end;
 
 function UseW(bot)
@@ -88,18 +88,22 @@ function UseW(bot)
     --phantom_assassin_phantom_strike to kill
     --Need to check if there is an actual hero scary hero within phantom_assassin_phantom_strike range
     if (scariestHeroTarget ~= nil) then
-        local trueTotalAttackDamage = GetActualIncomingDamage(totalAttackDamage, DAMAGE_TYPE_PHYSICAL);
-        if (scariestHeroTarget:GetHealth < 1.05 * trueTotalAttackDamage) then
-            bot:Action_UseAbilityOnEntity(abilityW, scariestHeroTarget);
-            return true;
+        if (not utils.IsTargetMagicImmune(scariestHeroTarget)) then   
+            local trueTotalAttackDamage = GetActualIncomingDamage(totalAttackDamage, DAMAGE_TYPE_PHYSICAL);
+            if (scariestHeroTarget:GetHealth < 1.05 * trueTotalAttackDamage) then
+                bot:Action_UseAbilityOnEntity(abilityW, scariestHeroTarget);
+                return true;
+            end;
+        return false;
         end;
+    return false;
     end; 
    
    --phantom_assassin_phantom_strike to roshan
    
    --phantom_assassin_phantom_strike to farm
    
-    return false;
+return false;
 end;
 
 

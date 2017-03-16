@@ -66,7 +66,7 @@ return false;
 end;
 
 function UseW(bot)
-    if not abilitW:IsFullyCastable() then
+    if not abilityW:IsFullyCastable() then
         return false;
     end;
 

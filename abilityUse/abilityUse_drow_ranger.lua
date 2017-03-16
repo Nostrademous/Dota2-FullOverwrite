@@ -32,7 +32,7 @@ local abilityW = ""
 local abilityE = ""
 local abilityR = ""
 
-function nukeDamage( bot, enemy )
+function drAbility:nukeDamage( bot, enemy )
     if enemy == nil or enemy:IsNull() then return 0, {}, 0, 0, 0 end
 
     local comboQueue = {}
@@ -78,7 +78,7 @@ function nukeDamage( bot, enemy )
     return dmgTotal, comboQueue, castTime, stunTime, slowTime, engageDist
 end
 
-function queueNuke(bot, enemy, castQueue, engageDist)
+function drAbility:queueNuke(bot, enemy, castQueue, engageDist)
     local dist = GetUnitToUnitDistance(bot, enemy)
 
     -- if out of range, attack move for one hit to get in range
@@ -196,10 +196,10 @@ function drAbility:AbilityUsageThink(bot)
         if #nearbyEnemyHeroes == 1 then
             target = nearbyEnemyHeroes[1]
             if GetUnitToUnitDistance(bot, target) < (bot:GetAttackRange() + bot:GetBoundingRadius() + target:GetBoundingRadius()) then
-                local dmg, castQueue, castTime, stunTime, slowTime, engageDist = nukeDamage( bot, target )
+                local dmg, castQueue, castTime, stunTime, slowTime, engageDist = self:nukeDamage( bot, target )
 
                 if dmg > target:GetHealth() then
-                    local bKill = queueNuke(bot, target, castQueue, engageDist)
+                    local bKill = self:queueNuke(bot, target, castQueue, engageDist)
                     if bKill then
                         setHeroVar("Target", target)
                         return true

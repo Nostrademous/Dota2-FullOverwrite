@@ -41,7 +41,7 @@ function genericAbility:AbilityUsageThink(bot)
     return false
 end
 
-function nukeDamage( bot, enemy )
+function genericAbility:nukeDamage( bot, enemy )
     if enemy == nil or enemy:IsNull() then return 0, {}, 0, 0, 0 end
 
     local comboQueue = {}
@@ -57,7 +57,7 @@ function nukeDamage( bot, enemy )
     return dmgTotal, comboQueue, castTime, stunTime, slowTime, engageDist
 end
 
-function queueNuke(bot, enemy, castQueue, engageDist)
+function genericAbility:queueNuke(bot, enemy, castQueue, engageDist)
     -- WRITE CODE HERE --
     
     return false

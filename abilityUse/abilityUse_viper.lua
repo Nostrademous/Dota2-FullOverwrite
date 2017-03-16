@@ -35,7 +35,7 @@ local abilityR = ""
 local DoTdpsQ = 0
 local DoTdpsUlt = 0
 
-function nukeDamage( bot, enemy )
+function viperAbility:nukeDamage( bot, enemy )
     if enemy == nil or enemy:IsNull() then return 0, {}, 0, 0, 0 end
 
     local comboQueue = {}
@@ -89,7 +89,7 @@ function nukeDamage( bot, enemy )
     return dmgTotal, comboQueue, castTime, stunTime, slowTime, engageDist
 end
 
-function queueNuke(bot, enemy, castQueue, engageDist)
+function viperAbility:queueNuke(bot, enemy, castQueue, engageDist)
     local dist = GetUnitToUnitDistance(bot, enemy)
 
     -- if out of range, attack move for one hit to get in range
@@ -135,11 +135,11 @@ function viperAbility:AbilityUsageThink(bot)
     if not utils.ValidTarget(target) then
         target, _ = utils.GetWeakestHero(bot, bot:GetAttackRange()+bot:GetBoundingRadius()+25, nearbyEnemyHeroes)
         if target ~= nil then
-            local dmg, castQueue, castTime, stunTime, slowTime, engageDist = nukeDamage( bot, target )
+            local dmg, castQueue, castTime, stunTime, slowTime, engageDist = self:nukeDamage( bot, target )
             local rightClickTime = stunTime + slowTime -- in Viper's case we don't discount the slow as he can cast it indefinitely (mana providing)
             local totalDmgPerSec = (CalcRightClickDmg(bot, target) + DoTdpsUlt + DoTdpsQ)/bot:GetSecondsPerAttack()
             if totalDmgPerSec*rightClickTime > target:GetHealth() then
-                local bKill = queueNuke(bot, target, castQueue, engageDist)
+                local bKill = self:queueNuke(bot, target, castQueue, engageDist)
                 if bKill then
                     setHeroVar("Target", target)
                     return true

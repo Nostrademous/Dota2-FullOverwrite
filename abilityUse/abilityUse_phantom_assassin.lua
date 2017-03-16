@@ -24,6 +24,29 @@ local abilityW = ""
 local abilityE = ""
 local abilityR = ""
 
+function UseQ(bot)
+    if not abilityQ:IsFullyCastable() then
+        return false
+    end
+    
+    --Code for lasthitting creeps as my first try
+    local daggerRange = abilityQ:GetCastRange()
+    local daggerDamage = 65 + abilityQ:GetSpecialValueInt("attack_factor_tooltip") * bot:GetAttackDamage()
+    local inRangeEnemyCreeps = gHeroVar.GetNearbyEnemyCreep(bot, daggerRange)
+    
+    local daggerTarget, _ = utils.GetWeakestCreep(inRangeEnemyCreeps)
+    --Need to check if there is an actual creep with the lowest health
+    if (daggerTarget ~= nil) then
+        local trueDaggerDamage = daggerTarget:GetActualIncomingDamage( daggerDamage, DAMAGE_TYPE_PHYSICAL);
+        if (daggerTarget:GetHealth() <= trueDaggerDamage) then
+            bot:Action_UseAbilityOnEntity(abilityQ, daggerTarget)
+            return true
+        end
+        
+    end
+    return false
+end
+
 function genericAbility:AbilityUsageThink(bot)
     -- Check if we're already using an ability
     if utils.IsBusy(bot) then return true end
@@ -37,11 +60,12 @@ function genericAbility:AbilityUsageThink(bot)
     if abilityR == "" then abilityR = bot:GetAbilityByName( "phantom_assassin_coup_de_grace" ) end
     
     -- WRITE CODE HERE --
+    if UseQ(bot) then return true end
     
     return false
 end
 
-function nukeDamage( bot, enemy )
+function genericAbility:nukeDamage( bot, enemy )
     if enemy == nil or enemy:IsNull() then return 0, {}, 0, 0, 0 end
 
     local comboQueue = {}
@@ -57,7 +81,7 @@ function nukeDamage( bot, enemy )
     return dmgTotal, comboQueue, castTime, stunTime, slowTime, engageDist
 end
 
-function queueNuke(bot, enemy, castQueue, engageDist)
+function genericAbility:queueNuke(bot, enemy, castQueue, engageDist)
     -- WRITE CODE HERE --
     
     return false

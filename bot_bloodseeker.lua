@@ -26,7 +26,7 @@ local SKILL_E = "bloodseeker_thirst";
 local SKILL_R = "bloodseeker_rupture";
 
 local ABILITY1 = "special_bonus_attack_damage_25"
-local ABILITY2 = "special_bonus_hp_200"
+local ABILITY2 = "special_bonus_hp_225"
 local ABILITY3 = "special_bonus_attack_speed_30"
 local ABILITY4 = "special_bonus_unique_bloodseeker_2"
 local ABILITY5 = "special_bonus_unique_bloodseeker_3"

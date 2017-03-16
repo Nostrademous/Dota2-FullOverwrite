@@ -500,14 +500,16 @@ function X:ConsiderBuyingExtensions()
         if utils.InTable(self.ExtensionItems.DefensiveItems, "item_solar_crest") then
             local ItemIndex = utils.PosInTable(self.ExtensionItems.DefensiveItems, "item_solar_crest")
             table.remove(self.ExtensionItems.DefensiveItems, ItemIndex)
-        elseif utils.InTable(self.ExtensionItems.OffensiveItems, "item_butterfly") then
+        end
+        
+        if utils.InTable(self.ExtensionItems.OffensiveItems, "item_butterfly") then
             local ItemIndex = utils.PosInTable(self.ExtensionItems.DefensiveItems, "item_butterfly")
             table.remove(self.ExtensionItems.DefensiveItems, ItemIndex)
         end
     end
 
     -- Remove magic immunty if not needed
-    if DamageMagical > DamagePhysical then
+    if DamagePhysical > DamageMagical then
         if utils.InTable(self.ExtensionItems.DefensiveItems, "item_hood_of_defiance") or utils.InTable(self.ExtensionItems.DefensiveItems, "item_pipe") then
             --utils.myPrint(" Considering magic damage reduction")
         elseif utils.InTable(self.ExtensionItems.DefensiveItems, "item_black_king_bar") then

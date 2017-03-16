@@ -315,7 +315,7 @@ function ConsiderTeamShrine(playerAssignment)
             end
 
             if bestShrine and (not ally.useShrine or ally.useShrine == -1) then
-                utils.myPrint("Adding ID: '", ally:GetPlayerID(), "' to Shrine: ", bestShrine)
+                --utils.myPrint("Adding ID: '", ally:GetPlayerID(), "' to Shrine: ", bestShrine)
                 table.insert(global_game_state.GetShrineState(bestShrine).pidsLookingForHeal, ally:GetPlayerID())
                 ally.useShrine = bestShrine
             end

@@ -26,6 +26,7 @@ generic.ItemsToBuyAsHardCarry = {
         "item_phase_boots",
         "item_armlet",
         "item_desolator",
+        "item_black_king_bar",
         "item_basher",
         "item_abyssal_blade"
 	},
@@ -36,7 +37,6 @@ generic.ItemsToBuyAsHardCarry = {
             "item_rapier"
 		},
 		DefensiveItems = {
-			"item_black_king_bar",
             "item_satanic",
             "item_skadi"
 		}

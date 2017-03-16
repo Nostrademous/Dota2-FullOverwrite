@@ -15,7 +15,7 @@ local RadiantBots = {
 
 local Pos_1_Pool = {
     "npc_dota_hero_drow_ranger",
-    --"npc_dota_hero_phantom_assassin"
+    "npc_dota_hero_phantom_assassin"
 }
 
 local Pos_2_Pool = {
@@ -33,7 +33,7 @@ local Pos_5_Pool = {
 
 local Pos_X_Pool = {
     "npc_dota_hero_legion_commander",
-    --"npc_dota_hero_bloodseeker"
+    "npc_dota_hero_bloodseeker"
 }
 
 local BotPool = {

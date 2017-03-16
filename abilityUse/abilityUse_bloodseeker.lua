@@ -202,7 +202,8 @@ function bsAbility:AbilityUsageThink(bot)
         end
     end
 
-    if UseUlt(bot) or UseW(bot, nearbyEnemyHeroes) then return end
+    if UseUlt(bot) or UseW(bot, nearbyEnemyHeroes) then return true end
+    return false
 end
 
 return bsAbility

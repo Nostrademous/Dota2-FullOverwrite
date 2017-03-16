@@ -31,10 +31,10 @@ function genericAbility:AbilityUsageThink(bot)
     -- Check to see if we are CC'ed
     if utils.IsCrowdControlled(bot) then return false end
 
-    if abilityQ == "" then abilityQ = bot:GetAbilityByName( "FILL ME OUT" ) end
-    if abilityW == "" then abilityW = bot:GetAbilityByName( "FILL ME OUT" ) end
-    if abilityE == "" then abilityE = bot:GetAbilityByName( "FILL ME OUT" ) end
-    if abilityR == "" then abilityR = bot:GetAbilityByName( "FILL ME OUT" ) end
+    if abilityQ == "" then abilityQ = bot:GetAbilityByName( "phantom_assassin_stifling_dagger" ) end
+    if abilityW == "" then abilityW = bot:GetAbilityByName( "phantom_assassin_phantom_strike" ) end
+    if abilityE == "" then abilityE = bot:GetAbilityByName( "phantom_assassin_blur" ) end
+    if abilityR == "" then abilityR = bot:GetAbilityByName( "phantom_assassin_coup_de_grace" ) end
     
     -- WRITE CODE HERE --
     

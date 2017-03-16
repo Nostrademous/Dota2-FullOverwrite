@@ -29,23 +29,79 @@ function UseQ(bot)
         return false;
     end;
     
-    --Code for lasthitting creeps as my first try
-    local daggerRange = abilityQ:GetCastRange();
-    local daggerDamage = 65 + abilityQ:GetSpecialValueInt("attack_factor_tooltip") / 100 * bot:GetAttackDamage();
-    local inRangeEnemyCreeps = gHeroVar.GetNearbyEnemyCreep(bot, daggerRange);
+    local daggerCastRange = abilityQ:GetCastRange();
+    local daggerDamage = 65 + abilityQ:GetSpecialValueInt("attack_factor_tooltip") / 100 * bot:GetAttackDamage();   --Add abilityQ:GetBaseDamage() instead of 65 (patches ruin everything)
+    local inRangeEnemyCreeps = gHeroVar.GetNearbyEnemyCreep(bot, daggerCastRange);
+    local inRangeEnemyHeroes = gHeroVar.GetNearbyEnemies(bot, daggerCastRange);
+    local creepTarget, _ = utils.GetWeakestCreep(inRangeEnemyCreeps);
+    local scariestHeroTarget = nil;
     
-    local daggerTarget, _ = utils.GetWeakestCreep(inRangeEnemyCreeps);
+    if (#inRangeEnemyHeroes > 0) then
+        if (#inRangeEnemyHeroes > 1) then
+            table.sort(inRangeEnemyHeroes, function(a,b) return a:GetRawOffensivePower() > b:GetRawOffensivePower() end);
+        end;
+        scariestHeroTarget = inRangeEnemyHeroes[1];
+    end;
+    
+    --Code for lasthitting creeps as my first try
     --Need to check if there is an actual creep with the lowest health
-    if (daggerTarget ~= nil) then
-        local trueDaggerDamage = daggerTarget:GetActualIncomingDamage( daggerDamage, DAMAGE_TYPE_PHYSICAL);
-        if (daggerTarget:GetHealth() <= trueDaggerDamage) then
-            bot:Action_UseAbilityOnEntity(abilityQ, daggerTarget);
+    if (creepTarget ~= nil) then
+        local trueDaggerDamage = creepTarget:GetActualIncomingDamage(daggerDamage, DAMAGE_TYPE_PHYSICAL);
+        if (creepTarget:GetHealth() <= trueDaggerDamage) then
+            bot:Action_UseAbilityOnEntity(abilityQ, creepTarget);
+            return true;
+        end;    
+    end;
+    
+    --Code for harassing enemy heroes as my second try
+    --Need to check if there is an actual hero scary hero within dagger range
+    if (scariestHeroTarget ~= nil) then
+        if (not utils.IsTargetMagicImmune(scariestHeroTarget)) then   
+            bot:Action_UseAbilityOnEntity(abilityQ, scariestHeroTarget);
             return true;
         end;
-        
     end;
+    
     return false;
 end;
+
+function UseW(bot)
+    if not abilitW:IsFullyCastable() then
+        return false;
+    end;
+
+    local phantomStrikeCastRange = abiltyW:GetCastRange();
+    local totalAttackDamage = 4 * bot:GetAttackDamage(); -- phantom_assassin_phantom_strike adds 4 very fast attacks
+    local inRangeEnemyCreeps = gHeroVar.GetNearbyEnemyCreep(bot, phantomStrikeCastRange);
+    local inRangeEnemyHeroes = gHeroVar.GetNearbyEnemies(bot, phantomStrikeCastRange);
+    local creepTarget, _ = utils.GetWeakestCreep(inRangeEnemyCreeps);
+    local scariestHeroTarget = nil;
+    
+    
+    if (#inRangeEnemyHeroes > 0) then
+        if (#inRangeEnemyHeroes > 1) then
+            table.sort(inRangeEnemyHeroes, function(a,b) return a:GetRawOffensivePower() > b:GetRawOffensivePower() end);
+        end;
+        scariestHeroTarget = inRangeEnemyHeroes[1];
+    end;
+    
+    --phantom_assassin_phantom_strike to kill
+    --Need to check if there is an actual hero scary hero within phantom_assassin_phantom_strike range
+    if (scariestHeroTarget ~= nil) then
+        local trueTotalAttackDamage = GetActualIncomingDamage(totalAttackDamage, DAMAGE_TYPE_PHYSICAL);
+        if (scariestHeroTarget:GetHealth < 1.05 * trueTotalAttackDamage) then
+            bot:Action_UseAbilityOnEntity(abilityW, scariestHeroTarget);
+            return true;
+        end;
+    end; 
+   
+   --phantom_assassin_phantom_strike to roshan
+   
+   --phantom_assassin_phantom_strike to farm
+   
+    return false;
+end;
+
 
 function genericAbility:AbilityUsageThink(bot)
     -- Check if we're already using an ability

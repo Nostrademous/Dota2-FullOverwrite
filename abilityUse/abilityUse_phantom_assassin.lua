@@ -90,18 +90,18 @@ function UseW(bot)
     if (scariestHeroTarget ~= nil) then
         if (not utils.IsTargetMagicImmune(scariestHeroTarget)) then   
             local trueTotalAttackDamage = GetActualIncomingDamage(totalAttackDamage, DAMAGE_TYPE_PHYSICAL);
-            if (scariestHeroTarget:GetHealth < 1.05 * trueTotalAttackDamage) then
+            if (scariestHeroTarget:GetHealth() <= trueTotalAttackDamage) then
                 bot:Action_UseAbilityOnEntity(abilityW, scariestHeroTarget);
                 return true;
             end;
-        return false;
         end;
-    return false;
     end; 
    
    --phantom_assassin_phantom_strike to roshan
    
    --phantom_assassin_phantom_strike to farm
+   
+   --phantom_assassin_phantom_strike to escape
    
 return false;
 end;

@@ -517,8 +517,9 @@ function U.AreTreesBetweenMeAndLoc(loc, lineOfSightThickness)
 end
 
 -- CONTRIBUTOR: Function below was based off above function by Platinum_dota2
-function U.AreEnemyCreepsBetweenMeAndLoc(loc, lineOfSightThickness)
+function U.GetEnemyCreepsBetweenMeAndLoc(loc, lineOfSightThickness)
     local npcBot = GetBot()
+    local fCreepList = {}
 
     local eCreeps = npcBot:GetNearbyCreeps(Min(1600, GetUnitToLocationDistance(npcBot, loc)), true)
 
@@ -544,16 +545,21 @@ function U.AreEnemyCreepsBetweenMeAndLoc(loc, lineOfSightThickness)
             local d = math.abs((a*z.x + b*z.y + c)/math.sqrt(a*a + b*b))
             if d <= lineOfSightThickness and
                 GetUnitToLocationDistance(npcBot, loc) > (U.GetDistance(x,loc) + 50) then
-                return true
+                table.insert(fCreepList, eCreep)
             end
         end
     end
-    return false
+    return fCreepList
+end
+
+function U.AreEnemyCreepsBetweenMeAndLoc(loc, lineOfSightThickness)
+    return #U.GetEnemyCreepsBetweenMeAndLoc(loc, lineOfSightThickness) > 0 
 end
 
 -- CONTRIBUTOR: Function below was based off above function by Platinum_dota2
-function U.AreFriendlyCreepsBetweenMeAndLoc(loc, lineOfSightThickness)
+function U.GetFriendlyCreepsBetweenMeAndLoc(loc, lineOfSightThickness)
     local npcBot = GetBot()
+    local fCreepList = {}
 
     local fCreeps = npcBot:GetNearbyCreeps(Min(1600, GetUnitToLocationDistance(npcBot, loc)), false)
 
@@ -579,11 +585,15 @@ function U.AreFriendlyCreepsBetweenMeAndLoc(loc, lineOfSightThickness)
             local d = math.abs((a*z.x + b*z.y + c)/math.sqrt(a*a + b*b))
             if d <= lineOfSightThickness and
                 GetUnitToLocationDistance(npcBot, loc) > (U.GetDistance(x,loc) + 50) then
-                return true
+                table.insert(fCreepList, fCreep)
             end
         end
     end
-    return false
+    return fCreepList
+end
+
+function U.AreFriendlyCreepsBetweenMeAndLoc(loc, lineOfSightThickness)
+    return #U.GetFriendlyCreepsBetweenMeAndLoc(loc, lineOfSightThickness) > 0
 end
 
 -- CONTRIBUTOR: Function below was based off above function by Platinum_dota2
@@ -592,6 +602,46 @@ function U.AreCreepsBetweenMeAndLoc(loc, lineOfSightThickness)
         return U.AreFriendlyCreepsBetweenMeAndLoc(loc, lineOfSightThickness)
     end
     return true
+end
+
+function U.GetCreepsBetweenMeAndLoc(loc, lineOfSightThickness)
+    return { unpack(U.GetEnemyCreepsBetweenMeAndLoc(loc, lineOfSightThickness)), unpack(U.GetFriendlyCreepsBetweenMeAndLoc(loc, lineOfSightThickness)) }
+end
+
+-- CONTRIBUTOR: Function below was based off above function by Platinum_dota2
+function U.GetFriendlyHeroesBetweenMeAndLoc(loc, lineOfSightThickness)
+    local npcBot = GetBot()
+    local fHeroList = {}
+
+    local fHeroes = npcBot:GetNearbyCreeps(Min(1600, GetUnitToLocationDistance(npcBot, loc)), false)
+
+    --check if there are enemy creeps between us and location with line-of-sight thickness
+    for _, fHero in ipairs(fHeroes) do
+        local x = fHero:GetLocation()
+        local y = npcBot:GetLocation()
+        local z = loc
+
+        if x ~= y then
+            local a = 1
+            local b = 1
+            local c = 0
+
+            if x.x - y.x == 0 then
+                b = 0
+                c = -x.x
+            else
+                a =- (x.y - y.y)/(x.x - y.x)
+                c =- (x.y + x.x*a)
+            end
+
+            local d = math.abs((a*z.x + b*z.y + c)/math.sqrt(a*a + b*b))
+            if d <= lineOfSightThickness and
+                GetUnitToLocationDistance(npcBot, loc) > (U.GetDistance(x,loc) + 50) then
+                table.insert(fHeroList, fHero)
+            end
+        end
+    end
+    return fHeroList
 end
 
 -------------------------------------------------------------------------------
@@ -618,21 +668,19 @@ function U.IsBusy(bot)
     return false
 end
 
-function U.IsCore()
-    if getHeroVar("Role") == constants.ROLE_HARDCARRY
-        or getHeroVar("Role") == constants.ROLE_MID
-        or getHeroVar("Role") == constants.ROLE_OFFLANE
-        or getHeroVar("Role") == constants.ROLE_JUNGLER then
-            return true;
+function U.IsCore( hHero )
+    if gHeroVar.GetVar(hHero:GetPlayerID(), "Role") == constants.ROLE_HARDCARRY
+        or gHeroVar.GetVar(hHero:GetPlayerID(), "Role") == constants.ROLE_MID
+        or gHeroVar.GetVar(hHero:GetPlayerID(), "Role") == constants.ROLE_OFFLANE
+        or gHeroVar.GetVar(hHero:GetPlayerID(), "Role") == constants.ROLE_JUNGLER then
+            return true
     end
-
-    return false;
+    return false
 end
 
 function U.IsMelee(hero)
     --NOTE: Monkey King is considered Melee with a range of 300, typical melee heroes are range 150
-    if hero:GetAttackRange() < 320.0 then return true end
-    return false
+    return hero:GetAttackRange() < 320.0
 end
 
 function U.PartyChat(msg)
@@ -1162,15 +1210,8 @@ function U.HarassEnemy(bot, listEnemies)
     -- if we have an orb effect (won't aggro creep), use it
     if U.UseOrbEffect(bot) then return true end
     
-    -- if we can harass, do it
-    if enemyToHarass then
-        gHeroVar.HeroAttackUnit(bot, enemyToHarass, true)
-        return true
-    end
-    
     local listEnemyCreep = gHeroVar.GetNearbyEnemyCreep(bot, 1200)
-    local listAlliedCreep = gHeroVar.GetNearbyAlliedCreep(bot, 1200)
-    if #listEnemies > 0 and (#listEnemyCreep < (#listAlliedCreep-1) or #listEnemyCreep == 0) and
+    if #listEnemies > 0 and #listEnemyCreep == 0 and
         GetUnitToUnitDistance(bot, listEnemies[1]) < (bot:GetAttackRange()+bot:GetBoundingRadius()) then
         gHeroVar.HeroAttackUnit(bot, listEnemies[1], true)
         return true

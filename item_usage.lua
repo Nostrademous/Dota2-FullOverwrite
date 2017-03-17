@@ -486,11 +486,24 @@ function UseMidas()
 end
 
 function UseGlimmerCape(target)
+    local gcTarget = GetBot()
+    if target ~= nil and target:IsAlive() then
+        gcTarget = target
+    end
+    
+    local gc = utils.IsItemAvailable("item_glimmer_cape")
+    if gc ~= nil and gcTarget ~= nil then
+        bot:Action_UseAbilityOnEntity(gc, gcTarget)
+        return true
+    end
+    return false
+end
+
+function UseBlink(location)
     local bot = GetBot()
-    local target = target or bot
-    local gc = utils.HaveItem(bot, "item_glimmer_cape")
-    if gc ~= nil and target ~= nil then
-        bot:Action_UseAbilityOnEntity(gc, target)
+    local blink = utils.IsItemAvailable("item_blink")
+    if blink then
+        bot:Action_UseAbilityOnLocation(blink, location)
         return true
     end
     return false

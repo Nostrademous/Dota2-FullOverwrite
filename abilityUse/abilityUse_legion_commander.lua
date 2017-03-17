@@ -56,8 +56,8 @@ function ConsiderQ()
 	--------------------------------------
 	--try to kill enemy hero
 	if modeName ~= "retreat" then
-		if WeakestEnemy ~= nil then
-			if not utils.IsTargetMagicImmune( WeakestEnemy ) and WeakestEnemy:CanBeSeen() then
+		if utils.ValidTarget(WeakestEnemy) then
+			if not utils.IsTargetMagicImmune( WeakestEnemy ) then
 				if HeroHealth <= WeakestEnemy:GetActualIncomingDamage(Damage, DAMAGE_TYPE_MAGICAL) then
 					return BOT_ACTION_DESIRE_HIGH, utils.VectorTowards(WeakestEnemy, bot, Radius/2)
 				end
@@ -140,8 +140,7 @@ function ConsiderW()
     -- save allies from other disables
 	if modeName == "fight" or modeName == "defendally" or ManaPerc > 0.4 then
 		for _, npcTarget in pairs( allies ) do
-			if (npcTarget:GetCurrentMovementSpeed() < 250 or npcTarget:IsSilenced() or npcTarget:IsMuted() or 
-				npcTarget:IsNightmared() or npcTarget:IsDisarmed() or npcTarget:IsBlind() or npcTarget:IsBlockDisabled())
+			if (npcTarget:GetCurrentMovementSpeed() < 250 or utils.IsUnitCrowdControlled(npcTarget) or npcTarget:IsBlockDisabled())
 			then
 				if not utils.IsTargetMagicImmune( npcTarget ) then
 					return BOT_ACTION_DESIRE_HIGH, npcTarget

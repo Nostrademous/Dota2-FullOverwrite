@@ -1267,7 +1267,11 @@ function U.IsTargetMagicImmune(target)
 end
 
 function U.IsCrowdControlled(enemy)
-    return enemy:IsRooted() or enemy:IsHexed() or enemy:IsStunned() or enemy:IsNightmared()
+    return enemy:IsRooted() or enemy:IsHexed() or enemy:IsStunned() -- or enemy:IsNightmared()
+end
+
+function U.IsUnitCrowdControlled(e)
+    return U.IsCrowdControlled(e) or e:IsNightmared() or e:IsDisarmed() or e:IsBlind() or e:IsSilenced() or e:IsMuted()
 end
 
 function U.DropTowerAggro(bot, nearbyAlliedCreep)
@@ -1281,6 +1285,57 @@ function U.DropTowerAggro(bot, nearbyAlliedCreep)
         end
     end
     return false
+end
+
+-------------------------------------------------------------------------------
+-- Team Fight Functions
+-------------------------------------------------------------------------------
+function U.InTeamFight(bot, range)
+    local checkDist = 1000
+    if range then checkDist = range end
+    
+    local alliesInTeamfight = {}
+    
+    local allyList = GetUnitList(UNIT_LIST_ALLIED_HEROES)
+    for _, ally in pairs(allyList) do
+        if ally:IsAlive() and not ally:IsIllusion() and 
+            GetUnitToUnitDistance(bot, ally) <= checkDist and
+            ally.SelfRef:getCurrentMode():GetName() == "fight" then
+            table.insert(alliesInTeamfight, ally)
+        end
+    end
+    
+    return alliesInTeamfight
+end
+
+function U.GetScariestEnemy(bot, range, bConsiderMagicImmune)
+    local mostDangerousEnemy = nil
+	local mostDangerousDamage = 0
+    
+    local checkForMagicImmunity = false
+    if bConsiderMagicImmune then checkForMagicImmunity = bConsiderMagicImmune end
+        
+    for _, npcEnemy in pairs( gHeroVar.GetNearbyEnemies( bot, range ) ) do
+        if not U.IsUnitCrowdControlled(npcEnemy) and not npcEnemy:IsInvulnerable() then
+            if checkForMagicImmunity then
+                local Damage = npcEnemy:GetEstimatedDamageToTarget( false, bot, 3.0, DAMAGE_TYPE_ALL )
+                if Damage > mostDangerousDamage then
+                    mostDangerousDamage = Damage
+                    mostDangerousEnemy = npcEnemy
+                end
+            else
+                if not npcEnemy:IsMagicImmune() then
+                    local Damage = npcEnemy:GetEstimatedDamageToTarget( false, bot, 3.0, DAMAGE_TYPE_ALL )
+                    if Damage > mostDangerousDamage then
+                        mostDangerousDamage = Damage
+                        mostDangerousEnemy = npcEnemy
+                    end
+                end
+            end
+        end
+    end
+    
+    return mostDangerousEnemy
 end
 
 -------------------------------------------------------------------------------

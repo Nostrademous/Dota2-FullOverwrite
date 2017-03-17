@@ -125,7 +125,11 @@ function X:Think(bot)
         end
 
         -- Put support items in list if we are a support (even if we already wanted to buy something else)
-        self:BuySupportItems()
+        if GetNumCouriers() == 0 then
+            self:BuySupportItems()
+        elseif DotaTime() > 10 then
+            self:BuySupportItems()
+        end
 
         -- If there's an item to be purchased already bail
         if ( (bot:GetNextItemPurchaseValue() > 0) and (bot:GetGold() < bot:GetNextItemPurchaseValue()) ) then return end

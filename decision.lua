@@ -96,6 +96,8 @@ function X:DoInit(bot)
     self.pID = bot:GetPlayerID() -- do this to reduce calls to bot:GetPlayerID() in the future
     gHeroVar.InitHeroVar(self.pID)
 
+    bot.SelfRef = self
+    
     self:setHeroVar("Self", self)
     self:setHeroVar("LastCourierThink", -1000.0)
     self:setHeroVar("LastLevelUpThink", -1000.0)

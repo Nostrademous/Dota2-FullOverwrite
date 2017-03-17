@@ -499,16 +499,6 @@ function UseGlimmerCape(target)
     return false
 end
 
-function UseBlink(location)
-    local bot = GetBot()
-    local blink = utils.IsItemAvailable("item_blink")
-    if blink then
-        bot:Action_UseAbilityOnLocation(blink, location)
-        return true
-    end
-    return false
-end
-
 -- will return a handle to the ward or nil if we don't have it, checks both
 -- individual ward types and the combined ward dispenser item and switches
 -- it's state to the selection we want prior to returning

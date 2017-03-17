@@ -131,6 +131,14 @@ function X:Think(bot)
             self:BuySupportItems()
         end
 
+        -- buy TPs if we are near a shop and don't have one
+        if not utils.HaveTeleportation(bot) and not utils.InTable(self.PurchaseOrder, "item_tpscroll")
+            and DotaTime() > 60*4 then
+            if bot:DistanceFromFountain() < 1600 or bot:DistanceFromSideShop() < 1600 then
+                table.insert(self.PurchaseOrder, 1, "item_tpscroll")
+            end
+        end
+        
         -- If there's an item to be purchased already bail
         if ( (bot:GetNextItemPurchaseValue() > 0) and (bot:GetGold() < bot:GetNextItemPurchaseValue()) ) then return end
 
@@ -157,9 +165,7 @@ function X:Think(bot)
             -- Enough gold -> buy, remove
             if(bot:GetGold() >= GetItemCost(sNextItem)) then
                 if bot:IsAlive() then
-                    local me = getHeroVar("Self")
-                    
-                    if me:getCurrentMode():GetName() ~= "shop" then
+                    if bot.SelfRef:getCurrentMode():GetName() ~= "shop" then
                         bot:ActionImmediate_PurchaseItem(sNextItem)
                         table.remove(self.PurchaseOrder, 1)
                         UpdateTeamBuyList(sNextItem)
@@ -225,7 +231,7 @@ end
 
 function X:BuySupportItems()
     -- insert support items first if available
-    if not utils.IsCore() then
+    if not utils.IsCore(GetBot()) then
     --[[
     Idea: Buy starting items, then buy either core / extension items unless there is more important utility to buy.
                 Upgrade courier at 3:00, buy all available wards and if needed detection (no smoke).
@@ -242,12 +248,13 @@ function X:BuySupportItems()
                 table.insert(self.PurchaseOrder, 1, "item_courier")
             end
             -- buy flying courier if available (only 1x)
-            if GetNumCouriers() > 0 and DotaTime() >= (3*60) then
+            if GetNumCouriers() > 0 and DotaTime() >= (3*60) and not gHeroVar.GetGlobalVar("FlyingCourier") then
                 if not utils.InTable(self.BoughtItems, "item_flying_courier") then
                     table.insert(self.PurchaseOrder, 1, "item_flying_courier")
                     -- flying courier is the only item we put in the bought item list,
                     -- wards etc. are not important to store
                     table.insert(self.BoughtItems, "item_flying_courier")
+                    gHeroVar.SetGlobalVar("FlyingCourier", true)
                 end
             end
 
@@ -411,24 +418,41 @@ function X:ConsiderSellingItems(bot)
 
         -- put all items we still want to buy (combined) and all items we bought already (combined) in a table
         local toBuyCombined = {}
+        
         for _,k in pairs(self.StartingItems) do
             local toBuySingle = {}
             items:GetItemsTable(toBuySingle, items[k])
-            if #toBuySingle > 1 then
+            if #toBuySingle > 1 or items:GetItemValueNumber(items[k]) >= 2000 then
                 items:GetItemsTable(toBuyCombined, items[k])
             end
         end
         for _,k in pairs(self.CoreItems) do
             local toBuySingle = {}
             items:GetItemsTable(toBuySingle, items[k])
-            if #toBuySingle > 1 then
+            if #toBuySingle > 1 or items:GetItemValueNumber(items[k]) >= 2000 then
                 items:GetItemsTable(toBuyCombined, items[k])
             end
         end
+        
+        for _,k in pairs(self.ExtensionItems.OffensiveItems) do
+            local toBuySingle = {}
+            items:GetItemsTable(toBuySingle, items[k])
+            if #toBuySingle > 1 or items:GetItemValueNumber(items[k]) >= 2000 then
+                items:GetItemsTable(toBuyCombined, items[k])
+            end
+        end
+        for _,k in pairs(self.ExtensionItems.DefensiveItems) do
+            local toBuySingle = {}
+            items:GetItemsTable(toBuySingle, items[k])
+            if #toBuySingle > 1 or items:GetItemValueNumber(items[k]) >= 2000 then
+                items:GetItemsTable(toBuyCombined, items[k])
+            end
+        end
+        
         for _,k in pairs(self.BoughtItems) do
             local toBuySingle = {}
             items:GetItemsTable(toBuySingle, items[k])
-            if #toBuySingle > 1 then
+            if #toBuySingle > 1 or items:GetItemValueNumber(items[k]) >= 2000 then
                 items:GetItemsTable(toBuyCombined, items[k])
             end
         end
@@ -451,7 +475,7 @@ function X:ConsiderSellingItems(bot)
             end
         end
 
-        local ItemToSell
+        local ItemToSell = nil
         local iItemValue = 1000000
         -- Now check which item is least valuable to us
         for _,p in pairs(ItemsToConsiderSelling) do

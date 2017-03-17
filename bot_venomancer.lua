@@ -33,9 +33,9 @@ local ABILITY7 = "special_bonus_respawn_reduction_60"
 local ABILITY8 = "special_bonus_unique_venomancer"
 
 local AbilityPriority = {
-    SKILL_E,    SKILL_W,    SKILL_E,    SKILL_W,    SKILL_E,
-    SKILL_R,    SKILL_E,    SKILL_W,    SKILL_Q,    ABILITY1,
-    SKILL_W,    SKILL_R,    SKILL_Q,    SKILL_Q,    ABILITY3,
+    SKILL_Q,    SKILL_W,    SKILL_E,    SKILL_E,    SKILL_E,
+    SKILL_R,    SKILL_E,    SKILL_W,    SKILL_W,    SKILL_W,
+    ABILITY2,   SKILL_R,    SKILL_Q,    SKILL_Q,    ABILITY4,
     SKILL_Q,    SKILL_R,    ABILITY5,   ABILITY8
 }
 
@@ -51,7 +51,7 @@ end
 local vmBot = botVM:new{abilityPriority = AbilityPriority}
 
 function vmBot:ConsiderAbilityUse()
-    ability.AbilityUsageThink(GetBot())
+    return ability.AbilityUsageThink(GetBot())
 end
 
 function vmBot:GetNukeDamage(bot, target)

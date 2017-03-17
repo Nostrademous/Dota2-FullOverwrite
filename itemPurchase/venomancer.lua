@@ -24,14 +24,14 @@ generic.ItemsToBuyAsSupport = {
 	},
 	CoreItems = {
 		"item_infused_raindrop",
-		"item_tranquil_boots",
-		"item_veil_of_discord",
-		"item_force_staff",
-		"item_ultimate_scepter"
+		"item_arcane_boots",
+		"item_guardian_greaves",
+        "item_pipe",
+		"item_force_staff"
 	},
 	ExtensionItems = {
 		OffensiveItems = {
-            "item_blink",
+            "item_ultimate_scepter",
             "item_black_king_bar"
 		},
 		DefensiveItems = {

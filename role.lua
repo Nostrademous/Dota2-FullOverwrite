@@ -249,7 +249,7 @@ local listSEMISUPPORT = {
 	"npc_dota_hero_tusk",
 	"npc_dota_hero_undying",
 	"npc_dota_hero_vengefulspirit",
-	--"npc_dota_hero_venomancer",
+	"npc_dota_hero_venomancer",
 	"npc_dota_hero_warlock",
 	"npc_dota_hero_windrunner",
 	--"npc_dota_hero_winter_wyvern",

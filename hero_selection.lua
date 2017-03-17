@@ -27,10 +27,15 @@ local Pos_3_Pool = {
     "npc_dota_hero_viper"
 }
 
+local Pos_4_Pool = {
+    "npc_dota_hero_venomancer"
+}
+
 local Pos_5_Pool = {
     "npc_dota_hero_crystal_maiden"
 }
 
+-- roamers, junglers
 local Pos_X_Pool = {
     "npc_dota_hero_legion_commander",
     "npc_dota_hero_bloodseeker"
@@ -39,7 +44,7 @@ local Pos_X_Pool = {
 local BotPool = {
     Pos_1_Pool, -- hard carry
     Pos_5_Pool, -- hard support
-    Pos_X_Pool, -- semi-support, roamer, jungler
+    {unpack(Pos_4_Pool), unpack(Pos_X_Pool)}, -- semi-support, roamer, jungler
     Pos_2_Pool, -- mid
     Pos_3_Pool  -- offlane
 }

@@ -47,7 +47,7 @@ function X:Think(bot)
     
     -- if shrine is dead, clear mode
     if not utils.NotNilOrDead(hShrine) then
-        getHeroVar("Self"):ClearMode()
+        bot.SelfRef:ClearMode()
         return
     end
     
@@ -55,7 +55,7 @@ function X:Think(bot)
     -- TODO: will it be on cooldown when we get there, then ok
     if GetShrineCooldown(hShrine) ~= 0 then
         global_game_state.RemovePIDFromShrine(bot.useShrine, bot:GetPlayerID())
-        getHeroVar("Self"):ClearMode()
+        bot.SelfRef:ClearMode()
         return
     end
 
@@ -64,7 +64,7 @@ function X:Think(bot)
     if bot:GetHealth()/bot:GetMaxHealth() > 0.5 and not bot:HasModifier("modifier_filler_heal") then
         utils.myPrint("Don't need to use shrine, canceling")
         global_game_state.RemovePIDFromShrine(bot.useShrine, bot:GetPlayerID())
-        getHeroVar("Self"):ClearMode()
+        bot.SelfRef:ClearMode()
         return
     end
     
@@ -76,12 +76,52 @@ function X:Think(bot)
 
     if bot.shrineUseMode then
         if hShrine and GetUnitToUnitDistance(bot, hShrine) > 300 then
-            bot:Action_MoveToLocation(hShrine:GetLocation())
+            
             local mvAbility = getHeroVar("HasMovementAbility")
             if mvAbility and mvAbility[1]:IsFullyCastable() then
                 local newLoc = utils.VectorTowards(bot:GetLocation(), hShrine:GetLocation(), mvAbility[2])
-                bot:ActionPush_UseAbilityOnLocation(mvAbility[1], newLoc)
+                local behavior = mvAbility[1]:GetBehavior()
+
+                -- we can move to "location"
+                if utils.CheckFlag(behavior, ABILITY_BEHAVIOR_POINT) then
+                    bot:Action_UseAbilityOnLocation(mvAbility[1], newLoc)
+                    return
+                -- we can move to a "unit"
+                elseif utils.CheckFlag(behavior, ABILITY_BEHAVIOR_UNIT_TARGET) then
+                    local targetType = mvAbility[1]:GetTargetType()
+                    
+                    if utils.CheckFlag(targetType, ABILITY_TARGET_TYPE_CREEP) then
+                        local viableTargets = utils.GetCreepsBetweenMeAndLoc(newLoc, 200)
+                        if #viableTargets > 0 then
+                            if #viableTargets > 1 then
+                                table.sort(viableTargets, function(n1,n2) return GetUnitToUnitDistance(bot, n1) > GetUnitToUnitDistance(bot, n2) end)
+                            end
+                            bot:Action_UseAbilityOnEntity(mvAbility[1], viableTargets[1])
+                            return
+                        end
+                    end
+                    
+                    if utils.CheckFlag(targetType, ABILITY_TARGET_TYPE_HERO) then
+                        local viableTargets = utils.GetFriendlyHeroesBetweenMeAndLoc(newLoc, 200)
+                        if #viableTargets > 0 then
+                            if #viableTargets > 1 then
+                                table.sort(viableTargets, function(n1,n2) return GetUnitToUnitDistance(bot, n1) > GetUnitToUnitDistance(bot, n2) end)
+                            end
+                            bot:Action_UseAbilityOnEntity(mvAbility[1], viableTargets[1])
+                            return
+                        end
+                    end
+                    
+                    if utils.CheckFlag(targetType, ABILITY_TARGET_TYPE_TREE) then
+                        utils.pause("Retreat ability to Tree not implemented yet")
+                    end
+                end
             end
+            
+            if item_usage.UseMovementItems(hShrine:GetLocation()) then return end
+            
+            bot:Action_MoveToLocation(hShrine:GetLocation())
+            
             return
         elseif bot.shrineUseMode ~= constants.SHRINE_USE then
             utils.myPrint("Waiting on more friends: ", #global_game_state.GetShrineState(bot.useShrine).pidsLookingForHeal)
@@ -108,7 +148,7 @@ function X:Think(bot)
         end
     end
 
-    getHeroVar("Self"):ClearMode()
+    bot.SelfRef:ClearMode()
     return
 end
 

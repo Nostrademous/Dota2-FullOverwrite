@@ -61,9 +61,9 @@ function ConsiderQ()
 				if HeroHealth <= WeakestEnemy:GetActualIncomingDamage(Damage, DAMAGE_TYPE_MAGICAL) then
                     local dist = GetUnitToUnitDistance(bot, WeakestEnemy)
                     if dist < (CastRange + Radius) then
-                        return BOT_ACTION_DESIRE_HIGH, utils.VectorTowards(bot, WeakestEnemy, 100)
+                        return BOT_ACTION_DESIRE_HIGH, utils.VectorTowards(bot:GetLocation(), WeakestEnemy:GetLocation(), 100)
                     else
-                        return BOT_ACTION_DESIRE_HIGH, utils.VectorTowards(bot, WeakestEnemy, dist+100)
+                        return BOT_ACTION_DESIRE_HIGH, utils.VectorTowards(bot:GetLocation(), WeakestEnemy:GetLocation(), dist+100)
                     end
 				end
 			end
@@ -165,7 +165,7 @@ function ConsiderE()
         
         local friendlyTower = gHeroVar.GetNearbyAlliedTowers(bot, CastRange+300)
         if #friendlyTower >= 1 then
-            if ManaPerc > 0.4 then
+            if ManaPerc > 0.4 and #gHeroVar.GetNearbyEnemyCreep(bot, 900) > 1 then
                 return BOT_ACTION_DESIRE_LOW, friendlyTower[1]:GetLocation() + RandomVector( RandomInt(0, CastRange) )
             end
         end
@@ -178,7 +178,7 @@ function ConsiderE()
 		
 		if ManaPerc > 0.4 then
 			if utils.ValidTarget(npcEnemy) then
-				return BOT_ACTION_DESIRE_MODERATE, utils.VectorTowards(bot, npcEnemy, RandomInt(0,CastRange))
+				return BOT_ACTION_DESIRE_MODERATE, utils.VectorTowards(bot:GetLocation(), npcEnemy:GetLocation(), RandomInt(0, CastRange))
 			end
 		end
 	end
@@ -188,7 +188,7 @@ function ConsiderE()
 	if modeName == "laning" or modeName == "jungling" then
 		if #creeps >= 2 then
 			if ManaPerc > 0.4 then
-                return BOT_ACTION_DESIRE_LOW, utils.VectorTowards(bot, creeps[1], RandomInt(0, CastRange))
+                return BOT_ACTION_DESIRE_LOW, utils.VectorTowards(bot:GetLocation(), creeps[1]:GetLocation(), RandomInt(0, CastRange))
 			end	
 		end
 	end

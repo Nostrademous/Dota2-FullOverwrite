@@ -49,7 +49,7 @@ function ConsiderQ()
     
 	local WeakestEnemy, HeroHealth = utils.GetWeakestHero(bot, CastRange+150)
     
-    local modeName = getHeroVar("Self"):getCurrentMode():GetName()
+    local modeName = bot.SelfRef:getCurrentMode():GetName()
 
     --------------------------------------
 	-- Global high-priorty usage
@@ -59,7 +59,7 @@ function ConsiderQ()
 		if utils.ValidTarget(WeakestEnemy) then
 			if not utils.IsTargetMagicImmune( WeakestEnemy ) then
 				if HeroHealth <= WeakestEnemy:GetActualIncomingDamage(Damage, DAMAGE_TYPE_MAGICAL) then
-					return BOT_ACTION_DESIRE_HIGH, utils.VectorTowards(WeakestEnemy, bot, Radius/2)
+					return BOT_ACTION_DESIRE_HIGH, utils.VectorTowards(WeakestEnemy:GetLocation(), bot:GetLocation(), Radius/2)
 				end
 			end
 		end
@@ -93,7 +93,7 @@ function ConsiderQ()
 		local npcEnemy = getHeroVar("RoamTarget")
 		if utils.ValidTarget(npcEnemy) then
 			if not utils.IsTargetMagicImmune( npcEnemy ) then
-				return BOT_ACTION_DESIRE_MODERATE, utils.VectorTowards(npcEnemy, bot, Radius/2)
+				return BOT_ACTION_DESIRE_MODERATE, utils.VectorTowards(npcEnemy:GetLocation(), bot:GetLocation(), Radius/2)
 			end
 		end
 	end
@@ -135,7 +135,7 @@ function ConsiderW()
 		end
 	end
 	
-    local modeName = getHeroVar("Self"):getCurrentMode():GetName()
+    local modeName = bot.SelfRef:getCurrentMode():GetName()
     
     -- save allies from other disables
 	if modeName == "fight" or modeName == "defendally" or ManaPerc > 0.4 then
@@ -224,7 +224,7 @@ function ConsiderR()
 
     local CastRange = abilityR:GetCastRange()
     
-    local modeName = getHeroVar("Self"):getCurrentMode():GetName()
+    local modeName = bot.SelfRef:getCurrentMode():GetName()
     
 	--------------------------------------
 	-- Global high-priorty usage

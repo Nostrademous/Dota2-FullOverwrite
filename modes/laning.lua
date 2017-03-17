@@ -344,7 +344,14 @@ local function GetBack(bot)
         return true
     end
 
-    if bot:WasRecentlyDamagedByCreep(0.5) and bot:GetHealth() < 900 and bot:GetHealth()/bot:GetMaxHealth() < 0.8 then
+    local nearETowers = gHeroVar.GetNearbyEnemyTowers(bot, 800)
+    if #nearETowers > 0 then
+        setHeroVar("BackTimer", GameTime())
+        return true
+    end
+    
+    if bot:WasRecentlyDamagedByCreep(1.0) and (not utils.IsCore(bot) or 
+        (bot:GetHealth() < 900 and bot:GetHealth()/bot:GetMaxHealth() < 0.8)) then
         setHeroVar("BackTimer", GameTime())
         return true
     end

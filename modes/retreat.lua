@@ -70,7 +70,8 @@ function X:Think(bot)
 
     local retreatAbility = getHeroVar("HasMovementAbility")
     if retreatAbility ~= nil and retreatAbility[1]:IsFullyCastable() then
-        -- same name for bot AM and QoP, "tooltip_range" for "riki_blink_strike"
+        local behavior = retreatAbility[1]:GetBehavior()
+        
         local value = retreatAbility[2]
         -- below I test how far in units is a single 0.01 move in terms of GetLocationAlongLane()
         local scale = utils.GetDistance(GetLocationAlongLane(rLane, 0.5), GetLocationAlongLane(rLane, 0.49))
@@ -80,8 +81,23 @@ function X:Think(bot)
         else
             nextmove = utils.VectorTowards(bot:GetLocation(), nextmove, value-15)
         end
-        bot:Action_UseAbilityOnLocation(retreatAbility[1], nextmove)
-        return
+        
+        -- we can move to "location"
+        if utils.CheckFlag(behavior, ABILITY_BEHAVIOR_POINT) then
+            bot:Action_UseAbilityOnLocation(retreatAbility[1], nextmove)
+            return
+        -- we can move to a "unit"
+        elseif utils.CheckFlag(behavior, ABILITY_BEHAVIOR_UNIT_TARGET) then
+            local targetType = retreatAbility[1]:GetTargetType()
+            if targetType == ABILITY_TARGET_TYPE_CREEP then
+                local viableTargets = utils.AreCreepsBetweenMeAndLoc(nextmove, 200)
+                table.sort(viableTargets, function(n1,n2) return GetUnitToUnitDistance(bot, n1) > GetUnitToUnitDistance(bot, n2) end)
+                bot:Action_UseAbilityOnEntity(retreatAbility[1], viableTargets[1])
+                return
+            elseif targetType == ABILITY_TARGET_TYPE_TREE then
+                utils.pause("Retreat ability to Tree not implemented yet")
+            end
+        end
     end
 
     --utils.myPrint("MyLanePos: ", tostring(bot:GetLocation()), ", RetreatPos: ", tostring(nextmove))

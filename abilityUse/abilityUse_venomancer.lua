@@ -134,13 +134,11 @@ function ConsiderE()
 	end
     
     local CastRange = abilityE:GetCastRange()
+    local modeName = getHeroVar("Self"):getCurrentMode():GetName()
     
     --------------------------------------
 	-- Global high-priorty usage
 	--------------------------------------
-    
-
-    
     local enemies = gHeroVar.GetNearbyEnemies( bot, 1200 )
 	
     -- if I'm retreating

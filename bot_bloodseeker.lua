@@ -95,7 +95,7 @@ end
 
 function bloodseekerBot:IsReadyToGank(bot)
     local rupture = bot:GetAbilityByName(SKILL_R)
-    return rupture:IsFullyCastable() or bot:GetCurrentMovementSpeed() >= 420
+    return rupture:IsFullyCastable() or (bot:GetCurrentMovementSpeed() >= 420 and bot:GetLevel() > 5)
 end
 
 function bloodseekerBot:DoCleanCamp(bot, neutrals, difficulty)

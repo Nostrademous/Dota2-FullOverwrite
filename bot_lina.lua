@@ -66,6 +66,14 @@ function linaBot:QueueNuke(bot, target, actionQueue, engageDist)
     return ability.queueNuke( bot, target, actionQueue, engageDist )
 end
 
+function linaBot:IsReadyToGank(bot)
+    local ult = bot:GetAbilityByName(LINA_SKILL_R)
+    if ult:IsFullyCastable() and utils.HaveItem(bot, "item_blink") then
+        return true
+    end
+    return false
+end
+
 function Think()
     local bot = GetBot()
     

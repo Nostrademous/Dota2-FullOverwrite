@@ -10,8 +10,6 @@ module( "hero_think", package.seeall )
 require( GetScriptDirectory().."/constants" )
 require( GetScriptDirectory().."/item_usage" )
 
-local roamMode = dofile( GetScriptDirectory().."/modes/roam" )
-
 local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
 local utils = require( GetScriptDirectory().."/utility" )
 
@@ -210,24 +208,19 @@ end
 -- Roaming decision are made at the Team level to keep all relevant
 -- heroes informed of the upcoming kill opportunity. 
 -- This just checks if this Hero is part of the Gank.
-function ConsiderRoam(bot)
-    if getHeroVar("Role") == ROLE_ROAMER or 
-        (getHeroVar("Role") == ROLE_JUNGLER and getHeroVar("Self"):IsReadyToGank(bot)) then
-        
-        local roamTarget = getHeroVar("RoamTarget")
-        if roamTarget and not roamTarget:IsNull() then
-            local dist = GetUnitToUnitDistance(bot, roamTarget)
-        
-            local timeToIntercept = dist/bot:GetCurrentMovementSpeed()
-            local timeUntilEscaped = utils.TimeForEnemyToGetIntoTheirBase(roamTarget)
-                
-            if timeUntilEscaped <= timeToIntercept then
-                return BOT_MODE_DESIRE_HIGH
-            end
-        end
-        
-        if roamMode.FindTarget(bot) then
-            return BOT_MODE_DESIRE_HIGH
+function ConsiderRoam(bot) 
+    if bot.roam ~= nil then
+        return bot.roam:Desire(bot)
+    else
+        specialFileName = GetScriptDirectory().."/modes/roam_"..utils.GetHeroName(bot)
+        if pcall(tryHeroSpecialMode) then
+            specialFileName = nil
+            bot.roam = specialFile
+            return bot.roam:Desire(bot)
+        else
+            specialFileName = nil
+            bot.roam = dofile( GetScriptDirectory().."/modes/roam" )
+            return bot.roam:Desire(bot)
         end
     end
     return BOT_MODE_DESIRE_NONE

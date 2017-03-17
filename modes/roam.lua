@@ -7,6 +7,8 @@ BotsInit = require( "game/botsinit" )
 local X = BotsInit.CreateGeneric()
 
 ----------
+require( GetScriptDirectory().."/item_usage" )
+
 local utils = require( GetScriptDirectory().."/utility" )
 local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
 
@@ -25,9 +27,9 @@ local HeroCountFactor = 0.3
 local MinRating = 1.0
 
 function FindTarget(bot)
-    if not getHeroVar("Self"):IsReadyToGank(bot) then
-        return false
-    end
+    --if not bot.SelfRef:IsReadyToGank(bot) then
+    --    return false
+    --end
 
     local enemies = GetUnitList(UNIT_LIST_ENEMY_HEROES) -- check all enemies
     local allies = GetUnitList(UNIT_LIST_ALLIED_HEROES)
@@ -101,16 +103,50 @@ function X:Think(bot)
     
     if utils.ValidTarget(target) and target:IsAlive() then
         local dist = GetUnitToUnitDistance(bot, target)
-        if dist < 500 then
+        
+        if utils.IsItemAvailable("item_blink") then
+            if dist < 1200 then
+                item_usage.UseBlink(target:GetLocation())
+                setHeroVar("Target", target)
+                setHeroVar("RoamTarget", nil)
+                return
+            end
+        end
+        
+        if dist < 300 then
             gHeroVar.HeroAttackUnit(bot, target, true)
             setHeroVar("Target", target)
             setHeroVar("RoamTarget", nil)
             return
         end
+        
         gHeroVar.HeroMoveToLocation(bot, target:GetLocation())
     else
         setHeroVar("RoamTarget", nil)
     end
+end
+
+function X:Desire(bot)
+    if getHeroVar("Role") == ROLE_ROAMER or bot.SelfRef:IsReadyToGank(bot) then
+        
+        local roamTarget = getHeroVar("RoamTarget")
+        if utils.ValidTarget(roamTarget) then
+            local dist = GetUnitToUnitDistance(bot, roamTarget)
+        
+            local timeToIntercept = dist/bot:GetCurrentMovementSpeed()
+            local timeUntilEscaped = utils.TimeForEnemyToGetIntoTheirBase(roamTarget)
+                
+            if timeUntilEscaped <= timeToIntercept then
+                return BOT_MODE_DESIRE_HIGH
+            end
+        end
+        
+        if FindTarget(bot) then
+            return BOT_MODE_DESIRE_HIGH
+        end
+    end
+    
+    return BOT_MODE_DESIRE_NONE
 end
 
 return X

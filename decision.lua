@@ -243,6 +243,11 @@ end
 -------------------------------------------------------------------------------
 -- VIRTUAL FUNCTIONS - OVER-LOAD THESE IN HERO-SPECIFIC FILES (IF APPROPRIATE)
 -------------------------------------------------------------------------------
+
+function X:IsReadyToGank(bot)
+    return false
+end
+
 function X:DoHeroSpecificInit(bot)
     utils.myPrint("non-overloaded function 'DoHeroSpecificInit' called")
     return

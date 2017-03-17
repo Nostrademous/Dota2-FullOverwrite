@@ -25,16 +25,16 @@ end
 function UseRegenItems()
     local bot = GetBot()
 
-    if bot:IsChanneling() or bot:IsCastingAbility() then
+    if utils.IsBusy(bot) then
         return false
     end
-    
+
     -- if we are full health and full mana, exit early
     if bot:GetHealth() == bot:GetMaxHealth() and bot:GetMana() == bot:GetMaxMana() then return false end
-    
+
     -- if we are under effect of a shrine, exit early
     if bot:HasModifier("modifier_filler_heal") then return false end
-    
+
     local Enemies = gHeroVar.GetNearbyEnemies(bot, 850)
 
     local bottle = utils.HaveItem(bot, "item_bottle")
@@ -57,16 +57,28 @@ function UseRegenItems()
 
     if not bot:HasModifier("modifier_fountain_aura_buff") then
 
+        local wand = utils.HaveItem(bot, "item_magic_wand")
+        if not wand then wand = utils.HaveItem(bot, "item_magic_stick") end
+        
+        if wand ~= nil and wand:IsFullyCastable() then
+            if wand:GetCurrentCharges() > 0 then
+                local restoreAmount = 15*wand:GetCurrentCharges()
+                if bot.SelfRef:getCurrentMode():GetName() == "retreat" then
+                    gHeroVar.HeroUseAbility(bot, wand)
+                end
+            end
+        end
+    
         local mekansm = utils.HaveItem(bot, "item_mekansm")
         local Allies = gHeroVar.GetNearbyAllies(bot, 900)
         if mekansm ~= nil and mekansm:IsFullyCastable() then
-            if (bot:GetHealth()/bot:GetMaxHealth()) < 0.15 then
+            if (bot:GetHealth()/bot:GetMaxHealth()) < 0.5 then
                 gHeroVar.HeroUseAbility(bot, mekansm)
                 return true
             end
             if #Allies > 1 then
                 for _, ally in pairs(Allies) do
-                    if (ally:GetHealth()/ally:GetMaxHealth()) < 0.15 then
+                    if (ally:GetHealth()/ally:GetMaxHealth()) < 0.5 then
                         gHeroVar.HeroUseAbility(bot, mekansm)
                         return true
                     end
@@ -93,10 +105,10 @@ function UseRegenItems()
                 end
             end
         end
-		
-		local urn = utils.HaveItem(bot, "item_urn_of_shadows")
+
+        local urn = utils.HaveItem(bot, "item_urn_of_shadows")
         if urn ~= nil and urn:GetCurrentCharges() > 0 then
-		    if #Enemies == 0 then
+            if #Enemies == 0 then
                 if (bot:GetMaxHealth()-bot:GetHealth()) > 400 and not bot:HasModifier("modifier_item_urn_heal") and not modifiers.HasActiveDOTDebuff(bot)  then
                     bot:Action_UseAbilityOnEntity(urn, bot)
                     return true
@@ -141,37 +153,37 @@ end
 function UseRegenItemsOnAlly()
     local bot = GetBot()
 
-    if bot:IsChanneling() or bot:IsCastingAbility() then
+    if utils.IsBusy(bot) then
         return false
     end
-    
+
     -- if we are under effect of a shrine, exit early
     if bot:HasModifier("modifier_filler_heal") then return false end
-    
+
     local Enemies = gHeroVar.GetNearbyEnemies(bot, 850)
-	local Allies = gHeroVar.GetNearbyAllies(bot, 850)
-	
-	local lowestHealthAlly = nil
-	local lowestManaAlly = nil
-	local bottleTargetAlly = nil
+    local Allies = gHeroVar.GetNearbyAllies(bot, 850)
+
+    local lowestHealthAlly = nil
+    local lowestManaAlly = nil
+    local bottleTargetAlly = nil
     for _,ally in pairs(Allies) do
         if lowestHealthAlly == nil then lowestHealthAlly = ally end
         if lowestManaAlly == nil then lowestManaAlly = ally end
         if bottleTargetAlly == nil then bottleTargetAlly = ally end
-		
+
         local allyHealthPct = ally:GetHealth()/ally:GetMaxHealth()
         local allyManaPct = ally:GetMana()/ally:GetMaxMana()
-		
+
         local targetHealthPct = lowestHealthAlly:GetHealth()/lowestHealthAlly:GetMaxHealth()
         local targetManaPct = lowestManaAlly:GetMana()/lowestManaAlly:GetMaxMana()
-		
+
         if allyHealthPct < targetHealthPct then lowestHealthAlly = ally end -- get lowest health ally
         if allyManaPct < targetManaPct then lowestManaAlly = ally end -- get lowest mana ally
         if allyManaPct < targetManaPct and allyHealthPct < targetHealthPct then bottleTargetAlly = ally end -- get lowest mana and lowest health ally
     end
 
     local bottle = utils.HaveItem(bot, "item_bottle")
-    if bottle ~= nil and bottle:GetCurrentCharges() > 0 and not bottleTargetAlly:HasModifier("modifier_bottle_regeneration") 
+    if bottle ~= nil and bottle:GetCurrentCharges() > 0 and not bottleTargetAlly:HasModifier("modifier_bottle_regeneration")
         and not bottleTargetAlly:HasModifier("modifier_clarity_potion") and not bottleTargetAlly:HasModifier("modifier_flask_healing")
         and (not utils.HaveItem(bottleTargetAlly, "item_bottle"))   then
 
@@ -212,8 +224,8 @@ function UseRegenItemsOnAlly()
                 end
             end
         end
-		
-		local tango = utils.HaveItem(bot, "item_tango");
+
+        local tango = utils.HaveItem(bot, "item_tango");
         if tango ~= nil and tango:IsFullyCastable() and (not getHeroVar("IsRetreating")) and (not (utils.HaveItem(lowestHealthAlly, "item_tango") or utils.HaveItem(lowestHealthAlly, "item_tango_single")) )then
             if (lowestHealthAlly:GetMaxHealth()-lowestHealthAlly:GetHealth()) > 200 and not lowestHealthAlly:HasModifier("modifier_tango_heal") then
                 local tree = utils.GetNearestTree(bot)
@@ -223,10 +235,10 @@ function UseRegenItemsOnAlly()
                 end
             end
         end
-		
+
         local urn = utils.HaveItem(bot, "item_urn_of_shadows")
         if urn ~= nil and urn:GetCurrentCharges() > 0 then
-		    if (Enemies == nil or #Enemies == 0) then
+            if (Enemies == nil or #Enemies == 0) then
                 if (lowestHealthAlly:GetMaxHealth()-lowestHealthAlly:GetHealth()) > 400 and not lowestHealthAlly:HasModifier("modifier_item_urn_heal") and not modifiers.HasActiveDOTDebuff(lowestHealthAlly)  then
                     bot:Action_UseAbilityOnEntity(urn, lowestHealthAlly)
                     return true
@@ -241,7 +253,7 @@ end
 function UseTeamItems()
     local bot = GetBot()
 
-    if bot:IsChanneling() or bot:IsCastingAbility() then
+    if utils.IsBusy(bot) then
         return false
     end
 
@@ -271,14 +283,14 @@ function UseTeamItems()
             end
         end
     end
-    
+
     return false
 end
 
 function UseMovementItems(location)
     local bot = GetBot()
 
-    if bot:IsChanneling() then
+    if utils.IsBusy(bot) then
         return false
     end
 
@@ -307,9 +319,8 @@ end
 
 function UseDefensiveItems(enemy, triggerDistance)
     local bot = GetBot()
-    local location = location or bot:GetLocation()
 
-    if bot:IsChanneling() or bot:IsCastingAbility() then return false end
+    if utils.IsBusy(bot) then return false end
 
     local hp = utils.HaveItem(bot, "item_hurricane_pike")
     if hp ~= nil and GetUnitToUnitDistance(bot, enemy) < triggerDistance then
@@ -321,12 +332,12 @@ end
 function UseBuffItems()
     local bot = GetBot()
 
-    if bot:IsChanneling() or bot:IsCastingAbility() then return false end
-    
+    if utils.IsBusy(bot) then return false end
+
     if UseTomeOfKnowledge() then return true end
-    
+
     if UseMidas() then return true end
-    
+
     return false
 end
 
@@ -335,19 +346,19 @@ function UseTP(hero, loc, lane)
     local lane = lane or getHeroVar("CurLane")
     local tpSwap = false
     local backPackSlot = 0
-    
+
     if DotaTime() < 10 then return false end
 
-    if hero:IsChanneling() or hero:IsCastingAbility() then return false end
-    
+    if utils.IsBusy(hero) then return false end
+
     -- if we are in fountain, don't TP out until we have full health & mana
-    if hero:DistanceFromFountain() < 200 and 
+    if hero:DistanceFromFountain() < 200 and
         not (hero:GetHealth() == hero:GetMaxHealth() and hero:GetMana() == hero:GetMaxMana()) then
         return false
     end
 
     local tp = utils.HaveItem(hero, "item_tpscroll")
-    if tp ~= nil and (utils.HaveItem(hero, "item_travel_boots_1") or utils.HaveItem(hero, "item_travel_boots_2")) 
+    if tp ~= nil and (utils.HaveItem(hero, "item_travel_boots_1") or utils.HaveItem(hero, "item_travel_boots_2"))
         and (hero:DistanceFromFountain() < 200 or hero:DistanceFromSideShop() < 200 or hero:DistanceFromSecretShop() < 200) then
         hero:SellItem(tp)
         tp = nil
@@ -364,19 +375,19 @@ function UseTP(hero, loc, lane)
     if dest == nil then
         dest = GetLocationAlongLane(lane, GetLaneFrontAmount(GetTeam(), lane, false))
     end
-    
+
     if tp == nil and GetUnitToLocationDistance(hero, dest) > 3000
         and hero:DistanceFromFountain() < 200
         and hero:GetGold() > 50 then
-        
+
         -- if our inventory and backpack is full, don't bother buying TPs
         if utils.NumberOfItemsInBackpack(hero) == 3 and utils.NumberOfItems(hero) == 6 then
             return false
         end
-        
+
         local savedValue = hero:GetNextItemPurchaseValue()
         backPackSlot = utils.GetFreeSlotInBackPack(hero)
-        if utils.NumberOfItems(hero) == 6 and backPackSlot > 0 then 
+        if utils.NumberOfItems(hero) == 6 and backPackSlot > 0 then
             hero:ActionImmediate_SwapItems(0, backPackSlot)
             tpSwap = true
         end
@@ -390,13 +401,13 @@ function UseTP(hero, loc, lane)
         -- just default to closest location we can TP to in that direction
         if GetUnitToLocationDistance(hero, dest) > 3000 and hero:DistanceFromFountain() < 200 then
             hero:Action_UseAbilityOnLocation(tp, dest)
-            if tpSwap then 
+            if tpSwap then
                 hero:ActionImmediate_SwapItems(0, backPackSlot)
             end
             return true
         end
     end
-    
+
     return false
 end
 
@@ -405,18 +416,18 @@ function UseItems()
 
     local bot = GetBot()
 
-    if bot:IsChanneling() or bot:IsCastingAbility() then return false end
+    if utils.IsBusy(bot) then return false end
 
     if UseBuffItems() then return true end
-    
+
     if UseRegenItems() then return true end
 
     if UseRegenItemsOnAlly() then return true end
-    
+
     if UseTeamItems() then return true end
-    
+
     if UseTP(bot) then return true end
-    
+
     local courier = utils.IsItemAvailable("item_courier")
     if courier ~= nil then
         gHeroVar.HeroUseAbility(bot, courier)
@@ -490,10 +501,20 @@ function UseGlimmerCape(target)
     if target ~= nil and target:IsAlive() then
         gcTarget = target
     end
-    
+
     local gc = utils.IsItemAvailable("item_glimmer_cape")
     if gc ~= nil and gcTarget ~= nil then
         bot:Action_UseAbilityOnEntity(gc, gcTarget)
+        return true
+    end
+    return false
+end
+
+function UseBlink(location)
+    local bot = GetBot()
+    local blink = utils.IsItemAvailable("item_blink")
+    if blink then
+        bot:Action_UseAbilityOnLocation(blink, location)
         return true
     end
     return false

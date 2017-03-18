@@ -38,7 +38,10 @@ generic.ItemsToBuyAsHardCarry = {
 			"item_hurricane_pike",
 			"item_black_king_bar"
 		}
-	}
+	},
+    SellItems = {
+        "item_ring_of_aquila"
+    }
 }
 
 generic.ItemsToBuyAsMid = {
@@ -67,7 +70,10 @@ generic.ItemsToBuyAsMid = {
 			"item_black_king_bar",
 		    "item_ultimate_scepter"
 		}
-	}
+	},
+    SellItems = {
+        "item_ring_of_aquila"
+    }
 }
 
 function thisBot:Init()

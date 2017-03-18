@@ -38,7 +38,11 @@ generic.ItemsToBuyAsJungler = {
             "item_skadi",
 			"item_heart"
 		}
-	}
+	},
+    SellItems = {
+        "item_stout_shield",
+        "item_iron_talon"
+    }
 }
 
 function thisBot:Init()

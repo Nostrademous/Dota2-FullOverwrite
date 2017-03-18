@@ -38,7 +38,12 @@ generic.ItemsToBuyAsSupport = {
 		DefensiveItems = {
             "item_lotus_orb"
 		}
-	}
+	},
+    SellItems = {
+        "item_branches",
+        "item_branches",
+        "item_wind_lace"
+    }
 }
 
 function thisBot:Init()

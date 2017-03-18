@@ -29,7 +29,9 @@ generic.ItemsToBuyAsJungler = {
 		DefensiveItems = {
 			"item_black_king_bar"
 		}
-	}
+	},
+    SellItems = {
+    }
 }
 
 ----------------------------------------------------------------------------------------------------

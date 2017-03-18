@@ -57,7 +57,10 @@ generic.ItemsToBuyAsHardCarry = {
 		},
 		DefensiveItems = {
 		}
-	}
+	},
+    SellItems = {
+        "item_infused_raindrop"
+    }
 }
 
 generic.ItemsToBuyAsMid = {
@@ -109,7 +112,10 @@ generic.ItemsToBuyAsMid = {
 		},
 		DefensiveItems = {
 		}
-	}
+	},
+    SellItems = {
+        "item_infused_raindrop"
+    }
 }
 
 generic.ItemsToBuyAsOfflane = {
@@ -161,7 +167,10 @@ generic.ItemsToBuyAsOfflane = {
 		},
 		DefensiveItems = {
 		}
-	}
+	},
+    SellItems = {
+        "item_infused_raindrop"
+    }
 }
 
 ----------------------------------------------------------------------------------------------------

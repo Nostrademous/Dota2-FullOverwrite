@@ -38,7 +38,10 @@ generic.ItemsToBuyAsSupport = {
             "item_ghost",
             "item_lotus_orb"
 		}
-	}
+	},
+    SellItems = {
+        "item_infused_raindrop"
+    }
 }
 
 ----------------------------------------------------------------------------------------------------

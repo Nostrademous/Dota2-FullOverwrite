@@ -153,6 +153,15 @@ function X:Think(bot)
 end
 
 function X:Desire(bot)
+    if bot:HasModifier("modifier_filler_heal") and 
+        (bot:GetHealth() ~= bot:GetMaxHealth() or bot:GetMana() ~= bot:GetMaxMana()) then
+        -- TODO: we shouldn't return here really, we can do all kinds of things,
+        -- just need to stay in range of heal radius while we are not full health/mana
+        --bot.DontMove = true
+        
+        return BOT_MODE_DESIRE_VERYHIGH
+    end
+    
     if bot.useShrine and bot.useShrine >= 0 then
         if not utils.NotNilOrDead(global_game_state.GetShrineState(bot.useShrine).handle) then
             return BOT_MODE_DESIRE_NONE
@@ -176,13 +185,6 @@ function X:Desire(bot)
             bot.shrineUseMode = constants.SHRINE_WAITING
             return BOT_MODE_DESIRE_VERYHIGH
         end
-    end
-    
-    if bot:HasModifier("modifier_filler_heal") and 
-        (bot:GetHealth() ~= bot:GetMaxHealth() or bot:GetMana() ~= bot:GetMaxMana()) then
-        -- TODO: we shouldn't return here really, we can do all kinds of things,
-        -- just need to stay in range of heal radius while we are not full health/mana
-        return BOT_MODE_DESIRE_VERYHIGH
     end
     
     return BOT_MODE_DESIRE_NONE

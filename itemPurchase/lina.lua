@@ -30,7 +30,12 @@ generic.ItemsToBuyAsHardCarry = {
 		},
 		DefensiveItems = {
 		}
-	}
+	},
+    SellItems = {
+        "item_branches",
+        "item_null_talisman",
+        "item_bottle"
+    }
 }
 generic.ItemsToBuyAsMid = {
 	StartingItems = {
@@ -54,7 +59,12 @@ generic.ItemsToBuyAsMid = {
 		},
 		DefensiveItems = {
 		}
-	}
+	},
+    SellItems = {
+        "item_branches",
+        "item_null_talisman",
+        "item_bottle"
+    }
 }
 
 generic.ItemsToBuyAsSupport = {
@@ -82,7 +92,12 @@ generic.ItemsToBuyAsSupport = {
 		},
 		DefensiveItems = {
 		}
-	}
+	},
+    SellItems = {
+        "item_branches",
+        "item_null_talisman",
+        "item_bottle"
+    }
 }
 
 ----------------------------------------------------------------------------------------------------

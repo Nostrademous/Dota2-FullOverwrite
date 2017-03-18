@@ -504,7 +504,7 @@ function UseGlimmerCape(target)
 
     local gc = utils.IsItemAvailable("item_glimmer_cape")
     if gc ~= nil and gcTarget ~= nil then
-        bot:Action_UseAbilityOnEntity(gc, gcTarget)
+        GetBot():Action_UseAbilityOnEntity(gc, gcTarget)
         return true
     end
     return false

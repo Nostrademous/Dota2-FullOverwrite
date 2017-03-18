@@ -39,7 +39,10 @@ generic.ItemsToBuyAsHardCarry = {
 			"item_ultimate_scepter",
 			"item_heart"
 		}
-	}
+	},
+    SellItems = {
+        "item_infused_raindrop"
+    }
 }
 
 function thisBot:Init()

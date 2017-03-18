@@ -31,7 +31,11 @@ generic.ItemsToBuyAsHardCarry = {
 		{
 			"item_heart"
 		}
-	}
+	},
+    SellItems = {
+        "item_stout_shield",
+        "item_ring_of_aquila"
+    }
 }
 generic.ItemsToBuyAsMid = {
 	StartingItems = {
@@ -56,7 +60,11 @@ generic.ItemsToBuyAsMid = {
 		{
 			"item_heart"
 		}
-	}
+	},
+    SellItems = {
+        "item_stout_shield",
+        "item_ring_of_aquila"
+    }
 }
 generic.ItemsToBuyAsOfflane = {
 	StartingItems = {
@@ -85,7 +93,11 @@ generic.ItemsToBuyAsOfflane = {
 			"item_heart",
 			"item_manta"
 		}
-	}
+	},
+    SellItems = {
+        "item_stout_shield",
+        "item_ring_of_aquila"
+    }
 }
 
 function thisBot:Init()

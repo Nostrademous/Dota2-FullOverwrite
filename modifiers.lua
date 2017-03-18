@@ -59,6 +59,10 @@ function HasActiveDOTDebuff(bot)
     return false
 end
 
+function IsInvisible(bot)
+    return bot:HasModifier("modifier_invisible")
+end
+
 function IsRuptured(bot)
     return bot:HasModifier("modifier_bloodseeker_rupture")
 end

@@ -32,6 +32,9 @@ generic.ItemsToBuyAsHardCarry = {
         DefensiveItems = {
             "item_black_king_bar"
         }
+    },
+    SellItems = {
+        "item_ring_of_aquila"
     }
 }
 generic.ItemsToBuyAsMid = {
@@ -58,6 +61,9 @@ generic.ItemsToBuyAsMid = {
         DefensiveItems = {
             "item_black_king_bar"
         }
+    },
+    SellItems = {
+        "item_ring_of_aquila"
     }
 }
 

@@ -39,6 +39,11 @@ generic.ItemsToBuyAsJungler = {
             "item_black_king_bar",
             "item_aghs_scepter"
         }
+    },
+    SellItems = {
+        "item_branches",
+        "item_branches",
+        "item_iron_talon"
     }
 }
 

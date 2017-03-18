@@ -51,6 +51,7 @@ X.ExtensionItems = {
     OffensiveItems = {},
     DefensiveItems = {}
 }
+X.SellItems = {}
 
 X.LastThink = -1000.0
 X.LastSupportThink = -1000.0
@@ -90,6 +91,14 @@ end
 
 function X:SetExtensionItems(items)
     self.ExtensionItems = items
+end
+
+function X:GetSellItems()
+    return self.SellItems
+end
+
+function X:SetSellItems(items)
+    self.SellItems = items
 end
 
 -------------------------------------------------------------------------------
@@ -190,18 +199,21 @@ function X:InitTable()
         self:SetUtilityItems(self.ItemsToBuyAsMid.UtilityItems)
         self:SetCoreItems(self.ItemsToBuyAsMid.CoreItems)
         self:SetExtensionItems(self.ItemsToBuyAsMid.ExtensionItems)
+        self:SetSellItems(self.ItemsToBuyAsMid.SellItems)
         return true
     elseif (getHeroVar("Role") == role.ROLE_HARDCARRY ) then
         self:SetStartingItems(self.ItemsToBuyAsHardCarry.StartingItems)
         self:SetUtilityItems(self.ItemsToBuyAsHardCarry.UtilityItems)
         self:SetCoreItems(self.ItemsToBuyAsHardCarry.CoreItems)
         self:SetExtensionItems(self.ItemsToBuyAsHardCarry.ExtensionItems)
+        self:SetSellItems(self.ItemsToBuyAsHardCarry.SellItems)
         return true
     elseif (getHeroVar("Role") == role.ROLE_OFFLANE ) then
         self:SetStartingItems(self.ItemsToBuyAsOfflane.StartingItems)
         self:SetUtilityItems(self.ItemsToBuyAsOfflane.UtilityItems)
         self:SetCoreItems(self.ItemsToBuyAsOfflane.CoreItems)
         self:SetExtensionItems(self.ItemsToBuyAsOfflane.ExtensionItems)
+        self:SetSellItems(self.ItemsToBuyAsOfflane.SellItems)
         return true
     elseif (getHeroVar("Role") == role.ROLE_HARDSUPPORT
         or getHeroVar("Role") == role.ROLE_SEMISUPPORT ) then
@@ -209,18 +221,21 @@ function X:InitTable()
         self:SetUtilityItems(self.ItemsToBuyAsSupport.UtilityItems)
         self:SetCoreItems(self.ItemsToBuyAsSupport.CoreItems)
         self:SetExtensionItems(self.ItemsToBuyAsSupport.ExtensionItems)
+        self:SetSellItems(self.ItemsToBuyAsSupport.SellItems)
         return true
     elseif (getHeroVar("Role") == role.ROLE_JUNGLER ) then
         self:SetStartingItems(self.ItemsToBuyAsJungler.StartingItems)
         self:SetUtilityItems(self.ItemsToBuyAsJungler.UtilityItems)
         self:SetCoreItems(self.ItemsToBuyAsJungler.CoreItems)
         self:SetExtensionItems(self.ItemsToBuyAsJungler.ExtensionItems)
+        self:SetSellItems(self.ItemsToBuyAsJungler.SellItems)
         return true
     elseif (getHeroVar("Role") == role.ROLE_ROAMER ) then
         self:SetStartingItems(self.ItemsToBuyAsRoamer.StartingItems)
         self:SetUtilityItems(self.ItemsToBuyAsRoamer.UtilityItems)
         self:SetCoreItems(self.ItemsToBuyAsRoamer.CoreItems)
         self:SetExtensionItems(self.ItemsToBuyAsRoamer.ExtensionItems)
+        self:SetSellItems(self.ItemsToBuyAsRoamer.SellItems)
         return true
     end
 end
@@ -405,90 +420,38 @@ function X:UpdatePurchaseOrder()
 end
 
 function X:ConsiderSellingItems(bot)
-    local ItemsToConsiderSelling = {}
-    local DontSell = {}
+    local ItemsToConsiderSelling = self:GetSellItems()
 
     if utils.NumberOfItems(bot) == 6 and utils.NumberOfItemsInBackpack(bot) == 3 then
-        local inventory = {}
-        -- Store name of the items in a table
-        for i = 0,8,1 do
-            local item = bot:GetItemInSlot(i)
-            table.insert(inventory, item:GetName())
-        end
-
-        -- put all items we still want to buy (combined) and all items we bought already (combined) in a table
-        local toBuyCombined = {}
+        local soldNum = 0
+        local alwaysSellIfNoRoom = {"item_tango_single", "item_tango", "item_clarity", "item_salve", "item_faerie_fire", "item_enchanted_mango"}
+        ItemsToConsiderSelling = {unpack(alwaysSellIfNoRoom), unpack(ItemsToConsiderSelling)}
         
-        for _,k in pairs(self.StartingItems) do
-            local toBuySingle = {}
-            items:GetItemsTable(toBuySingle, items[k])
-            if #toBuySingle > 1 or items:GetItemValueNumber(items[k]) >= 2000 then
-                items:GetItemsTable(toBuyCombined, items[k])
-            end
-        end
-        for _,k in pairs(self.CoreItems) do
-            local toBuySingle = {}
-            items:GetItemsTable(toBuySingle, items[k])
-            if #toBuySingle > 1 or items:GetItemValueNumber(items[k]) >= 2000 then
-                items:GetItemsTable(toBuyCombined, items[k])
-            end
-        end
-        
-        for _,k in pairs(self.ExtensionItems.OffensiveItems) do
-            local toBuySingle = {}
-            items:GetItemsTable(toBuySingle, items[k])
-            if #toBuySingle > 1 or items:GetItemValueNumber(items[k]) >= 2000 then
-                items:GetItemsTable(toBuyCombined, items[k])
-            end
-        end
-        for _,k in pairs(self.ExtensionItems.DefensiveItems) do
-            local toBuySingle = {}
-            items:GetItemsTable(toBuySingle, items[k])
-            if #toBuySingle > 1 or items:GetItemValueNumber(items[k]) >= 2000 then
-                items:GetItemsTable(toBuyCombined, items[k])
-            end
-        end
-        
-        for _,k in pairs(self.BoughtItems) do
-            local toBuySingle = {}
-            items:GetItemsTable(toBuySingle, items[k])
-            if #toBuySingle > 1 or items:GetItemValueNumber(items[k]) >= 2000 then
-                items:GetItemsTable(toBuyCombined, items[k])
-            end
-        end
-
-        for _,k in pairs(inventory) do
-            local toRemove = -1
-            -- check through items to buy
-            for _,p in pairs(toBuyCombined) do
-                if k == p then
-                    -- if inventory item is in there save pos
-                    toRemove = utils.PosInTable(toBuyCombined, p)
+        while soldNum == 0 do
+            if #ItemsToConsiderSelling > 0 then
+                local ItemToSell = ItemsToConsiderSelling[1]
+                
+                -- Sell the item
+                if ItemToSell ~= nil then
+                    local pos = bot:FindItemSlot(ItemToSell)
+                    if pos ~= ITEM_SLOT_TYPE_INVALID then
+                        if ItemToSell ~= "item_tango_single" then
+                            bot:ActionImmediate_SellItem(bot:GetItemInSlot(pos))
+                            table.remove(ItemsToConsiderSelling, 1)
+                            soldNum = soldNum + 1
+                        else
+                            bot:ActionPush_DropItem(GetItemInSlot(pos), bot:GetLocation())
+                            table.remove(ItemsToConsiderSelling, 1)
+                            soldNum = soldNum + 1
+                        end
+                    else
+                        table.remove(ItemsToConsiderSelling, 1)
+                    end
                 end
-            end
-            -- pos saved -> remove that item
-            if toRemove > 0 then
-                table.remove(toBuyCombined, toRemove)
             else
-                -- otherwise we can potentially sell it
-                table.insert(ItemsToConsiderSelling, k)
+                utils.pause("can't empty anything in inventory")
+                break
             end
-        end
-
-        local ItemToSell = nil
-        local iItemValue = 1000000
-        -- Now check which item is least valuable to us
-        for _,p in pairs(ItemsToConsiderSelling) do
-            local iVal = items:GetItemValueNumber(p)
-            -- If the value of this item is lower change handle
-            if iVal < iItemValue and iVal > 0 then
-                ItemToSell = p
-            end
-        end
-        -- Sell if we found an item to sell
-        if ItemToSell ~= nil then
-            local pos = bot:FindItemSlot(ItemToSell)
-            bot:ActionImmediate_SellItem(bot:GetItemInSlot(pos))
         end
     end
 end

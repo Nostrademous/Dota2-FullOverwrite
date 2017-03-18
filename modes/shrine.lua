@@ -90,7 +90,7 @@ function X:Think(bot)
                 elseif utils.CheckFlag(behavior, ABILITY_BEHAVIOR_UNIT_TARGET) then
                     local targetType = mvAbility[1]:GetTargetType()
                     
-                    if utils.CheckFlag(targetType, ABILITY_TARGET_TYPE_CREEP) then
+                    if utils.CheckFlag(targetType, ABILITY_TARGET_TYPE_CREEP) or utils.CheckFlag(targetType, 0x80) then
                         local viableTargets = utils.GetCreepsBetweenMeAndLoc(newLoc, 200)
                         if #viableTargets > 0 then
                             if #viableTargets > 1 then
@@ -101,7 +101,7 @@ function X:Think(bot)
                         end
                     end
                     
-                    if utils.CheckFlag(targetType, ABILITY_TARGET_TYPE_HERO) then
+                    if utils.CheckFlag(targetType, ABILITY_TARGET_TYPE_HERO) or utils.CheckFlag(targetType, 0x80) then
                         local viableTargets = utils.GetFriendlyHeroesBetweenMeAndLoc(newLoc, 200)
                         if #viableTargets > 0 then
                             if #viableTargets > 1 then

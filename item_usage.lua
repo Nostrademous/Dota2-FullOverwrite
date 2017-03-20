@@ -702,7 +702,7 @@ end
 
 function UseForceStaff(target, location)
     local bot = GetBot()
-    local fs = utils.IsItemAvailable(bot, "item_force_staff")
+    local fs = utils.IsItemAvailable("item_force_staff")
     if fs and utils.IsFacingLocation(bot, location, 25) then
         bot:Action_UseAbilityOnEntity(fs, target)
         return true
@@ -782,7 +782,7 @@ end
 
 function UseHurricanePike(target, location)
     local bot = GetBot()
-    local hp = utils.IsItemAvailable(bot, "item_hurricane_pike")
+    local hp = utils.IsItemAvailable("item_hurricane_pike")
     if hp and utils.IsFacingLocation(bot, location, 25) then
         bot:Action_UseAbilityOnEntity(hp, target)
         return true

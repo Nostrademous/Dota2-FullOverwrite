@@ -1242,7 +1242,17 @@ end
 -- FIXME - make it handle heroes that went invisible if we have detection
 function U.GetWeakestHero(bot, r, unitList)
     local EnemyHeroes = unitList
-    if EnemyHeroes == nil or #EnemyHeroes == 0 then EnemyHeroes = gHeroVar.GetNearbyEnemies(bot, r) end
+    if EnemyHeroes == nil or #EnemyHeroes == 0 then
+        EnemyHeroes = gHeroVar.GetNearbyEnemies(bot, r)
+    else
+        local filteredList = {}
+        for _, hero in pairs(EnemyHeroes) do
+            if GetUnitToUnitDistance(bot, hero) <= r then
+                table.insert(filteredList, hero)
+            end
+        end
+        EnemyHeroes = filteredList
+    end
 
     if EnemyHeroes == nil or #EnemyHeroes == 0 then
         return nil, 10000

@@ -34,11 +34,17 @@ function FindTarget(bot)
     local enemies = GetUnitList(UNIT_LIST_ENEMY_HEROES) -- check all enemies
     local allies = GetUnitList(UNIT_LIST_ALLIED_HEROES)
     local ratings = {}
+    
+    local botMS = bot:GetCurrentMovementSpeed()
+    if utils.GetHeroName(bot) == "spirit_breaker" then
+        botMS = bot:GetAbilityByName("spirit_breaker_charge_of_darkness"):GetSpecialValueInt("movement_speed")
+    end
+    
     for i, e in pairs(enemies) do
         local r = 0
         r = r + HealthFactor * (1 - e:GetHealth()/e:GetMaxHealth())
         -- time to get there in 10s units
-        r = r - DistanceFactor * GetUnitToUnitDistance(bot, e) / bot:GetCurrentMovementSpeed() / 10
+        r = r - DistanceFactor * GetUnitToUnitDistance(bot, e) / botMS / 10
         r = r + UnitPosFactor * (1 - global_game_state.GetPositionBetweenBuildings(e, GetTeam()))
         local hero_count = 0
         for _, enemy in pairs(enemies) do

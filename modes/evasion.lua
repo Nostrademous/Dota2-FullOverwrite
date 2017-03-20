@@ -78,10 +78,12 @@ function X:Desire(bot)
     end
     
     -- NOTE: the tracking projectile will be a table with { "location", "ability", "is_dodgeable", "is_attack" }.
-    --local listTrackingProjectiles = bot:GetIncomingTrackingProjectiles()
-    --for _, projectile in pairs(listTrackingProjectiles) do
+    local listTrackingProjectiles = bot:GetIncomingTrackingProjectiles()
+    if #listTrackingProjectiles > 0 then
+        for _, projectile in pairs(listTrackingProjectiles) do
     --    utils.myPrint("Tracking Ability: ", projectile.ability:GetName(), ", Dodgeable: ", projectile.is_dodgeable)
-    --end
+        end
+    end
     
     -- NOTE: an aoe will be table with { "location", "ability", "caster", "radius", "playerid" }.    
     local aoes = gHeroVar.GetGlobalVar("AOEZones")

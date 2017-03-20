@@ -79,8 +79,12 @@ function Think()
     sbBot:Think(bot)
 end
 
-function ConsiderActionsWhileCharging(bot)
-    
+function sbBot:IsReadyToGank(bot)
+    local charge = bot:GetAbilityByName(SKILL_Q)
+    return charge:GetLevel() >= 2 and charge:IsFullyCastable()
+end
+
+function ConsiderActionsWhileCharging(bot) 
     -- we are retreating
     if bot.SelfRef:getCurrentMode():GetName() == "retreat" then
         -- TODO: write logic for breaking out of charge early if we were retreating

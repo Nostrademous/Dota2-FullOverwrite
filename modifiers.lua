@@ -59,6 +59,37 @@ function HasActiveDOTDebuff(bot)
     return false
 end
 
+local DispellableModifiers = {
+    "modifier_bounty_hunter_track",
+    "modifier_slardar_amplify_damage"
+}
+
+local EulEvadeModifiers = {
+    "modifier_sniper_assassinate",
+    "modifier_ice_blast" -- AA ult shatter
+}
+
+function HasEulModifier(bot)
+    local botModifierCount = bot:NumModifiers()
+    if botModifierCount == 0 then return false end
+    
+    for i = 0, botModifierCount-1, 1 do
+        local modName = bot:GetModifierName(i)
+        
+        if utils.InTable(EulEvadeModifiers, modName) then
+            if GetModifierRemainingDuration(i) < 2.0 then
+                return true
+            end
+        end
+        
+        if utils.InTable(DispellableModifiers, modName) then
+            return true
+        end
+    end
+    
+    return false
+end
+
 function IsInvisible(bot)
     return bot:HasModifier("modifier_invisible")
 end

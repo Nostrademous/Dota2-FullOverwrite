@@ -405,6 +405,8 @@ function UseItems()
     local bot = GetBot()
 
     if utils.IsBusy(bot) then return false end
+    
+    if UseEuls() then return true end
 
     if UseBuffItems() then return true end
 
@@ -632,13 +634,69 @@ function UseEtheralBlade(target)
     return false
 end
 
-function UseEuls(target)
+function UseEuls()
     local bot = GetBot()
     local euls = utils.IsItemAvailable("item_cyclone")
     if euls then
-        bot:Action_UseAbilityOnEntity(euls, target)
-        return true
+        local modeName = bot.SelfRef:getCurrentMode():GetName()
+        local CastRange = 575
+        
+        -- Check for a channeling enemy
+        local enemies = gHeroVar.GetNearbyEnemies(bot, CastRange + 300)
+        for _, npcEnemy in pairs( enemies ) do
+            if npcEnemy:IsChanneling() and not utils.IsTargetMagicImmune(npcEnemy) then
+                bot:Action_UseAbilityOnEntity(euls, npcEnemy)
+                return true
+            end
+        end
+        
+        -- protect myself by dispelling bad modifiers or making myself invulnerable when necessary
+        if modifiers.HasEulModifier(bot) then
+            bot:Action_UseAbilityOnEntity(euls, bot)
+            return true
+        end
+        
+        -- stop chasing enemy while on retreat
+        if modeName == "retreat" then
+           local tableNearbyEnemyHeroes = gHeroVar.GetNearbyEnemies( bot, CastRange )
+            for _, npcEnemy in pairs( tableNearbyEnemyHeroes ) do
+                if bot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) then
+                    if not utils.IsTargetMagicImmune(npcEnemy) and not utils.IsCrowdControlled(npcEnemy) then
+                        bot:Action_UseAbilityOnEntity(euls, npcEnemy)
+                        return true
+                    end
+                end
+            end
+        end
+        
+        -- If we're going after someone and they are outside our attack range
+        if modeName == "roam" or modeName == "defendally" or modeName == "fight" then
+            local npcEnemy = getHeroVar("RoamTarget")
+            if npcEnemy == nil then npcEnemy = getHeroVar("Target") end
+
+            if utils.ValidTarget(npcEnemy) then
+                if not utils.IsTargetMagicImmune(npcEnemy) and not utils.IsCrowdControlled(npcEnemy) then 
+                    local dist = GetUnitToUnitDistance(bot, npcEnemy)
+                    if dist > bot:GetAttackRange() and dist <= CastRange then
+                        bot:Action_UseAbilityOnEntity(euls, npcEnemy)
+                        return true
+                    end
+                end
+            end
+        end
+        
+        -- Disable strongest enemy in team-fight
+        local tableNearbyAttackingAlliedHeroes = utils.InTeamFight(bot, 1000)
+        if #tableNearbyAttackingAlliedHeroes >= 2 then
+            local npcMostDangerousEnemy = utils.GetScariestEnemy(bot, CastRange)
+
+            if utils.ValidTarget(npcMostDangerousEnemy)	then
+                bot:Action_UseAbilityOnEntity(euls, npcMostDangerousEnemy)
+                return true
+            end
+        end
     end
+    
     return false
 end
 

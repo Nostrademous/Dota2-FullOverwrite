@@ -1656,6 +1656,7 @@ function U.GetNearestTree(bot)
             end
         end
     end
+    return nil
 end
 
 -------------------------------------------------------------------------------

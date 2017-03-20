@@ -94,12 +94,18 @@ function ConsiderActionsWhileCharging(bot)
         end
     end
     
-    -- target TP'ed somewhere bad
     local target = getHeroVar("RoamTarget")
     if not target then target = getHeroVar("Target") end
-    if not utils.ValidTarget(target) or GetUnitToLocationDistance(target, utils.Fountain(utils.GetOtherTeam())) < 1250 then
+    
+    -- target TP'ed somewhere bad
+    if not utils.ValidTarget(target) then
         bot:Action_ClearActions(true)
         return
+    else
+        if GetUnitToLocationDistance(target, utils.Fountain(utils.GetOtherTeam())) < 1250 then
+            bot:Action_ClearActions(true)
+            return
+        end
     end
     
     local sb = utils.IsItemAvailable("item_invis_sword")

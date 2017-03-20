@@ -87,13 +87,24 @@ end
 function ConsiderActionsWhileCharging(bot) 
     -- we are retreating
     if bot.SelfRef:getCurrentMode():GetName() == "retreat" then
-        -- TODO: write logic for breaking out of charge early if we were retreating
+        local enemies = gHeroVar.GetNearbyEnemies(bot, 1600)
+        if #enemies == 0 then
+            bot:Action_ClearActions(true)
+            return
+        end
+    end
+    
+    -- target TP'ed somewhere bad
+    local target = getHeroVar("RoamTarget")
+    if not target then target = getHeroVar("Target") end
+    if not utils.ValidTarget(target) or GetUnitToLocationDistance(target, utils.Fountain(utils.GetOtherTeam())) < 1250 then
+        bot:Action_ClearActions(true)
+        return
     end
     
     local sb = utils.IsItemAvailable("item_invis_sword")
     if sb then
         local chargeSpeed = bot:GetAbilityByName(SKILL_Q):GetSpecialValueInt("movement_speed")
-        local target = getHeroVar("RoamTarget")
         if not utils.ValidTarget(target) then target = getHeroVar("Target") end
         if utils.ValidTarget(target) then
             local timeToArrival = GetUnitToUnitDistance(bot, target)/chargeSpeed
@@ -107,7 +118,6 @@ function ConsiderActionsWhileCharging(bot)
     local se = utils.IsItemAvailable("item_silver_edge")
     if se then
         local chargeSpeed = bot:GetAbilityByName(SKILL_Q):GetSpecialValueInt("movement_speed")
-        local target = getHeroVar("RoamTarget")
         if not utils.ValidTarget(target) then target = getHeroVar("Target") end
         if utils.ValidTarget(target) then
             if GetUnitToUnitDistance(bot, target)/chargeSpeed < 10.0 then

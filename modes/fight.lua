@@ -59,6 +59,8 @@ function X:Think(bot)
                         gHeroVar.HeroMoveToLocation(bot, utils.VectorTowards(bot:GetLocation(), target:GetLocation(), 0.75*attackRange-dist))
                     end
                 else
+                    if utils.UseOrbEffect(bot, target) then return end
+                    
                     gHeroVar.HeroAttackUnit(bot, target, true)
                 end
             else

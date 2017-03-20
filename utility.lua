@@ -1284,19 +1284,21 @@ function U.EnemyHasBreakableBuff(enemy)
     return false
 end
 
-function U.UseOrbEffect(bot, enemy)
-    local enemy = enemy or nil
+function U.UseOrbEffect(bot, enemy)    
     local orb = getHeroVar("HasOrbAbility")
     if orb ~= nil then
         local ability = bot:GetAbilityByName(orb)
         if ability ~= nil and ability:IsFullyCastable() then
-            if enemy == nil then
-                enemy, _ = U.GetWeakestHero(bot, ability:GetCastRange()+bot:GetBoundingRadius())
+            local target = nil
+            if U.ValidTarget(enemy) then target = enemy end
+    
+            if target == nil then
+                target, _ = U.GetWeakestHero(bot, ability:GetCastRange()+bot:GetBoundingRadius())
             end
 
-            if enemy ~= nil and GetUnitToUnitDistance(bot, enemy) < (ability:GetCastRange()+bot:GetBoundingRadius()) then
+            if target ~= nil and GetUnitToUnitDistance(bot, target) < (ability:GetCastRange()+bot:GetBoundingRadius()) then
                 U.TreadCycle(bot, constants.INTELLIGENCE)
-                bot:Action_UseAbilityOnEntity(ability, enemy)
+                bot:Action_UseAbilityOnEntity(ability, target)
                 return true
             end
         end
@@ -1643,12 +1645,15 @@ end
 
 function U.GetNearestTree(bot)
     local trees = bot:GetNearbyTrees(700)
+    local eTowers = gHeroVar.GetNearbyEnemyTowers(bot, 900)
 
     for _, tree in ipairs(trees) do
         local treeLoc = GetTreeLocation(tree)
         --U.myPrint("Tree Loc: <", treeLoc[1], ", ", treeLoc[2], ", ", treeLoc[3], ">")
-        if U.GetHeightDiff(bot, treeLoc[3]) == 0 then
-            return tree
+        if #eTowers == 0 or utils.GetDistance(treeLoc, eTowers[1]:GetLocation()) > 900 then
+            if U.GetHeightDiff(bot, treeLoc[3]) == 0 then
+                return tree
+            end
         end
     end
 end

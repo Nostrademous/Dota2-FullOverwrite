@@ -520,6 +520,178 @@ function UseBlink(location)
     return false
 end
 
+function UseBladeMail()
+    local bot = GetBot()
+    local bm = utils.IsItemAvailable("item_blade_mail")
+    if bm then
+        bot:Action_UseAbility(bm)
+        return true
+    end
+    return false
+end
+
+function UseBlackKingBar()
+    local bot = GetBot()
+    local bkb = utils.IsItemAvailable("item_black_king_bar")
+    if bkb then
+        bot:Action_UseAbility(bkb)
+        return true
+    end
+    return false 
+end
+
+function UseAbyssalBlade(target)
+    local bot = GetBot()
+    local ab = utils.IsItemAvailable("item_abyssal_blade")
+    if ab then
+        bot:Action_UseAbilityOnEntity(ab, target)
+        return true
+    end
+    return false
+end
+
+function UseBloodthorn(target)
+    local bot = GetBot()
+    local bt = utils.IsItemAvailable("item_bloodthorn")
+    if bt then
+        bot:Action_UseAbilityOnEntity(bt, target)
+        return true
+    end
+    return false
+end
+
+function UseCrimsonGuard()
+    local bot = GetBot()
+    local cg = utils.IsItemAvailable("item_crimson_guard")
+    if cg then
+        bot:Action_UseAbility(cg)
+        return true
+    end
+    return false 
+end
+
+function UseEtheralBlade(target)
+    local bot = GetBot()
+    local eb = utils.IsItemAvailable("item_ethereal_blade")
+    if eb then
+        bot:Action_UseAbilityOnEntity(eb, target)
+        return true
+    end
+    return false
+end
+
+function UseEuls(target)
+    local bot = GetBot()
+    local euls = utils.IsItemAvailable("item_cyclone")
+    if euls then
+        bot:Action_UseAbilityOnEntity(euls, target)
+        return true
+    end
+    return false
+end
+
+function UseHeavensHalberd(target)
+    local bot = GetBot()
+    local hh = utils.IsItemAvailable("item_heavens_halberd")
+    if hh then
+        bot:Action_UseAbilityOnEntity(hh, target)
+        return true
+    end
+    return false
+end
+
+function UseHelmOfTheDominator(target)
+    local bot = GetBot()
+    local hotd = utils.IsItemAvailable("item_helm_of_the_dominator")
+    if hotd then
+        bot:Action_UseAbilityOnEntity(hotd, target)
+        return true
+    end
+    return false
+end
+
+function UseLinkens(target)
+    local bot = GetBot()
+    local ls = utils.IsItemAvailable("item_sphere")
+    if ls then
+        bot:Action_UseAbilityOnEntity(ls, target)
+        return true
+    end
+    return false
+end
+
+function UseLotusOrb(target)
+    local bot = GetBot()
+    local lo = utils.IsItemAvailable("item_lotus_orb")
+    if lo then
+        bot:Action_UseAbilityOnEntity(lo, target)
+        return true
+    end
+    return false
+end
+
+-- TODO: fill in missing items
+
+function UseScytheOfVyse(target)
+    local bot = GetBot()
+    local ss = utils.IsItemAvailable("item_sheepstick")
+    if ss then
+        bot:Action_UseAbilityOnEntity(ss, target)
+        return true
+    end
+    return false
+end
+
+function UseShivas()
+    local bot = GetBot()
+    local sg = utils.IsItemAvailable("item_shivas_guard")
+    if sg then
+        bot:Action_UseAbility(sg)
+        return true
+    end
+    return false 
+end
+
+function UseSolarCrest(target)
+    local bot = GetBot()
+    local sc = utils.IsItemAvailable("item_solar_crest")
+    if sc then
+        bot:Action_UseAbilityOnEntity(sc, target)
+        return true
+    end
+    return false
+end
+
+function UseSoulRing()
+    local bot = GetBot()
+    local sr = utils.IsItemAvailable("item_soul_ring")
+    if sr then
+        bot:Action_UseAbility(sr)
+        return true
+    end
+    return false
+end
+
+function UseUrn(target)
+    local bot = GetBot()
+    local urn = utils.IsItemAvailable("item_urn_of_shadows")
+    if urn then
+        bot:Action_UseAbilityOnEntity(urn, target)
+        return true
+    end
+    return false
+end
+
+function UseVeil(loc)
+    local bot = GetBot()
+    local veil = utils.IsItemAvailable("item_veil_of_discord")
+    if veil then
+        bot:Action_UseAbilityOnEntity(veil, loc)
+        return true
+    end
+    return false
+end
+
 -- will return a handle to the ward or nil if we don't have it, checks both
 -- individual ward types and the combined ward dispenser item and switches
 -- it's state to the selection we want prior to returning

@@ -65,7 +65,7 @@ function genericAbility:AbilityUsageThink(bot)
 
 	if castQDesire > 0 then
         bot:Action_ClearActions(false)
-        bot:ActionPush_Delay(0.1)
+        bot:ActionPush_Delay(0.25)
 		bot:ActionPush_UseAbilityOnEntity( abilityQ, castQTarget )
 		return true
 	end

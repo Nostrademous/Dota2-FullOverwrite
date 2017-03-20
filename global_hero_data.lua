@@ -161,7 +161,7 @@ function X.HeroMoveToLocation(bot, loc)
     end
 end
 
-function X.HeroPushMoveToLocation(bot, loc)    
+function X.HeroPushMoveToLocation(bot, loc)
     local pID = bot:GetPlayerID()
     local ca = X.GetHeroCurrentAction(pID)
     
@@ -198,121 +198,108 @@ function X.HeroPushMoveToUnit(bot, hUnit)
     end
 end
 
-function X.HeroQueueMoveToUnit(bot, hUnit)    
+function X.HeroQueueMoveToUnit(bot, hUnit)
     bot:ActionQueue_MoveToUnit(hUnit)
 end
 
 function X.HeroAttackUnit(bot, hTarget, bOnce)
-    if bDisableActions then return end
-    
     local pID = bot:GetPlayerID()
     local bOnce = bOnce or true
     local ca = X.GetHeroCurrentAction(pID)
 
     if checkSleepAttack(bot, ca) then return end
     
-    if #ca == 0 or not (ca[1] == "AttackUnit" and ca[2] == hTarget and ca[3] == bOnce) then
-        if DEFAULT_METHOD then
-            X[pID].currentAction = {[1]="SleepAttack", [2]=GameTime()+bot:GetAttackPoint()}
-            bot:Action_AttackUnit(hTarget, bOnce)
-        else
-            X[pID].prevAction = {unpack(X[pID].currentAction)}
-            X[pID].currentAction = {}
-            X[pID].actionQueue = {{[1]="AttackUnit", [2]=hTarget, [3]=bOnce}, {[1]="SleepAttack", [2]=GameTime()+bot:GetAttackPoint()}}
-        end
-    end
+    X[pID].currentAction = {[1]="SleepAttack", [2]=GameTime()+bot:GetAttackPoint()}
+    bot:Action_AttackUnit(hTarget, bOnce)
 end
 
 function X.HeroPushAttackUnit(bot, hTarget, bOnce)
-    if bDisableActions then return end
-    
     local pID = bot:GetPlayerID()
     local bOnce = bOnce or true
     local ca = X.GetHeroCurrentAction(pID)
 
     if checkSleepAttack(bot, ca) then return end
     
-    if #ca == 0 or not (ca[1] == "AttackUnit" and ca[2] == hTarget and ca[3] == bOnce) then
-        if DEFAULT_METHOD then
-            X[pID].currentAction = {[1]="SleepAttack", [2]=GameTime()+bot:GetAttackPoint()}
-            bot:ActionPush_AttackUnit(hTarget, bOnce)
-        else
-            X[pID].actionQueue = {{[1]="AttackUnit", [2]=hTarget, [3]=bOnce}, {[1]="SleepAttack", [2]=GameTime()+bot:GetAttackPoint()}}
-            X[pID].currentAction = {}
-            table.insert(X[pID].actionQueue, 1, {[1]="SleepAttack", [2]=GameTime()+bot:GetAttackPoint()})
-            table.insert(X[pID].actionQueue, 1, {[1]="AttackUnit", [2]=hTarget, [3]=bOnce})
-        end
+    X[pID].currentAction = {[1]="SleepAttack", [2]=GameTime()+bot:GetAttackPoint()}
+    bot:ActionPush_AttackUnit(hTarget, bOnce)
+end
+
+function X.HeroQueueAttackUnit(bot, hUnit)
+    bot:ActionQueue_AttackUnit(hUnit)
+end
+
+function X.HeroAttackMove(bot, loc)
+    local pID = bot:GetPlayerID()
+    local ca = X.GetHeroCurrentAction(pID)
+    
+    if checkSleepAttack(bot, ca) then return end
+    
+    if GetUnitToLocationDistance(bot, loc) > 15.0 then
+        bot:Action_AttackMove(loc)
     end
+end
+
+function X.HeroPushAttackMove(bot, loc)
+    local pID = bot:GetPlayerID()
+    local ca = X.GetHeroCurrentAction(pID)
+    
+    if checkSleepAttack(bot, ca) then return end
+    
+    if GetUnitToLocationDistance(bot, loc) > 15.0 then
+        bot:ActionPush_AttackMove(loc)
+    end
+end
+
+function X.HeroQueueAttackMove(bot, loc)
+    bot:ActionQueue_AttackMove(loc)
 end
 
 function X.HeroUseAbility(bot, ability)
-    if bDisableActions then return end
-    
-    local pID = bot:GetPlayerID()
-    local ca = X.GetHeroCurrentAction(pID)
-    
-    if #ca == 0 or not (ca[1] == "UseAbility" and ca[2] == ability) then
-        if DEFAULT_METHOD then
-            bot:Action_UseAbility(ability)
-        else
-            --print(pID .. " set UseAbilityOnLocation: " .. loc[1] .. ", " .. loc[2])
-            X[pID].prevAction = {unpack(X[pID].currentAction)}
-            X[pID].currentAction = {}
-            X[pID].actionQueue = {{[1]="UseAbility", [2]=ability}}
-        end
-    end
+    bot:Action_UseAbility(ability)
 end
 
-function X.HeroUseAbilityOnLocation(bot, ability, loc, range)
-    if bDisableActions then return end
-    
-    local pID = bot:GetPlayerID()
-    local range = range or 0
-    local ca = X.GetHeroCurrentAction(pID)
-    
-    if #ca == 0 or not (ca[1] == "UseAbilityOnLocation" and ca[2] == ability and ca[3] == loc) then
-        if DEFAULT_METHOD then
-            bot:Action_UseAbilityOnLocation(ability, loc)
-        else
-            --print(pID .. " set UseAbilityOnLocation: " .. loc[1] .. ", " .. loc[2])
-            X[pID].prevAction = {unpack(X[pID].currentAction)}
-            X[pID].currentAction = {}
-            X[pID].actionQueue = {{[1]="UseAbilityOnLocation", [2]=ability, [3]=loc, [4]=range}}
-        end
-    end
+function X.HeroPushUseAbility(bot, ability)
+    bot:ActionPush_UseAbility(ability)
 end
 
-function X.HeroPushUseAbilityOnLocation(bot, ability, loc, range)
-    if bDisableActions then return end
-    
-    local pID = bot:GetPlayerID()
-    local range = range or 0
-    local ca = X.GetHeroCurrentAction(pID)
-    
-    if #ca == 0 or not (ca[1] == "UseAbilityOnLocation" and ca[2] == ability and ca[3] == loc) then
-        if DEFAULT_METHOD then
-            bot:ActionPush_UseAbilityOnLocation(ability, loc)
-        else
-            X[pID].currentAction = {}
-            table.insert(X[pID].actionQueue, 1, {[1]="UseAbilityOnLocation", [2]=ability, [3]=loc, [4]=range})
-        end
-    end
+function X.HeroQueueUseAbility(bot, ability)
+    bot:ActionQueue_UseAbility(ability)
 end
 
-function X.HeroQueueUseAbilityOnLocation(bot, ability, loc, range)
-    if bDisableActions then return end
-    
-    local pID = bot:GetPlayerID()
-    local range = range or 0
-    local ca = X.GetHeroCurrentAction(pID)
-    
-    if #ca == 0 or not (ca[1] == "UseAbilityOnLocation" and ca[2] == ability and ca[3] == loc) then
-        if DEFAULT_METHOD then
-            bot:ActionQueue_UseAbilityOnLocation(ability, loc)
-        else
-            table.insert(X[pID].actionQueue, {[1]="UseAbilityOnLocation", [2]=ability, [3]=loc, [4]=range})
-        end
-    end
+function X.HeroUseAbilityOnEntity(bot, ability, hUnit)
+    bot:Action_UseAbilityOnEntity(ability, hUnit)
+end
+
+function X.HeroPushUseAbilityOnEntity(bot, ability, hUnit)
+    bot:ActionPush_UseAbilityOnEntity(ability, hUnit)
+end
+
+function X.HeroQueueUseAbilityOnEntity(bot, ability, hUnit)
+    bot:ActionQueue_UseAbilityOnEntity(ability, hUnit)
+end
+
+function X.HeroUseAbilityOnLocation(bot, ability, loc)
+    bot:Action_UseAbilityOnLocation(ability, loc)
+end
+
+function X.HeroPushUseAbilityOnLocation(bot, ability, loc)
+    bot:ActionPush_UseAbilityOnLocation(ability, loc)
+end
+
+function X.HeroQueueUseAbilityOnLocation(bot, ability, loc)
+    bot:ActionQueue_UseAbilityOnLocation(ability, loc)
+end
+
+function X.HeroUseAbilityOnTree(bot, ability, iTree)
+    bot:Action_UseAbilityOnTree(ability, iTree)
+end
+
+function X.HeroPushUseAbilityOnTree(bot, ability, iTree)
+    bot:ActionPush_UseAbilityOnTree(ability, iTree)
+end
+
+function X.HeroQueueUseAbilityOnTree(bot, ability, iTree)
+    bot:ActionQueue_UseAbilityOnTree(ability, iTree)
 end
 
 function X.ExecuteHeroActionQueue(bot)

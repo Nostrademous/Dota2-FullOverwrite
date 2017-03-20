@@ -40,6 +40,8 @@ generic.ItemsToBuyAsHardCarry = {
 		}
 	},
     SellItems = {
+        "item_branches",
+        "item_branches",
         "item_ring_of_aquila"
     }
 }

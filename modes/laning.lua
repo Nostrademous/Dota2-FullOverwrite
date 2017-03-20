@@ -42,15 +42,29 @@ local LaningState = LaningStates.Start
 -------------------------------
 
 local function Start(bot)
-    if CurLane == LANE_MID then
-        gHeroVar.HeroMoveToLocation(bot, GetRuneSpawnLocation(RUNE_BOUNTY_2))
-    elseif CurLane == LANE_TOP then
-        gHeroVar.HeroMoveToLocation(bot, GetRuneSpawnLocation(RUNE_BOUNTY_2)+Vector(-250, 1000))
-    elseif CurLane == LANE_BOT then
-        if utils.IsCore(bot) then
-            gHeroVar.HeroMoveToLocation(bot, GetRuneSpawnLocation(RUNE_BOUNTY_1))
-        else
-            gHeroVar.HeroMoveToLocation(bot, GetRuneSpawnLocation(RUNE_BOUNTY_1)+Vector(-250, -250))
+    if GetTeam() == TEAM_RADIANT then
+        if CurLane == LANE_MID then
+            gHeroVar.HeroMoveToLocation(bot, GetRuneSpawnLocation(RUNE_BOUNTY_2))
+        elseif CurLane == LANE_TOP then
+            gHeroVar.HeroMoveToLocation(bot, GetRuneSpawnLocation(RUNE_BOUNTY_2)+Vector(-250, 1000))
+        elseif CurLane == LANE_BOT then
+            if utils.IsCore(bot) then
+                gHeroVar.HeroMoveToLocation(bot, GetRuneSpawnLocation(RUNE_BOUNTY_1))
+            else
+                gHeroVar.HeroMoveToLocation(bot, GetRuneSpawnLocation(RUNE_BOUNTY_1)+Vector(250, 250))
+            end
+        end
+    else
+        if CurLane == LANE_MID then
+            gHeroVar.HeroMoveToLocation(bot, GetRuneSpawnLocation(RUNE_BOUNTY_4))
+        elseif CurLane == LANE_BOT then
+            gHeroVar.HeroMoveToLocation(bot, GetRuneSpawnLocation(RUNE_BOUNTY_4)+Vector(-350, -600))
+        elseif CurLane == LANE_TOP then
+            if utils.IsCore(bot) then
+                gHeroVar.HeroMoveToLocation(bot, GetRuneSpawnLocation(RUNE_BOUNTY_3))
+            else
+                gHeroVar.HeroMoveToLocation(bot, GetRuneSpawnLocation(RUNE_BOUNTY_3)+Vector(-250, -250))
+            end
         end
     end
 

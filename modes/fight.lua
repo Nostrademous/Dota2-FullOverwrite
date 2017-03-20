@@ -90,7 +90,7 @@ function X:Desire(bot)
     end
     enemyValue = enemyValue + #eTowers*110
     
-    local allyList = gHeroVar.GetNearbyAllies(bot, 900)
+    local allyList = gHeroVar.GetNearbyAllies(bot, 1200)
     for _, ally in pairs(allyList) do
         allyValue = allyValue + ally:GetHealth() + ally:GetOffensivePower()
     end

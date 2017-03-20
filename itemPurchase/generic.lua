@@ -141,8 +141,9 @@ function X:Think(bot)
         end
 
         -- buy TPs if we are near a shop and don't have one
-        if not utils.HaveTeleportation(bot) and not utils.InTable(self.PurchaseOrder, "item_tpscroll")
-            and DotaTime() > 60*4 and (utils.NumberOfItems(bot) + utils.NumberOfItemsInBackpack(bot)) < 8 then
+        if not utils.HaveTeleportation(bot) and bot:FindItemSlot("item_tpscroll") == ITEM_SLOT_TYPE_INVALID
+            and not utils.InTable(self.PurchaseOrder, "item_tpscroll") and DotaTime() > 60*4
+            and (utils.NumberOfItems(bot) + utils.NumberOfItemsInBackpack(bot)) < 8 then
             if bot:DistanceFromFountain() < 1600 or bot:DistanceFromSideShop() < 1600 then
                 table.insert(self.PurchaseOrder, 1, "item_tpscroll")
             end

@@ -294,23 +294,11 @@ function UseMovementItems(location)
         return false
     end
 
-    local pb = utils.HaveItem(bot, "item_phase_boots")
-    if pb ~= nil and pb:IsFullyCastable() then
-        gHeroVar.HeroUseAbility(bot, pb)
-        return true
-    end
+    if UsePhaseBoots() then return true end
 
-    local force = utils.HaveItem(bot, "item_force_staff")
-    if force ~= nil and utils.IsFacingLocation(bot, location, 25) then
-        bot:Action_UseAbilityOnEntity(force, bot)
-        return true
-    end
+    if UseForceStaff(bot, location) then return true end
 
-    local hp = utils.HaveItem(bot, "item_hurricane_pike")
-    if hp ~= nil and utils.IsFacingLocation(bot, location, 25) then
-        bot:Action_UseAbilityOnEntity(hp, bot)
-        return true
-    end
+    if UseHurricanePike(bot, location) then return true end
 
     if UseSilverEdge() or UseShadowBlade() then return true end
 
@@ -322,8 +310,8 @@ function UseDefensiveItems(enemy, triggerDistance)
 
     if utils.IsBusy(bot) then return false end
 
-    local hp = utils.HaveItem(bot, "item_hurricane_pike")
-    if hp ~= nil and GetUnitToUnitDistance(bot, enemy) < triggerDistance then
+    local hp = utils.IsItemAvailable("item_hurricane_pike")
+    if hp and GetUnitToUnitDistance(bot, enemy) < triggerDistance then
         bot:Action_UseAbilityOnEntity(hp, enemy)
         return true
     end
@@ -479,32 +467,21 @@ function UseTomeOfKnowledge()
     return false
 end
 
-function UseMidas()
+function UseAbyssalBlade(target)
     local bot = GetBot()
-    local midas = utils.HaveItem(bot, "item_hand_of_midas")
-    if midas ~= nil and midas:IsFullyCastable() then
-        local creeps = gHeroVar.GetNearbyEnemyCreep(bot, 600)
-        if #creeps > 1 then
-            table.sort(creeps, function(n1, n2) return n1:GetHealth() > n2:GetHealth() end)
-            bot:Action_UseAbilityOnEntity(midas, creeps[1])
-            return true
-        elseif #creeps == 1 then
-            bot:Action_UseAbilityOnEntity(midas, creeps[1])
-            return true
-        end
+    local ab = utils.IsItemAvailable("item_abyssal_blade")
+    if ab then
+        bot:Action_UseAbilityOnEntity(ab, target)
+        return true
     end
     return false
 end
 
-function UseGlimmerCape(target)
-    local gcTarget = GetBot()
-    if target ~= nil and target:IsAlive() then
-        gcTarget = target
-    end
-
-    local gc = utils.IsItemAvailable("item_glimmer_cape")
-    if gc ~= nil and gcTarget ~= nil then
-        GetBot():Action_UseAbilityOnEntity(gc, gcTarget)
+function UseBattlefury( hTree )
+    local bot = GetBot()
+    local item = utils.IsItemAvailable("item_bfury")
+    if item then
+        bot:Action_UseAbilityOnEntity(item, hTree)
         return true
     end
     return false
@@ -522,9 +499,9 @@ end
 
 function UseBladeMail()
     local bot = GetBot()
-    local bm = utils.IsItemAvailable("item_blade_mail")
-    if bm then
-        bot:Action_UseAbility(bm)
+    local item = utils.IsItemAvailable("item_blade_mail")
+    if item then
+        gHeroVar.HeroUseAbility(bot, item)
         return true
     end
     return false
@@ -532,22 +509,22 @@ end
 
 function UseBlackKingBar()
     local bot = GetBot()
-    local bkb = utils.IsItemAvailable("item_black_king_bar")
-    if bkb then
-        bot:Action_UseAbility(bkb)
+    local item = utils.IsItemAvailable("item_black_king_bar")
+    if item then
+        gHeroVar.HeroUseAbility(bot, item)
         return true
     end
     return false 
 end
 
-function UseAbyssalBlade(target)
+function UseBloodstone()
     local bot = GetBot()
-    local ab = utils.IsItemAvailable("item_abyssal_blade")
-    if ab then
-        bot:Action_UseAbilityOnEntity(ab, target)
+    local item = utils.IsItemAvailable("item_bloodstone")
+    if item then
+        gHeroVar.HeroUseAbility(bot, item)
         return true
     end
-    return false
+    return false 
 end
 
 function UseBloodthorn(target)
@@ -560,11 +537,86 @@ function UseBloodthorn(target)
     return false
 end
 
+function UseButterfly()
+    local bot = GetBot()
+    local item = utils.IsItemAvailable("item_butterfly")
+    if item then
+        gHeroVar.HeroUseAbility(bot, item)
+        return true
+    end
+    return false 
+end
+
+function UseCheese()
+    local bot = GetBot()
+    local item = utils.IsItemAvailable("item_cheese")
+    if item then
+        gHeroVar.HeroUseAbility(bot, item)
+        return true
+    end
+    return false 
+end
+
 function UseCrimsonGuard()
     local bot = GetBot()
-    local cg = utils.IsItemAvailable("item_crimson_guard")
-    if cg then
-        bot:Action_UseAbility(cg)
+    local item = utils.IsItemAvailable("item_crimson_guard")
+    if item then
+        gHeroVar.HeroUseAbility(bot, item)
+        return true
+    end
+    return false 
+end
+
+function UseDagon(target)
+    local bot = GetBot()
+    local item = utils.HaveItem(bot, "item_dagon_1")
+    if not item then item = utils.HaveItem(bot, "item_dagon_2") end
+    if not item then item = utils.HaveItem(bot, "item_dagon_3") end
+    if not item then item = utils.HaveItem(bot, "item_dagon_4") end
+    if not item then item = utils.HaveItem(bot, "item_dagon_5") end
+    if item and item:IsFullyCastable() then
+        bot:Action_UseAbilityOnEntity(item, target)
+        return true
+    end
+    return false
+end
+
+function UseDiffusal(target)
+    local bot = GetBot()
+    local item = utils.IsItemAvailable("item_diffusal_blade_1")
+    if not item then item = utils.IsItemAvailable("item_diffusal_blade_2") end
+    if item and item:GetCurrentCharges() > 0 then
+        bot:Action_UseAbilityOnEntity(item, target)
+        return true
+    end
+    return false
+end
+
+function UseDrums()
+    local bot = GetBot()
+    local item = utils.IsItemAvailable("item_ancient_janggo")
+    if item and item:GetCurrentCharges() > 0 then
+        gHeroVar.HeroUseAbility(bot, item)
+        return true
+    end
+    return false
+end
+
+function UseDust()
+    local bot = GetBot()
+    local item = utils.IsItemAvailable("item_dust")
+    if item then
+        gHeroVar.HeroUseAbility(bot, item)
+        return true
+    end
+    return false 
+end
+
+function UseMango()
+    local bot = GetBot()
+    local item = utils.IsItemAvailable("item_enchanted_mango")
+    if item then
+        gHeroVar.HeroUseAbility(bot, item)
         return true
     end
     return false 
@@ -590,6 +642,56 @@ function UseEuls(target)
     return false
 end
 
+function UseForceStaff(target, location)
+    local bot = GetBot()
+    local fs = utils.IsItemAvailable(bot, "item_force_staff")
+    if fs and utils.IsFacingLocation(bot, location, 25) then
+        bot:Action_UseAbilityOnEntity(fs, target)
+        return true
+    end
+end
+
+function UseGhostScepter()
+    local bot = GetBot()
+    local item = utils.IsItemAvailable("item_ghost")
+    if item then
+        gHeroVar.HeroUseAbility(bot, item)
+        return true
+    end
+    return false 
+end
+
+function UseGlimmerCape(target)
+    local gcTarget = GetBot()
+    if target ~= nil and target:IsAlive() then
+        gcTarget = target
+    end
+
+    local gc = utils.IsItemAvailable("item_glimmer_cape")
+    if gc and gcTarget ~= nil then
+        GetBot():Action_UseAbilityOnEntity(gc, gcTarget)
+        return true
+    end
+    return false
+end
+
+function UseMidas()
+    local bot = GetBot()
+    local midas = utils.HaveItem(bot, "item_hand_of_midas")
+    if midas ~= nil and midas:IsFullyCastable() then
+        local creeps = gHeroVar.GetNearbyEnemyCreep(bot, 600)
+        if #creeps > 1 then
+            table.sort(creeps, function(n1, n2) return n1:GetHealth() > n2:GetHealth() end)
+            bot:Action_UseAbilityOnEntity(midas, creeps[1])
+            return true
+        elseif #creeps == 1 then
+            bot:Action_UseAbilityOnEntity(midas, creeps[1])
+            return true
+        end
+    end
+    return false
+end
+
 function UseHeavensHalberd(target)
     local bot = GetBot()
     local hh = utils.IsItemAvailable("item_heavens_halberd")
@@ -608,6 +710,25 @@ function UseHelmOfTheDominator(target)
         return true
     end
     return false
+end
+
+function UseHood()
+    local bot = GetBot()
+    local item = utils.IsItemAvailable("item_hood_of_defiance")
+    if item then
+        gHeroVar.HeroUseAbility(bot, item)
+        return true
+    end
+    return false
+end
+
+function UseHurricanePike(target, location)
+    local bot = GetBot()
+    local hp = utils.IsItemAvailable(bot, "item_hurricane_pike")
+    if hp and utils.IsFacingLocation(bot, location, 25) then
+        bot:Action_UseAbilityOnEntity(hp, target)
+        return true
+    end
 end
 
 function UseLinkens(target)
@@ -630,7 +751,136 @@ function UseLotusOrb(target)
     return false
 end
 
--- TODO: fill in missing items
+function UseManta()
+    local bot = GetBot()
+    local item = utils.IsItemAvailable("item_manta")
+    if item then
+        gHeroVar.HeroUseAbility(bot, item)
+        return true
+    end
+    return false 
+end
+
+function UseMoM()
+    local bot = GetBot()
+    local item = utils.IsItemAvailable("item_mask_of_madness")
+    if item then
+        gHeroVar.HeroUseAbility(bot, item)
+        return true
+    end
+    return false 
+end
+
+function UseMedallion(target)
+    local bot = GetBot()
+    local item = utils.IsItemAvailable("item_medallion_of_courage")
+    if item then
+        bot:Action_UseAbilityOnEntity(item, target)
+        return true
+    end
+    return false 
+end
+
+function UseMjollnir()
+    local bot = GetBot()
+    local item = utils.IsItemAvailable("item_mjollnir")
+    if item then
+        gHeroVar.HeroUseAbility(bot, item)
+        return true
+    end
+    return false 
+end
+
+function UseMoonshard(target)
+    local bot = GetBot()
+    local item = utils.IsItemAvailable("item_moon_shard")
+    if item then
+        bot:Action_UseAbilityOnEntity(item, target)
+        return true
+    end
+    return false 
+end
+
+function UseNecronomicon()
+    local bot = GetBot()
+    local item = utils.IsItemAvailable("item_necronomicon_1")
+    if not item then item = utils.IsItemAvailable("item_necronomicon_2") end
+    if not item then item = utils.IsItemAvailable("item_necronomicon_3") end
+    if item then
+        gHeroVar.HeroUseAbility(bot, item)
+        return true
+    end
+    return false 
+end
+
+function UseOrchid(target)
+    local bot = GetBot()
+    local item = utils.IsItemAvailable("item_orchid")
+    if item then
+        bot:Action_UseAbilityOnEntity(item, target)
+        return true
+    end
+    return false
+end
+
+function UsePhaseBoots()
+    local bot = GetBot()
+    local pb = utils.IsItemAvailable("item_phase_boots")
+    if pb then
+        gHeroVar.HeroUseAbility(bot, pb)
+        return true
+    end
+end
+
+function UsePipe()
+    local bot = GetBot()
+    local item = utils.IsItemAvailable("item_pipe")
+    if item then
+        gHeroVar.HeroUseAbility(bot, item)
+        return true
+    end
+    return false 
+end
+
+function UseQuellingBlade( hTree )
+    local bot = GetBot()
+    local item = utils.IsItemAvailable("item_quelling_blade")
+    if item then
+        bot:Action_UseAbilityOnEntity(item, hTree)
+        return true
+    end
+    return false
+end
+
+function UseRefresher()
+    local bot = GetBot()
+    local item = utils.IsItemAvailable("item_refresher")
+    if item then
+        gHeroVar.HeroUseAbility(bot, item)
+        return true
+    end
+    return false 
+end
+
+function UseRodOfAtos(target)
+    local bot = GetBot()
+    local rod = utils.IsItemAvailable("item_rod_of_atos")
+    if rod then
+        bot:Action_UseAbilityOnEntity(rod, target)
+        return true
+    end
+    return false
+end
+
+function UseSatanic()
+    local bot = GetBot()
+    local item = utils.IsItemAvailable("item_satanic")
+    if item then
+        gHeroVar.HeroUseAbility(bot, item)
+        return true
+    end
+    return false 
+end
 
 function UseScytheOfVyse(target)
     local bot = GetBot()
@@ -642,11 +892,30 @@ function UseScytheOfVyse(target)
     return false
 end
 
+function UseShadowAmulet()
+    local bot = GetBot()
+    local item = utils.IsItemAvailable("item_shadow_amulet")
+    if item then
+        gHeroVar.HeroUseAbility(bot, item)
+        return true
+    end
+    return false 
+end
+
 function UseShivas()
     local bot = GetBot()
-    local sg = utils.IsItemAvailable("item_shivas_guard")
-    if sg then
-        bot:Action_UseAbility(sg)
+    local item = utils.IsItemAvailable("item_shivas_guard")
+    if item then
+        gHeroVar.HeroUseAbility(bot, item)
+        return true
+    end
+    return false 
+end
+
+function UseSmoke( hUnit )
+    local item = utils.HaveItem(hUnit, "item_smoke_of_deceit")
+    if item and item:IsFullyCastable() then
+        gHeroVar.HeroUseAbility(hUnit, item)
         return true
     end
     return false 
@@ -664,9 +933,9 @@ end
 
 function UseSoulRing()
     local bot = GetBot()
-    local sr = utils.IsItemAvailable("item_soul_ring")
-    if sr then
-        bot:Action_UseAbility(sr)
+    local item = utils.IsItemAvailable("item_soul_ring")
+    if item then
+        gHeroVar.HeroUseAbility(bot, item)
         return true
     end
     return false
@@ -675,7 +944,7 @@ end
 function UseUrn(target)
     local bot = GetBot()
     local urn = utils.IsItemAvailable("item_urn_of_shadows")
-    if urn then
+    if urn and urn:GetCurrentCharges() > 0 then
         bot:Action_UseAbilityOnEntity(urn, target)
         return true
     end

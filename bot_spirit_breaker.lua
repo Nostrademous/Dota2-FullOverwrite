@@ -92,7 +92,7 @@ function ConsiderActionsWhileCharging(bot)
     
     local sb = utils.IsItemAvailable("item_invis_sword")
     if sb then
-        local chargeSpeed = abilityQ:GetSpecialValueInt("movement_speed")
+        local chargeSpeed = bot:GetAbilityByName(SKILL_Q):GetSpecialValueInt("movement_speed")
         local target = getHeroVar("RoamTarget")
         if not utils.ValidTarget(target) then target = getHeroVar("Target") end
         if utils.ValidTarget(target) then
@@ -106,7 +106,7 @@ function ConsiderActionsWhileCharging(bot)
     
     local se = utils.IsItemAvailable("item_silver_edge")
     if se then
-        local chargeSpeed = abilityQ:GetSpecialValueInt("movement_speed")
+        local chargeSpeed = bot:GetAbilityByName(SKILL_Q):GetSpecialValueInt("movement_speed")
         local target = getHeroVar("RoamTarget")
         if not utils.ValidTarget(target) then target = getHeroVar("Target") end
         if utils.ValidTarget(target) then

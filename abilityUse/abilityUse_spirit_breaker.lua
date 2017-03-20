@@ -130,14 +130,14 @@ function ConsiderQ()
 		-- we have a roam target
 		local roamTarget = getHeroVar("RoamTarget")
         if utils.ValidTarget(roamTarget) then
-			local allies3   = gHeroVar.GetNearbyAllies(roamTarget, 1600)
-			local enemies3  = gHeroVar.GetNearbyEnemies(roamTarget, 1600)
+			local enemies3  = gHeroVar.GetNearbyAllies(roamTarget, Min(1600, roamTarget:GetCurrentVisionRange()))
+			local allies3   = gHeroVar.GetNearbyEnemies(roamTarget, Min(1600, roamTarget:GetCurrentVisionRange()))
 			local sumdamage = bot:GetEstimatedDamageToTarget(true, roamTarget, 4.0, DAMAGE_TYPE_ALL)
 			
 			if #enemies3 <= 2 then
 				for _, npcAlly in pairs(allies3) do
 					if not npcAlly:IsIllusion() and npcAlly:GetHealth()/npcAlly:GetMaxHealth() >= 0.7 and 
-                        npcAlly.SelfRef.getCurrentMode():GetName() ~= "retreat" then
+                        npcAlly.SelfRef:getCurrentMode():GetName() ~= "retreat" then
 						sumdamage = sumdamage + npcAlly:GetEstimatedDamageToTarget(true, roamTarget, 4.0, DAMAGE_TYPE_ALL)
 					end
 				end
@@ -156,11 +156,13 @@ function ConsiderQ()
 	if modeName == "retreat" then
         if bot:WasRecentlyDamagedByAnyHero( 2.0 ) then
             for _, npcAlly in pairs(GetUnitList(UNIT_LIST_ALLIED_HEROES)) do
-                local enemies3 = gHeroVar.GetNearbyEnemies(npcAlly, 1600)
-                local creep    = gHeroVar.GetNearbyEnemyCreep(npcAlly, npcAlly:GetCurrentVisionRange())
-				if #enemies3 == 0 and #creep > 0 then
-					return BOT_ACTION_DESIRE_HIGH, creep[1]
-				end
+                if npcAlly:IsAlive() then
+                    local enemies3 = gHeroVar.GetNearbyEnemies(npcAlly, Min(1600, npcAlly:GetCurrentVisionRange()))
+                    local creep    = gHeroVar.GetNearbyEnemyCreep(npcAlly, Min(1600, npcAlly:GetCurrentVisionRange()))
+                    if #enemies3 == 0 and #creep > 0 then
+                        return BOT_ACTION_DESIRE_HIGH, creep[1]
+                    end
+                end
 			end
 		end
 	end
@@ -171,8 +173,8 @@ function ConsiderQ()
         if npcEnemy == nil then npcEnemy = getHeroVar("Target") end
 		
         if utils.ValidTarget(npcEnemy) then
-            local allies3   = gHeroVar.GetNearbyAllies(npcEnemy, 1200)
-            local enemies3  = gHeroVar.GetNearbyEnemies(npcEnemy, 1600)
+            local enemies3  = gHeroVar.GetNearbyAllies(npcEnemy, Min(1200, npcEnemy:GetCurrentVisionRange()))
+            local allies3   = gHeroVar.GetNearbyEnemies(npcEnemy, Min(1600, npcEnemy:GetCurrentVisionRange()))
 		
 			if not utils.IsTargetMagicImmune(npcEnemy) and not utils.IsCrowdControlled(npcEnemy) and 
                 #enemies3 <= #allies3 then

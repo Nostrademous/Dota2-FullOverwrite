@@ -36,20 +36,35 @@ end
 function X:Think(bot)
     local target = getHeroVar("Target")
     if utils.ValidTarget(target) and target:IsAlive() then
-        --[[
-        local score = getHeroVar("TargetScore")
-        for _, ally in pairs(GetUnitList(UNIT_LIST_ALLIED_HEROES)) do
-            if ally:GetPlayerID() ~= bot:GetPlayerID() then
-                local allyTarget = gHeroVar.GetVar(ally:GetPlayerID(), "Target")
-                if allyTarget and allyTarget == target and GetUnitToUnitDistance(ally, target) < 1200 and
-                    ally:GetHealth()/ally:GetMaxHealth() > 0.30 then
-                    score = score + gHeroVar.GetVar(ally:GetPlayerID(), "TargetScore")
+        local dist = GetUnitToUnitDistance(bot, target)
+        local attackRange = bot:GetAttackRange() + bot:GetBoundingRadius() + target:GetBoundingRadius()
+        
+        if utils.IsMelee(bot) then
+            if dist < attackRange then
+                if target:IsAttackImmune() or (bot:GetLastAttackTime() + bot:GetSecondsPerAttack()) > GameTime() then
+                    gHeroVar.HeroMoveToUnit(bot, target)
+                else
+                    gHeroVar.HeroAttackUnit(bot, target, true)
                 end
+            else
+                gHeroVar.HeroMoveToUnit(bot, target)
+            end
+        else
+            if dist < attackRange then
+                if target:IsAttackImmune() or (bot:GetLastAttackTime() + bot:GetSecondsPerAttack()) > GameTime() then
+                    -- move away if we are too close
+                    if dist < 0.3*attackRange then
+                        gHeroVar.HeroMoveToLocation(bot, utils.VectorAway(bot:GetLocation(), target:GetLocation(), 0.75*attackRange-dist))
+                    elseif dist > 0.75*attackRange then
+                        gHeroVar.HeroMoveToLocation(bot, utils.VectorTowards(bot:GetLocation(), target:GetLocation(), 0.75*attackRange-dist))
+                    end
+                else
+                    gHeroVar.HeroAttackUnit(bot, target, true)
+                end
+            else
+                gHeroVar.HeroMoveToUnit(bot, target)
             end
         end
-        --]]
-        
-        gHeroVar.HeroAttackUnit(bot, target, true)
     else
         setHeroVar("Target", nil)
     end
@@ -80,7 +95,7 @@ function X:Desire(bot)
     allyValue = allyValue + #aTowers*110
     
     if allyValue > enemyValue then
-        local target, _ = utils.GetWeakestHero(bot, bot:GetAttackRange()+bot:GetBoundingRadius(), enemyList)
+        local target, _ = utils.GetWeakestHero(bot, bot:GetAttackRange()+bot:GetBoundingRadius())
         if target then
             setHeroVar("Target", target)
             return BOT_MODE_DESIRE_MODERATE
@@ -90,9 +105,9 @@ function X:Desire(bot)
     end
     
     local target = getHeroVar("Target")
-    if utils.ValidTarget(target) and getHeroVar("Self"):getCurrentMode():GetName() == "fight" and
+    if utils.ValidTarget(target) and bot.SelfRef:getCurrentMode():GetName() == "fight" and
         #eTowers == 0 then
-        return getHeroVar("Self"):getCurrentModeValue()
+        return bot.SelfRef:getCurrentModeValue()
     end
 
     return BOT_MODE_DESIRE_NONE

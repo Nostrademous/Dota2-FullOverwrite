@@ -657,7 +657,10 @@ function U.IsBusy(bot)
     if bot:IsChanneling() then return true end
     if bot:IsCastingAbility() then
         local target = getHeroVar("Target")        
-        if U.ValidTarget(target) and GetUnitToUnitDistance(bot, target) > 2000 then return false end
+        if U.ValidTarget(target) then
+            if bot.AbilityOnEntityUseTime and (GameTime() - bot.AbilityOnEntityUseTime) > 3.0 then return false end
+            if GetUnitToUnitDistance(bot, target) > 2000 then return false end
+        end
         return true
     end
     if bot:NumQueuedActions() > 0 then
@@ -785,7 +788,7 @@ function U.NearestLane(bot)
 end
 
 function U.MoveSafelyToLocation(bot, dest)
-    bot:Action_MoveToLocation(dest)
+    gHeroVar.HeroMoveToLocation(bot, dest)
 end
 
 function U.InitPathFinding()
@@ -1186,10 +1189,10 @@ function U.HarassEnemy(bot, listEnemies)
                     if not enemy:IsStunned() and stun[1]:IsFullyCastable() then
                         local behaviorFlag = stun[1]:GetBehavior()
                         if U.CheckFlag(behaviorFlag, ABILITY_BEHAVIOR_UNIT_TARGET) then
-                            bot:Action_UseAbilityOnEntity(stun[1], enemy)
+                            gHeroVar.HeroUseAbilityOnEntity(bot, stun[1], enemy)
                             return true
                         elseif U.CheckFlag(behaviorFlag, ABILITY_BEHAVIOR_POINT) then
-                            bot:Action_UseAbilityOnLocation(stun[1], enemy:GetExtrapolatedLocation(stun[2]+getHeroVar("AbilityDelay")))
+                            gHeroVar.HeroUseAbilityOnLocation(bot, stun[1], enemy:GetExtrapolatedLocation(stun[2]+getHeroVar("AbilityDelay")))
                             return true
                         end
                     end
@@ -1298,7 +1301,7 @@ function U.UseOrbEffect(bot, enemy)
 
             if target ~= nil and GetUnitToUnitDistance(bot, target) < (ability:GetCastRange()+bot:GetBoundingRadius()) then
                 U.TreadCycle(bot, constants.INTELLIGENCE)
-                bot:Action_UseAbilityOnEntity(ability, target)
+                gHeroVar.HeroUseAbilityOnEntity(bot, ability, target)
                 return true
             end
         end
@@ -1645,12 +1648,12 @@ end
 
 function U.GetNearestTree(bot)
     local trees = bot:GetNearbyTrees(700)
-    local eTowers = gHeroVar.GetNearbyEnemyTowers(bot, 900)
+    local eTowers = gHeroVar.GetNearbyEnemyTowers(bot, 1600)
 
     for _, tree in ipairs(trees) do
         local treeLoc = GetTreeLocation(tree)
         --U.myPrint("Tree Loc: <", treeLoc[1], ", ", treeLoc[2], ", ", treeLoc[3], ">")
-        if #eTowers == 0 or utils.GetDistance(treeLoc, eTowers[1]:GetLocation()) > 900 then
+        if #eTowers == 0 or U.GetDistance(treeLoc, eTowers[1]:GetLocation()) > 900 then
             if U.GetHeightDiff(bot, treeLoc[3]) == 0 then
                 return tree
             end

@@ -47,6 +47,7 @@ function X:Think(bot)
                     gHeroVar.HeroAttackUnit(bot, target, true)
                 end
             else
+                if item_usage.UseMovementItems(target:GetLocation()) then return end
                 gHeroVar.HeroMoveToUnit(bot, target)
             end
         else
@@ -64,6 +65,7 @@ function X:Think(bot)
                     gHeroVar.HeroAttackUnit(bot, target, true)
                 end
             else
+                if item_usage.UseMovementItems(target:GetLocation()) then return end
                 gHeroVar.HeroMoveToUnit(bot, target)
             end
         end

@@ -105,10 +105,10 @@ function invokeTornado(bot)
     end
 
     bot:ActionPush_Delay(0.01)
-    bot:ActionPush_UseAbility( abilityR )
-    bot:ActionPush_UseAbility( abilityW )
-    bot:ActionPush_UseAbility( abilityQ )
-    bot:ActionPush_UseAbility( abilityW )
+    gHeroVar.HeroPushUseAbility(bot,  abilityR )
+    gHeroVar.HeroPushUseAbility(bot,  abilityW )
+    gHeroVar.HeroPushUseAbility(bot,  abilityQ )
+    gHeroVar.HeroPushUseAbility(bot,  abilityW )
 
     return true
 end
@@ -120,10 +120,10 @@ function invokeChaosMeteor(bot)
     end
 
     bot:ActionPush_Delay(0.01)
-    bot:ActionPush_UseAbility( abilityR )
-    bot:ActionPush_UseAbility( abilityE )
-    bot:ActionPush_UseAbility( abilityW )
-    bot:ActionPush_UseAbility( abilityE )
+    gHeroVar.HeroPushUseAbility(bot,  abilityR )
+    gHeroVar.HeroPushUseAbility(bot,  abilityE )
+    gHeroVar.HeroPushUseAbility(bot,  abilityW )
+    gHeroVar.HeroPushUseAbility(bot,  abilityE )
 
     return true
 end
@@ -169,9 +169,9 @@ function prepNukeTOCMDB( bot )
                 return false
             else
                 bot:ActionPush_Delay(0.01)
-                bot:ActionPush_UseAbility(abilityQ)
-                bot:ActionPush_UseAbility(abilityW)
-                bot:ActionPush_UseAbility(abilityE)
+                gHeroVar.HeroPushUseAbility(bot, abilityQ)
+                gHeroVar.HeroPushUseAbility(bot, abilityW)
+                gHeroVar.HeroPushUseAbility(bot, abilityE)
                 return true
             end
         end
@@ -221,12 +221,12 @@ function queueNukeTOCMDB(bot, location, engageDist)
 
         print("INVOKER TO CM DB combo!!!")
 
-        bot:ActionQueue_UseAbilityOnLocation(abilityTO, location)
-        bot:ActionQueue_UseAbility(abilityR) -- invoke DB
+        gHeroVar.HeroQueueUseAbilityOnLocation(bot, abilityTO, location)
+        gHeroVar.HeroQueueUseAbility(bot, abilityR) -- invoke DB
         bot:ActionQueue_Delay(liftDuration - cmLandTime + engageDist/tornadoSpeed - 0.1) -- 0.1 for bot-difficulty avg delay
-        bot:ActionQueue_UseAbilityOnLocation(abilityCM, VectorTowards(bot:GetLocation(), location, 450))
+        gHeroVar.HeroQueueUseAbilityOnLocation(bot, abilityCM, VectorTowards(bot:GetLocation(), location, 450))
         bot:ActionQueue_Delay(0.55)
-        bot:ActionQueue_UseAbilityOnLocation(abilityDB, location)
+        gHeroVar.HeroQueueUseAbilityOnLocation(bot, abilityDB, location)
         bot:ActionQueue_Delay(0.01)
         return true
     end
@@ -307,9 +307,9 @@ function Think()
 
     if DotaTime() > 0 then
         if bot:GetHealth() == bot:GetMaxHealth() then
-            bot:Action_MoveToLocation( Vector( 0, 0 ) )
+            gHeroVar.HeroMoveToLocation(bot,  Vector( 0, 0 ) )
         else
-            bot:Action_MoveToLocation( Vector( -7000, -7000 ) )
+            gHeroVar.HeroMoveToLocation(bot,  Vector( -7000, -7000 ) )
         end
     end
 end

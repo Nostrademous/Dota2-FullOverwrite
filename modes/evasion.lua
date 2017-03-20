@@ -35,7 +35,7 @@ function X:Think(bot)
     if modifiers.IsRuptured(bot) then
         local tp = utils.IsItemAvailable("item_tpscroll")
         if tp then
-            bot:Action_UseAbilityOnLocation( tp, utils.Fountain( GetTeam() ) )
+            gHeroVar.HeroUseAbilityOnLocation(bot,  tp, utils.Fountain( GetTeam() ) )
             return
         else
             utils.myPrint("FIXME: we are ruptured and don't have TP... need to implement")

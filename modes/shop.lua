@@ -87,7 +87,7 @@ function ThinkSecretShop( NextItem )
             return false
         end
     else
-        bot:Action_MoveToLocation(secLoc)
+        gHeroVar.HeroMoveToLocation(bot, secLoc)
         return false
     end
 end
@@ -117,7 +117,7 @@ function ThinkSideShop( NextItem )
             return false
         end
     else
-        bot:Action_MoveToLocation(sideLoc)
+        gHeroVar.HeroMoveToLocation(bot, sideLoc)
         return false
     end
 end

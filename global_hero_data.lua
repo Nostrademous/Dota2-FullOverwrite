@@ -224,8 +224,8 @@ function X.HeroPushAttackUnit(bot, hTarget, bOnce)
     bot:ActionPush_AttackUnit(hTarget, bOnce)
 end
 
-function X.HeroQueueAttackUnit(bot, hUnit)
-    bot:ActionQueue_AttackUnit(hUnit)
+function X.HeroQueueAttackUnit(bot, hUnit, bOnce)
+    bot:ActionQueue_AttackUnit(hUnit, bOnce)
 end
 
 function X.HeroAttackMove(bot, loc)
@@ -268,10 +268,12 @@ end
 
 function X.HeroUseAbilityOnEntity(bot, ability, hUnit)
     bot:Action_UseAbilityOnEntity(ability, hUnit)
+    bot.AbilityOnEntityUseTime = GameTime()
 end
 
 function X.HeroPushUseAbilityOnEntity(bot, ability, hUnit)
     bot:ActionPush_UseAbilityOnEntity(ability, hUnit)
+    bot.AbilityOnEntityUseTime = GameTime()
 end
 
 function X.HeroQueueUseAbilityOnEntity(bot, ability, hUnit)

@@ -289,17 +289,17 @@ function genericAbility:AbilityUsageThink(bot)
 	local castRDesire, castRTarget    = ConsiderR()
     
     if castQDesire > 0 then
-        bot:Action_UseAbilityOnLocation( abilityQ, castQLocation )
+        gHeroVar.HeroUseAbilityOnLocation(bot,  abilityQ, castQLocation )
         return true
     end
     
     if castWDesire > 0 then
-        bot:Action_UseAbilityOnEntity( abilityW, castWTarget )
+        gHeroVar.HeroUseAbilityOnEntity(bot,  abilityW, castWTarget )
         return true
     end
     
     if castRDesire > 0 then
-        bot:Action_UseAbilityOnEntity( abilityR, castRTarget )
+        gHeroVar.HeroUseAbilityOnEntity(bot,  abilityR, castRTarget )
         return true
     end
     

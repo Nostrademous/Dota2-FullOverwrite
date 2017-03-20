@@ -47,7 +47,7 @@ function X:Think(bot)
                 getHeroVar("Self"):ClearMode()
             end
         else
-            bot:Action_MoveToLocation(dest)
+            gHeroVar.HeroMoveToLocation(bot, dest)
         end
     end
 end

@@ -85,7 +85,7 @@ function X:Think(bot)
         
         -- we can move to "location"
         if utils.CheckFlag(behavior, ABILITY_BEHAVIOR_POINT) then
-            bot:Action_UseAbilityOnLocation(retreatAbility[1], nextmove)
+            gHeroVar.HeroUseAbilityOnLocation(bot, retreatAbility[1], nextmove)
             return
         -- we can move to a "unit"
         elseif utils.CheckFlag(behavior, ABILITY_BEHAVIOR_UNIT_TARGET) then
@@ -97,7 +97,7 @@ function X:Think(bot)
                     if #viableTargets > 1 then
                         table.sort(viableTargets, function(n1,n2) return GetUnitToUnitDistance(bot, n1) > GetUnitToUnitDistance(bot, n2) end)
                     end
-                    bot:Action_UseAbilityOnEntity(retreatAbility[1], viableTargets[1])
+                    gHeroVar.HeroUseAbilityOnEntity(bot, retreatAbility[1], viableTargets[1])
                     return
                 end
             end
@@ -108,7 +108,7 @@ function X:Think(bot)
                     if #viableTargets > 1 then
                         table.sort(viableTargets, function(n1,n2) return GetUnitToUnitDistance(bot, n1) > GetUnitToUnitDistance(bot, n2) end)
                     end
-                    bot:Action_UseAbilityOnEntity(retreatAbility[1], viableTargets[1])
+                    gHeroVar.HeroUseAbilityOnEntity(bot, retreatAbility[1], viableTargets[1])
                     return
                 end
             end
@@ -140,7 +140,7 @@ function X:Think(bot)
         if item_usage.UseMovementItems(nextmove) then return end
     end
     
-    bot:Action_MoveToLocation(nextmove)
+    gHeroVar.HeroMoveToLocation(bot, nextmove)
 end
 
 function X:Desire(bot)

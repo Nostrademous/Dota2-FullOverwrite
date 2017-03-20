@@ -36,7 +36,7 @@ function AbilityUsageThink(nearbyEnemyHeroes, nearbyAlliedHeroes, nearbyEnemyCre
 	castMVDesire, castMVTarget = ConsiderManaVoid( abilityMV )
 
 	if castMVDesire > 0 then
-		bot:Action_UseAbilityOnEntity( abilityMV, castMVTarget )
+		gHeroVar.HeroUseAbilityOnEntity(bot,  abilityMV, castMVTarget )
 		return true
 	end
 	
@@ -53,7 +53,7 @@ end
 
 function ConsiderManaVoid(abilityMV, nearbyEnemyHeroes)
 
-	local npcBot = GetBot()
+	local bot = GetBot()
 
 	-- Make sure it's castable
 	if not abilityMV:IsFullyCastable() then 
@@ -73,11 +73,11 @@ function ConsiderManaVoid(abilityMV, nearbyEnemyHeroes)
 	local lowestManaHero = nil
 	local highestManaDiff = 0
 	for _,npcEnemy in pairs( nearbyEnemyHeroes ) do
-		if GetUnitToUnitDistance( npcBot, npcEnemy ) < nCastRange and npcEnemy:IsChanneling() then
+		if GetUnitToUnitDistance( bot, npcEnemy ) < nCastRange and npcEnemy:IsChanneling() then
 			channelingHero = npcEnemy
 		end
 		local manaDiff = npcEnemy:GetMaxMana() - npcEnemy:GetMana()
-		if GetUnitToUnitDistance( npcBot, npcEnemy ) < nCastRange and manaDiff > highestManaDiff then
+		if GetUnitToUnitDistance( bot, npcEnemy ) < nCastRange and manaDiff > highestManaDiff then
 			lowestManaHero = npcEnemy
 			highestManaDiff = manaDiff
 		end

@@ -55,22 +55,22 @@ function genericAbility:AbilityUsageThink(bot)
     
     -- CHECK BELOW TO SEE WHAT PRIORITY OF ABILITIES YOU WANT FOR THIS HERO --
     if castRDesire > 0 then
-		bot:Action_UseAbilityOnEntity( abilityR, castRTarget )
+		gHeroVar.HeroUseAbilityOnEntity(bot,  abilityR, castRTarget )
 		return true
 	end
     
     if castEDesire > 0 then
-		bot:Action_UseAbilityOnEntity( abilityE, castETarget )
+		gHeroVar.HeroUseAbilityOnEntity(bot,  abilityE, castETarget )
 		return true
 	end
 	
 	if castWDesire > 0 then
-		bot:Action_UseAbility( abilityW )
+		gHeroVar.HeroUseAbility(bot,  abilityW )
 		return true
 	end
 
 	if castQDesire > 0 then
-		bot:Action_UseAbilityOnEntity( abilityQ, castQTarget )
+		gHeroVar.HeroUseAbilityOnEntity(bot,  abilityQ, castQTarget )
 		return true
 	end
     

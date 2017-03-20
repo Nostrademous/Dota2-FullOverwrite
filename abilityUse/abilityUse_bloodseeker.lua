@@ -95,10 +95,10 @@ function queueNuke(bot, enemy, castQueue, engageDist)
                     gHeroVar.HeroPushUseAbilityOnLocation(bot, skill, enemy:GetExtrapolatedLocation(3.0))
                 end
             elseif skill:GetName() == Abilities[4] then
-                bot:ActionPush_UseAbilityOnEntity(skill, enemy)
+                gHeroVar.HeroPushUseAbilityOnEntity(bot, skill, enemy)
             end
         end
-        bot:ActionQueue_AttackUnit( enemy, false )
+        gHeroVar.HeroQueueAttackUnit( bot, enemy, false )
         bot:ActionQueue_Delay(0.01)
         return true
     end
@@ -119,12 +119,12 @@ local function UseW(bot, nearbyEnemyHeroes)
     
     local delay = abilityW:GetSpecialValueFloat("delay_plus_castpoint_tooltip")
     if #nearbyEnemyHeroes == 1 then
-        bot:Action_UseAbilityOnLocation(abilityW, nearbyEnemyHeroes[1]:GetExtrapolatedLocation(delay))
+        gHeroVar.HeroUseAbilityOnLocation(bot, abilityW, nearbyEnemyHeroes[1]:GetExtrapolatedLocation(delay))
         return true
     else
         local center = utils.GetCenter(nearbyEnemyHeroes)
         if center ~= nil then
-            bot:Action_UseAbilityOnLocation(abilityW, center)
+            gHeroVar.HeroUseAbilityOnLocation(bot, abilityW, center)
             return true
         end
     end
@@ -145,7 +145,7 @@ local function UseUlt(bot)
     end
 
     if GetUnitToUnitDistance(bsTarget, bot) < (abilityR:GetCastRange() - 100) then
-        bot:Action_UseAbilityOnEntity(abilityR, bsTarget)
+        gHeroVar.HeroUseAbilityOnEntity(bot, abilityR, bsTarget)
         return true
     end
 
@@ -156,13 +156,13 @@ local function UseQ(bot)
     if not abilityQ:IsFullyCastable() then return false end
 
     if utils.NotNilOrDead(bsTarget) and GetUnitToUnitDistance(bsTarget, bot) < (abilityQ:GetCastRange() - 100) then
-        bot:Action_UseAbilityOnEntity(abilityQ, bsTarget)
+        gHeroVar.HeroUseAbilityOnEntity(bot, abilityQ, bsTarget)
         return true
     end
     
     if bot:HasModifier("modifier_bloodseeker_bloodrage") then return false end
     
-    bot:Action_UseAbilityOnEntity(abilityQ, bot)
+    gHeroVar.HeroUseAbilityOnEntity(bot, abilityQ, bot)
     return true
 end
 

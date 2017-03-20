@@ -102,14 +102,14 @@ function bloodseekerBot:DoCleanCamp(bot, neutrals, difficulty)
     local bloodraged =  bot:HasModifier("modifier_bloodseeker_bloodrage")
     local bloodrage = bot:GetAbilityByName(SKILL_Q)
     if not bloodraged and bloodrage:IsCooldownReady() then -- bloodrage all the time
-        bot:Action_UseAbilityOnEntity(bloodrage, bot)
+        gHeroVar.HeroUseAbilityOnEntity(bot, bloodrage, bot)
     end
     table.sort(neutrals, function(n1, n2) return n1:GetHealth() < n2:GetHealth() end) -- sort by health
     local it = utils.IsItemAvailable("item_iron_talon")
     if bloodraged and it ~= nil and difficulty ~= constants.CAMP_ANCIENT then -- we are bloodraged and have an iron talon and not fighting ancients
         local it_target = neutrals[#neutrals] -- neutral with most health
         if it_target:GetHealth() > 0.5 * it_target:GetMaxHealth() then -- is it worth it? TODO: add a absolute minimum / use it on big guys only
-            bot:Action_UseAbilityOnEntity(it, it_target)
+            gHeroVar.HeroUseAbilityOnEntity(bot, it, it_target)
             return
         end
     end

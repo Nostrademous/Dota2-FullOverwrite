@@ -123,7 +123,7 @@ function X:Think(bot)
             local vec = utils.Fountain(GetTeam()) - pos
             vec = vec * 575 / #vec -- resize to 575 units (max tp range from tower)
             pos = pos + vec
-            bot:Action_UseAbilityOnLocation(tp, pos)
+            gHeroVar.HeroUseAbilityOnLocation(bot, tp, pos)
         end
     end
 

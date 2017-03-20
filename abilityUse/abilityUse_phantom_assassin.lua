@@ -48,7 +48,7 @@ function UseQ(bot)
     if (creepTarget ~= nil) then
         local trueDaggerDamage = creepTarget:GetActualIncomingDamage(daggerDamage, DAMAGE_TYPE_PHYSICAL);
         if (creepTarget:GetHealth() <= trueDaggerDamage) then
-            bot:Action_UseAbilityOnEntity(abilityQ, creepTarget);
+            gHeroVar.HeroUseAbilityOnEntity(bot, abilityQ, creepTarget);
             return true;
         end;    
     end;
@@ -57,7 +57,7 @@ function UseQ(bot)
     --Need to check if there is an actual hero scary hero within dagger range
     if (scariestHeroTarget ~= nil) then
         if (not utils.IsTargetMagicImmune(scariestHeroTarget)) then   
-            bot:Action_UseAbilityOnEntity(abilityQ, scariestHeroTarget);
+            gHeroVar.HeroUseAbilityOnEntity(bot, abilityQ, scariestHeroTarget);
             return true;
         end;
     end;
@@ -93,7 +93,7 @@ function UseW(bot)
         if (not utils.IsTargetMagicImmune(scariestHeroTarget)) then   
             local trueTotalAttackDamage = scariestHeroTarget:GetActualIncomingDamage(totalAttackDamage, DAMAGE_TYPE_PHYSICAL);
             if (scariestHeroTarget:GetHealth() <= trueTotalAttackDamage) then
-                bot:Action_UseAbilityOnEntity(abilityW, scariestHeroTarget);
+                gHeroVar.HeroUseAbilityOnEntity(bot, abilityW, scariestHeroTarget);
                 return true;
             end;
         end;
@@ -105,7 +105,7 @@ function UseW(bot)
    if (modeName == "jungling") then
         if (creepTarget ~= nil) then
             if (not utils.IsTargetMagicImmune(creepTarget)) then   
-                bot:Action_UseAbilityOnEntity(abilityW, creepTarget);
+                gHeroVar.HeroUseAbilityOnEntity(bot, abilityW, creepTarget);
                 return true;
             end;
         end; 

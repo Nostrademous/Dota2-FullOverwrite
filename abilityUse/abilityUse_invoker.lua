@@ -106,9 +106,9 @@ function prepNukeTOCMDB( bot )
                 return false
             else
                 bot:ActionPush_Delay(0.01)
-                bot:ActionPush_UseAbility(abilityQ)
-                bot:ActionPush_UseAbility(abilityW)
-                bot:ActionPush_UseAbility(abilityE)
+                gHeroVar.HeroPushUseAbility(bot, abilityQ)
+                gHeroVar.HeroPushUseAbility(bot, abilityW)
+                gHeroVar.HeroPushUseAbility(bot, abilityE)
                 return true
             end
         end
@@ -158,12 +158,12 @@ function queueNukeTOCMDB(bot, location, engageDist)
         --utils.AllChat("Too EZ for Arteezy")
         utils.myPrint("INVOKER TO CM DB combo!!!")
 
-        bot:ActionQueue_UseAbilityOnLocation(abilityTO, location)
-        bot:ActionQueue_UseAbility(abilityR) -- invoke DB
+        gHeroVar.HeroQueueUseAbilityOnLocation(bot, abilityTO, location)
+        gHeroVar.HeroQueueUseAbility(bot, abilityR) -- invoke DB
         bot:ActionQueue_Delay(liftDuration - cmLandTime + engageDist/tornadoSpeed - getHeroVar("AbilityDelay"))
-        bot:ActionQueue_UseAbilityOnLocation(abilityCM, utils.VectorTowards(bot:GetLocation(), location, 400))
+        gHeroVar.HeroQueueUseAbilityOnLocation(bot, abilityCM, utils.VectorTowards(bot:GetLocation(), location, 400))
         bot:ActionQueue_Delay(0.6)
-        bot:ActionQueue_UseAbilityOnLocation(abilityDB, location)
+        gHeroVar.HeroQueueUseAbilityOnLocation(bot, abilityDB, location)
         bot:ActionQueue_Delay(0.01)
         setHeroVar("nukeTOCMDB", false)
         return true     
@@ -233,7 +233,7 @@ function invAbility:AbilityUsageThink(bot)
             
             if not target:IsNull() and utils.IsCrowdControlled(target) then
                 utils.PartyChat("Sun Strike incoming...")
-                bot:ActionPush_UseAbilityOnLocation( ability, target:GetLocation() )
+                gHeroVar.HeroPushUseAbilityOnLocation(bot,  ability, target:GetLocation() )
                 return true
             end
             
@@ -276,12 +276,12 @@ function invAbility:AbilityUsageThink(bot)
         if castTODesire > 0 then
             --utils.myPrint("I want to Tornado")
             if not abilityTO:IsHidden() then
-                bot:ActionPush_UseAbilityOnLocation( abilityTO, castTOLocation )
+                gHeroVar.HeroPushUseAbilityOnLocation(bot,  abilityTO, castTOLocation )
                 return true
             elseif abilityR:IsFullyCastable() then
                 bot:Action_ClearActions(true)
                 invokeTornado(bot)
-                bot:ActionQueue_UseAbilityOnLocation( abilityTO, castTOLocation )
+                gHeroVar.HeroQueueUseAbilityOnLocation(bot,  abilityTO, castTOLocation )
                 return true
             end
         end
@@ -289,12 +289,12 @@ function invAbility:AbilityUsageThink(bot)
         if castCMDesire > 0 then
             --utils.myPrint("I want to Chaos Meteor")
             if not abilityCM:IsHidden() then
-                bot:ActionPush_UseAbilityOnLocation( abilityCM, castCMLocation )
+                gHeroVar.HeroPushUseAbilityOnLocation(bot,  abilityCM, castCMLocation )
                 return true
             elseif abilityR:IsFullyCastable() then
                 bot:Action_ClearActions(true)
                 invokeChaosMeteor(bot)
-                bot:ActionQueue_UseAbilityOnLocation( abilityCM, castCMLocation )
+                gHeroVar.HeroQueueUseAbilityOnLocation(bot,  abilityCM, castCMLocation )
                 return true
             end
         end
@@ -302,12 +302,12 @@ function invAbility:AbilityUsageThink(bot)
         if castEMPDesire > 0 then
             --utils.myPrint("I want to EMP")
             if not abilityEMP:IsHidden() then
-                bot:ActionPush_UseAbilityOnLocation( abilityEMP, castEMPLocation )
+                gHeroVar.HeroPushUseAbilityOnLocation(bot,  abilityEMP, castEMPLocation )
                 return true
             elseif abilityR:IsFullyCastable() then
                 bot:Action_ClearActions(true)
                 invokeEMP(bot)
-                bot:ActionQueue_UseAbilityOnLocation( abilityEMP, castEMPLocation )
+                gHeroVar.HeroQueueUseAbilityOnLocation(bot,  abilityEMP, castEMPLocation )
                 return true
             end
         end
@@ -315,12 +315,12 @@ function invAbility:AbilityUsageThink(bot)
         if castDBDesire > 0 then
             --utils.myPrint("I want to Deafening Blast")
             if not abilityDB:IsHidden() then
-                bot:ActionPush_UseAbilityOnLocation( abilityDB, castDBLocation )
+                gHeroVar.HeroPushUseAbilityOnLocation(bot,  abilityDB, castDBLocation )
                 return true
             elseif abilityR:IsFullyCastable() then
                 bot:Action_ClearActions(true)
                 invokeDeafeningBlast(bot)
-                bot:ActionQueue_UseAbilityOnLocation( abilityDB, castDBLocation )
+                gHeroVar.HeroQueueUseAbilityOnLocation(bot,  abilityDB, castDBLocation )
                 return true
             end
         end
@@ -328,12 +328,12 @@ function invAbility:AbilityUsageThink(bot)
         if castCSDesire > 0 then
             --utils.myPrint("I want to Cold Snap")
             if not abilityCS:IsHidden() then
-                bot:ActionPush_UseAbilityOnEntity( abilityCS, castCSTarget )
+                gHeroVar.HeroPushUseAbilityOnEntity(bot,  abilityCS, castCSTarget )
                 return true
             elseif abilityR:IsFullyCastable() then
                 bot:Action_ClearActions(true)
                 invokeColdSnap(bot)
-                bot:ActionQueue_UseAbilityOnEntity( abilityCS, castCSTarget )
+                gHeroVar.HeroQueueUseAbilityOnEntity(bot,  abilityCS, castCSTarget )
                 return true
             end
         end
@@ -341,12 +341,12 @@ function invAbility:AbilityUsageThink(bot)
         if castSSDesire > 0 then
             --utils.myPrint("I want to Sunstrike")
             if not abilitySS:IsHidden() then
-                bot:ActionPush_UseAbilityOnLocation( abilitySS, castSSLocation )
+                gHeroVar.HeroPushUseAbilityOnLocation(bot,  abilitySS, castSSLocation )
                 return true
             elseif abilityR:IsFullyCastable() then
                 bot:Action_ClearActions(true)
                 invokeSunStrike(bot)
-                bot:ActionQueue_UseAbilityOnLocation( abilitySS, castSSLocation )
+                gHeroVar.HeroQueueUseAbilityOnLocation(bot,  abilitySS, castSSLocation )
                 return true
             end
         end
@@ -354,12 +354,12 @@ function invAbility:AbilityUsageThink(bot)
         if castACDesire > 0 then
             --utils.myPrint("I want to Alacrity")
             if not abilityAC:IsHidden() then
-                bot:ActionPush_UseAbilityOnEntity( abilityAC, castACTarget )
+                gHeroVar.HeroPushUseAbilityOnEntity(bot,  abilityAC, castACTarget )
                 return true
             elseif abilityR:IsFullyCastable() then
                 bot:Action_ClearActions(true)
                 invokeAlacrity(bot)
-                bot:ActionQueue_UseAbilityOnEntity( abilityAC, castACTarget )
+                gHeroVar.HeroQueueUseAbilityOnEntity(bot,  abilityAC, castACTarget )
                 return true
             end
         end
@@ -367,12 +367,12 @@ function invAbility:AbilityUsageThink(bot)
         if castFSDesire > 0 then
             --utils.myPrint("I want to Forge Spirit")
             if not abilityFS:IsHidden() then
-                bot:ActionPush_UseAbility( abilityFS )
+                gHeroVar.HeroPushUseAbility(bot,  abilityFS )
                 return true
             elseif abilityR:IsFullyCastable() then
                 bot:Action_ClearActions(true)
                 invokeForgedSpirit(bot)
-                bot:ActionQueue_UseAbility( abilityFS )
+                gHeroVar.HeroQueueUseAbility(bot,  abilityFS )
                 return true
             end
         end
@@ -380,14 +380,14 @@ function invAbility:AbilityUsageThink(bot)
         if castGWDesire > 0 then
             --utils.myPrint("I want to Ghost Walk")
             if not abilityGW:IsHidden() then
-                bot:ActionPush_Delay( 0.1 )
-                bot:ActionPush_UseAbility( abilityGW )
+                bot:ActionPush_Delay( 0.25 )
+                gHeroVar.HeroPushUseAbility(bot,  abilityGW )
                 return true
             elseif abilityR:IsFullyCastable() then
                 bot:Action_ClearActions(true)
                 invokeGhostWalk(bot)
-                bot:ActionQueue_UseAbility( abilityGW )
-                bot:ActionQueue_Delay( 0.1 )
+                gHeroVar.HeroQueueUseAbility(bot,  abilityGW )
+                bot:ActionQueue_Delay( 0.25 )
                 return true
             end
         end
@@ -395,14 +395,14 @@ function invAbility:AbilityUsageThink(bot)
         if castIWDesire > 0 then
             --utils.myPrint("I want to Ice Wall")
             if not abilityIW:IsHidden() then
-                bot:ActionPush_UseAbility( abilityIW )
+                gHeroVar.HeroPushUseAbility(bot,  abilityIW )
                 if castIWFacing ~= 0 then
                     local currentFacing = bot:GetFacing() -- returns 0 - 359 degrees. East is 0, North is 90
                     local desiredFacing = (currentFacing + castIWFacing) % 360
                     local myLoc = bot:GetLocation()
                     local yDisp = utils.Round(math.sin(math.rad(desiredFacing)), 0)
                     local xDisp = utils.Round(math.cos(math.rad(desiredFacing)), 0)
-                    bot:ActionPush_MoveToLocation( utils.VectorTowards(myLoc, myLoc+Vector( xDisp, yDisp, 0 ), 50) )
+                    gHeroVar.HeroPushMoveToLocation(bot, utils.VectorTowards(myLoc, myLoc+Vector( xDisp, yDisp, 0 ), 50) )
                 end
                 return true
             elseif abilityR:IsFullyCastable() then
@@ -415,9 +415,9 @@ function invAbility:AbilityUsageThink(bot)
                     local myLoc = bot:GetLocation()
                     local yDisp = utils.Round(math.sin(math.rad(desiredFacing)), 0)
                     local xDisp = utils.Round(math.cos(math.rad(desiredFacing)), 0)
-                    bot:ActionQueue_MoveToLocation( utils.VectorTowards(myLoc, myLoc+Vector( xDisp, yDisp, 0 ), 50) )
+                    gHeroVar.HeroQueueMoveToLocation(bot, utils.VectorTowards(myLoc, myLoc+Vector( xDisp, yDisp, 0 ), 50) )
                 end
-                bot:ActionQueue_UseAbility( abilityIW )
+                gHeroVar.HeroQueueUseAbility(bot,  abilityIW )
                 return true
             end
         end
@@ -478,10 +478,10 @@ function invokeTornado(bot)
     utils.myPrint("invoking Tornado")
 
     bot:ActionPush_Delay(0.01)
-    bot:ActionPush_UseAbility( abilityR )
-    bot:ActionPush_UseAbility( abilityW )
-    bot:ActionPush_UseAbility( abilityQ )
-    bot:ActionPush_UseAbility( abilityW )
+    gHeroVar.HeroPushUseAbility(bot,  abilityR )
+    gHeroVar.HeroPushUseAbility(bot,  abilityW )
+    gHeroVar.HeroPushUseAbility(bot,  abilityQ )
+    gHeroVar.HeroPushUseAbility(bot,  abilityW )
 
     return true
 end
@@ -495,10 +495,10 @@ function invokeChaosMeteor(bot)
     utils.myPrint("invoking Chaos Meteor")
 
     bot:ActionPush_Delay(0.01)
-    bot:ActionPush_UseAbility( abilityR )
-    bot:ActionPush_UseAbility( abilityE )
-    bot:ActionPush_UseAbility( abilityW )
-    bot:ActionPush_UseAbility( abilityE )
+    gHeroVar.HeroPushUseAbility(bot,  abilityR )
+    gHeroVar.HeroPushUseAbility(bot,  abilityE )
+    gHeroVar.HeroPushUseAbility(bot,  abilityW )
+    gHeroVar.HeroPushUseAbility(bot,  abilityE )
 
     return true
 end
@@ -512,10 +512,10 @@ function invokeDeafeningBlast(bot)
     utils.myPrint("invoking Deafening Blast")
 
     bot:ActionPush_Delay(0.01)
-    bot:ActionPush_UseAbility( abilityR )
-    bot:ActionPush_UseAbility( abilityQ )
-    bot:ActionPush_UseAbility( abilityW )
-    bot:ActionPush_UseAbility( abilityE )
+    gHeroVar.HeroPushUseAbility(bot,  abilityR )
+    gHeroVar.HeroPushUseAbility(bot,  abilityQ )
+    gHeroVar.HeroPushUseAbility(bot,  abilityW )
+    gHeroVar.HeroPushUseAbility(bot,  abilityE )
     
     return true
 end
@@ -529,10 +529,10 @@ function invokeForgedSpirit(bot)
     utils.myPrint("invoking Forged Spirit")
 
     bot:ActionPush_Delay(0.01)
-    bot:ActionPush_UseAbility( abilityR )
-    bot:ActionPush_UseAbility( abilityE )
-    bot:ActionPush_UseAbility( abilityQ )
-    bot:ActionPush_UseAbility( abilityE )
+    gHeroVar.HeroPushUseAbility(bot,  abilityR )
+    gHeroVar.HeroPushUseAbility(bot,  abilityE )
+    gHeroVar.HeroPushUseAbility(bot,  abilityQ )
+    gHeroVar.HeroPushUseAbility(bot,  abilityE )
 
     return true
 end
@@ -546,10 +546,10 @@ function invokeIceWall(bot)
     utils.myPrint("invoking Ice Wall")
 
     bot:ActionPush_Delay(0.01)
-    bot:ActionPush_UseAbility( abilityR )
-    bot:ActionPush_UseAbility( abilityQ )
-    bot:ActionPush_UseAbility( abilityQ )
-    bot:ActionPush_UseAbility( abilityE )
+    gHeroVar.HeroPushUseAbility(bot,  abilityR )
+    gHeroVar.HeroPushUseAbility(bot,  abilityQ )
+    gHeroVar.HeroPushUseAbility(bot,  abilityQ )
+    gHeroVar.HeroPushUseAbility(bot,  abilityE )
     return true
 end
 
@@ -562,10 +562,10 @@ function invokeEMP(bot)
     utils.myPrint("invoking EMP")
 
     bot:ActionPush_Delay(0.01)
-    bot:ActionPush_UseAbility( abilityR )
-    bot:ActionPush_UseAbility( abilityW )
-    bot:ActionPush_UseAbility( abilityW )
-    bot:ActionPush_UseAbility( abilityW )
+    gHeroVar.HeroPushUseAbility(bot,  abilityR )
+    gHeroVar.HeroPushUseAbility(bot,  abilityW )
+    gHeroVar.HeroPushUseAbility(bot,  abilityW )
+    gHeroVar.HeroPushUseAbility(bot,  abilityW )
 
     return true
 end
@@ -579,10 +579,10 @@ function invokeColdSnap(bot)
     utils.myPrint("invoking Cold Snap")
     
     bot:ActionPush_Delay(0.01)
-    bot:ActionPush_UseAbility( abilityR )
-    bot:ActionPush_UseAbility( abilityQ )
-    bot:ActionPush_UseAbility( abilityQ )
-    bot:ActionPush_UseAbility( abilityQ )
+    gHeroVar.HeroPushUseAbility(bot,  abilityR )
+    gHeroVar.HeroPushUseAbility(bot,  abilityQ )
+    gHeroVar.HeroPushUseAbility(bot,  abilityQ )
+    gHeroVar.HeroPushUseAbility(bot,  abilityQ )
 
     return true
 end
@@ -596,10 +596,10 @@ function invokeSunStrike(bot)
     utils.myPrint("invoking Sun Strike")
 
     bot:ActionPush_Delay(0.01)
-    bot:ActionPush_UseAbility( abilityR )
-    bot:ActionPush_UseAbility( abilityE )
-    bot:ActionPush_UseAbility( abilityE )
-    bot:ActionPush_UseAbility( abilityE )
+    gHeroVar.HeroPushUseAbility(bot,  abilityR )
+    gHeroVar.HeroPushUseAbility(bot,  abilityE )
+    gHeroVar.HeroPushUseAbility(bot,  abilityE )
+    gHeroVar.HeroPushUseAbility(bot,  abilityE )
 
     return true
 end
@@ -613,10 +613,10 @@ function invokeAlacrity(bot)
     utils.myPrint("invoking Alacrity")
 
     bot:ActionPush_Delay(0.01)
-    bot:ActionPush_UseAbility( abilityR )
-    bot:ActionPush_UseAbility( abilityW )
-    bot:ActionPush_UseAbility( abilityE )
-    bot:ActionPush_UseAbility( abilityW )
+    gHeroVar.HeroPushUseAbility(bot,  abilityR )
+    gHeroVar.HeroPushUseAbility(bot,  abilityW )
+    gHeroVar.HeroPushUseAbility(bot,  abilityE )
+    gHeroVar.HeroPushUseAbility(bot,  abilityW )
 
     return true
 end
@@ -630,10 +630,10 @@ function invokeGhostWalk(bot)
     utils.myPrint("invoking Ghost Walk")
 
     bot:ActionPush_Delay(0.01)
-    bot:ActionPush_UseAbility( abilityR )
-    bot:ActionPush_UseAbility( abilityQ )
-    bot:ActionPush_UseAbility( abilityW )
-    bot:ActionPush_UseAbility( abilityQ )
+    gHeroVar.HeroPushUseAbility(bot,  abilityR )
+    gHeroVar.HeroPushUseAbility(bot,  abilityQ )
+    gHeroVar.HeroPushUseAbility(bot,  abilityW )
+    gHeroVar.HeroPushUseAbility(bot,  abilityQ )
 
     return true
 end
@@ -641,9 +641,9 @@ end
 function tripleExortBuff(bot)
     if exortTrained() then
         bot:ActionPush_Delay(0.01)
-        bot:ActionPush_UseAbility( abilityE )
-        bot:ActionPush_UseAbility( abilityE )
-        bot:ActionPush_UseAbility( abilityE )
+        gHeroVar.HeroPushUseAbility(bot,  abilityE )
+        gHeroVar.HeroPushUseAbility(bot,  abilityE )
+        gHeroVar.HeroPushUseAbility(bot,  abilityE )
         return true
     end
     return false
@@ -652,9 +652,9 @@ end
 function tripleQuasBuff(bot)
     if quasTrained() then
         bot:ActionPush_Delay(0.01)
-        bot:ActionPush_UseAbility( abilityQ )
-        bot:ActionPush_UseAbility( abilityQ )
-        bot:ActionPush_UseAbility( abilityQ )
+        gHeroVar.HeroPushUseAbility(bot,  abilityQ )
+        gHeroVar.HeroPushUseAbility(bot,  abilityQ )
+        gHeroVar.HeroPushUseAbility(bot,  abilityQ )
         return true
     end
     return false
@@ -663,9 +663,9 @@ end
 function tripleWexBuff(bot)
     if wexTrained() then
         bot:ActionPush_Delay(0.01)
-        bot:ActionPush_UseAbility( abilityW )
-        bot:ActionPush_UseAbility( abilityW )
-        bot:ActionPush_UseAbility( abilityW )
+        gHeroVar.HeroPushUseAbility(bot,  abilityW )
+        gHeroVar.HeroPushUseAbility(bot,  abilityW )
+        gHeroVar.HeroPushUseAbility(bot,  abilityW )
         return true
     end
     return false

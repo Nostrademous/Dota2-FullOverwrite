@@ -54,19 +54,19 @@ function genericAbility:AbilityUsageThink(bot)
 	local castRDesire, castRTarget  = ConsiderR()
     
     if castRDesire > 0 then
-		bot:Action_UseAbilityOnEntity( abilityR, castRTarget )
+		gHeroVar.HeroUseAbilityOnEntity(bot,  abilityR, castRTarget )
 		return true
 	end
 	
 	if castWDesire > 0 then
-		bot:Action_UseAbility( abilityW )
+		gHeroVar.HeroUseAbility(bot,  abilityW )
 		return true
 	end
 
 	if castQDesire > 0 then
         bot:Action_ClearActions(false)
         bot:ActionPush_Delay(0.25)
-		bot:ActionPush_UseAbilityOnEntity( abilityQ, castQTarget )
+		gHeroVar.HeroPushUseAbilityOnEntity(bot,  abilityQ, castQTarget )
 		return true
 	end
     

@@ -107,7 +107,7 @@ function drowRangerBot:DoCleanCamp(bot, neutrals, difficulty)
         local slowed =  neutral:HasModifier("modifier_drow_ranger_frost_arrows_slow")
 
         if not (slowed) then
-            bot:Action_UseAbilityOnEntity(frostArrow, neutral)
+            gHeroVar.HeroUseAbilityOnEntity(bot, frostArrow, neutral)
         end
 
         gHeroVar.HeroAttackUnit(bot, neutral, true)

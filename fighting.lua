@@ -39,7 +39,7 @@ function GlobalFindTarget(heroToEnemyDist)
 end
 
 function FindTarget(listEnemies, listEnemyTowers, listAlliedTowers, listEnemyCreeps, listAlliedCreeps)
-	local npcBot = GetBot()
+	local bot = GetBot()
 
 	local mindis = 100000
 	local candidate = nil
@@ -64,18 +64,18 @@ function FindTarget(listEnemies, listEnemyTowers, listAlliedTowers, listEnemyCre
     
     local deadBaddies = {}
     
-    local lvl = npcBot:GetLevel()
+    local lvl = bot:GetLevel()
 	for _, enemy in pairs(listEnemies) do
 		if utils.NotNilOrDead(enemy) and GetUnitToLocationDistance(enemy, utils.Fountain(utils.GetOtherTeam())) > 1350 then
             
             -- get our stun/slow duration
-            local sd = npcBot:GetStunDuration(true) + 0.5*npcBot:GetSlowDuration(true)
+            local sd = bot:GetStunDuration(true) + 0.5*bot:GetSlowDuration(true)
             
             -- get stun/slow duration of allies that can reach us during my stun/slow duration
             local allyList = GetUnitList(UNIT_LIST_ALLIED_HEROES)
             local goodStunDuration = sd
             for _, ally in pairs(allyList) do
-                if ally:GetPlayerID() ~= npcBot:GetPlayerID() then -- remove ourselves from consideration
+                if ally:GetPlayerID() ~= bot:GetPlayerID() then -- remove ourselves from consideration
                     local timeToLocation = GetUnitToUnitDistance(enemy, ally)/ally:GetCurrentMovementSpeed()
                     if utils.NotNilOrDead(Ally) and timeToLocation <= sd then
                         goodStunDuration = goodStunDuration + ally:GetStunDuration(true) + 0.5*ally:GetSlowDuration(true)
@@ -139,7 +139,7 @@ function FindTarget(listEnemies, listEnemyTowers, listAlliedTowers, listEnemyCre
                         local dmgTime = badfightLength - distance/enemy2.MoveSpeed
 						badHealthPool = badHealthPool + enemy2.Health
                         if utils.ValidTarget(enemy2) then
-                            badDmg = badDmg + enemy2.Obj:GetEstimatedDamageToTarget(true, npcBot, dmgTime, DAMAGE_TYPE_ALL)
+                            badDmg = badDmg + enemy2.Obj:GetEstimatedDamageToTarget(true, bot, dmgTime, DAMAGE_TYPE_ALL)
                         end
 					end
 				end

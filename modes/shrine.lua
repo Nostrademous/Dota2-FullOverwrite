@@ -84,7 +84,7 @@ function X:Think(bot)
 
                 -- we can move to "location"
                 if utils.CheckFlag(behavior, ABILITY_BEHAVIOR_POINT) then
-                    bot:Action_UseAbilityOnLocation(mvAbility[1], newLoc)
+                    gHeroVar.HeroUseAbilityOnLocation(bot, mvAbility[1], newLoc)
                     return
                 -- we can move to a "unit"
                 elseif utils.CheckFlag(behavior, ABILITY_BEHAVIOR_UNIT_TARGET) then
@@ -96,7 +96,7 @@ function X:Think(bot)
                             if #viableTargets > 1 then
                                 table.sort(viableTargets, function(n1,n2) return GetUnitToUnitDistance(bot, n1) > GetUnitToUnitDistance(bot, n2) end)
                             end
-                            bot:Action_UseAbilityOnEntity(mvAbility[1], viableTargets[1])
+                            gHeroVar.HeroUseAbilityOnEntity(bot, mvAbility[1], viableTargets[1])
                             return
                         end
                     end
@@ -107,7 +107,7 @@ function X:Think(bot)
                             if #viableTargets > 1 then
                                 table.sort(viableTargets, function(n1,n2) return GetUnitToUnitDistance(bot, n1) > GetUnitToUnitDistance(bot, n2) end)
                             end
-                            bot:Action_UseAbilityOnEntity(mvAbility[1], viableTargets[1])
+                            gHeroVar.HeroUseAbilityOnEntity(bot, mvAbility[1], viableTargets[1])
                             return
                         end
                     end
@@ -120,7 +120,7 @@ function X:Think(bot)
             
             if item_usage.UseMovementItems(hShrine:GetLocation()) then return end
             
-            bot:Action_MoveToLocation(hShrine:GetLocation())
+            gHeroVar.HeroMoveToLocation(bot, hShrine:GetLocation())
             
             return
         elseif bot.shrineUseMode ~= constants.SHRINE_USE then

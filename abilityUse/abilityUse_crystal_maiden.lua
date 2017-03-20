@@ -123,9 +123,9 @@ function cmAbility:queueNuke(bot, enemy, castQueue, engageDist)
                     gHeroVar.HeroPushUseAbilityOnLocation(bot, skill, enemy:GetExtrapolatedLocation(0.95))
                 end
             elseif skill:GetName() == Abilities[2] then
-                bot:ActionPush_UseAbilityOnEntity(skill, enemy)
+                gHeroVar.HeroPushUseAbilityOnEntity(bot, skill, enemy)
             elseif skill:GetName() == Abilities[4] then
-                bot:ActionPush_UseAbility(skill)
+                gHeroVar.HeroPushUseAbility(bot, skill)
             end
         end
         return true
@@ -176,17 +176,17 @@ function cmAbility:AbilityUsageThink(bot)
 	local castRDesire                 = ConsiderR()
     
     if castQDesire > 0 then
-        bot:Action_UseAbilityOnLocation( abilityQ, castQLocation )
+        gHeroVar.HeroUseAbilityOnLocation(bot,  abilityQ, castQLocation )
         return true
     end
     
     if castWDesire > 0 then
-        bot:Action_UseAbilityOnEntity( abilityW, castWTarget )
+        gHeroVar.HeroUseAbilityOnEntity(bot,  abilityW, castWTarget )
         return true
     end
     
     if castRDesire > 0 then
-        bot:Action_UseAbility( abilityR )
+        gHeroVar.HeroUseAbility(bot,  abilityR )
         return true
     end
     

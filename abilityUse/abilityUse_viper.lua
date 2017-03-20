@@ -101,9 +101,9 @@ function viperAbility:queueNuke(bot, enemy, castQueue, engageDist)
             local skill = castQueue[i]
 
             if skill:GetName() == Abilities[1] then
-                bot:ActionPush_UseAbilityOnEntity(skill, enemy)
+                gHeroVar.HeroPushUseAbilityOnEntity(bot, skill, enemy)
             elseif skill:GetName() == Abilities[4] then
-                bot:ActionPush_UseAbilityOnEntity(skill, enemy)
+                gHeroVar.HeroPushUseAbilityOnEntity(bot, skill, enemy)
             end
         end
         return true
@@ -165,7 +165,7 @@ function UseQ(bot, nearbyEnemyHeroes)
     local target, _ = utils.GetWeakestHero(bot, bot:GetAttackRange()+bot:GetBoundingRadius(), nearbyEnemyHeroes)
     if target ~= nil and manaRatio > 0.4 and GetUnitToUnitDistance(bot, target) then
         utils.TreadCycle(bot, constants.INTELLIGENCE)
-        bot:Action_UseAbilityOnEntity(abilityQ, target)
+        gHeroVar.HeroUseAbilityOnEntity(bot, abilityQ, target)
         return true
     end
     --]]
@@ -184,7 +184,7 @@ function UseQ(bot, nearbyEnemyHeroes)
 
     if GetUnitToUnitDistance(bot, target) < (abilityQ:GetCastRange() + bot:GetBoundingRadius()) then
         utils.TreadCycle(bot, constants.INTELLIGENCE)
-        bot:Action_UseAbilityOnEntity(abilityQ, target)
+        gHeroVar.HeroUseAbilityOnEntity(bot, abilityQ, target)
         return true
     end
 
@@ -224,7 +224,7 @@ function UseUlt(bot)
 
     if GetUnitToUnitDistance(target, bot) < (abilityR:GetCastRange() + 100) then
         utils.TreadCycle(bot, constants.INTELLIGENCE)
-        bot:Action_UseAbilityOnEntity(abilityR, target)
+        gHeroVar.HeroUseAbilityOnEntity(bot, abilityR, target)
         return true
     end
 

@@ -132,7 +132,7 @@ local function queueNuke(bot, enemy, castQueue, engageDist)
                     gHeroVar.HeroPushUseAbilityOnLocation(bot, skill, enemy:GetExtrapolatedLocation(0.45 + dist/1200))
                 end
             elseif skill:GetName() == "lina_laguna_blade" then
-                bot:ActionPush_UseAbilityOnEntity(skill, enemy)
+                gHeroVar.HeroPushUseAbilityOnEntity(bot, skill, enemy)
             end
         end
         return true
@@ -198,19 +198,19 @@ function linaAbility:AbilityUsageThink(bot)
     if castLBDesire > castLSADesire and 
         castLBDesire > castDSDesire then
         --utils.myPrint( "I Desired a LB Hit" )
-        bot:Action_UseAbilityOnEntity( abilityR, castLBTarget )
+        gHeroVar.HeroUseAbilityOnEntity(bot,  abilityR, castLBTarget )
         return true
     end
 
     if castLSADesire > 0 then
         --utils.myPrint( "I Desired a LSA Hit" )
-        bot:Action_UseAbilityOnLocation( abilityW, castLSALocation )
+        gHeroVar.HeroUseAbilityOnLocation(bot,  abilityW, castLSALocation )
         return true
     end
 
     if castDSDesire > 0 then
         --utils.myPrint( "I Desired a DS Hit" )
-        bot:Action_UseAbilityOnLocation( abilityQ, castDSLocation )
+        gHeroVar.HeroUseAbilityOnLocation(bot,  abilityQ, castDSLocation )
         return true
     end
 

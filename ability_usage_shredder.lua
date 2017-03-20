@@ -104,7 +104,7 @@ local function UseW(Enemy)
 	end
 	
 	if bestTree ~= nil then
-		bot:Action_UseAbilityOnLocation(ability, GetTreeLocation(bestTree))
+		gHeroVar.HeroUseAbilityOnLocation(bot, ability, GetTreeLocation(bestTree))
 		return true
 	end
 	
@@ -159,10 +159,10 @@ local function UseUlt(Enemy)
 	local rod = utils.IsItemAvailable("item_rod_of_atos")
 	if rod ~= nil and rod:IsFullyCastable() and rod:GetCastRange() < GetUnitToUnitDistance(bot, enemy) then
 		dest = enemy:GetLocation()
-		bot:Action_UseAbilityOnEntity(rod, enemy);
+		gHeroVar.HeroUseAbilityOnEntity(bot, rod, enemy);
 	end
 	
-	bot:Action_UseAbilityOnLocation(ability, dest);
+	gHeroVar.HeroUseAbilityOnLocation(bot, ability, dest);
 	
 	setHerovar("UltTimer", DotaTime())
 	setHeroVar("Ulted", true)

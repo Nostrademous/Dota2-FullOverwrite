@@ -104,7 +104,7 @@ function lcBot:DoCleanCamp(bot, neutrals, difficulty)
     if it ~= nil and difficulty ~= constants.CAMP_ANCIENT then -- we have an iron talon and not fighting ancients
         local it_target = neutrals[#neutrals] -- neutral with most health
         if it_target:GetHealth() > 0.5 * it_target:GetMaxHealth() then -- is it worth it? TODO: add a absolute minimum / use it on big guys only
-            bot:Action_UseAbilityOnEntity(it, it_target)
+            gHeroVar.HeroUseAbilityOnEntity(bot, it, it_target)
             return
         end
     end

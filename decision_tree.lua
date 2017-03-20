@@ -637,11 +637,11 @@ function X:DoUseShrine(bot)
 
     if botShrineMode then
         if shrine and GetUnitToUnitDistance(bot, shrine) > 300 then
-            bot:Action_MoveToLocation(shrine:GetLocation())
+            gHeroVar.HeroMoveToLocation(bot, shrine:GetLocation())
             local mvAbility = getHeroVar("HasMovementAbility")
             if mvAbility and mvAbility[1]:IsFullyCastable() then
                 local newLoc = utils.VectorTowards(bot:GetLocation(), shrine:GetLocation(), mvAbility[2])
-                bot:ActionPush_UseAbilityOnLocation(mvAbility[1], newLoc)
+                gHeroVar.HeroPushUseAbilityOnLocation(bot, mvAbility[1], newLoc)
             end
             return true
         elseif botShrineMode[1] ~= constants.SHRINE_USE then

@@ -90,7 +90,7 @@ function drAbility:queueNuke(bot, enemy, castQueue, engageDist)
             local skill = castQueue[i]
 
             if skill:GetName() == Abilities[1] then
-                bot:ActionPush_UseAbilityOnEntity(skill, enemy)
+                gHeroVar.HeroPushUseAbilityOnEntity(bot, skill, enemy)
             elseif skill:GetName() == Abilities[2] then
                 gHeroVar.HeroPushUseAbilityOnLocation(skill, enemy)
             end
@@ -111,7 +111,7 @@ local function UseQ(bot)
     local target, _ = utils.GetWeakestHero(bot, bot:GetAttackRange()+bot:GetBoundingRadius(), nearbyEnemyHeroes)
     if target ~= nil and manaRatio > 0.4 and GetUnitToUnitDistance(bot, target) then
         utils.TreadCycle(bot, constants.INTELLIGENCE)
-        bot:Action_UseAbilityOnEntity(ability, target)
+        gHeroVar.HeroUseAbilityOnEntity(bot, ability, target)
         return true
     end
     --]]
@@ -126,7 +126,7 @@ local function UseQ(bot)
 
     if GetUnitToUnitDistance(bot, target) < (abilityQ:GetCastRange() + bot:GetBoundingRadius()) then
         utils.TreadCycle(bot, constants.INTELLIGENCE)
-        bot:Action_UseAbilityOnEntity(abilityQ, target)
+        gHeroVar.HeroUseAbilityOnEntity(bot, abilityQ, target)
         return true
     end
 
@@ -148,7 +148,7 @@ local function UseW(bot, nearbyEnemyHeroes)
             if not enemy:IsMagicImmune() then
                 local gustDelay = abilityW:GetCastPoint() + GetUnitToUnitDistance(bot, enemy)/wave_speed
                 utils.TreadCycle(bot, constants.INTELLIGENCE)
-                bot:Action_UseAbilityOnLocation(abilityW, enemy:GetExtrapolatedLocation(gustDelay))
+                gHeroVar.HeroUseAbilityOnLocation(bot, abilityW, enemy:GetExtrapolatedLocation(gustDelay))
                 return true
             end
         end
@@ -160,7 +160,7 @@ local function UseW(bot, nearbyEnemyHeroes)
             if GetUnitToUnitDistance(bot, enemy) < 150 and (not enemy:IsMagicImmune()) then
                 local gustDelay = abilityW:GetCastPoint() + GetUnitToUnitDistance(bot, enemy)/wave_speed
                 utils.TreadCycle(bot, constants.INTELLIGENCE)
-                bot:Action_UseAbilityOnLocation(abilityW, enemy:GetExtrapolatedLocation(gustDelay))
+                gHeroVar.HeroUseAbilityOnLocation(bot, abilityW, enemy:GetExtrapolatedLocation(gustDelay))
                 return true
             end
         end

@@ -483,14 +483,14 @@ end
 
 -- CONTRIBUTOR: Function below was coded by Platinum_dota2
 function U.AreTreesBetweenMeAndLoc(loc, lineOfSightThickness)
-    local npcBot = GetBot()
+    local bot = GetBot()
 
-    local trees = npcBot:GetNearbyTrees(Min(1600, GetUnitToLocationDistance(npcBot, loc)))
+    local trees = bot:GetNearbyTrees(Min(1600, GetUnitToLocationDistance(bot, loc)))
 
     --check if there are trees between us and location with line-of-sight thickness
     for _, tree in ipairs(trees) do
         local x = GetTreeLocation(tree)
-        local y = npcBot:GetLocation()
+        local y = bot:GetLocation()
         local z = loc
 
         if x ~= y then
@@ -508,7 +508,7 @@ function U.AreTreesBetweenMeAndLoc(loc, lineOfSightThickness)
 
             local d = math.abs((a*z.x + b*z.y + c)/math.sqrt(a*a + b*b))
             if d <= lineOfSightThickness and
-                GetUnitToLocationDistance(npcBot, loc) > (U.GetDistance(x,loc) + 50) then
+                GetUnitToLocationDistance(bot, loc) > (U.GetDistance(x,loc) + 50) then
                 return true
             end
         end
@@ -518,15 +518,15 @@ end
 
 -- CONTRIBUTOR: Function below was based off above function by Platinum_dota2
 function U.GetEnemyCreepsBetweenMeAndLoc(loc, lineOfSightThickness)
-    local npcBot = GetBot()
+    local bot = GetBot()
     local fCreepList = {}
 
-    local eCreeps = npcBot:GetNearbyCreeps(Min(1600, GetUnitToLocationDistance(npcBot, loc)), true)
+    local eCreeps = bot:GetNearbyCreeps(Min(1600, GetUnitToLocationDistance(bot, loc)), true)
 
     --check if there are enemy creeps between us and location with line-of-sight thickness
     for _, eCreep in ipairs(eCreeps) do
         local x = eCreep:GetLocation()
-        local y = npcBot:GetLocation()
+        local y = bot:GetLocation()
         local z = loc
 
         if x ~= y then
@@ -544,7 +544,7 @@ function U.GetEnemyCreepsBetweenMeAndLoc(loc, lineOfSightThickness)
 
             local d = math.abs((a*z.x + b*z.y + c)/math.sqrt(a*a + b*b))
             if d <= lineOfSightThickness and
-                GetUnitToLocationDistance(npcBot, loc) > (U.GetDistance(x,loc) + 50) then
+                GetUnitToLocationDistance(bot, loc) > (U.GetDistance(x,loc) + 50) then
                 table.insert(fCreepList, eCreep)
             end
         end
@@ -558,15 +558,15 @@ end
 
 -- CONTRIBUTOR: Function below was based off above function by Platinum_dota2
 function U.GetFriendlyCreepsBetweenMeAndLoc(loc, lineOfSightThickness)
-    local npcBot = GetBot()
+    local bot = GetBot()
     local fCreepList = {}
 
-    local fCreeps = npcBot:GetNearbyCreeps(Min(1600, GetUnitToLocationDistance(npcBot, loc)), false)
+    local fCreeps = bot:GetNearbyCreeps(Min(1600, GetUnitToLocationDistance(bot, loc)), false)
 
     --check if there are enemy creeps between us and location with line-of-sight thickness
     for _, fCreep in ipairs(fCreeps) do
         local x = fCreep:GetLocation()
-        local y = npcBot:GetLocation()
+        local y = bot:GetLocation()
         local z = loc
 
         if x ~= y then
@@ -584,7 +584,7 @@ function U.GetFriendlyCreepsBetweenMeAndLoc(loc, lineOfSightThickness)
 
             local d = math.abs((a*z.x + b*z.y + c)/math.sqrt(a*a + b*b))
             if d <= lineOfSightThickness and
-                GetUnitToLocationDistance(npcBot, loc) > (U.GetDistance(x,loc) + 50) then
+                GetUnitToLocationDistance(bot, loc) > (U.GetDistance(x,loc) + 50) then
                 table.insert(fCreepList, fCreep)
             end
         end
@@ -610,15 +610,15 @@ end
 
 -- CONTRIBUTOR: Function below was based off above function by Platinum_dota2
 function U.GetFriendlyHeroesBetweenMeAndLoc(loc, lineOfSightThickness)
-    local npcBot = GetBot()
+    local bot = GetBot()
     local fHeroList = {}
 
-    local fHeroes = npcBot:GetNearbyCreeps(Min(1600, GetUnitToLocationDistance(npcBot, loc)), false)
+    local fHeroes = bot:GetNearbyCreeps(Min(1600, GetUnitToLocationDistance(bot, loc)), false)
 
     --check if there are enemy creeps between us and location with line-of-sight thickness
     for _, fHero in ipairs(fHeroes) do
         local x = fHero:GetLocation()
-        local y = npcBot:GetLocation()
+        local y = bot:GetLocation()
         local z = loc
 
         if x ~= y then
@@ -636,7 +636,7 @@ function U.GetFriendlyHeroesBetweenMeAndLoc(loc, lineOfSightThickness)
 
             local d = math.abs((a*z.x + b*z.y + c)/math.sqrt(a*a + b*b))
             if d <= lineOfSightThickness and
-                GetUnitToLocationDistance(npcBot, loc) > (U.GetDistance(x,loc) + 50) then
+                GetUnitToLocationDistance(bot, loc) > (U.GetDistance(x,loc) + 50) then
                 table.insert(fHeroList, fHero)
             end
         end
@@ -791,7 +791,7 @@ end
 function U.InitPathFinding()
 end
 
-function U.InitPath(npcBot)
+function U.InitPath(bot)
 end
 
 function U.IsInLane()
@@ -1128,9 +1128,9 @@ function U.IsHeroAttackingMe(hero, fTime)
     if (hero == nil) or (not hero:IsAlive()) then return false end
 
     local fTime = fTime or 2.0
-    local npcBot = GetBot()
+    local bot = GetBot()
 
-    if npcBot:WasRecentlyDamagedByHero(hero, fTime) then
+    if bot:WasRecentlyDamagedByHero(hero, fTime) then
         return true
     end
     return false
@@ -1138,9 +1138,9 @@ end
 
 function U.IsAnyHeroAttackingMe(fTime)
     local fTime = fTime or 2.0
-    local npcBot = GetBot()
+    local bot = GetBot()
 
-    if npcBot:WasRecentlyDamagedByAnyHero(fTime) then
+    if bot:WasRecentlyDamagedByAnyHero(fTime) then
         return true
     end
     return false
@@ -1166,9 +1166,9 @@ end
 
 function U.IsCreepAttackingMe(fTime)
     local fTime = fTime or 1.0
-    local npcBot = GetBot()
+    local bot = GetBot()
 
-    if npcBot:WasRecentlyDamagedByCreep(fTime) then
+    if bot:WasRecentlyDamagedByCreep(fTime) then
         return true
     end
     return false
@@ -1240,8 +1240,9 @@ end
 
 -- takes a "RANGE", returns hero handle and health value of that hero
 -- FIXME - make it handle heroes that went invisible if we have detection
-function U.GetWeakestHero(bot, r)
-    local EnemyHeroes = gHeroVar.GetNearbyEnemies(bot, r)
+function U.GetWeakestHero(bot, r, unitList)
+    local EnemyHeroes = unitList
+    if EnemyHeroes == nil or #EnemyHeroes == 0 then EnemyHeroes = gHeroVar.GetNearbyEnemies(bot, r) end
 
     if EnemyHeroes == nil or #EnemyHeroes == 0 then
         return nil, 10000
@@ -1507,38 +1508,38 @@ function U.GetFreeSlotInBackPack(bot)
     return -1
 end
 
-function U.HaveTeleportation(npcBot)
-    if U.GetHeroName(npcBot) == "furion" then
+function U.HaveTeleportation(bot)
+    if U.GetHeroName(bot) == "furion" then
         return true
     end
 
-    if U.HaveItem(npcBot, "item_tpscroll") ~= nil
-        or U.HaveItem(npcBot, "item_travel_boots_1") ~= nil
-        or U.HaveItem(npcBot, "item_travel_boots_2") ~= nil then
+    if U.HaveItem(bot, "item_tpscroll") ~= nil
+        or U.HaveItem(bot, "item_travel_boots_1") ~= nil
+        or U.HaveItem(bot, "item_travel_boots_2") ~= nil then
         return true
     end
     return false
 end
 
-function U.GetTeleportationAbility(npcBot)
-    if U.GetHeroName(npcBot) == "furion" then
-        local ability = npcBot:GetAbilityByName("furion_teleportation")
+function U.GetTeleportationAbility(bot)
+    if U.GetHeroName(bot) == "furion" then
+        local ability = bot:GetAbilityByName("furion_teleportation")
         if ability ~= nil and ability:IsFullyCastable() then
             return ability
         end
     end
 
-    local tp = U.HaveItem(npcBot, "item_tpscroll")
+    local tp = U.HaveItem(bot, "item_tpscroll")
     if tp ~= nil and tp:IsFullyCastable() then
         return tp
     end
     
-    tp = U.HaveItem(npcBot, "item_travel_boots_1")
+    tp = U.HaveItem(bot, "item_travel_boots_1")
     if tp ~= nil and tp:IsFullyCastable() then
         return tp
     end
     
-    tp = U.HaveItem(npcBot, "item_travel_boots_2")
+    tp = U.HaveItem(bot, "item_travel_boots_2")
     if tp ~= nil and tp:IsFullyCastable() then
         return tp
     end
@@ -1547,9 +1548,9 @@ function U.GetTeleportationAbility(npcBot)
 end
 
 function U.IsItemAvailable(item_name)
-    local npcBot = GetBot()
+    local bot = GetBot()
 
-    local item = U.HaveItem(npcBot, item_name)
+    local item = U.HaveItem(bot, item_name)
     if item ~= nil then
         if item:IsFullyCastable() then
             return item
@@ -1560,10 +1561,10 @@ end
 
 --important items for delivery
 function U.HasImportantItem()
-     local npcBot = GetBot()
+     local bot = GetBot()
 
     for i = 9, 14, 1 do
-        local item = npcBot:GetItemInSlot(i)
+        local item = bot:GetItemInSlot(i)
         if item ~= nil then
             if string.find(item:GetName(),"recipe") ~= nil or string.find(item:GetName(),"item_boots") ~= nil or string.find(item:GetName(),"item_bottle") then
                 return true
@@ -1578,38 +1579,55 @@ function U.HasImportantItem()
     return false
 end
 
-function U.CourierThink(npcBot)
+function U.CourierThink(bot)
     if GetNumCouriers() == 0 then return end
 
-    if npcBot:IsIllusion() then return end
+    if bot:IsIllusion() then return end
 
+    local courier   = GetCourier(0)
+    local state     = GetCourierState(courier)
+    
+    if not state == COURIER_STATE_DEAD then return end
+    
     local checkLevel, newTime = U.TimePassed(getHeroVar("LastCourierThink"), 1.0)
-
     if not checkLevel then return end
     setHeroVar("LastCourierThink", newTime)
 
-    local courier = GetCourier(0)
-    if IsFlyingCourier(courier) and courier:GetHealth() >= 1 and (GameTime() - gHeroVar.GetGlobalVar("LastCourierBurst")) >= 90.0 then
-        if GetCourierState(courier) == COURIER_STATE_DELIVERING_ITEMS or GetCourierState(courier) == COURIER_STATE_RETURNING_TO_BASE then
-            npcBot:ActionImmediate_Courier(courier, COURIER_ACTION_BURST)
+    local eTowers = gHeroVar.GetNearbyEnemyTowers(courier, 1000)
+    local eHeroes = gHeroVar.GetNearbyEnemies(courier, 800)
+    
+    if courier:WasRecentlyDamagedByAnyHero(2) or courier:WasRecentlyDamagedByTower(2) then --or #eTowers >= 1 or #eHeroes >= 1 then
+        if IsFlyingCourier(courier) and (GameTime() - gHeroVar.GetGlobalVar("LastCourierBurst")) > 90.0 then
+			bot:ActionImmediate_Courier(courier, COURIER_ACTION_BURST)
+            gHeroVar.SetGlobalVar("LastCourierBurst", GameTime())
+		end
+        
+		bot:ActionImmediate_Courier(courier, COURIER_ACTION_RETURN)
+		return
+    end
+    
+    if IsFlyingCourier(courier) and (GameTime() - gHeroVar.GetGlobalVar("LastCourierBurst")) > 90.0 then
+        if state == COURIER_STATE_DELIVERING_ITEMS then
+            bot:ActionImmediate_Courier(courier, COURIER_ACTION_BURST)
             gHeroVar.SetGlobalVar("LastCourierBurst", GameTime())
             return
         end
     end
     
-    if GetCourierState(courier) ~= COURIER_STATE_DEAD and GetCourierState(courier) ~= COURIER_STATE_MOVING and GetCourierState(courier) ~= COURIER_STATE_AT_BASE then
-        npcBot:ActionImmediate_Courier(courier, COURIER_ACTION_RETURN)
+    if state ~= COURIER_STATE_DEAD and state ~= COURIER_STATE_MOVING and state ~= COURIER_STATE_AT_BASE then
+        bot:ActionImmediate_Courier(courier, COURIER_ACTION_RETURN)
         return
     end
 
-    if npcBot:IsAlive() and (npcBot:GetStashValue() > 500 or npcBot:GetCourierValue() > 0 or U.HasImportantItem()) and GetCourierState(courier) == COURIER_STATE_AT_BASE then
-        npcBot:ActionImmediate_Courier(courier, COURIER_ACTION_TAKE_AND_TRANSFER_ITEMS)
+    if bot:IsAlive() and (bot:GetStashValue() > 500 or bot:GetCourierValue() > 0 or U.HasImportantItem()) and state ~= COURIER_STATE_DELIVERING_ITEMS then
+        bot:ActionImmediate_Courier(courier, COURIER_ACTION_TAKE_AND_TRANSFER_ITEMS)
         return
     end
 
-    if GetCourierState(courier) ~= COURIER_STATE_DEAD and GetCourierState(courier) == COURIER_STATE_AT_BASE and
-        (not npcBot:IsAlive()) and npcBot:GetCourierValue() > 0 then
-        npcBot:ActionImmediate_Courier(courier, COURIER_ACTION_RETURN_STASH_ITEMS)
+    if state ~= COURIER_STATE_DEAD and state == COURIER_STATE_AT_BASE and
+        (not bot:IsAlive()) and bot:GetCourierValue() > 0 then
+        bot:ActionImmediate_Courier(courier, COURIER_ACTION_RETURN_STASH_ITEMS)
+        return
     end
 end
 

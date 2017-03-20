@@ -263,9 +263,9 @@ function genericAbility:AbilityUsageThink(bot)
 	HealthPerc    = bot:GetHealth()/bot:GetMaxHealth()
     
     -- Consider using each ability
-	castQDesire, castQLocation  = ConsiderQ()
-	castEDesire, castELocation  = ConsiderE()
-	castRDesire, castRTarget    = ConsiderR()
+	local castQDesire, castQLocation  = ConsiderQ()
+	local castEDesire, castELocation  = ConsiderE()
+	local castRDesire, castRTarget    = ConsiderR()
     
     if castRDesire > 0 then
         bot:Action_UseAbility( abilityR )

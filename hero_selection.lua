@@ -24,6 +24,7 @@ local Pos_2_Pool = {
 }
 
 local Pos_3_Pool = {
+    "npc_dota_hero_spirit_breaker",
     "npc_dota_hero_viper"
 }
 

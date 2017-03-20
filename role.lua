@@ -148,7 +148,7 @@ local listOFF = {
 	"npc_dota_hero_furion",
 	"npc_dota_hero_huskar",
 	"npc_dota_hero_kunkka",
-	"npc_dota_hero_legion_commander",
+	--"npc_dota_hero_legion_commander",
 	"npc_dota_hero_lifestealer",
 	"npc_dota_hero_lone_druid",
 	"npc_dota_hero_lycan",

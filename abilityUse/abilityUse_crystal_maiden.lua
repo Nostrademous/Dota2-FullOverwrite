@@ -171,9 +171,9 @@ function cmAbility:AbilityUsageThink(bot)
 	ManaPerc      = bot:GetMana()/bot:GetMaxMana()
     
     -- Consider using each ability
-	castQDesire, castQLocation  = ConsiderQ()
-	castWDesire, castWTarget    = ConsiderW()
-	castRDesire                 = ConsiderR()
+	local castQDesire, castQLocation  = ConsiderQ()
+	local castWDesire, castWTarget    = ConsiderW()
+	local castRDesire                 = ConsiderR()
     
     if castQDesire > 0 then
         bot:Action_UseAbilityOnLocation( abilityQ, castQLocation )

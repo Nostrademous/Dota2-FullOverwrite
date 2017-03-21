@@ -68,6 +68,6 @@ end
 
 function Think()
     local bot = GetBot()
-
+    
     cmBot:Think(bot)
 end

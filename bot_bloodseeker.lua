@@ -74,6 +74,7 @@ function Think()
         if bot:GetLevel() >= 16 and getHeroVar("Role") ~= constants.ROLE_HARDCARRY then
             setHeroVar("Role", constants.ROLE_HARDCARRY)
             setHeroVar("CurLane", LANE_BOT) --FIXME: don't hardcode this
+            bot.RetreatHealthPerc = 0.25
         end
     end
 end
@@ -91,6 +92,10 @@ function bloodseekerBot:GetMaxClearableCampLevel(bot)
     end
 
     return constants.CAMP_MEDIUM
+end
+
+function bloodseekerBot:DoHeroSpecificInit(bot)
+    bot.RetreatHealthPerc = 0.1
 end
 
 function bloodseekerBot:IsReadyToGank(bot)

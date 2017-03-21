@@ -53,7 +53,6 @@ end
 local drowRangerBot = botDrow:new{abilityPriority = DrowRangerAbilityPriority}
 
 function drowRangerBot:DoHeroSpecificInit(bot)
-    self:setHeroVar("HasOrbAbility", SKILL_Q)
 end
 
 function drowRangerBot:ConsiderAbilityUse()

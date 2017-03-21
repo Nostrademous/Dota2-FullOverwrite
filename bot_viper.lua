@@ -21,8 +21,8 @@ local ABILITY3 = "special_bonus_strength_8"
 local ABILITY4 = "special_bonus_agility_14"
 local ABILITY5 = "special_bonus_armor_7"
 local ABILITY6 = "special_bonus_attack_range_75"
-local ABILITY7 = "special_bonus_unique_viper_1"
-local ABILITY8 = "special_bonus_unique_viper_2"
+local ABILITY7 = "special_bonus_unique_viper_1" -- poison attacks affects buildings
+local ABILITY8 = "special_bonus_unique_viper_2" -- +80 DPS on Ult
 
 local ViperAbilityPriority = {
     SKILL_Q,    SKILL_E,    SKILL_W,    SKILL_E,    SKILL_W,

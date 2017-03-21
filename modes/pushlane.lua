@@ -29,13 +29,63 @@ function X:OnEnd()
     setHeroVar("ShouldPush", false)
 end
 
+function GetPushLaneFrontByTower(lane)
+    local listBuildings = global_game_state.GetLatestVulnerableEnemyBuildings()
+    
+    if lane == LANE_MID then
+        if utils.InTable(listBuildings, 4) then -- tier 1 mid
+            return 0.597
+        elseif utils.InTable(listBuildings, 5) then
+            return -1
+        elseif utils.InTable(listBuildings, 6) then
+            return -1
+        end
+    elseif lane == LANE_TOP then
+        if GetTeam() == TEAM_RADIANT then
+            if utils.InTable(listBuildings, 1) then -- tier 1 top
+                return 0.537
+            elseif utils.InTable(listBuildings, 2) then
+                return -1
+            elseif utils.InTable(listBuildings, 3) then
+                return -1
+            end
+        else
+            if utils.InTable(listBuildings, 1) then -- tier 1 top
+                return 0.687
+            elseif utils.InTable(listBuildings, 2) then
+                return -1
+            elseif utils.InTable(listBuildings, 3) then
+                return -1
+            end
+        end
+    elseif lane == LANE_BOT then
+        if GetTeam() == TEAM_RADIANT then
+            if utils.InTable(listBuildings, 7) then -- tier 1 bot
+                return 0.687
+            elseif utils.InTable(listBuildings, 8) then
+                return -1
+            elseif utils.InTable(listBuildings, 9) then
+                return -1
+            end
+        else
+            if utils.InTable(listBuildings, 7) then
+                return 0.537
+            elseif utils.InTable(listBuildings, 8) then
+                return -1
+            elseif utils.InTable(listBuildings, 9) then
+                return -1
+            end
+        end
+    end
+end
+
 function X:Think(bot)
 
     if utils.IsBusy(bot) then return end
 
     if utils.IsCrowdControlled(bot) then return end
 
-    local Towers = gHeroVar.GetNearbyEnemyTowers(bot, 800)
+    local Towers = gHeroVar.GetNearbyEnemyTowers(bot, 900)
     local Shrines = bot:GetNearbyShrines(750, true)
     local Barracks = bot:GetNearbyBarracks(750, true)
     local Ancient = GetAncient(utils.GetOtherTeam())
@@ -51,18 +101,20 @@ function X:Think(bot)
 
     -- we are pushing lane but no structures nearby, so push forward in lane
     local enemyFrontier = GetLaneFrontAmount(utils.GetOtherTeam(), getHeroVar("CurLane"), false)
-    local frontier = Min(1.0, enemyFrontier)
-    local dest = GetLocationAlongLane(getHeroVar("CurLane"), Min(1.0, frontier))
-
+    local myFrontier = GetLaneFrontAmount(GetTeam(), getHeroVar("CurLane"), true)
+    local frontier = Min(Min(1.0, enemyFrontier), myFrontier)
+    local dest = GetLocationAlongLane(getHeroVar("CurLane"), frontier)
+    
     local nearbyAlliedCreep = gHeroVar.GetNearbyAlliedCreep(bot, 900)
+    local nearbyEnemyCreep = gHeroVar.GetNearbyEnemyCreep(bot, 1200)
 
     if utils.IsTowerAttackingMe() and #nearbyAlliedCreep > 0 then
         if utils.DropTowerAggro(bot, nearbyAlliedCreep) then
             return
         else
             local dist = GetUnitToUnitDistance(bot, Towers[1])
-            if dist < 800 then
-                gHeroVar.HeroMoveToLocation(bot, utils.VectorAway(bot:GetLocation(), Towers[1]:GetLocation(), 800-dist))
+            if dist < 900 then
+                gHeroVar.HeroMoveToLocation(bot, utils.VectorAway(bot:GetLocation(), Towers[1]:GetLocation(), 900-dist))
                 return
             end
         end
@@ -75,24 +127,30 @@ function X:Think(bot)
     end
 
     -- TODO: should be reworked with proper tower aggro thinking
-    local nearbyEnemyCreep = gHeroVar.GetNearbyEnemyCreep(bot, 1200)
     if #nearbyEnemyCreep > 0 then
         if #nearbyAlliedCreep > 0 or frontier < 0.25 then
-            if #Towers > 0 and #nearbyAlliedCreep < 2 then
+            if #Towers > 0 then
                 local dist = GetUnitToUnitDistance(bot, Towers[1])
-                if dist < 800 then
-                    gHeroVar.HeroMoveToLocation(bot, utils.VectorAway(bot:GetLocation(), Towers[1]:GetLocation(), 800-dist))
+                if dist < 900 then
+                    -- local towerSafeDist = GetPushLaneFrontByTower(getHeroVar("CurLane"))
+                    -- if towerSafeDist == -1 then
+                        -- local eFront = GetLaneFrontAmount(utils.GetOtherTeam(), getHeroVar("CurLane"), false)
+                        -- utils.pause(eFront, ", Dist: ", utils.GetDistance(GetLocationAlongLane(getHeroVar("CurLane"), eFront), GetLocationAlongLane(getHeroVar("CurLane"), eFront-0.01)))
+                    -- end
+                    -- gHeroVar.HeroMoveToLocation(bot, GetLocationAlongLane(getHeroVar("CurLane"), Max(towerSafeDist, enemyFrontier)))
+                    
+                    gHeroVar.HeroMoveToLocation(bot, utils.VectorAway(bot:GetLocation(), Towers[1]:GetLocation(), 900-dist))
                     return
                 end
             else
-                creep, _ = utils.GetWeakestCreep(nearbyEnemyCreep)
+                local creep, _ = utils.GetWeakestCreep(nearbyEnemyCreep)
                 if creep then
                     gHeroVar.HeroAttackUnit(bot, creep, true)
                     return
                 end
             end
         else
-            getHeroVar("Self"):ClearMode()
+            bot.SelfRef:ClearMode()
             return
         end
     end
@@ -170,9 +228,8 @@ function X:Desire(bot)
         return BOT_MODE_DESIRE_MODERATE
     end
 
-    local me = getHeroVar("Self")
-    if me:getCurrentMode():GetName() == "pushlane" then
-        return me:getCurrentModeValue()
+    if bot.SelfRef:getCurrentMode():GetName() == "pushlane" then
+        return bot.SelfRef:getCurrentModeValue()
     end
 
     return BOT_MODE_DESIRE_NONE

@@ -97,6 +97,7 @@ function X:DoInit(bot)
     gHeroVar.InitHeroVar(self.pID)
 
     bot.SelfRef = self
+    bot.lastModeThink = -1000.0
     
     self:setHeroVar("Self", self)
     self:setHeroVar("LastCourierThink", -1000.0)
@@ -135,6 +136,7 @@ function X:DoInit(bot)
     utils.myPrint(" initialized - Lane: ", self:getHeroVar("CurLane"), ", Role: ", self:getHeroVar("Role"))
 
     self:DoHeroSpecificInit(bot)
+    if not bot.RetreatHealthPerc then bot.RetreatHealthPerc = 0.25 end
     
     local itemPurchase = dofile( GetScriptDirectory().."/itemPurchase/"..self.Name )
     setHeroVar("ItemPurchaseClass", itemPurchase)
@@ -191,15 +193,42 @@ function X:Think(bot)
     -- update our building information
     buildings_status.Update()
     
+    -- check if we should change lanes
+    self:DoChangeLane(bot)
+    
     -- consider using items
     if not utils.IsBusy(bot) then
         if item_usage.UseItems() then return end
     end
     
+    -- if we are in fountain, heal fully
+    if bot:HasModifier("modifier_fountain_aura_buff") then
+        if bot:GetHealth()/bot:GetMaxHealth() < 0.95 then return end
+        if bot:GetMana()/bot:GetMaxMana() < 0.95 then return end
+    end
+    
+    -- if we are at active shrine
+    if bot:HasModifier("modifier_filler_heal") then
+        if bot:GetHealth()/bot:GetMaxHealth() < 1.0 then
+            bot.DontMove = true
+            return
+        end
+        if bot:GetMana()/bot:GetMaxMana() < 1.0 then
+            bot.DontMove = true
+            return
+        end
+    else
+        bot.DontMove = false
+    end
+    
     -- do out Thinking and set our Mode
-    local highestDesiredMode, highestDesiredValue = think.MainThink()
-    self:BeginMode(highestDesiredMode, highestDesiredValue)
-    self:ExecuteMode()
+    if GameTime() - bot.lastModeThink >= 0.1 then
+        local highestDesiredMode, highestDesiredValue = think.MainThink()
+        self:BeginMode(highestDesiredMode, highestDesiredValue)
+        self:ExecuteMode()
+        
+        bot.lastModeThink = GameTime()
+    end
     
     -- consider using abilities
     if not utils.IsBusy(bot) then
@@ -209,6 +238,11 @@ function X:Think(bot)
     
     -- consider purchasing items
     self:getHeroVar("ItemPurchaseClass"):ItemPurchaseThink(bot)
+    
+    --if getHeroVar("CurLane") > 0 then
+    --    local eFront = GetLaneFrontAmount(utils.GetOtherTeam(), getHeroVar("CurLane"), false)
+    --    utils.myPrint(eFront, ", Dist: ", utils.GetDistance(GetLocationAlongLane(getHeroVar("CurLane"), eFront), GetLocationAlongLane(getHeroVar("CurLane"), eFront-0.01)))
+    --end
 end
 
 -------------------------------------------------------------------------------
@@ -238,6 +272,65 @@ function X:ConsiderBuyback(bot)
         return false -- FIXME: for now always return false
     end
     return false
+end
+
+-------------------------------------------------------------------------------
+-- BASE LANE CHANGE LOGIC - DO NOT OVER-LOAD
+-------------------------------------------------------------------------------
+
+function X:AnalyzeLanes(nLane)
+    if utils.InTable(nLane, self:getHeroVar("CurLane")) then
+        return
+    end
+
+    if #nLane > 1 then
+        local newLane = nLane[RandomInt(1, #nLane)]
+        utils.myPrint("Randomly switching to lane: ", newLane)
+        self:setHeroVar("CurLane", newLane)
+    elseif #nLane == 1 then
+        utils.myPrint("Switching to lane: ", nLane[1])
+        self:setHeroVar("CurLane", nLane[1])
+    else
+        utils.myPrint("Switching to lane: ", LANE_MID)
+        self:setHeroVar("CurLane", LANE_MID)
+    end
+
+    self:setHeroVar("LaningState", 1) -- 1 is LaningState.Moving
+    return
+end
+
+function X:DoChangeLane(bot)
+    local listBuildings = global_game_state.GetLatestVulnerableEnemyBuildings()
+    local nLane = {}
+
+    -- check Tier 1 towers
+    if utils.InTable(listBuildings, 1) then table.insert(nLane, LANE_TOP) end
+    if utils.InTable(listBuildings, 4) then table.insert(nLane, LANE_MID) end
+    if utils.InTable(listBuildings, 7) then table.insert(nLane, LANE_BOT) end
+    -- if we have found a standing Tier 1 tower, end
+    if #nLane > 0 then
+        return self:AnalyzeLanes(nLane)
+    end
+
+    -- check Tier 2 towers
+    if utils.InTable(listBuildings, 2) then table.insert(nLane, LANE_TOP) end
+    if utils.InTable(listBuildings, 5) then table.insert(nLane, LANE_MID) end
+    if utils.InTable(listBuildings, 8) then table.insert(nLane, LANE_BOT) end
+    -- if we have found a standing Tier 2 tower, end
+    if #nLane > 0 then
+        return self:AnalyzeLanes(nLane)
+    end
+
+    -- check Tier 3 towers & buildings
+    if utils.InTable(listBuildings, 3) or utils.InTable(listBuildings, 12) or utils.InTable(listBuildings, 13) then table.insert(nLane, LANE_TOP) end
+    if utils.InTable(listBuildings, 6) or utils.InTable(listBuildings, 14) or utils.InTable(listBuildings, 15) then table.insert(nLane, LANE_MID) end
+    if utils.InTable(listBuildings, 9) or utils.InTable(listBuildings, 16) or utils.InTable(listBuildings, 17) then table.insert(nLane, LANE_BOT) end
+    -- if we have found a standing Tier 3 tower, end
+    if #nLane > 0 then
+        return self:AnalyzeLanes(nLane)
+    end
+
+    return
 end
 
 -------------------------------------------------------------------------------

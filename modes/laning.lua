@@ -77,8 +77,6 @@ local function Moving(bot)
     local frontier = GetLaneFrontAmount(GetTeam(), CurLane, false)
     local enemyFrontier = GetLaneFrontAmount(utils.GetOtherTeam(), CurLane, false)
     frontier = Min(frontier, enemyFrontier)
-
-    if utils.HarassEnemy(bot, listEnemies) then return end
     
     local dest = GetLocationAlongLane(CurLane, Min(1.0, frontier))
     gHeroVar.HeroMoveToLocation(bot, dest)
@@ -112,8 +110,6 @@ local function MovingToPos(bot)
             return
         end
     end
-    
-    if utils.HarassEnemy(bot, listEnemies) then return end
 
     local bNeedToGoHigher = false
     local higherDest = nil
@@ -215,8 +211,6 @@ local function PushCS(bot, WeakestCreep, nAc, damage, AS)
             return false
         end
     end
-    
-    if utils.HarassEnemy(bot, listEnemies) then return end
 
     gHeroVar.HeroAttackUnit(bot, WeakestCreep, false)
     return true
@@ -349,8 +343,6 @@ local function CSing(bot)
     
     -- if we got here we decided there are no creeps to kill/deny
     LaningState = LaningStates.MovingToPos
-    
-    if utils.HarassEnemy(bot, listEnemies) then return end
 end
 
 local function GetBack(bot)
@@ -358,15 +350,20 @@ local function GetBack(bot)
         return true
     end
 
-    local nearETowers = gHeroVar.GetNearbyEnemyTowers(bot, 800)
+    local HealthPerc = bot:GetHealth()/bot:GetMaxHealth()
+    if HealthPerc < bot.RetreatHealthPerc and bot:GetHealthRegen() >= 7.9 then
+        setHeroVar("BackTimer", GameTime()+2)
+        return true
+    end
+    
+    local nearETowers = gHeroVar.GetNearbyEnemyTowers(bot, 900)
     if #nearETowers > 0 then
         setHeroVar("BackTimer", GameTime())
         return true
     end
     
-    if bot:WasRecentlyDamagedByCreep(1.0) and (not utils.IsCore(bot) or 
-        (bot:GetHealth() < 900 and bot:GetHealth()/bot:GetMaxHealth() < 0.8)) then
-        setHeroVar("BackTimer", GameTime())
+    if bot:WasRecentlyDamagedByCreep(1.0) then
+        setHeroVar("BackTimer", GameTime()-0.5)
         return true
     end
     
@@ -375,7 +372,7 @@ local function GetBack(bot)
     end
     
     local allyTowers = gHeroVar.GetNearbyAlliedTowers(bot, 600)
-    if #allyTowers > 0 and #listEnemies <= 3 then
+    if #allyTowers > 0 and #listEnemies <= #listAllies then
         return false
     end
     

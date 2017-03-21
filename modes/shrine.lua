@@ -67,70 +67,26 @@ function X:Think(bot)
         bot.SelfRef:ClearMode()
         return
     end
-    
-    if bot:HasModifier("modifier_filler_heal") then
-        -- TODO: we shouldn't return here really, we can do all kinds of things,
-        -- just need to stay in range of heal radius while we are not full health/mana
-        return
-    end
 
     if bot.shrineUseMode then
         if hShrine and GetUnitToUnitDistance(bot, hShrine) > 300 then
             
-            local mvAbility = getHeroVar("HasMovementAbility")
-            if mvAbility and mvAbility[1]:IsFullyCastable() then
-                local newLoc = utils.VectorTowards(bot:GetLocation(), hShrine:GetLocation(), mvAbility[2])
-                local behavior = mvAbility[1]:GetBehavior()
-
-                -- we can move to "location"
-                if utils.CheckFlag(behavior, ABILITY_BEHAVIOR_POINT) then
-                    gHeroVar.HeroUseAbilityOnLocation(bot, mvAbility[1], newLoc)
-                    return
-                -- we can move to a "unit"
-                elseif utils.CheckFlag(behavior, ABILITY_BEHAVIOR_UNIT_TARGET) then
-                    local targetType = mvAbility[1]:GetTargetType()
-                    
-                    if utils.CheckFlag(targetType, ABILITY_TARGET_TYPE_CREEP) or utils.CheckFlag(targetType, 0x80) then
-                        local viableTargets = utils.GetCreepsBetweenMeAndLoc(newLoc, 200)
-                        if #viableTargets > 0 then
-                            if #viableTargets > 1 then
-                                table.sort(viableTargets, function(n1,n2) return GetUnitToUnitDistance(bot, n1) > GetUnitToUnitDistance(bot, n2) end)
-                            end
-                            gHeroVar.HeroUseAbilityOnEntity(bot, mvAbility[1], viableTargets[1])
-                            return
-                        end
-                    end
-                    
-                    if utils.CheckFlag(targetType, ABILITY_TARGET_TYPE_HERO) or utils.CheckFlag(targetType, 0x80) then
-                        local viableTargets = utils.GetFriendlyHeroesBetweenMeAndLoc(newLoc, 200)
-                        if #viableTargets > 0 then
-                            if #viableTargets > 1 then
-                                table.sort(viableTargets, function(n1,n2) return GetUnitToUnitDistance(bot, n1) > GetUnitToUnitDistance(bot, n2) end)
-                            end
-                            gHeroVar.HeroUseAbilityOnEntity(bot, mvAbility[1], viableTargets[1])
-                            return
-                        end
-                    end
-                    
-                    if utils.CheckFlag(targetType, ABILITY_TARGET_TYPE_TREE) then
-                        utils.pause("Retreat ability to Tree not implemented yet")
-                    end
-                end
+            if not modifiers.IsInvisible(bot) then
+                if item_usage.UseMovementItems(hShrine:GetLocation()) then return end
+                if item_usage.UseGlimmerCape(bot) then return end
             end
-            
-            if item_usage.UseMovementItems(hShrine:GetLocation()) then return end
             
             gHeroVar.HeroMoveToLocation(bot, hShrine:GetLocation())
             
             return
         elseif bot.shrineUseMode ~= constants.SHRINE_USE then
-            utils.myPrint("Waiting on more friends: ", #global_game_state.GetShrineState(bot.useShrine).pidsLookingForHeal)
+            --utils.myPrint("Waiting on more friends: ", #global_game_state.GetShrineState(bot.useShrine).pidsLookingForHeal)
             for _, id in pairs(global_game_state.GetShrineState(bot.useShrine).pidsLookingForHeal) do
-                utils.myPrint("\tID: ", id)
+                --utils.myPrint("\tID: ", id)
             end
             return
         elseif bot.shrineUseMode == constants.SHRINE_USE then
-            utils.myPrint("using Shrine")
+            --utils.myPrint("using Shrine")
             bot:ActionPush_UseShrine(hShrine)
             bot.shrineUseMode = nil
             local savedShrineID = bot.useShrine
@@ -152,17 +108,8 @@ function X:Think(bot)
     return
 end
 
-function X:Desire(bot)
-    if bot:HasModifier("modifier_filler_heal") and 
-        (bot:GetHealth() ~= bot:GetMaxHealth() or bot:GetMana() ~= bot:GetMaxMana()) then
-        -- TODO: we shouldn't return here really, we can do all kinds of things,
-        -- just need to stay in range of heal radius while we are not full health/mana
-        --bot.DontMove = true
-        
-        return BOT_MODE_DESIRE_VERYHIGH
-    end
-    
-    if bot.useShrine and bot.useShrine >= 0 then
+function X:Desire(bot)    
+    if bot.useShrine ~= nil and bot.useShrine >= 0 then
         if not utils.NotNilOrDead(global_game_state.GetShrineState(bot.useShrine).handle) then
             return BOT_MODE_DESIRE_NONE
         end

@@ -65,7 +65,10 @@ end
 
 function X:Desire(bot)
     if modifiers.IsRuptured(bot) then
+        bot.DontMove = true
         return BOT_MODE_DESIRE_ABSOLUTE
+    else
+        bot.DontMove = false
     end
     
     -- NOTE: a projectile will be a table with { "location", "ability", "velocity", "radius", "playerid" }

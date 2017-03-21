@@ -314,10 +314,17 @@ function ConsiderTeamShrine(playerAssignment)
                 end
             end
 
-            if bestShrine and (not ally.useShrine or ally.useShrine == -1) then
-                --utils.myPrint("Adding ID: '", ally:GetPlayerID(), "' to Shrine: ", bestShrine)
-                table.insert(global_game_state.GetShrineState(bestShrine).pidsLookingForHeal, ally:GetPlayerID())
-                ally.useShrine = bestShrine
+            if bestShrine and (ally.useShrine == nil or ally.useShrine == -1) then
+                if (utils.InTeamFight(GetBot(), 750) or GetBot().SelfRef:getCurrentMode():GetName() == "fighting") and distToShrine <= 400 then
+                    table.insert(global_game_state.GetShrineState(bestShrine).pidsLookingForHeal, ally:GetPlayerID())
+                    ally.useShrine = bestShrine
+                end
+                
+                if (GetBot():DistanceFromFountain() + 3500) > distToShrine then
+                    --utils.myPrint("Adding ID: '", ally:GetPlayerID(), "' to Shrine: ", bestShrine)
+                    table.insert(global_game_state.GetShrineState(bestShrine).pidsLookingForHeal, ally:GetPlayerID())
+                    ally.useShrine = bestShrine
+                end
             end
         end
     end

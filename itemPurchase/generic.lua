@@ -2,6 +2,7 @@
 --- AUTHOR: Nostrademous, dralois
 --- GITHUB REPO: https://github.com/Nostrademous/Dota2-FullOverwrite
 -------------------------------------------------------------------------------
+DEBUG = false
 
 local utils = require( GetScriptDirectory().."/utility" )
 local items = require(GetScriptDirectory().."/itemPurchase/items" )
@@ -452,7 +453,9 @@ function X:ConsiderSellingItems(bot)
                     end
                 end
             else
-                utils.pause("can't empty anything in inventory")
+                if not utils.IsBusy() and not utils.HaveItem(bot, "item_tpscroll") then
+                    if DEBUG then utils.pause("can't empty anything in inventory") end
+                end
                 break
             end
         end

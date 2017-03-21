@@ -1177,8 +1177,11 @@ function U.IsCreepAttackingMe(fTime)
     return false
 end
 
-function U.HarassEnemy(bot, listEnemies)
+function U.HarassEnemy(bot)
+    local listEnemies = gHeroVar.GetNearbyEnemies(bot, Min(1200, bot:GetCurrentVisionRange()))
     local enemyToHarass = nil
+    
+    if #listEnemies == 0 then return false end
     
     local listAlliedTowers = gHeroVar.GetNearbyAlliedTowers(bot, 600)
     for _, enemy in pairs(listEnemies) do
@@ -1186,7 +1189,7 @@ function U.HarassEnemy(bot, listEnemies)
             local stunAbilities = getHeroVar("HasStun")
             if stunAbilities then
                 for _, stun in pairs(stunAbilities) do
-                    if not enemy:IsStunned() and stun[1]:IsFullyCastable() then
+                    if not U.IsCrowdControlled(enemy) and stun[1]:IsFullyCastable() then
                         local behaviorFlag = stun[1]:GetBehavior()
                         if U.CheckFlag(behaviorFlag, ABILITY_BEHAVIOR_UNIT_TARGET) then
                             gHeroVar.HeroUseAbilityOnEntity(bot, stun[1], enemy)
@@ -1198,15 +1201,6 @@ function U.HarassEnemy(bot, listEnemies)
                     end
                 end
             end
-            gHeroVar.HeroAttackUnit(bot, enemy, true)
-            return true
-        end
-        
-        if (bot:GetHealth() + bot:GetAttackDamage()) < (enemy:GetHealth() + enemy:GetAttackDamage()) and
-            GetUnitToUnitDistance(bot, enemy) < (bot:GetAttackRange() + bot:GetBoundingRadius()) and 
-            #listEnemies == 1 then -- and enemy:GetAttackRange() <= bot:GetAttackRange() then
-            enemyToHarass = enemy
-            break
         end
     end
     
@@ -1214,7 +1208,7 @@ function U.HarassEnemy(bot, listEnemies)
     if U.UseOrbEffect(bot) then return true end
     
     local listEnemyCreep = gHeroVar.GetNearbyEnemyCreep(bot, 1200)
-    if #listEnemies > 0 and #listEnemyCreep == 0 and
+    if #listEnemies <= #gHeroVar.GetNearbyAllies(bot, 900) and #listEnemyCreep == 0 and
         GetUnitToUnitDistance(bot, listEnemies[1]) < (bot:GetAttackRange()+bot:GetBoundingRadius()) then
         gHeroVar.HeroAttackUnit(bot, listEnemies[1], true)
         return true
@@ -1296,10 +1290,10 @@ function U.UseOrbEffect(bot, enemy)
             if U.ValidTarget(enemy) then target = enemy end
     
             if target == nil then
-                target, _ = U.GetWeakestHero(bot, ability:GetCastRange()+bot:GetBoundingRadius())
+                target, _ = U.GetWeakestHero(bot, bot:GetAttackRange()+bot:GetBoundingRadius())
             end
 
-            if target ~= nil and GetUnitToUnitDistance(bot, target) < (ability:GetCastRange()+bot:GetBoundingRadius()) then
+            if target ~= nil and GetUnitToUnitDistance(bot, target) < (bot:GetAttackRange()+bot:GetBoundingRadius()) then
                 U.TreadCycle(bot, constants.INTELLIGENCE)
                 gHeroVar.HeroUseAbilityOnEntity(bot, ability, target)
                 return true

@@ -125,7 +125,7 @@ function UseRegenItems()
         end
 
         local tango_shared = utils.HaveItem(bot, "item_tango_single");
-        if tango_shared ~= nil  and tango_shared:IsFullyCastable() and (not getHeroVar("IsRetreating")) then
+        if tango_shared ~= nil and tango_shared:IsFullyCastable() then
             if (bot:GetMaxHealth()-bot:GetHealth()) > 200 and not bot:HasModifier("modifier_tango_heal") then
                 local tree = utils.GetNearestTree(bot)
                 if tree ~= nil then
@@ -136,7 +136,7 @@ function UseRegenItems()
         end
 
         local tango = utils.HaveItem(bot, "item_tango");
-        if tango ~= nil and tango:IsFullyCastable() and (not getHeroVar("IsRetreating")) then
+        if tango ~= nil and tango:IsFullyCastable() then
             if (bot:GetMaxHealth()-bot:GetHealth()) > 200 and not bot:HasModifier("modifier_tango_heal") then
                 local tree = utils.GetNearestTree(bot)
                 if tree ~= nil then
@@ -226,7 +226,7 @@ function UseRegenItemsOnAlly()
         end
 
         local tango = utils.HaveItem(bot, "item_tango");
-        if tango ~= nil and tango:IsFullyCastable() and (not getHeroVar("IsRetreating")) and (not (utils.HaveItem(lowestHealthAlly, "item_tango") or utils.HaveItem(lowestHealthAlly, "item_tango_single")) )then
+        if tango ~= nil and tango:IsFullyCastable() and (not (utils.HaveItem(lowestHealthAlly, "item_tango") or utils.HaveItem(lowestHealthAlly, "item_tango_single")) )then
             if (lowestHealthAlly:GetMaxHealth()-lowestHealthAlly:GetHealth()) > 200 and not lowestHealthAlly:HasModifier("modifier_tango_heal") then
                 local tree = utils.GetNearestTree(bot)
                 if tree ~= nil then

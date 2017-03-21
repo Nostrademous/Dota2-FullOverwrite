@@ -169,7 +169,7 @@ end
 function bsAbility:AbilityUsageThink(bot)
     if utils.IsBusy(bot) then return true end
     
-    if getHeroVar("IsRetreating") then return true end
+    if utils.IsCrowdControlled(bot) then return false end
     
     if abilityQ == "" then abilityQ = bot:GetAbilityByName( Abilities[1] ) end
     if abilityW == "" then abilityW = bot:GetAbilityByName( Abilities[2] ) end

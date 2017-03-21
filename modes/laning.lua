@@ -27,7 +27,6 @@ local listAllies = {}
 local AttackRange       = 600
 local AttackSpeed       = 1
 local CurLane           = 0
-local ShouldPush        = false
 local LanePos           = nil
 
 local LaningStates = {
@@ -131,7 +130,7 @@ local function MovingToPos(bot)
     
     local bpos = GetLocationAlongLane(CurLane, LanePos - 0.02)
 
-    local dest = utils.VectorTowards(cpos, bpos, 500)
+    local dest = utils.VectorTowards(cpos, bpos, 500) + RandomVector(100)
     if bNeedToGoHigher and #listAlliedCreep > 0 and #listEnemies == 0 then
         dest = higherDest
     end
@@ -197,32 +196,11 @@ local function DenyNearbyCreeps(bot)
     return false
 end
 
-local function PushCS(bot, WeakestCreep, nAc, damage, AS)
-    utils.TreadCycle(bot, constants.AGILITY)
-    if WeakestCreep:GetHealth() > damage and WeakestCreep:GetHealth() < (damage + 17*nAc*AS) and nAc > 1 then
-        if #listEnemyCreep > 1 then
-            if listEnemyCreep[1] ~= WeakestCreep then
-                gHeroVar.HeroAttackUnit(bot, listEnemyCreep[1], true)
-            else
-                gHeroVar.HeroAttackUnit(bot, listEnemyCreep[2], true)
-            end
-            return true
-        else
-            return false
-        end
-    end
-
-    gHeroVar.HeroAttackUnit(bot, WeakestCreep, false)
-    return true
-end
-
 local function CSing(bot)
     local listAlliedCreep = gHeroVar.GetNearbyAlliedCreep(bot, 1200)
     if #listAlliedCreep == 0 then
-        if not ShouldPush then
-            LaningState = LaningStates.Moving
-            return
-        end
+        LaningState = LaningStates.Moving
+        return
     end
 
     local listEnemyCreep = gHeroVar.GetNearbyEnemyCreep(bot, 1200)
@@ -248,10 +226,6 @@ local function CSing(bot)
         if utils.IsCore(hero) then
             NoCoreAround = false
         end
-    end
-
-    if ShouldPush and (#listEnemies > 0 or DotaTime() < (60*3)) then
-        ShouldPush = false
     end
 
     if utils.IsCore(bot) or (NoCoreAround and #listEnemies < 2) then
@@ -290,11 +264,6 @@ local function CSing(bot)
             return
         end
 
-        if ShouldPush and WeakestCreep ~= nil then
-            local bDone = PushCS(bot, WeakestCreep, nAc, damage, AttackSpeed)
-            if bDone then return end
-        end
-
         -- check if enemy has a breakable buff
         if #listEnemies > 0 and #listEnemies <= #listAllies then
             local breakableEnemy = nil
@@ -321,23 +290,19 @@ local function CSing(bot)
             approachScalar = 2.5
         end
 
-        if (not ShouldPush) and WeakestCreepHealth < damage*approachScalar and GetUnitToUnitDistance(bot, WeakestCreep) > AttackRange and #listEnemyTowers == 0 then
+        if WeakestCreepHealth < damage*approachScalar and GetUnitToUnitDistance(bot, WeakestCreep) > AttackRange and #listEnemyTowers == 0 then
             local dest = utils.VectorTowards(WeakestCreep:GetLocation(),GetLocationAlongLane(CurLane, LanePos-0.03), AttackRange-20)
             gHeroVar.HeroMoveToLocation(bot, dest)
             return
         end
 
-        if not ShouldPush then
-            if DenyNearbyCreeps(bot) then
-                return
-            end
+        if DenyNearbyCreeps(bot) then
+            return
         end
     elseif not NoCoreAround then
-        -- we are not a Core, we are not pushing, deny only
-        if not ShouldPush then
-            if DenyNearbyCreeps(bot) then
-                return
-            end
+        -- we are not a Core, deny only
+        if DenyNearbyCreeps(bot) then
+            return
         end
     end
     
@@ -443,7 +408,6 @@ local function LoadLaningData(bot)
     LaningState = getHeroVar("LaningState")
     CurLane     = getHeroVar("CurLane")
     LanePos     = utils.PositionAlongLane(bot, CurLane)
-    ShouldPush  = getHeroVar("ShouldPush")
 
     if not bot:IsAlive() then
         LaningState = LaningStates.Moving
@@ -455,7 +419,6 @@ end
 
 local function SaveLaningData()
     setHeroVar("LaningState", LaningState)
-    setHeroVar("ShouldPush", ShouldPush)
 end
 
 function X:GetName()

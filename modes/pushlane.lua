@@ -22,11 +22,9 @@ function X:GetName()
 end
 
 function X:OnStart(myBot)
-    setHeroVar("ShouldPush", true)
 end
 
 function X:OnEnd()
-    setHeroVar("ShouldPush", false)
 end
 
 function GetPushLaneFrontByTower(lane)

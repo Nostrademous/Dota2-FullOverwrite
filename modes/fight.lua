@@ -107,26 +107,23 @@ function X:Desire(bot)
     
     if allyValue/enemyValue > Max(1.0, (1.6 - bot:GetLevel()*0.1)) then
         local target, _ = utils.GetWeakestHero(bot, bot:GetAttackRange()+bot:GetBoundingRadius())
-        if target then
+        if utils.ValidTarget(target) then
             setHeroVar("Target", target)
             return BOT_MODE_DESIRE_MODERATE
         end
     else
         return BOT_MODE_DESIRE_NONE
     end
-    
-    local target = getHeroVar("Target")
-    if utils.ValidTarget(target) and bot.SelfRef:getCurrentMode():GetName() == "fight" and
-        #eTowers == 0 then
-        return bot.SelfRef:getCurrentModeValue()
-    end
 
     local allyList2 = gHeroVar.GetNearbyAllies(bot, 1600)
     for _, ally in pairs(allyList2) do
-        if not ally:IsIllusion() and utils.ValidTarget(ally:GetAttackTarget()) and
-            ally:GetAttackTarget():IsHero() then
-            setHeroVar("Target", ally:GetAttackTarget())
-            return BOT_MODE_DESIRE_MODERATE
+        if not ally:IsIllusion() then
+            local allyTarget = ally:GetAttackTarget() --gHeroVar.GetVar(ally:GetPlayerID(), "Target")
+            if utils.ValidTarget(allyTarget) and allyTarget:IsHero() and
+                utils.GetOtherTeam() == GetTeamForPlayer(allyTarget:GetPlayerID()) then
+                setHeroVar("Target", allyTarget)
+                return BOT_MODE_DESIRE_MODERATE
+            end
         end
     end
     

@@ -49,6 +49,8 @@ local castIWDesire = 0
 local castSSDesire = 0
 local castFSDesire = 0
 
+local modeName      = nil
+
 function nukeDamageSS( bot )
     -- Check Sun Strike
     if abilitySS:IsFullyCastable() then
@@ -192,6 +194,8 @@ function invAbility:AbilityUsageThink(bot)
     if abilityIW == "" then abilityIW = bot:GetAbilityByName( "invoker_ice_wall" ) end
     if abilitySS == "" then abilitySS = bot:GetAbilityByName( "invoker_sun_strike" ) end
     if abilityFS == "" then abilityFS = bot:GetAbilityByName( "invoker_forge_spirit" ) end
+    
+    modeName      = bot.SelfRef:getCurrentMode():GetName()
     
     local nearbyEnemyHeroes = gHeroVar.GetNearbyEnemies(bot, 1200)
     local nearbyEnemyCreep  = gHeroVar.GetNearbyEnemyCreep(bot, 1200)
@@ -690,7 +694,7 @@ function ConsiderOrbs(bot)
         if (nWex + nQuas + nExort) >= 3 then break end
     end
     
-    if getHeroVar("IsRetreating") then
+    if bot.IsRetreating then
         if nWex < 3 then 
             return tripleWexBuff(bot)
         end
@@ -766,7 +770,7 @@ function ConsiderTornado(bot)
     --------------------------------------
 
     --------- RETREATING -----------------------
-    if getHeroVar("IsRetreating") then
+    if bot.IsRetreating then
         for _, npcEnemy in pairs( nearbyEnemyHeroes ) do
             if bot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) and GetUnitToUnitDistance( bot, npcEnemy ) <= nDistance then
                 return BOT_ACTION_DESIRE_MODERATE, npcEnemy:GetLocation()
@@ -823,7 +827,7 @@ function ConsiderIceWall(bot, nearbyEnemyHeroes)
     --------------------------------------
 
     --------- RETREATING -----------------------
-    if getHeroVar("IsRetreating") then
+    if bot.IsRetreating then
         for _, npcEnemy in pairs( nearbyEnemyHeroes ) do
             if  bot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) and GetUnitToUnitDistance(npcEnemy, bot) < 300 then
                 return BOT_ACTION_DESIRE_MODERATE, 0
@@ -1053,8 +1057,8 @@ function ConsiderGhostWalk(bot, nearbyEnemyHeroes)
         end
     end
 
-    -- WE ARE RETREATNG AND THEY ARE ON US
-    if getHeroVar("IsRetreating") then
+    -- WE ARE RETREATING AND THEY ARE ON US
+    if bot.IsRetreating then
         for _, npcEnemy in pairs( nearbyEnemyHeroes ) do
             if bot:WasRecentlyDamagedByHero( npcEnemy, 1.0 ) or GetUnitToUnitDistance( npcEnemy, bot ) < 600 then
                 return BOT_ACTION_DESIRE_HIGH
@@ -1153,9 +1157,11 @@ function ConsiderAlacrity(bot, nearbyEnemyCreep, nearbyEnemyTowers)
     local manaRatio = bot:GetMana()/bot:GetMaxMana()
     
     -- If we're pushing or defending a lane and can hit 4+ creeps, go for it
-    if manaRatio > 0.6 and (getHeroVar("ShouldDefend") or getHeroVar("ShouldPush")) then
-        if #nearbyEnemyCreep >= 3 or #nearbyEnemyTowers > 0 then
-            return BOT_ACTION_DESIRE_LOW, bot
+    if modeName == "pushlane" or modeName == "defendlane" then
+        if manaRatio > 0.6 then
+            if #nearbyEnemyCreep >= 3 or #nearbyEnemyTowers > 0 then
+                return BOT_ACTION_DESIRE_LOW, bot
+            end
         end
     end
 
@@ -1198,8 +1204,7 @@ function ConsiderForgedSpirit(bot, nearbyEnemyHeroes, nearbyEnemyCreep, nearbyEn
     end
 
     --------- ROSHAN --------------------------------
-    local me = getHeroVar("Self")
-    if me:getCurrentMode():GetName() == "roshan" then
+    if modeName == "roshan" then
         local npcTarget = bot:GetTarget()
         if utils.NotNilOrDead(npcTarget) then
             return BOT_ACTION_DESIRE_LOW
@@ -1212,11 +1217,11 @@ function ConsiderForgedSpirit(bot, nearbyEnemyHeroes, nearbyEnemyCreep, nearbyEn
     local manaRatio = bot:GetMana()/bot:GetMaxMana()
     
     -- If we're pushing or defending a lane, go for it
-    local me = getHeroVar("Self")
-    if manaRatio > 0.4 and (me:getCurrentMode():GetName() == "pushlane" or 
-        me:getCurrentMode():GetName() == "defendlane") then
-        if #nearbyEnemyHeroes > 0 or #nearbyEnemyCreep >= 3 or #nearbyEnemyTowers > 0 then
-            return BOT_ACTION_DESIRE_MODERATE
+    if modeName == "pushlane" or modeName == "defendlane" then
+        if manaRatio > 0.4 then
+            if #nearbyEnemyHeroes > 0 or #nearbyEnemyCreep >= 3 or #nearbyEnemyTowers > 0 then
+                return BOT_ACTION_DESIRE_MODERATE
+            end
         end
     end
 

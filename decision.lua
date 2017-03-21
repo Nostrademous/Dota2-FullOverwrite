@@ -104,8 +104,7 @@ function X:DoInit(bot)
     self:setHeroVar("LastLevelUpThink", -1000.0)
     self:setHeroVar("TeamBuy", {})
     self:setHeroVar("DoDefendLane", {})
-    self:setHeroVar("IsRetreating", false)
-    self:setHeroVar("ShouldPush", false)
+    bot.IsRetreating = false
     self:setHeroVar("Target", nil)
     self:setHeroVar("RoamTarget", nil)
     

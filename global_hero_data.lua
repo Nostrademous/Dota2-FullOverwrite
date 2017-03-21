@@ -151,48 +151,56 @@ local function checkSleepAttack(bot, ca)
 end
 
 function X.HeroMoveToLocation(bot, loc)
+    if bot.DontMove then return end
+
     local pID = bot:GetPlayerID()
     local ca = X.GetHeroCurrentAction(pID)
-    
+
     if checkSleepAttack(bot, ca) then return end
-    
+
     if GetUnitToLocationDistance(bot, loc) > 15.0 then
         bot:Action_MoveToLocation(loc)
     end
 end
 
 function X.HeroPushMoveToLocation(bot, loc)
+    if bot.DontMove then return end
+
     local pID = bot:GetPlayerID()
     local ca = X.GetHeroCurrentAction(pID)
-    
+
     if checkSleepAttack(bot, ca) then return end
-    
+
     if GetUnitToLocationDistance(bot, loc) > 15.0 then
         bot:ActionPush_MoveToLocation(loc)
     end
 end
 
-function X.HeroQueueMoveToLocation(bot, loc)    
+function X.HeroQueueMoveToLocation(bot, loc)
     bot:ActionQueue_MoveToLocation(loc)
 end
 
 function X.HeroMoveToUnit(bot, hUnit)
+    if bot.DontMove then return end
+
     local pID = bot:GetPlayerID()
     local ca = X.GetHeroCurrentAction(pID)
-    
+
     if checkSleepAttack(bot, ca) then return end
-    
+
     if GetUnitToUnitDistance(bot, hUnit) > 15.0 then
         bot:Action_MoveToUnit(hUnit)
     end
 end
 
 function X.HeroPushMoveToUnit(bot, hUnit)
+    if bot.DontMove then return end
+
     local pID = bot:GetPlayerID()
     local ca = X.GetHeroCurrentAction(pID)
-    
+
     if checkSleepAttack(bot, ca) then return end
-    
+
     if GetUnitToUnitDistance(bot, hUnit) > 15.0 then
         bot:ActionPush_MoveToUnit(hUnit)
     end
@@ -208,7 +216,7 @@ function X.HeroAttackUnit(bot, hTarget, bOnce)
     local ca = X.GetHeroCurrentAction(pID)
 
     if checkSleepAttack(bot, ca) then return end
-    
+
     X[pID].currentAction = {[1]="SleepAttack", [2]=GameTime()+bot:GetAttackPoint()}
     bot:Action_AttackUnit(hTarget, bOnce)
 end
@@ -219,7 +227,7 @@ function X.HeroPushAttackUnit(bot, hTarget, bOnce)
     local ca = X.GetHeroCurrentAction(pID)
 
     if checkSleepAttack(bot, ca) then return end
-    
+
     X[pID].currentAction = {[1]="SleepAttack", [2]=GameTime()+bot:GetAttackPoint()}
     bot:ActionPush_AttackUnit(hTarget, bOnce)
 end
@@ -229,22 +237,26 @@ function X.HeroQueueAttackUnit(bot, hUnit, bOnce)
 end
 
 function X.HeroAttackMove(bot, loc)
+    if bot.DontMove then return end
+
     local pID = bot:GetPlayerID()
     local ca = X.GetHeroCurrentAction(pID)
-    
+
     if checkSleepAttack(bot, ca) then return end
-    
+
     if GetUnitToLocationDistance(bot, loc) > 15.0 then
         bot:Action_AttackMove(loc)
     end
 end
 
 function X.HeroPushAttackMove(bot, loc)
+    if bot.DontMove then return end
+
     local pID = bot:GetPlayerID()
     local ca = X.GetHeroCurrentAction(pID)
-    
+
     if checkSleepAttack(bot, ca) then return end
-    
+
     if GetUnitToLocationDistance(bot, loc) > 15.0 then
         bot:ActionPush_AttackMove(loc)
     end

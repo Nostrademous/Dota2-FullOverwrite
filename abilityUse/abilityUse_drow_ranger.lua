@@ -32,6 +32,10 @@ local abilityW = ""
 local abilityE = ""
 local abilityR = ""
 
+local AttackRange   = 0
+local ManaPerc      = 0
+local modeName      = nil
+
 function drAbility:nukeDamage( bot, enemy )
     if enemy == nil or enemy:IsNull() then return 0, {}, 0, 0, 0 end
 
@@ -100,123 +104,158 @@ function drAbility:queueNuke(bot, enemy, castQueue, engageDist)
     return false
 end
 
-local function UseQ(bot)
+function ConsiderQ()
+    local bot = GetBot()
+
     if not abilityQ:IsFullyCastable() then
-        return false
+        return BOT_ACTION_DESIRE_NONE, nil
     end
 
-    -- harassment code when in lane
-    --[[
-    local manaRatio = bot:GetMana()/bot:GetMaxMana()
-    local target, _ = utils.GetWeakestHero(bot, bot:GetAttackRange()+bot:GetBoundingRadius(), nearbyEnemyHeroes)
-    if target ~= nil and manaRatio > 0.4 and GetUnitToUnitDistance(bot, target) then
-        utils.TreadCycle(bot, constants.INTELLIGENCE)
-        gHeroVar.HeroUseAbilityOnEntity(bot, ability, target)
-        return true
-    end
-    --]]
-
-    local target = getHeroVar("Target")
-
-    -- if we don't have a valid target, return
-    if not utils.ValidTarget(target) then return false end
-
-    -- if target is magic immune or invulnerable return
-    if utils.IsTargetMagicImmune(target) then return false end
-
-    if GetUnitToUnitDistance(bot, target) < (abilityQ:GetCastRange() + bot:GetBoundingRadius()) then
-        utils.TreadCycle(bot, constants.INTELLIGENCE)
-        gHeroVar.HeroUseAbilityOnEntity(bot, abilityQ, target)
-        return true
+    if modeName ~= "retreat" or (modeName == "retreat" and bot.SelfRef:getCurrentModeValue() < BOT_MODE_DESIRE_VERYHIGH) then
+        local WeakestEnemy, HeroHealth = utils.GetWeakestHero(bot, AttackRange + 100)
+        if utils.ValidTarget(WeakestEnemy) then
+            if not utils.IsTargetMagicImmune(WeakestEnemy) and not utils.IsCrowdControlled(WeakestEnemy) then
+                if HeroHealth <= WeakestEnemy:GetActualIncomingDamage(bot:GetOffensivePower(), DAMAGE_TYPE_PHYSICAL) then
+                    return BOT_ACTION_DESIRE_HIGH, WeakestEnemy
+                end
+            end
+        end
     end
 
-    return false
+    -- If we're going after someone
+    if modeName == "roam" or modeName == "defendally" or modeName == "fight" then
+        local npcEnemy = getHeroVar("RoamTarget")
+        if npcEnemy == nil then npcEnemy = getHeroVar("Target") end
+
+        if utils.ValidTarget(npcEnemy) then
+            if not utils.IsTargetMagicImmune(npcEnemy) and not utils.IsCrowdControlled(npcEnemy) and
+                GetUnitToUnitDistance(bot, npcEnemy) < (AttackRange + 75*#gHeroVar.GetNearbyAllies(bot,1200)) then
+                return BOT_ACTION_DESIRE_MODERATE, npcEnemy
+            end
+        end
+    end
+
+    -- laning harassment
+    if modeName == "laning" and ManaPerc > 0.4 then
+        local WeakestEnemy, HeroHealth = utils.GetWeakestHero(bot, AttackRange)
+        if utils.ValidTarget(WeakestEnemy) then
+            if not utils.IsTargetMagicImmune(WeakestEnemy) and not utils.IsCrowdControlled(WeakestEnemy) then
+                return BOT_ACTION_DESIRE_LOW, WeakestEnemy
+            end
+        end
+    end
+
+    -- jungling
+    if modeName == "jungling" and ManaPerc > 0.25 then
+        local neutralCreeps = gHeroVar.GetNearbyEnemyCreep(bot, AttackRange)
+        for _, creep in pairs(neutralCreeps) do
+            if not creep:HasModifier("modifier_drow_ranger_frost_arrows_slow") and not creep:IsAncientCreep() then
+                return BOT_ACTION_DESIRE_LOW, creep
+            end
+        end
+    end
+
+    return BOT_ACTION_DESIRE_NONE, nil
 end
 
-local function UseW(bot, nearbyEnemyHeroes)
+function ConsiderW()
+    local bot = GetBot()
+
     if not abilityW:IsFullyCastable() then
-        return false
+        return BOT_ACTION_DESIRE_NONE, {}
     end
 
-    if #nearbyEnemyHeroes == 0 then return false end
-
-    local wave_speed = abilityW:GetSpecialValueFloat("wave_speed")
+    -- WRITE CODE HERE --
+    local CastRange = abilityW:GetCastRange()
+    local WaveSpeed = abilityW:GetSpecialValueFloat("wave_speed")
+    --local Delay = abilityW:GetCastPoint() + GetUnitToUnitDistance(bot, npcEnemy)/WaveSpeed
 
     --Use gust to break channeling spells
-    for _, enemy in pairs( nearbyEnemyHeroes ) do
-        if GetUnitToUnitDistance(bot, enemy) < abilityW:GetCastRange() and enemy:IsChanneling() then
-            if not enemy:IsMagicImmune() then
-                local gustDelay = abilityW:GetCastPoint() + GetUnitToUnitDistance(bot, enemy)/wave_speed
-                utils.TreadCycle(bot, constants.INTELLIGENCE)
-                gHeroVar.HeroUseAbilityOnLocation(bot, abilityW, enemy:GetExtrapolatedLocation(gustDelay))
-                return true
+    local enemies = gHeroVar.GetNearbyEnemies(bot, CastRange+300)
+    for _, npcEnemy in pairs( enemies ) do
+        if npcEnemy:IsChanneling() and not utils.IsTargetMagicImmune(npcEnemy) then
+            return BOT_ACTION_DESIRE_HIGH, npcEnemy:GetLocation()
+        end
+    end
+
+    -- If we're in a teamfight, silence as many as we can
+    local tableNearbyAttackingAlliedHeroes = utils.InTeamFight(bot, 1000)
+    if #tableNearbyAttackingAlliedHeroes >= 2 then
+        local locationAoE = bot:FindAoELocation( true, true, bot:GetLocation(), CastRange, 250, 0, 0 )
+        if locationAoE.count >= 2 and GetUnitToLocationDistance(bot, locationAoE.targetloc) <= CastRange then
+            return BOT_ACTION_DESIRE_MODERATE, locationAoE.targetloc
+        end
+    end
+
+    -- protect myself
+    if modeName == "retreat" then
+        local closeEnemies = gHeroVar.GetNearbyEnemies(bot, 350)
+        for _, npcEnemy in pairs( closeEnemies ) do
+            if not utils.IsTargetMagicImmune( npcEnemy ) and not utils.IsCrowdControlled(npcEnemy) then
+                return BOT_ACTION_DESIRE_HIGH, npcEnemy:GetLocation()
             end
         end
     end
 
-    --Use Gust as a Defensive skill to fend off chasing enemies
-    if getHeroVar("IsRetreating") and (bot:GetHealth()/bot:GetMaxHealth()) < 0.5 then
-        for _, enemy in pairs( nearbyEnemyHeroes ) do
-            if GetUnitToUnitDistance(bot, enemy) < 150 and (not enemy:IsMagicImmune()) then
-                local gustDelay = abilityW:GetCastPoint() + GetUnitToUnitDistance(bot, enemy)/wave_speed
-                utils.TreadCycle(bot, constants.INTELLIGENCE)
-                gHeroVar.HeroUseAbilityOnLocation(bot, abilityW, enemy:GetExtrapolatedLocation(gustDelay))
-                return true
-            end
-        end
-    end
-
-    return false
+    return BOT_ACTION_DESIRE_NONE, {}
 end
 
-local function UseE(bot, nearbyEnemyTowers, nearbyAlliedCreep)
+function ConsiderE()
+    local bot = GetBot()
+
     if not abilityE:IsFullyCastable() then
-        return false
+        return BOT_ACTION_DESIRE_NONE
     end
 
-    -- TODO: use it when we should push (when all lanes should push, actually)
+    -- WRITE CODE HERE --
+    if modeName == "pushlane" then
+        local aCreep    = gHeroVar.GetNearbyAlliedCreep(bot, 900)
+        local eCreep    = gHeroVar.GetNearbyEnemyCreep(bot, 900)
+        local eTowers   = gHeroVar.GetNearbyEnemyTowers(bot, 900)
+        local enemies   = gHeroVar.GetNearbyEnemies(bot, 1200)
 
-    return false
+        if #eTowers > 0 and #enemies == 0 and #eCreep <= 1 and #aCreep >= 3 then
+            return BOT_ACTION_DESIRE_LOW
+        end
+    end
+
+    return BOT_ACTION_DESIRE_NONE
 end
 
 function drAbility:AbilityUsageThink(bot)
     if utils.IsBusy(bot) then return true end
+
+    if utils.IsCrowdControlled(bot) then return false end
 
     if abilityQ == "" then abilityQ = bot:GetAbilityByName( Abilities[1] ) end
     if abilityW == "" then abilityW = bot:GetAbilityByName( Abilities[2] ) end
     if abilityE == "" then abilityE = bot:GetAbilityByName( Abilities[3] ) end
     if abilityR == "" then abilityR = bot:GetAbilityByName( Abilities[4] ) end
 
-    local nearbyEnemyHeroes = gHeroVar.GetNearbyEnemies(bot, 1200)
+    AttackRange   = bot:GetAttackRange() + bot:GetBoundingRadius()
+    ManaPerc      = bot:GetMana()/bot:GetMaxMana()
+    modeName      = bot.SelfRef:getCurrentMode():GetName()
 
-    if not nearbyEnemyHeroes or #nearbyEnemyHeroes == 0 then return false end
+    -- CHECK BELOW TO SEE WHICH ABILITIES ARE NOT PASSIVE AND WHAT RETURN TYPES ARE --
+    -- Consider using each ability
+    local castQDesire, castQTarget  = ConsiderQ()
+    local castWDesire, castWLoc     = ConsiderW()
+    local castEDesire               = ConsiderE()
 
-    local target = getHeroVar("Target")
-    if not utils.ValidTarget(target) then
-        if #nearbyEnemyHeroes == 1 then
-            target = nearbyEnemyHeroes[1]
-            if GetUnitToUnitDistance(bot, target) < (bot:GetAttackRange() + bot:GetBoundingRadius() + target:GetBoundingRadius()) then
-                local dmg, castQueue, castTime, stunTime, slowTime, engageDist = self:nukeDamage( bot, target )
-
-                if dmg > target:GetHealth() then
-                    local bKill = self:queueNuke(bot, target, castQueue, engageDist)
-                    if bKill then
-                        setHeroVar("Target", target)
-                        return true
-                    end
-                end
-            end
-        end
+    -- CHECK BELOW TO SEE WHAT PRIORITY OF ABILITIES YOU WANT FOR THIS HERO --
+    if castEDesire > 0 then
+        gHeroVar.HeroUseAbility(bot,  abilityE)
+        return true
     end
 
-    if getHeroVar("IsRetreating") then
-        if UseW(bot, nearbyEnemyHeroes) then return true end
-    else
-        if UseE(bot) then return true end
+    if castWDesire > 0 then
+        gHeroVar.HeroUseAbilityOnLocation(bot, abilityW, castWLoc)
+        return true
+    end
 
-        if UseW(bot, nearbyEnemyHeroes) then return true end
-
-        if UseQ(bot, nearbyEnemyHeroes) then return true end
+    if castQDesire > 0 then
+        gHeroVar.HeroUseAbilityOnEntity(bot, abilityQ, castQTarget)
+        return true
     end
 
     return false

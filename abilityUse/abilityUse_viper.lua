@@ -35,6 +35,10 @@ local abilityR = ""
 local DoTdpsQ = 0
 local DoTdpsUlt = 0
 
+local AttackRange   = 0
+local ManaPerc      = 0
+local modeName      = nil
+
 function viperAbility:nukeDamage( bot, enemy )
     if enemy == nil or enemy:IsNull() then return 0, {}, 0, 0, 0 end
 
@@ -111,126 +115,6 @@ function viperAbility:queueNuke(bot, enemy, castQueue, engageDist)
     return false
 end
 
-function viperAbility:AbilityUsageThink(bot)
-    if utils.IsBusy(bot) then return true end
-    
-    if getHeroVar("IsRetreating") then return false end
-    
-    if utils.IsCrowdControlled(bot) then return false end
-
-    if abilityQ == "" then abilityQ = bot:GetAbilityByName( Abilities[1] ) end
-    if abilityW == "" then abilityW = bot:GetAbilityByName( Abilities[2] ) end
-    if abilityE == "" then abilityE = bot:GetAbilityByName( Abilities[3] ) end
-    if abilityR == "" then abilityR = bot:GetAbilityByName( Abilities[4] ) end
-
-    local me = getHeroVar("Self")
-    if me:getCurrentMode() == constants.MODE_RETREAT then return false end
-
-    local nearbyEnemyHeroes = gHeroVar.GetNearbyEnemies(bot, 1200)
-
-    if ( #nearbyEnemyHeroes == 0 ) then return false end
-
-    local target = getHeroVar("Target")
-
-    if not utils.ValidTarget(target) then
-        target, _ = utils.GetWeakestHero(bot, bot:GetAttackRange()+bot:GetBoundingRadius()+25, nearbyEnemyHeroes)
-        if target ~= nil then
-            local dmg, castQueue, castTime, stunTime, slowTime, engageDist = self:nukeDamage( bot, target )
-            local rightClickTime = stunTime + slowTime -- in Viper's case we don't discount the slow as he can cast it indefinitely (mana providing)
-            local totalDmgPerSec = (CalcRightClickDmg(bot, target) + DoTdpsUlt + DoTdpsQ)/bot:GetSecondsPerAttack()
-            if totalDmgPerSec*rightClickTime > target:GetHealth() then
-                local bKill = self:queueNuke(bot, target, castQueue, engageDist)
-                if bKill then
-                    setHeroVar("Target", target)
-                    return true
-                end
-            end
-        end
-    end
-
-    if UseUlt(bot) or UseQ(bot, nearbyEnemyHeroes) then return true end
-
-    return false
-end
-
-function UseQ(bot, nearbyEnemyHeroes)
-
-    if not abilityQ:IsFullyCastable() then
-        return false
-    end
-
-    -- harassment code when in lane
-    --[[
-    local manaRatio = bot:GetMana()/bot:GetMaxMana()
-    local target, _ = utils.GetWeakestHero(bot, bot:GetAttackRange()+bot:GetBoundingRadius(), nearbyEnemyHeroes)
-    if target ~= nil and manaRatio > 0.4 and GetUnitToUnitDistance(bot, target) then
-        utils.TreadCycle(bot, constants.INTELLIGENCE)
-        gHeroVar.HeroUseAbilityOnEntity(bot, abilityQ, target)
-        return true
-    end
-    --]]
-
-    local target = getHeroVar("Target")
-
-    -- if we don't have a valid target, return
-    if not utils.ValidTarget(target) then return false end
-
-    -- if target is magic immune or invulnerable, return
-    if utils.IsTargetMagicImmune(target) then return false end
-
-    -- set our local var
-    DoTdpsQ = abilityQ:GetSpecialValueInt("damage")
-    DoTdpsQ = target:GetActualIncomingDamage(DoTdpsQ, DAMAGE_TYPE_MAGICAL)
-
-    if GetUnitToUnitDistance(bot, target) < (abilityQ:GetCastRange() + bot:GetBoundingRadius()) then
-        utils.TreadCycle(bot, constants.INTELLIGENCE)
-        gHeroVar.HeroUseAbilityOnEntity(bot, abilityQ, target)
-        return true
-    end
-
-    return false
-end
-
-function HasUlt(bot)
-    if not abilityR:IsFullyCastable() then
-        return false
-    end
-
-    return true
-end
-
-function UseUlt(bot)
-    if not HasUlt(bot) then return false end
-
-    local target = getHeroVar("Target")
-
-    -- if we don't have a valid target, return
-    if not utils.ValidTarget(target) then return false end
-
-    -- if target is magic immune or invulnerable, return
-    if target:IsMagicImmune() or target:IsInvulnerable() then return false end
-
-    -- set our local var
-    DoTdpsUlt = abilityR:GetSpecialValueInt("damage")
-
-    if bot:GetLevel() >= 25 then
-        local unique2 = bot:GetAbilityByName("special_bonus_unique_viper_2")
-        if unique2 and unique2:GetLevel() >= 1 then
-            DoTdpsUlt = DoTdpsUlt + 80
-        end
-    end
-
-    DoTdpsUlt = target:GetActualIncomingDamage(DoTdpsUlt, DAMAGE_TYPE_MAGICAL)
-
-    if GetUnitToUnitDistance(target, bot) < (abilityR:GetCastRange() + 100) then
-        utils.TreadCycle(bot, constants.INTELLIGENCE)
-        gHeroVar.HeroUseAbilityOnEntity(bot, abilityR, target)
-        return true
-    end
-
-    return false
-end
-
 function CalcRightClickDmg(bot, target)
     local bonusDmg = 0
     if abilityW ~= nil and abilityW:GetLevel() > 0 then
@@ -243,6 +127,152 @@ function CalcRightClickDmg(bot, target)
     local rightClickDmg = bot:GetAttackDamage() + bonusDmg
     local actualDmg = target:GetActualIncomingDamage(rightClickDmg, DAMAGE_TYPE_PHYSICAL)
     return actualDmg
+end
+
+function ComboDmg(bot, target)
+    local dmg, castQueue, castTime, stunTime, slowTime, engageDist = viperAbility:nukeDamage( bot, target )
+    local rightClickTime = stunTime + slowTime -- in Viper's case we don't discount the slow as he can cast it indefinitely (mana providing)
+
+    DoTdpsQ   = target:GetActualIncomingDamage(abilityQ:GetSpecialValueInt("damage"), DAMAGE_TYPE_MAGICAL)
+
+    DoTdpsR   = abilityR:GetSpecialValueInt("damage")
+    if bot:GetLevel() >= 25 then
+        local unique2 = bot:GetAbilityByName("special_bonus_unique_viper_2")
+        if unique2 and unique2:GetLevel() >= 1 then
+            DoTdpsR = DoTdpsR + 80
+        end
+    end
+    DoTdpsR = target:GetActualIncomingDamage(DoTdpsR, DAMAGE_TYPE_MAGICAL)
+
+    local totalDmgPerSec = (CalcRightClickDmg(bot, target) + DoTdpsR + DoTdpsQ)/bot:GetSecondsPerAttack()
+    return totalDmgPerSec*rightClickTime
+end
+
+function viperAbility:AbilityUsageThink(bot)
+    if utils.IsBusy(bot) then return true end
+
+    if utils.IsCrowdControlled(bot) then return false end
+
+    if abilityQ == "" then abilityQ = bot:GetAbilityByName( Abilities[1] ) end
+    if abilityW == "" then abilityW = bot:GetAbilityByName( Abilities[2] ) end
+    if abilityE == "" then abilityE = bot:GetAbilityByName( Abilities[3] ) end
+    if abilityR == "" then abilityR = bot:GetAbilityByName( Abilities[4] ) end
+
+    AttackRange   = bot:GetAttackRange() + bot:GetBoundingRadius()
+    ManaPerc      = bot:GetMana()/bot:GetMaxMana()
+    modeName      = bot.SelfRef:getCurrentMode():GetName()
+
+    -- Consider using each ability
+    local castQDesire, castQTarget  = ConsiderQ()
+    local castRDesire, castRTarget  = ConsiderR()
+
+    if castRDesire > 0 then
+        gHeroVar.HeroUseAbilityOnEntity(bot, abilityR, castRTarget)
+        return true
+    end
+
+    if castQDesire > 0 then
+        gHeroVar.HeroUseAbilityOnEntity(bot, abilityQ, castQTarget)
+        return true
+    end
+
+    return false
+end
+
+function ConsiderQ()
+    local bot = GetBot()
+
+    if not abilityQ:IsFullyCastable() then
+        return BOT_ACTION_DESIRE_NONE, nil
+    end
+
+    if modeName ~= "retreat" or (modeName == "retreat" and bot.SelfRef:getCurrentModeValue() < BOT_MODE_DESIRE_VERYHIGH) then
+        local WeakestEnemy, HeroHealth = utils.GetWeakestHero(bot, AttackRange + 100)
+        if utils.ValidTarget(WeakestEnemy) then
+            if not utils.IsTargetMagicImmune(WeakestEnemy) and not utils.IsCrowdControlled(WeakestEnemy) then
+                if HeroHealth <= WeakestEnemy:GetActualIncomingDamage(ComboDmg(bot, WeakestEnemy), DAMAGE_TYPE_PHYSICAL) then
+                    return BOT_ACTION_DESIRE_HIGH, WeakestEnemy
+                end
+            end
+        end
+    end
+
+    -- If we're going after someone
+    if modeName == "roam" or modeName == "defendally" or modeName == "fight" then
+        local npcEnemy = getHeroVar("RoamTarget")
+        if npcEnemy == nil then npcEnemy = getHeroVar("Target") end
+
+        if utils.ValidTarget(npcEnemy) then
+            if not utils.IsTargetMagicImmune(npcEnemy) and not utils.IsCrowdControlled(npcEnemy) and
+                GetUnitToUnitDistance(bot, npcEnemy) < (AttackRange + 75*#gHeroVar.GetNearbyAllies(bot,1200)) then
+                return BOT_ACTION_DESIRE_MODERATE, npcEnemy
+            end
+        end
+    end
+
+    -- If we are pushing a lane and have our level 25 building unique talent
+    if modeName == "pushlane" and ManaPerc > 0.25 then
+        local unique1 = bot:GetAbilityByName("special_bonus_unique_viper_1")
+        if unique1 and unique1:GetLevel() >= 1 and bot:GetAttackTarget():IsBuilding() then
+            return BOT_ACTION_DESIRE_MODERATE, bot:GetAttackTarget()
+        end
+    end
+
+    -- laning harassment
+    if modeName == "laning" and ManaPerc > 0.4 then
+        local WeakestEnemy, HeroHealth = utils.GetWeakestHero(bot, AttackRange)
+        if utils.ValidTarget(WeakestEnemy) then
+            if not utils.IsTargetMagicImmune(WeakestEnemy) and not utils.IsCrowdControlled(WeakestEnemy) then
+                return BOT_ACTION_DESIRE_LOW, WeakestEnemy
+            end
+        end
+    end
+
+    -- jungling
+    if modeName == "jungling" and ManaPerc > 0.25 then
+        local neutralCreeps = gHeroVar.GetNearbyEnemyCreep(bot, AttackRange)
+        for _, creep in pairs(neutralCreeps) do
+            if not creep:HasModifier("modifier_viper_poison_attack_slow") and not creep:IsAncientCreep() then
+                return BOT_ACTION_DESIRE_LOW, creep
+            end
+        end
+    end
+
+    return BOT_ACTION_DESIRE_NONE, nil
+end
+
+function ConsiderR()
+    local bot = GetBot()
+
+    if not abilityR:IsFullyCastable() then
+        return BOT_ACTION_DESIRE_NONE, nil
+    end
+
+    if modeName ~= "retreat" or (modeName == "retreat" and bot.SelfRef:getCurrentModeValue() < BOT_MODE_DESIRE_VERYHIGH) then
+        local WeakestEnemy, HeroHealth = utils.GetWeakestHero(bot, AttackRange + 100)
+        if utils.ValidTarget(WeakestEnemy) then
+            if not utils.IsTargetMagicImmune(WeakestEnemy) and not utils.IsCrowdControlled(WeakestEnemy) then
+                if HeroHealth <= WeakestEnemy:GetActualIncomingDamage(ComboDmg(bot, WeakestEnemy), DAMAGE_TYPE_PHYSICAL) then
+                    return BOT_ACTION_DESIRE_HIGH, WeakestEnemy
+                end
+            end
+        end
+    end
+
+    -- If we're going after someone
+    if modeName == "roam" or modeName == "defendally" or modeName == "fight" then
+        local npcEnemy = getHeroVar("RoamTarget")
+        if npcEnemy == nil then npcEnemy = getHeroVar("Target") end
+
+        if utils.ValidTarget(npcEnemy) then
+            if not utils.IsTargetMagicImmune(npcEnemy) and not utils.IsCrowdControlled(npcEnemy) and
+                GetUnitToUnitDistance(bot, npcEnemy) < (AttackRange + 75*#gHeroVar.GetNearbyAllies(bot,1200)) then
+                return BOT_ACTION_DESIRE_MODERATE, npcEnemy
+            end
+        end
+    end
+
+    return BOT_ACTION_DESIRE_NONE, nil
 end
 
 return viperAbility

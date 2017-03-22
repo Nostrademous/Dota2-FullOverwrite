@@ -115,7 +115,7 @@ function X:Desire(bot)
     end
     allyValue = allyValue + #aTowers*110
     
-    utils.myPrint("allyV/enemyV: ", allyValue/enemyValue)
+    --utils.myPrint("allyV/enemyV: ", allyValue/enemyValue)
     
     if allyValue/enemyValue > Max(1.0, (1.6 - bot:GetLevel()*0.1)) then
         local target, _ = utils.GetWeakestHero(bot, bot:GetAttackRange()+bot:GetBoundingRadius())

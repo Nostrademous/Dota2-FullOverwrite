@@ -5,14 +5,6 @@
 
 local utils = require( GetScriptDirectory().."/utility" )
 
-local RadiantBots = {
-    "npc_dota_hero_drow_ranger",
-    "npc_dota_hero_crystal_maiden",
-    "npc_dota_hero_bloodseeker",
-    "npc_dota_hero_invoker",
-    "npc_dota_hero_viper"
-}
-
 local Pos_1_Pool = {
     "npc_dota_hero_drow_ranger",
     --"npc_dota_hero_phantom_assassin"
@@ -43,6 +35,14 @@ local Pos_X_Pool = {
 }
 
 local BotPool = {
+    Pos_1_Pool, -- hard carry
+    Pos_5_Pool, -- hard support
+    {unpack(Pos_4_Pool), unpack(Pos_X_Pool)}, -- semi-support, roamer, jungler
+    Pos_2_Pool, -- mid
+    Pos_3_Pool  -- offlane
+}
+
+local BotPool2 = {
     Pos_1_Pool, -- hard carry
     Pos_5_Pool, -- hard support
     {unpack(Pos_4_Pool), unpack(Pos_X_Pool)}, -- semi-support, roamer, jungler
@@ -88,9 +88,15 @@ function Think()
             local IDs = GetTeamPlayers(GetTeam())
             for index, id in pairs(IDs) do
                 if IsPlayerBot(id) and IsPlayerInHeroSelectionControl(id) and GetSelectedHeroName(id) == "" then
-                    local sizeOfPool = #BotPool[index]
+                    local pool = nil
+                    if GetTeam() == TEAM_RADIANT then
+                        pool = BotPool
+                    else
+                        pool = BotPool2
+                    end
+                    local sizeOfPool = #pool[index]
                     for j = 1, sizeOfPool do
-                        randomHero = BotPool[index][RandomInt(1, sizeOfPool)]
+                        randomHero = pool[index][RandomInt(1, sizeOfPool)]
                         if not utils.InTable(chosenHeroes, randomHero) then
                             table.insert(chosenHeroes, randomHero)
                             SelectHero(id, randomHero)

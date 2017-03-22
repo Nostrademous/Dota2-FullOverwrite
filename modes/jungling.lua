@@ -38,9 +38,14 @@ end
 function X:OnStart(myBot)
     setHeroVar("JunglingState", JunglingStates.FindCamp)
     setHeroVar("move_ticks", 0)
+    setHeroVar("currentCamp", nil)
+    setHeroVar("waituntil", 0)
+    GetBot().jungleReloaded = false
 end
 
 function X:OnEnd()
+    setHeroVar("move_ticks", 0)
+    setHeroVar("currentCamp", nil)
 end
 
 ----------------------------------
@@ -98,7 +103,7 @@ local function MoveToCamp(bot)
     local neutrals = gHeroVar.GetNearbyEnemyCreep(bot, 900)
     if #neutrals == 0 then -- no creeps here
         local jungle = jungle_status.GetJungle(GetTeam()) or {}
-        jungle = FindCampsByMaxDifficulty(jungle, getHeroVar("Self"):GetMaxClearableCampLevel(bot))
+        jungle = FindCampsByMaxDifficulty(jungle, bot.SelfRef:GetMaxClearableCampLevel(bot))
         if #jungle == 0 then -- jungle is empty
             setHeroVar("waituntil", utils.NextNeutralSpawn())
             utils.myPrint("waits for spawn")
@@ -130,7 +135,7 @@ local function Stack(bot)
             gHeroVar.HeroMoveToLocation(bot, stackLoc)
             return
         else
-            local nearbyCreep = gHeroVar.GetNearbyEnemyCreep(bot, bot:AttackRange())
+            local nearbyCreep = gHeroVar.GetNearbyEnemyCreep(bot, bot:GetAttackRange())
             if #nearbyCreep > 0 then
                 gHeroVar.HeroAttackUnit(bot, nearbyCreep[1], true)
                 return
@@ -195,6 +200,10 @@ local States = {
 
 function X:Think(bot)
     if utils.IsBusy(bot) then return end
+    
+    if bot.jungleReloaded then
+        self:OnStart(bot.SelfRef)
+    end
 
     States[getHeroVar("JunglingState")](bot)
 end

@@ -90,6 +90,13 @@ function X:Think(bot)
                 if utils.DropTowerAggro(bot, nearbyAlliedCreep) then
                     return
                 else
+                    -- otherwise, walk away, don't be that bot that takes tower damage over and over
+                    local dist = GetUnitToUnitDistance(bot, hTower)
+                    if dist < 900 then
+                        gHeroVar.HeroMoveToLocation(bot, utils.VectorAway(bot:GetLocation(), hTower:GetLocation(), 900-dist))
+                        return
+                    end
+                end
             else
                 -- if we can't drop aggro, but tower is almost dead
                 if hTower:GetHealth()/hTower:GetMaxHealth() < 0.1 and not modifiers.IsBuildingGlyphed(hTower) then
@@ -106,12 +113,10 @@ function X:Think(bot)
             end
         -- else, tower is not attacking me
         else
-            local myAttackRange = bot:GetAttackRange() + bot:GetBoundingRadius() + hTower:GetBoundingRadius()
-
             -- see if the tower has a target, we know it's not us, but is it any other unit?
             local bTowerHasTarget = false
             for i = 1, 5, 1 do
-                local hTowerTarget = U.GetLaneTowerAttackTarget(U.GetOtherTeam(), lane, i)
+                local hTowerTarget = U.GetLaneTowerAttackTarget(U.GetOtherTeam(), getHeroVar("CurLane"), i)
                 if utils.NotNilOrDead(hTowerTarget) and GetUnitToUnitDistance(bot, hTowerTarget) < 1200 then
                     -- make sure it is not another hero, unless illusion
                     if hTowerTarget:IsIllusion() or not hTowerTarget:IsHero() then

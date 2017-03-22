@@ -116,7 +116,7 @@ local function queueNuke(bot, enemy, castQueue, engageDist)
             local skill = castQueue[i]
             local behaviorFlag = skill:GetBehavior()
 
-            utils.myPrint(" - skill '", skill:GetName(), "' has BehaviorFlag: ", behaviorFlag)
+            --utils.myPrint(" - skill '", skill:GetName(), "' has BehaviorFlag: ", behaviorFlag)
 
             if skill:GetName() == "lina_light_strike_array" then
                 if utils.IsCrowdControlled(enemy) then

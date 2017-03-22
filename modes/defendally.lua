@@ -32,6 +32,8 @@ end
 function X:Think(bot)
     if utils.ValidTarget(bot.defendAllyTarget) then
         gHeroVar.HeroAttackUnit(bot, bot.defendAllyTarget, true)
+    else
+        bot.defendAllyTarget = nil
     end
 end
 
@@ -77,7 +79,7 @@ function X:Desire(bot)
     end
 
     bot.defendAllyTarget = GetDefendeesTarget(bot)
-    if bot.defendAllyTarget then
+    if utils.ValidTarget(bot.defendAllyTarget) then
         return BOT_MODE_DESIRE_MODERATE
     end
 

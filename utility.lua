@@ -697,7 +697,7 @@ function U.AllChat(msg)
 end
 
 function U.ValidTarget(target)
-    if target and target:IsAlive() and not target:IsNull() then
+    if target and not target:IsNull() and target:IsAlive() then
         return true
     end
     return false
@@ -1179,9 +1179,6 @@ end
 
 function U.HarassEnemy(bot)
     local listEnemies = gHeroVar.GetNearbyEnemies(bot, Min(1200, bot:GetCurrentVisionRange()))
-    local enemyToHarass = nil
-    
-    if #listEnemies == 0 then return false end
     
     local listAlliedTowers = gHeroVar.GetNearbyAlliedTowers(bot, 600)
     for _, enemy in pairs(listEnemies) do
@@ -1208,7 +1205,7 @@ function U.HarassEnemy(bot)
     if U.UseOrbEffect(bot) then return true end
     
     local listEnemyCreep = gHeroVar.GetNearbyEnemyCreep(bot, 1200)
-    if #listEnemies <= #gHeroVar.GetNearbyAllies(bot, 900) and #listEnemyCreep == 0 and
+    if #listEnemies > 0 and #listEnemies <= #gHeroVar.GetNearbyAllies(bot, 900) and #listEnemyCreep == 0 and
         GetUnitToUnitDistance(bot, listEnemies[1]) < (bot:GetAttackRange()+bot:GetBoundingRadius()) then
         gHeroVar.HeroAttackUnit(bot, listEnemies[1], true)
         return true
@@ -1281,19 +1278,18 @@ function U.EnemyHasBreakableBuff(enemy)
     return false
 end
 
-function U.UseOrbEffect(bot, enemy)    
+function U.UseOrbEffect(bot)    
     local orb = getHeroVar("HasOrbAbility")
     if orb ~= nil then
         local ability = bot:GetAbilityByName(orb)
         if ability ~= nil and ability:IsFullyCastable() then
             local target = nil
-            if U.ValidTarget(enemy) then target = enemy end
-    
-            if target == nil then
+            if U.ValidTarget(getHeroVar("Target")) then
+                target = getHeroVar("Target")
+            else
                 target, _ = U.GetWeakestHero(bot, bot:GetAttackRange()+bot:GetBoundingRadius())
             end
-
-            if target ~= nil and GetUnitToUnitDistance(bot, target) < (bot:GetAttackRange()+bot:GetBoundingRadius()) then
+            if utils.ValidTarget(target) and GetUnitToUnitDistance(bot, target) < (bot:GetAttackRange()+bot:GetBoundingRadius()) then
                 U.TreadCycle(bot, constants.INTELLIGENCE)
                 gHeroVar.HeroUseAbilityOnEntity(bot, ability, target)
                 return true

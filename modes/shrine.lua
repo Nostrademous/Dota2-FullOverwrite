@@ -117,7 +117,7 @@ function X:Desire(bot)
         local nearbyAllies = gHeroVar.GetNearbyAllies(bot, 400)
         local numAllies = 0
         for _, ally in pairs(nearbyAllies) do
-            if utils.InTable(global_game_state.GetShrineState(bot.useShrine).pidsLookingForHeal, ally:GetPlayerID()) then
+            if not ally:IsIllusion() and utils.InTable(global_game_state.GetShrineState(bot.useShrine).pidsLookingForHeal, ally:GetPlayerID()) then
                 if GetUnitToUnitDistance(ally, global_game_state.GetShrineState(bot.useShrine).handle) < 400 then
                     numAllies = numAllies + 1
                 end

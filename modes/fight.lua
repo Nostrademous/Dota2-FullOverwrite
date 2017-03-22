@@ -33,11 +33,12 @@ end
 
 function X:OnEnd()
     setHeroVar("Target", nil)
+    setHeroVar("RoamTarget", nil)
 end
 
 function X:Think(bot)
     local target = getHeroVar("Target")
-    if utils.ValidTarget(target) and target:IsAlive() then
+    if utils.ValidTarget(target) then
         local dist = GetUnitToUnitDistance(bot, target)
         local attackRange = bot:GetAttackRange() + bot:GetBoundingRadius() + target:GetBoundingRadius()
         
@@ -66,7 +67,7 @@ function X:Think(bot)
                     if dist < 0.3*attackRange then
                         gHeroVar.HeroMoveToLocation(bot, utils.VectorAway(bot:GetLocation(), target:GetLocation(), 0.75*attackRange-dist))
                     else
-                        if utils.UseOrbEffect(bot, target) then return end
+                        if utils.UseOrbEffect(bot) then return end
                         
                         gHeroVar.HeroAttackUnit(bot, target, true)
                     end
@@ -137,6 +138,10 @@ function X:Desire(bot)
                 return BOT_MODE_DESIRE_MODERATE
             end
         end
+    end
+    
+    if not utils.ValidTarget(getHeroVar("Target")) then
+        setHeroVar("Target", nil)
     end
     
     return BOT_MODE_DESIRE_NONE

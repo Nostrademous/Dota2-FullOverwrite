@@ -28,6 +28,7 @@ function NewJungle ()
     if not isJungleFresh then
         jungle = utils.deepcopy(utils.tableNeutralCamps)
         isJungleFresh = true
+        GetBot().jungleReloaded = true
     end
 end
 

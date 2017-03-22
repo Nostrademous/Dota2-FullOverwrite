@@ -161,6 +161,25 @@ function X:Think(bot)
     end
 
     if GetGameState() ~= GAME_STATE_GAME_IN_PROGRESS and GetGameState() ~= GAME_STATE_PRE_GAME then return end
+    
+    local tt = getHeroVar("Target")
+    local rt = getHeroVar("RoamTarget")
+    if tt and tt:IsNull() then
+        utils.myPrint("Null Target")
+        setHeroVar("Target", nil)
+    end
+    if tt and not tt:IsNull() and not tt:IsAlive() then
+        utils.myPrint("Not Null but Dead Target")
+        setHeroVar("Target", nil)
+    end
+    if rt and rt:IsNull() then
+        utils.myPrint("Null RoamTarget")
+        setHeroVar("RoamTarget", nil)
+    end
+    if rt and not rt:IsNull() and not rt:IsAlive() then
+        utils.myPrint("Not Null but Dead RoamTarget")
+        setHeroVar("RoamTarget", nil)
+    end
 
     -- level up abilities if time
     local checkLevel, newTime = utils.TimePassed(self:getHeroVar("LastLevelUpThink"), 2.0)

@@ -90,6 +90,25 @@ function HasEulModifier(bot)
     return false
 end
 
+local DangerousModifiers = {
+    "modifier_bloodseeker_rupture"
+}
+
+function HasDangerousModifiers(hUnit)
+    local botModifierCount = hUnit:NumModifiers()
+    if botModifierCount == 0 then return false end
+    
+    for i = 0, botModifierCount-1, 1 do
+        local modName = hUnit:GetModifierName(i)
+        
+        if utils.InTable(DangerousModifiers, modName) then
+            return true
+        end
+    end
+    
+    return false
+end
+
 function IsInvisible(bot)
     return bot:HasModifier("modifier_invisible")
 end

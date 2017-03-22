@@ -34,7 +34,9 @@ local abilityW = ""
 local abilityE = ""
 local abilityR = ""
 
-function nukeDamage( bot, enemy )
+local modeName      = nil
+
+function bsAbility:nukeDamage( bot, enemy )
     if enemy == nil or enemy:IsNull() then return 0, {}, 0, 0, 0 end
 
     local comboQueue = {}
@@ -77,7 +79,7 @@ function nukeDamage( bot, enemy )
     return dmgTotal, comboQueue, castTime, stunTime, slowTime, engageDist
 end
     
-function queueNuke(bot, enemy, castQueue, engageDist)
+function bsAbility:queueNuke(bot, enemy, castQueue, engageDist)
     local dist = GetUnitToUnitDistance(bot, enemy)
 
     -- if out of range, attack move for one hit to get in range
@@ -105,65 +107,183 @@ function queueNuke(bot, enemy, castQueue, engageDist)
     return false
 end
 
-local function UseW(bot, nearbyEnemyHeroes)
-    if not abilityW:IsFullyCastable() then return false end
+function ComboDamage(bot, enemy)
+    local dmg, castQueue, castTime, stunTime, slowTime, engageDist = bsAbility:nukeDamage( bot, enemy )
 
-    if #nearbyEnemyHeroes == 1 and abilityR:IsFullyCastable() then
-        setHeroVar("Target", nearbyEnemyHeroes[1])
-        return false
-    end
+    dmg = dmg + fight_simul.estimateRightClickDamage( bot, enemy, 5.0 )
 
-    if bsTarget and GetUnitToUnitDistance(bot, bsTarget) > 1500 then
-        return false
+    return dmg
+end
+
+function ConsiderQ()
+    local bot = GetBot()
+    
+    if not abilityQ:IsFullyCastable() then
+		return BOT_ACTION_DESIRE_NONE, nil
+	end
+    
+    -- WRITE CODE HERE --
+    
+    -- If we're in a teamfight, use it on the scariest enemy
+	local tableNearbyAttackingAlliedHeroes = utils.InTeamFight(bot, 1000)
+	if #tableNearbyAttackingAlliedHeroes >= 2 then
+        local targetCountTable = {}
+		for _, ally in pairs(tableNearbyAttackingAlliedHeroes) do
+            local allyTarget = gHeroVar.GetVar(ally:GetPlayerID(), "Target")
+            if utils.ValidTarget(allyTarget) then
+                local pos = utils.PosInTable(targetCountTable, allyTarget)
+                if pos == -1 then
+                    targetCountTable[allyTarget] = 1
+                else
+                    targetCountTable[allyTarget] = targetCountTable[allyTarget] + 1
+                end
+            end
+            table.sort(targetCountTable)
+            
+            if #targetCountTable > 0 and utils.ValidTarget(targetCountTable[1])	then
+                return BOT_ACTION_DESIRE_HIGH, targetCountTable[1]
+            end
+        end
+	end
+    
+    if modeName == "roshan" then
+        if GetUnitToLocationDistance(bot, utils.ROSHAN) < 600 then
+            local eCreep = gHeroVar.GetNearbyEnemyCreep(bot, 600)
+            local roshan = nil
+            for _, creep in pairs(eCreep) do
+                if creep:GetUnitName() == "npc_dota_roshan" then
+                    roshan = creep
+                    break
+                end
+            end
+            if utils.ValidTarget(roshan) then
+                if not roshan:HasModifier("modifier_bloodseeker_bloodrage") then
+                    return BOT_ACTION_DESIRE_LOW, roshan
+                end
+            end
+        end 
     end
     
-    local delay = abilityW:GetSpecialValueFloat("delay_plus_castpoint_tooltip")
-    if #nearbyEnemyHeroes == 1 then
-        gHeroVar.HeroUseAbilityOnLocation(bot, abilityW, nearbyEnemyHeroes[1]:GetExtrapolatedLocation(delay))
-        return true
-    else
-        local center = utils.GetCenter(nearbyEnemyHeroes)
-        if center ~= nil then
-            gHeroVar.HeroUseAbilityOnLocation(bot, abilityW, center)
-            return true
+    if modeName == "jungling" or modeName == "laning" or modeName == "pushlane" or modeName == "roshan" then
+        if not bot:HasModifier("modifier_bloodseeker_bloodrage") and #gHeroVar.GetNearbyEnemyCreep(bot, 1200) > 0 then
+            return BOT_ACTION_DESIRE_LOW, bot
         end
     end
-
-    return false
+    
+    return BOT_ACTION_DESIRE_NONE, nil
 end
 
-local function UseUlt(bot)
-    if not abilityR:IsFullyCastable() then return false end
-
-    if not utils.NotNilOrDead(bsTarget) then return false end
+function ConsiderW()
+    local bot = GetBot()
     
-    local timeToKillRightClicking = fight_simul.estimateTimeToKill(bot, bsTarget)
-    --utils.myPrint("Estimating Time To Kill with Right Clicks: ", timeToKillRightClicking)
-    if timeToKillRightClicking < 4.0 then
-        utils.myPrint("Not Using Ult")
-        return false
+    if not abilityW:IsFullyCastable() then
+		return BOT_ACTION_DESIRE_NONE, {}
+	end
+    
+    local CastRange = abilityW:GetCastRange()
+    local Radius = 600
+    local Delay = abilityW:GetSpecialValueFloat("delay_plus_castpoint_tooltip")
+    
+    -- Check for a channeling enemy
+    local enemies = gHeroVar.GetNearbyEnemies(bot, 1600)
+    
+	for _, npcEnemy in pairs( enemies ) do
+		if npcEnemy:IsChanneling() and not utils.IsTargetMagicImmune(npcEnemy) then
+			return BOT_ACTION_DESIRE_HIGH, npcEnemy:GetLocation()
+		end
+	end
+    
+    -- If we're in a teamfight, use it
+	local tableNearbyAttackingAlliedHeroes = utils.InTeamFight(bot, 1600)
+	if #tableNearbyAttackingAlliedHeroes >= 2 then
+        local locationAoE = bot:FindAoELocation( true, true, bot:GetLocation(), CastRange, Radius, Delay, 0 )
+        if locationAoE.count >= 2 and GetUnitToLocationDistance(bot, locationAoE.targetloc) <= CastRange then
+            return BOT_ACTION_DESIRE_LOW, locationAoE.targetloc
+        end
     end
+    
+    -- If we're going after someone
+	if modeName == "roam" or modeName == "defendally" or modeName == "fight" then
+		local npcEnemy = getHeroVar("RoamTarget")
+        if npcEnemy == nil then npcEnemy = getHeroVar("Target") end
 
-    if GetUnitToUnitDistance(bsTarget, bot) < (abilityR:GetCastRange() - 100) then
-        gHeroVar.HeroUseAbilityOnEntity(bot, abilityR, bsTarget)
-        return true
-    end
+		if utils.ValidTarget(npcEnemy) then
+			if not utils.IsTargetMagicImmune(npcEnemy) and not utils.IsCrowdControlled(npcEnemy) and 
+                GetUnitToUnitDistance(bot, npcEnemy) < (CastRange + 75*#gHeroVar.GetNearbyAllies(bot,1200)) then
+				return BOT_ACTION_DESIRE_MODERATE, npcEnemy:GetExtrapolatedLocation(Delay)
+			end
+		end
+	end
+    
+    -- farming/laning
+	if modeName == "jungling" or modeName == "laning" then		
+        -- if we can hit 2+ enemies do it
+		if abilityR:GetLevel() >= 1 and bot:GetMana() > abilityR:GetManaCost() then
+			local locationAoE = bot:FindAoELocation( true, true, bot:GetLocation(), CastRange, Radius, Delay, 0 )
+			if locationAoE.count >= 2 and GetUnitToLocationDistance(bot, locationAoE.targetloc) <= CastRange then
+				return BOT_ACTION_DESIRE_LOW, locationAoE.targetloc
+			end
+        else
+            local locationAoE = bot:FindAoELocation( true, true, bot:GetLocation(), CastRange, Radius, Delay, 0 )
+			if locationAoE.count >= 2 and GetUnitToLocationDistance(bot, locationAoE.targetloc) <= CastRange then
+				return BOT_ACTION_DESIRE_LOW, locationAoE.targetloc
+			end
+		end
+	end
 
-    return false
+    return BOT_ACTION_DESIRE_NONE, {}
 end
 
-local function UseQ(bot)
-    if not abilityQ:IsFullyCastable() then return false end
+function ConsiderR()
 
-    if utils.NotNilOrDead(bsTarget) and GetUnitToUnitDistance(bsTarget, bot) < (abilityQ:GetCastRange() - 100) then
-        gHeroVar.HeroUseAbilityOnEntity(bot, abilityQ, bsTarget)
-        return true
-    end
+    local bot = GetBot()
     
-    if bot:HasModifier("modifier_bloodseeker_bloodrage") then return false end
+    if not abilityR:IsFullyCastable() then
+		return BOT_ACTION_DESIRE_NONE, nil
+	end
     
-    gHeroVar.HeroUseAbilityOnEntity(bot, abilityQ, bot)
-    return true
+    -- WRITE CODE HERE --
+    local CastRange = abilityR:GetCastRange()
+    
+    -- If we're in a teamfight, use it on the scariest enemy
+	local tableNearbyAttackingAlliedHeroes = utils.InTeamFight(bot, 1000)
+	if #tableNearbyAttackingAlliedHeroes >= 2 then
+		local npcMostDangerousEnemy = utils.GetScariestEnemy(bot, CastRange, true)
+
+		if utils.ValidTarget(npcMostDangerousEnemy)	then
+			return BOT_ACTION_DESIRE_HIGH, npcMostDangerousEnemy
+		end
+	end
+    
+    --Try to kill enemy hero
+    local WeakestEnemy, HeroHealth = utils.GetWeakestHero(bot, CastRange + 150)   
+	if modeName ~= "retreat" then
+		if utils.ValidTarget(WeakestEnemy) then
+            local timeToKillRightClicking = fight_simul.estimateTimeToKill(bot, WeakestEnemy)
+			if timeToKillRightClicking > 4.0 and not utils.IsCrowdControlled(WeakestEnemy) then
+				if HeroHealth <= (fight_simul.estimateRightClickDamage( bot, WeakestEnemy, 12.0 ) + 200) then
+                    setHeroVar("Target", WeakestEnemy)
+					return BOT_ACTION_DESIRE_HIGH, WeakestEnemy
+				end
+			end
+		end
+	end
+    
+    -- If we're going after someone
+	if modeName == "roam" or modeName == "defendally" or modeName == "fight" then
+		local npcEnemy = getHeroVar("RoamTarget")
+        if npcEnemy == nil then npcEnemy = getHeroVar("Target") end
+
+		if utils.ValidTarget(npcEnemy) then
+            local timeToKillRightClicking = fight_simul.estimateTimeToKill(bot, npcEnemy)
+            if timeToKillRightClicking > 4.0 and not utils.IsCrowdControlled(npcEnemy) and 
+                GetUnitToUnitDistance(bot, npcEnemy) < CastRange then
+                return BOT_ACTION_DESIRE_MODERATE, npcEnemy
+            end
+		end
+	end
+    
+    return BOT_ACTION_DESIRE_NONE, nil
 end
 
 function bsAbility:AbilityUsageThink(bot)
@@ -176,33 +296,30 @@ function bsAbility:AbilityUsageThink(bot)
     if abilityE == "" then abilityE = bot:GetAbilityByName( Abilities[3] ) end
     if abilityR == "" then abilityR = bot:GetAbilityByName( Abilities[4] ) end
 
-    bsTarget = getHeroVar("Target")
-    if bsTarget == nil then bsTarget = getHeroVar("RoamTarget") end
+    modeName      = bot.SelfRef:getCurrentMode():GetName()
 
-    if UseQ(bot) then return end
+    -- CHECK BELOW TO SEE WHICH ABILITIES ARE NOT PASSIVE AND WHAT RETURN TYPES ARE --
+    -- Consider using each ability
+	local castQDesire, castQTarget  = ConsiderQ()
+	local castWDesire, castWLoc     = ConsiderW()
+	local castRDesire, castRTarget  = ConsiderR()
     
-    local nearbyEnemyHeroes = gHeroVar.GetNearbyEnemies(bot, 1600)
-    if not bsTarget then
-        if #nearbyEnemyHeroes == 0 then return end
-        
-        if #nearbyEnemyHeroes == 1 then
-            local enemy = nearbyEnemyHeroes[1]
-            local dmg, castQueue, castTime, stunTime, slowTime, engageDist = nukeDamage( bot, enemy )
+    -- CHECK BELOW TO SEE WHAT PRIORITY OF ABILITIES YOU WANT FOR THIS HERO --
+    if castWDesire > 0 then
+		gHeroVar.HeroUseAbilityOnLocation(bot, abilityW, castWLoc)
+		return true
+	end
+    
+    if castRDesire > 0 then
+		gHeroVar.HeroUseAbilityOnEntity(bot, abilityR, castRTarget)
+		return true
+	end
 
-            dmg = dmg + fight_simul.estimateRightClickDamage( bot, enemy, 5.0 )
-
-            -- magic immunity is already accounted for by nukeDamage()
-            if dmg > enemy:GetHealth() then
-                local bKill = queueNuke(bot, enemy, castQueue, engageDist)
-                if bKill then
-                    setHeroVar("Target", enemy)
-                    return 
-                end
-            end
-        end
-    end
-
-    if UseUlt(bot) or UseW(bot, nearbyEnemyHeroes) then return true end
+	if castQDesire > 0 then
+		gHeroVar.HeroUseAbilityOnEntity(bot, abilityQ, castQTarget)
+		return true
+	end
+    
     return false
 end
 

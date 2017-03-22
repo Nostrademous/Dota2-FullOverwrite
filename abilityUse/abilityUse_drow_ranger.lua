@@ -76,6 +76,9 @@ function drAbility:nukeDamage( bot, enemy )
                     table.insert(comboQueue, abilityQ)
                 end
             end
+        else
+            dmgTotal = dmgTotal + Min(bot:GetLevel(),4)*enemy:GetActualIncomingDamage(bot:GetAttackDamage(), DAMAGE_TYPE_PHYSICAL)
+            castTime = castTime + bot:GetAttackPoint()
         end
     end
 
@@ -104,6 +107,11 @@ function drAbility:queueNuke(bot, enemy, castQueue, engageDist)
     return false
 end
 
+function ComboDmg(bot, target)
+    local dmg, castQueue, castTime, stunTime, slowTime, engageDist = drAbility:nukeDamage( bot, target )
+    return dmg
+end
+
 function ConsiderQ()
     local bot = GetBot()
 
@@ -115,7 +123,7 @@ function ConsiderQ()
         local WeakestEnemy, HeroHealth = utils.GetWeakestHero(bot, AttackRange + 100)
         if utils.ValidTarget(WeakestEnemy) then
             if not utils.IsTargetMagicImmune(WeakestEnemy) and not utils.IsCrowdControlled(WeakestEnemy) then
-                if HeroHealth <= WeakestEnemy:GetActualIncomingDamage(bot:GetOffensivePower(), DAMAGE_TYPE_PHYSICAL) then
+                if HeroHealth <= WeakestEnemy:GetActualIncomingDamage(ComboDmg(bot, WeakestEnemy), DAMAGE_TYPE_PHYSICAL) then
                     return BOT_ACTION_DESIRE_HIGH, WeakestEnemy
                 end
             end

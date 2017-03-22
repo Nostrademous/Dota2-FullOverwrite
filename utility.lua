@@ -186,11 +186,11 @@ U["tableNeutralCamps"] = {
     }
 }
 
-U.SIDE_SHOP_TOP = Vector(-7220,4430);
-U.SIDE_SHOP_BOT = Vector(7249,-4113);
-U.SECRET_SHOP_RADIANT = Vector(-4472,1328);
-U.SECRET_SHOP_DIRE = Vector(4586,-1588);
-U.ROSHAN = Vector(-2450, 1880);
+U.SIDE_SHOP_TOP = Vector(-7220,4430)
+U.SIDE_SHOP_BOT = Vector(7249,-4113)
+U.SECRET_SHOP_RADIANT = Vector(-4472,1328)
+U.SECRET_SHOP_DIRE = Vector(4586,-1588)
+U.ROSHAN = Vector(-2405, 1905)
 
 U.MapSafeSpots = {
     Vector(-7180, 4811),

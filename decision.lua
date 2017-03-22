@@ -96,6 +96,7 @@ function X:DoInit(bot)
     self.pID = bot:GetPlayerID() -- do this to reduce calls to bot:GetPlayerID() in the future
     gHeroVar.InitHeroVar(self.pID)
 
+    bot.Name = utils.GetHeroName(bot)
     bot.SelfRef = self
     bot.lastModeThink = -1000.0
     

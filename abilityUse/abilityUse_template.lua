@@ -50,27 +50,27 @@ function genericAbility:AbilityUsageThink(bot)
     -- Consider using each ability
 	local castQDesire, castQTarget  = ConsiderQ()
 	local castWDesire               = ConsiderW()
-    local castEDesire, castETarget  = ConsiderE()
+    local castEDesire, castELoc     = ConsiderE()
 	local castRDesire, castRTarget  = ConsiderR()
     
     -- CHECK BELOW TO SEE WHAT PRIORITY OF ABILITIES YOU WANT FOR THIS HERO --
     if castRDesire > 0 then
-		gHeroVar.HeroUseAbilityOnEntity(bot,  abilityR, castRTarget )
+		gHeroVar.HeroUseAbilityOnEntity(bot, abilityR, castRTarget)
 		return true
 	end
     
     if castEDesire > 0 then
-		gHeroVar.HeroUseAbilityOnEntity(bot,  abilityE, castETarget )
+		gHeroVar.HeroUseAbilityOnLocation(bot, abilityE, castELoc)
 		return true
 	end
 	
 	if castWDesire > 0 then
-		gHeroVar.HeroUseAbility(bot,  abilityW )
+		gHeroVar.HeroUseAbility(bot, abilityW)
 		return true
 	end
 
 	if castQDesire > 0 then
-		gHeroVar.HeroUseAbilityOnEntity(bot,  abilityQ, castQTarget )
+		gHeroVar.HeroUseAbilityOnEntity(bot, abilityQ, castQTarget)
 		return true
 	end
     

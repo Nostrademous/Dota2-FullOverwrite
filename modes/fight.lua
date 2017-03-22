@@ -6,6 +6,8 @@
 BotsInit = require( "game/botsinit" )
 local X = BotsInit.CreateGeneric()
 
+require( GetScriptDirectory().."/modifiers" )
+
 local utils = require( GetScriptDirectory().."/utility" )
 local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
 
@@ -86,7 +88,7 @@ function X:Desire(bot)
         return BOT_MODE_DESIRE_NONE
     end
     
-    local enemyList = gHeroVar.GetNearbyEnemies(bot, 1200)
+    local enemyList = gHeroVar.GetNearbyEnemies(bot, 1600)
     if #enemyList == 0 then return BOT_MODE_DESIRE_NONE end
     
     local eTowers = gHeroVar.GetNearbyEnemyTowers(bot, 900)
@@ -94,16 +96,26 @@ function X:Desire(bot)
     
     local enemyValue = 0
     local allyValue = 0
+    local allyList = gHeroVar.GetNearbyAllies(bot, 1200)
     for _, enemy in pairs(enemyList) do
-        enemyValue = enemyValue + enemy:GetHealth() + enemy:GetOffensivePower()
+        if enemy:GetHealth()/enemy:GetMaxHealth() >= 0.25 and not modifiers.HasDangerousModifiers(enemy) and 
+            not utils.IsCrowdControlled(enemy) then
+            --utils.myPrint(utils.GetHeroName(enemy), ", OP: ", enemy:GetRawOffensivePower())
+            enemyValue = enemyValue + enemy:GetHealth() + enemy:GetRawOffensivePower()
+        end
     end
     enemyValue = enemyValue + #eTowers*110
-    
-    local allyList = gHeroVar.GetNearbyAllies(bot, 1200)
+     
     for _, ally in pairs(allyList) do
-        allyValue = allyValue + ally:GetHealth() + ally:GetOffensivePower()
+        if ally:GetHealth()/ally:GetMaxHealth() >= 0.25 and not modifiers.HasDangerousModifiers(ally) and 
+            not utils.IsCrowdControlled(ally) then
+            --utils.myPrint(ally.Name, ", OP: ", ally:GetOffensivePower())
+            allyValue = allyValue + ally:GetHealth() + ally:GetOffensivePower()
+        end
     end
     allyValue = allyValue + #aTowers*110
+    
+    utils.myPrint("allyV/enemyV: ", allyValue/enemyValue)
     
     if allyValue/enemyValue > Max(1.0, (1.6 - bot:GetLevel()*0.1)) then
         local target, _ = utils.GetWeakestHero(bot, bot:GetAttackRange()+bot:GetBoundingRadius())

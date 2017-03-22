@@ -6,6 +6,8 @@
 BotsInit = require( "game/botsinit" )
 local genericAbility = BotsInit.CreateGeneric()
 
+require( GetScriptDirectory().."/fight_simul" )
+
 local utils = require( GetScriptDirectory().."/utility" )
 local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
 
@@ -100,7 +102,7 @@ function ConsiderQ()
 		local WeakestEnemy, HeroHealth = utils.GetWeakestHero(bot, 1600, enemies)
 		if utils.ValidTarget(WeakestEnemy) then
             if not utils.IsTargetMagicImmune(WeakestEnemy) and not utils.IsCrowdControlled(WeakestEnemy) then
-				if HeroHealth <= WeakestEnemy:GetActualIncomingDamage(bot:GetOffensivePower(), DAMAGE_TYPE_MAGICAL) then
+				if HeroHealth <= WeakestEnemy:GetActualIncomingDamage(ComboDmg(bot, WeakestEnemy), DAMAGE_TYPE_PHYSICAL) then
 					return BOT_ACTION_DESIRE_HIGH, WeakestEnemy
 				end
 			end
@@ -143,6 +145,7 @@ function ConsiderQ()
 				end
                 
 				if roamTarget:GetHealth()*1.1 <= sumdamage then
+                    setHeroVar("Target", roamTarget)
 					return BOT_ACTION_DESIRE_HIGH, roamTarget
 				end
 			end
@@ -157,9 +160,11 @@ function ConsiderQ()
         if bot:WasRecentlyDamagedByAnyHero( 2.0 ) then
             for _, npcAlly in pairs(GetUnitList(UNIT_LIST_ALLIED_HEROES)) do
                 if npcAlly:IsAlive() then
-                    local enemies3 = gHeroVar.GetNearbyEnemies(npcAlly, Min(1600, npcAlly:GetCurrentVisionRange()))
-                    local creep    = gHeroVar.GetNearbyEnemyCreep(npcAlly, Min(1600, npcAlly:GetCurrentVisionRange()))
+                    local enemies3 = gHeroVar.GetNearbyEnemies(npcAlly, 1600)
+                    local creep    = gHeroVar.GetNearbyEnemyCreep(npcAlly, 1600)
                     if #enemies3 == 0 and #creep > 0 then
+                        return BOT_ACTION_DESIRE_HIGH, creep[1]
+                    elseif #enemies3 == 1 and #creep > 0 then
                         return BOT_ACTION_DESIRE_HIGH, creep[1]
                     end
                 end
@@ -178,6 +183,7 @@ function ConsiderQ()
 		
 			if not utils.IsTargetMagicImmune(npcEnemy) and not utils.IsCrowdControlled(npcEnemy) and 
                 #enemies3 <= #allies3 then
+                setHeroVar("Target", npcEnemy)
 				return BOT_ACTION_DESIRE_MODERATE, npcEnemy
 			end
 		end
@@ -247,7 +253,7 @@ function ConsiderR()
 		if utils.ValidTarget(WeakestEnemy) then
             if not utils.IsTargetMagicImmune(WeakestEnemy) and not utils.IsCrowdControlled(WeakestEnemy) then
 				if HeroHealth <= WeakestEnemy:GetActualIncomingDamage(Damage, DAMAGE_TYPE_MAGICAL) then
-					return BOT_ACTION_DESIRE_HIGH,WeakestEnemy; 
+					return BOT_ACTION_DESIRE_HIGH, WeakestEnemy
 				end
 			end
 		end
@@ -283,6 +289,10 @@ function ConsiderR()
 	end
     
     return BOT_ACTION_DESIRE_NONE, nil
+end
+
+function ComboDmg(bot, enemy)
+    return bot:GetOffensivePower() + fight_simul.estimateRightClickDamage( bot, enemy, 4.0 )
 end
 
 function genericAbility:nukeDamage( bot, enemy )

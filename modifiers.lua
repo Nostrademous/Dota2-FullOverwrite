@@ -117,5 +117,9 @@ function IsRuptured(bot)
     return bot:HasModifier("modifier_bloodseeker_rupture")
 end
 
+function IsBuildingGlyphed(hBuilding)
+    return hBuilding:HasModifier("modifier_fountain_glyph")
+end
+
 -------------------------------------------------------------------------------
 for k,v in pairs( modifiers ) do _G._savedEnv[k] = v end

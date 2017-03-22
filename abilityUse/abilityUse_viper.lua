@@ -213,8 +213,11 @@ function ConsiderQ()
     -- If we are pushing a lane and have our level 25 building unique talent
     if modeName == "pushlane" and ManaPerc > 0.25 then
         local unique1 = bot:GetAbilityByName("special_bonus_unique_viper_1")
-        if unique1 and unique1:GetLevel() >= 1 and bot:GetAttackTarget():IsBuilding() then
-            return BOT_ACTION_DESIRE_MODERATE, bot:GetAttackTarget()
+        if unique1 and unique1:GetLevel() >= 1 then
+            local at = bot:GetAttackTarget()
+            if utils.NotNilOrDead(at) and at:IsBuilding() then
+                return BOT_ACTION_DESIRE_MODERATE, at
+            end
         end
     end
 

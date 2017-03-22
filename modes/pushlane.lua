@@ -6,6 +6,7 @@
 BotsInit = require( "game/botsinit" )
 local X = BotsInit.CreateGeneric()
 
+require( GetScriptDirectory().."/modifiers" )
 local utils = require( GetScriptDirectory().."/utility" )
 local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
 
@@ -27,168 +28,159 @@ end
 function X:OnEnd()
 end
 
-function GetPushLaneFrontByTower(lane)
-    local listBuildings = global_game_state.GetLatestVulnerableEnemyBuildings()
-    
-    if lane == LANE_MID then
-        if utils.InTable(listBuildings, 4) then -- tier 1 mid
-            return 0.597
-        elseif utils.InTable(listBuildings, 5) then
-            return -1
-        elseif utils.InTable(listBuildings, 6) then
-            return -1
-        end
-    elseif lane == LANE_TOP then
-        if GetTeam() == TEAM_RADIANT then
-            if utils.InTable(listBuildings, 1) then -- tier 1 top
-                return 0.537
-            elseif utils.InTable(listBuildings, 2) then
-                return -1
-            elseif utils.InTable(listBuildings, 3) then
-                return -1
-            end
-        else
-            if utils.InTable(listBuildings, 1) then -- tier 1 top
-                return 0.687
-            elseif utils.InTable(listBuildings, 2) then
-                return -1
-            elseif utils.InTable(listBuildings, 3) then
-                return -1
-            end
-        end
-    elseif lane == LANE_BOT then
-        if GetTeam() == TEAM_RADIANT then
-            if utils.InTable(listBuildings, 7) then -- tier 1 bot
-                return 0.687
-            elseif utils.InTable(listBuildings, 8) then
-                return -1
-            elseif utils.InTable(listBuildings, 9) then
-                return -1
-            end
-        else
-            if utils.InTable(listBuildings, 7) then
-                return 0.537
-            elseif utils.InTable(listBuildings, 8) then
-                return -1
-            elseif utils.InTable(listBuildings, 9) then
-                return -1
-            end
-        end
-    end
-end
-
 function X:Think(bot)
 
     if utils.IsBusy(bot) then return end
 
     if utils.IsCrowdControlled(bot) then return end
 
-    local Towers = gHeroVar.GetNearbyEnemyTowers(bot, 900)
-    local Shrines = bot:GetNearbyShrines(750, true)
-    local Barracks = bot:GetNearbyBarracks(750, true)
+    local Towers = gHeroVar.GetNearbyEnemyTowers(bot, 750)
+    local Shrines = bot:GetNearbyShrines(1600, true)
+    local Barracks = bot:GetNearbyBarracks(1600, true)
     local Ancient = GetAncient(utils.GetOtherTeam())
 
+    -- if there are no structures near by
     if #Towers == 0 and #Shrines == 0 and #Barracks == 0 then
+        -- are we near the enemy Ancient
         if GetUnitToLocationDistance(bot, Ancient:GetLocation()) < 500 then
-            if utils.NotNilOrDead(Ancient) and not Ancient:HasModifier("modifier_fountain_glyph") then
+            if utils.NotNilOrDead(Ancient) and not modifiers.IsBuildingGlyphed(Ancient) then
                 gHeroVar.HeroAttackUnit(bot, Ancient, true)
                 return
             end
-        end
-    end
-
-    -- we are pushing lane but no structures nearby, so push forward in lane
-    local enemyFrontier = GetLaneFrontAmount(utils.GetOtherTeam(), getHeroVar("CurLane"), false)
-    local myFrontier = GetLaneFrontAmount(GetTeam(), getHeroVar("CurLane"), true)
-    local frontier = Min(Min(1.0, enemyFrontier), myFrontier)
-    local dest = GetLocationAlongLane(getHeroVar("CurLane"), frontier)
-    
-    local nearbyAlliedCreep = gHeroVar.GetNearbyAlliedCreep(bot, 900)
-    local nearbyEnemyCreep = gHeroVar.GetNearbyEnemyCreep(bot, 1200)
-
-    if utils.IsTowerAttackingMe() and #nearbyAlliedCreep > 0 then
-        if utils.DropTowerAggro(bot, nearbyAlliedCreep) then
-            return
+        -- no structures, no ancient, push lane
         else
-            local dist = GetUnitToUnitDistance(bot, Towers[1])
-            if dist < 900 then
-                gHeroVar.HeroMoveToLocation(bot, utils.VectorAway(bot:GetLocation(), Towers[1]:GetLocation(), 900-dist))
-                return
+            local enemyFrontier = GetLaneFrontAmount(utils.GetOtherTeam(), getHeroVar("CurLane"), false)
+            local myFrontier = GetLaneFrontAmount(GetTeam(), getHeroVar("CurLane"), true)
+            local frontier = Min(Min(1.0, enemyFrontier), myFrontier)
+            local dest = GetLocationAlongLane(getHeroVar("CurLane"), frontier)
+
+            local nearbyAlliedCreep = gHeroVar.GetNearbyAlliedCreep(bot, 900)
+            local nearbyEnemyCreep = gHeroVar.GetNearbyEnemyCreep(bot, 1200)
+
+            if #nearbyEnemyCreep > 0 then
+                -- TODO: below should make exception for tanky high health regen heroes
+                -- like Timber, DK, Axe, Bristle, etc... probably using a flag like bot.CanTank
+                if #nearbyAlliedCreep > 0 or frontier < 0.25 then -- or bot.CanTank then
+                    local creep, _ = utils.GetWeakestCreep(nearbyEnemyCreep)
+                    if creep then
+                        gHeroVar.HeroAttackUnit(bot, creep, true)
+                        return
+                    end
+                end
             end
+
+            -- no creeps, move forward in lane
+            gHeroVar.HeroMoveToLocation(bot, dest)
+            return
         end
     end
 
-    if #Towers > 0 and Towers[1]:GetHealth()/Towers[1]:GetMaxHealth() < 0.1 and
-        not Towers[1]:HasModifier("modifier_fountain_glyph") then
-        gHeroVar.HeroAttackUnit(bot, Towers[1], false)
-        return
-    end
+    if #Towers > 0 then
+        -- if more than one tower, sort by lowest health
+        if #Towers > 1 then
+            table.sort(Towers, function(n1,n2) return n1:GetHealth() < n2:GetHealth() end)
+        end
+        local hTower = Towers[1]
 
-    -- TODO: should be reworked with proper tower aggro thinking
-    if #nearbyEnemyCreep > 0 then
-        if #nearbyAlliedCreep > 0 or frontier < 0.25 then
-            if #Towers > 0 then
-                local dist = GetUnitToUnitDistance(bot, Towers[1])
+        if utils.IsTowerAttackingMe() then
+            local nearbyAlliedCreep = gHeroVar.GetNearbyAlliedCreep(bot, 900)
+            local nearbyEnemyCreep = gHeroVar.GetNearbyEnemyCreep(bot, 1200)
+
+            if #nearbyAlliedCreep > 0 then
+                if utils.DropTowerAggro(bot, nearbyAlliedCreep) then
+                    return
+                else
+            else
+                -- if we can't drop aggro, but tower is almost dead
+                if hTower:GetHealth()/hTower:GetMaxHealth() < 0.1 and not modifiers.IsBuildingGlyphed(hTower) then
+                    gHeroVar.HeroAttackUnit(bot, hTower, true)
+                    return
+                end
+
+                -- otherwise, walk away, don't be that bot that takes tower damage over and over
+                local dist = GetUnitToUnitDistance(bot, hTower)
                 if dist < 900 then
-                    -- local towerSafeDist = GetPushLaneFrontByTower(getHeroVar("CurLane"))
-                    -- if towerSafeDist == -1 then
-                        -- local eFront = GetLaneFrontAmount(utils.GetOtherTeam(), getHeroVar("CurLane"), false)
-                        -- utils.pause(eFront, ", Dist: ", utils.GetDistance(GetLocationAlongLane(getHeroVar("CurLane"), eFront), GetLocationAlongLane(getHeroVar("CurLane"), eFront-0.01)))
-                    -- end
-                    -- gHeroVar.HeroMoveToLocation(bot, GetLocationAlongLane(getHeroVar("CurLane"), Max(towerSafeDist, enemyFrontier)))
-                    
-                    gHeroVar.HeroMoveToLocation(bot, utils.VectorAway(bot:GetLocation(), Towers[1]:GetLocation(), 900-dist))
-                    return
-                end
-            else
-                local creep, _ = utils.GetWeakestCreep(nearbyEnemyCreep)
-                if creep then
-                    gHeroVar.HeroAttackUnit(bot, creep, true)
+                    gHeroVar.HeroMoveToLocation(bot, utils.VectorAway(bot:GetLocation(), hTower:GetLocation(), 900-dist))
                     return
                 end
             end
+        -- else, tower is not attacking me
         else
-            bot.SelfRef:ClearMode()
-            return
-        end
-    end
+            local myAttackRange = bot:GetAttackRange() + bot:GetBoundingRadius() + hTower:GetBoundingRadius()
 
-    if #Towers > 0 and (#nearbyAlliedCreep > 1 or
-        (#nearbyAlliedCreep == 1 and nearbyAlliedCreep[1]:GetHealth() > 162) or
-        Towers[1]:GetHealth()/Towers[1]:GetMaxHealth() < 0.1) then
-        for _, tower in ipairs(Towers) do
-            if utils.NotNilOrDead(tower) and (not tower:HasModifier("modifier_fountain_glyph")) then
-                gHeroVar.HeroAttackUnit(bot, tower, true)
+            -- see if the tower has a target, we know it's not us, but is it any other unit?
+            local bTowerHasTarget = false
+            for i = 1, 5, 1 do
+                local hTowerTarget = U.GetLaneTowerAttackTarget(U.GetOtherTeam(), lane, i)
+                if utils.NotNilOrDead(hTowerTarget) and GetUnitToUnitDistance(bot, hTowerTarget) < 1200 then
+                    -- make sure it is not another hero, unless illusion
+                    if hTowerTarget:IsIllusion() or not hTowerTarget:IsHero() then
+                        bTowerHasTarget = true
+                        break
+                    end
+                end
+            end
+            
+            -- tower has a target that's not us, attack it if we can
+            if bTowerHasTarget and not modifiers.IsBuildingGlyphed(hTower) then
+                gHeroVar.HeroAttackUnit(bot, hTower, true)
                 return
+            -- at this point, I have to be outside of tower range (otherwise it would be attacking me), and
+            -- there is no friendly creep nearby or it would be being attacked
             else
-                local dist = GetUnitToUnitDistance(bot, Towers[1])
-                if dist < 750 then
-                    gHeroVar.HeroMoveToLocation(bot, utils.VectorAway(bot:GetLocation(), Towers[1]:GetLocation(), 750-dist))
-                    return
+                local nearbyAlliedCreep = gHeroVar.GetNearbyAlliedCreep(bot, 900)
+                local nearbyEnemyCreep = gHeroVar.GetNearbyEnemyCreep(bot, 1200)
+
+                if #nearbyEnemyCreep > 0 then
+                    -- TODO: below should make exception for tanky high health regen heroes
+                    -- like Timber, DK, Axe, Bristle, etc... probably using a flag like bot.CanTank
+                    if #nearbyAlliedCreep > 0 then -- or bot.CanTank then
+                        local creep, _ = utils.GetWeakestCreep(nearbyEnemyCreep)
+                        if creep then
+                            gHeroVar.HeroAttackUnit(bot, creep, true)
+                            return
+                        end
+                    end
                 end
             end
         end
     end
 
     if #Barracks > 0 then
-        for _, barrack in ipairs(Barracks) do
-            if utils.NotNilOrDead(barrack) and (not barrack:HasModifier("modifier_fountain_glyph")) then
-                gHeroVar.HeroAttackUnit(bot, barrack, true)
-                return
+        local hBarrackTarget = nil
+        for _, barrack in pairs(Barracks) do
+            if not modifiers.IsBuildingGlyphed(barrack) then
+                hBarrackTarget = barrack
+
+                local isMelee = string.find(barrack:GetUnitName(), "melee") 
+                if isMelee then
+                    break
+                end
             end
+        end
+
+        if utils.NotNilOrDead(hBarrackTarget) then
+            gHeroVar.HeroAttackUnit(bot, hBarrackTarget, true)
+            return
         end
     end
 
     if #Shrines > 0 then
-        for _, shrine in ipairs(Shrines) do
-            if utils.NotNilOrDead(shrine) and (not shrine:HasModifier("modifier_fountain_glyph")) then
-                gHeroVar.HeroAttackUnit(bot, shrine, true)
-                return
-            end
+        -- if more than one, sort by lowest health
+        if #Shrines > 1 then
+            table.sort(Shrines, function(n1,n2) return n1:GetHealth() < n2:GetHealth() end)
+        end
+        hShrine = Shrines[1]
+
+        if utils.NotNilOrDead(hShrine) and not modifiers.IsBuildingGlyphed(hShrine) then
+            gHeroVar.HeroAttackUnit(bot, hShrine, true)
+            return
         end
     end
 
-    gHeroVar.HeroMoveToLocation(bot, dest)
+    -- the only way to get here means we are near a tower which does not have a target
+    -- and is not close to dying and we have no friendly creep near us
+    bot.SelfRef:ClearMode()
 end
 
 function X:Desire(bot)

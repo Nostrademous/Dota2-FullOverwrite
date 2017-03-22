@@ -47,8 +47,8 @@ end
 
 local function FindCamp(bot)
     -- TODO: just killing the closest one might not be the best strategy
-    local jungle = jungle_status.GetJungle(GetTeam()) or {}
-    local maxcamplvl = getHeroVar("Self"):GetMaxClearableCampLevel(bot)
+    local jungle = jungle_status.GetJungle(GetTeam())
+    local maxcamplvl = bot.SelfRef:GetMaxClearableCampLevel(bot)
     jungle = FindCampsByMaxDifficulty(jungle, maxcamplvl)
     if #jungle == 0 then -- they are all dead
         jungle = utils.deepcopy(utils.tableNeutralCamps[GetTeam()])
@@ -125,8 +125,17 @@ end
 
 local function Stack(bot)
     if DotaTime() < getHeroVar("waituntil") then
-        gHeroVar.HeroMoveToLocation(bot, getHeroVar("currentCamp")[constants.STACK_VECTOR])
-        return
+        local stackLoc = getHeroVar("currentCamp")[constants.STACK_VECTOR]
+        if GetUnitToLocationDistance(bot, stackLoc) > 15 then
+            gHeroVar.HeroMoveToLocation(bot, stackLoc)
+            return
+        else
+            local nearbyCreep = gHeroVar.GetNearbyEnemyCreep(bot, bot:AttackRange())
+            if #nearbyCreep > 0 then
+                gHeroVar.HeroAttackUnit(bot, nearbyCreep[1], true)
+                return
+            end
+        end
     end
     setHeroVar("JunglingState", JunglingStates.FindCamp)
 end
@@ -153,10 +162,10 @@ local function CleanCamp(bot)
         if GetUnitToLocationDistance(bot, camp[constants.VECTOR]) <= 200 then
             jungle_status.JungleCampClear(GetTeam(), camp[constants.VECTOR])
         end
-        utils.myPrint("finds camp")
+        --utils.myPrint("finds camp")
         setHeroVar("JunglingState", JunglingStates.FindCamp)
     else
-        getHeroVar("Self"):DoCleanCamp(bot, neutrals, getHeroVar("currentCamp").difficulty)
+        bot.SelfRef:DoCleanCamp(bot, neutrals, getHeroVar("currentCamp").difficulty)
     end
 end
 
@@ -192,7 +201,7 @@ end
 
 function X:Desire(bot)
     if getHeroVar("Role") == constants.ROLE_JUNGLER then
-        return BOT_MODE_DESIRE_MODERATE
+        return BOT_MODE_DESIRE_VERYLOW
     end
     return BOT_MODE_DESIRE_NONE
 end

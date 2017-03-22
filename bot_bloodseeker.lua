@@ -104,11 +104,11 @@ function bloodseekerBot:IsReadyToGank(bot)
 end
 
 function bloodseekerBot:DoCleanCamp(bot, neutrals, difficulty)
-    local bloodraged =  bot:HasModifier("modifier_bloodseeker_bloodrage")
-    local bloodrage = bot:GetAbilityByName(SKILL_Q)
-    if not bloodraged and bloodrage:IsCooldownReady() then -- bloodrage all the time
-        gHeroVar.HeroUseAbilityOnEntity(bot, bloodrage, bot)
-    end
+    local bloodraged = bot:HasModifier("modifier_bloodseeker_bloodrage")
+    --local bloodrage = bot:GetAbilityByName(SKILL_Q)
+    --if not bloodraged and bloodrage:IsCooldownReady() then -- bloodrage all the time
+    --    gHeroVar.HeroUseAbilityOnEntity(bot, bloodrage, bot)
+    --end
     table.sort(neutrals, function(n1, n2) return n1:GetHealth() < n2:GetHealth() end) -- sort by health
     local it = utils.IsItemAvailable("item_iron_talon")
     if bloodraged and it ~= nil and difficulty ~= constants.CAMP_ANCIENT then -- we are bloodraged and have an iron talon and not fighting ancients
@@ -118,18 +118,18 @@ function bloodseekerBot:DoCleanCamp(bot, neutrals, difficulty)
             return
         end
     end
-    for i, neutral in ipairs(neutrals) do
+    for _, neutral in pairs(neutrals) do
         -- kill the Ghost first as they slow down our DPS tremendously by being around
         if string.find(neutral:GetUnitName(), "ghost") ~= nil and bloodraged then
             gHeroVar.HeroAttackUnit(bot, neutral, true)
             return
         end
     end
-    for i, neutral in ipairs(neutrals) do
+    for _, neutral in pairs(neutrals) do
         local eDamage = bot:GetEstimatedDamageToTarget(true, neutral, bot:GetAttackSpeed(), DAMAGE_TYPE_PHYSICAL)
         if (eDamage < neutral:GetHealth() or bloodraged) then -- make sure we lasthit with bloodrage on
             gHeroVar.HeroAttackUnit(bot, neutral, true)
-            break
+            return
         end
     end
     -- TODO: don't attack if we should wait on all neutrals!

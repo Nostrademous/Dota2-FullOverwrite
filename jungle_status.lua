@@ -36,7 +36,7 @@ end
 --get currently known alive / unknown camps
 function GetJungle ( nTeam )
     if jungle[nTeam] == nil or #jungle[nTeam] == 0 then
-        return nil
+        return {}
     end
     return jungle[nTeam]
 end

@@ -257,6 +257,8 @@ function X:DoWhileDead(bot)
     
     self:ClearMode()
     bot:Action_ClearActions(true)
+    self:setHeroVar("Target", nil)
+    self:setHeroVar("RoamTarget", nil)
 
     utils.MoveItemsFromStashToInventory(bot)
     local bb = self:ConsiderBuyback(bot)

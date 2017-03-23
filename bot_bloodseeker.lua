@@ -71,7 +71,7 @@ function Think()
 
     -- if we are initialized, do the rest
     if bloodseekerBot.Init then
-        if bot:GetLevel() >= 16 and getHeroVar("Role") ~= constants.ROLE_HARDCARRY then
+        if bot:GetLevel() >= 12 and getHeroVar("Role") ~= constants.ROLE_HARDCARRY then
             setHeroVar("Role", constants.ROLE_HARDCARRY)
             setHeroVar("CurLane", LANE_BOT) --FIXME: don't hardcode this
             bot.RetreatHealthPerc = 0.25

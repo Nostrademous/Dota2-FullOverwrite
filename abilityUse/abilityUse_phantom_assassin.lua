@@ -121,7 +121,7 @@ function genericAbility:AbilityUsageThink(bot)
     if utils.IsBusy(bot) then return true end
     
     -- Check to see if we are CC'ed
-    if utils.IsCrowdControlled(bot) then return false end
+    if utils.IsUnableToCast(bot) then return false end
 
     if abilityQ == "" then abilityQ = bot:GetAbilityByName( "phantom_assassin_stifling_dagger" ) end
     if abilityW == "" then abilityW = bot:GetAbilityByName( "phantom_assassin_phantom_strike" ) end
@@ -135,7 +135,7 @@ function genericAbility:AbilityUsageThink(bot)
 end
 
 function genericAbility:nukeDamage( bot, enemy )
-    if enemy == nil or enemy:IsNull() then return 0, {}, 0, 0, 0 end
+    if not utils.ValidTarget(enemy) then return 0, {}, 0, 0, 0 end
 
     local comboQueue = {}
     local manaAvailable = bot:GetMana()
@@ -151,6 +151,8 @@ function genericAbility:nukeDamage( bot, enemy )
 end
 
 function genericAbility:queueNuke(bot, enemy, castQueue, engageDist)
+    if not utils.ValidTarget(enemy) then return false end
+    
     -- WRITE CODE HERE --
     
     return false

@@ -25,7 +25,7 @@ end
 function UseRegenItems()
     local bot = GetBot()
 
-    if utils.IsBusy(bot) then
+    if utils.IsBusy(bot) or bot:IsMuted() then
         return false
     end
 
@@ -153,7 +153,7 @@ end
 function UseRegenItemsOnAlly()
     local bot = GetBot()
 
-    if utils.IsBusy(bot) then
+    if utils.IsBusy(bot) or bot:IsMuted() then
         return false
     end
 
@@ -290,7 +290,7 @@ end
 function UseMovementItems(location)
     local bot = GetBot()
 
-    if utils.IsBusy(bot) then
+    if utils.IsBusy(bot) or bot:IsMuted() then
         return false
     end
 
@@ -308,7 +308,7 @@ end
 function UseDefensiveItems(enemy, triggerDistance)
     local bot = GetBot()
 
-    if utils.IsBusy(bot) then return false end
+    if utils.IsBusy(bot) or bot:IsMuted() then return false end
 
     local hp = utils.IsItemAvailable("item_hurricane_pike")
     if hp and GetUnitToUnitDistance(bot, enemy) < triggerDistance then
@@ -320,7 +320,7 @@ end
 function UseBuffItems()
     local bot = GetBot()
 
-    if utils.IsBusy(bot) then return false end
+    if utils.IsBusy(bot) or bot:IsMuted() then return false end
 
     if UseTomeOfKnowledge() then return true end
 
@@ -337,7 +337,7 @@ function UseTP(hero, loc, lane)
 
     if DotaTime() < 10 then return false end
 
-    if utils.IsBusy(hero) then return false end
+    if utils.IsBusy(hero) or hero:IsMuted() then return false end
 
     -- if we are in fountain, don't TP out until we have full health & mana
     if hero:DistanceFromFountain() < 200 and
@@ -404,7 +404,7 @@ function UseItems()
 
     local bot = GetBot()
 
-    if utils.IsBusy(bot) then return false end
+    if utils.IsBusy(bot) or bot:IsMuted() then return false end
     
     if UseEuls() then return true end
 
@@ -707,6 +707,7 @@ function UseForceStaff(target, location)
         gHeroVar.HeroUseAbilityOnEntity(bot, fs, target)
         return true
     end
+    return false
 end
 
 function UseGhostScepter()
@@ -787,6 +788,7 @@ function UseHurricanePike(target, location)
         gHeroVar.HeroUseAbilityOnEntity(bot, hp, target)
         return true
     end
+    return false
 end
 
 function UseLinkens(target)
@@ -888,6 +890,7 @@ function UsePhaseBoots()
         gHeroVar.HeroUseAbility(bot, pb)
         return true
     end
+    return false
 end
 
 function UsePipe()

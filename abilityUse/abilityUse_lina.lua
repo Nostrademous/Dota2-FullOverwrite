@@ -29,7 +29,7 @@ local castDSDesire  = 0
 local castLBDesire  = 0
 
 local function nukeDamage( bot, enemy )
-    if enemy == nil or enemy:IsNull() then return 0, {}, 0, 0, 0 end
+    if not utils.ValidTarget(enemy) then return 0, {}, 0, 0, 0 end
 
     local comboQueue = {}
     local manaAvailable = bot:GetMana()
@@ -105,6 +105,8 @@ local function nukeDamage( bot, enemy )
 end
 
 local function queueNuke(bot, enemy, castQueue, engageDist)
+    if not utils.ValidTarget(enemy) then return false end
+    
     local dist = GetUnitToUnitDistance(bot, enemy)
 
     -- if out of range, attack move for one hit to get in range
@@ -141,15 +143,15 @@ local function queueNuke(bot, enemy, castQueue, engageDist)
 end
 
 function linaAbility:AbilityUsageThink(bot)
+    -- Check if we're already using an ability
+    if utils.IsBusy(bot) then return true end
+    
+    if utils.IsUnableToCast(bot) then return false end
+    
     if abilityQ == "" then abilityQ = bot:GetAbilityByName( "lina_dragon_slave" ) end
     if abilityW == "" then abilityW = bot:GetAbilityByName( "lina_light_strike_array" ) end
     if abilityE == "" then abilityE = bot:GetAbilityByName( "lina_fiery_soul" ) end
     if abilityR == "" then abilityR = bot:GetAbilityByName( "lina_laguna_blade" ) end
-    
-    -- Check if we're already using an ability
-    if utils.IsBusy(bot) then return true end
-    
-    if utils.IsCrowdControlled(bot) then return false end
     
     local nearbyEnemyHeroes = gHeroVar.GetNearbyEnemies(bot, 1200)
     local nearbyEnemyCreep = gHeroVar.GetNearbyEnemyCreep(bot, 1200)

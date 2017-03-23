@@ -37,7 +37,7 @@ local abilityR = ""
 local modeName      = nil
 
 function bsAbility:nukeDamage( bot, enemy )
-    if enemy == nil or enemy:IsNull() then return 0, {}, 0, 0, 0 end
+    if not utils.ValidTarget(enemy) then return 0, {}, 0, 0, 0 end
 
     local comboQueue = {}
     local manaAvailable = bot:GetMana()
@@ -80,6 +80,8 @@ function bsAbility:nukeDamage( bot, enemy )
 end
     
 function bsAbility:queueNuke(bot, enemy, castQueue, engageDist)
+    if not utils.ValidTarget(enemy) then return false end
+    
     local dist = GetUnitToUnitDistance(bot, enemy)
 
     -- if out of range, attack move for one hit to get in range
@@ -108,6 +110,8 @@ function bsAbility:queueNuke(bot, enemy, castQueue, engageDist)
 end
 
 function ComboDamage(bot, enemy)
+    if not utils.ValidTarget(enemy) then return 0 end
+    
     local dmg, castQueue, castTime, stunTime, slowTime, engageDist = bsAbility:nukeDamage( bot, enemy )
 
     dmg = dmg + fight_simul.estimateRightClickDamage( bot, enemy, 5.0 )
@@ -289,7 +293,7 @@ end
 function bsAbility:AbilityUsageThink(bot)
     if utils.IsBusy(bot) then return true end
     
-    if utils.IsCrowdControlled(bot) then return false end
+    if utils.IsUnableToCast(bot) then return false end
     
     if abilityQ == "" then abilityQ = bot:GetAbilityByName( Abilities[1] ) end
     if abilityW == "" then abilityW = bot:GetAbilityByName( Abilities[2] ) end

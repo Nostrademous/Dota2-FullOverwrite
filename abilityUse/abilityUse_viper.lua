@@ -40,7 +40,7 @@ local ManaPerc      = 0
 local modeName      = nil
 
 function viperAbility:nukeDamage( bot, enemy )
-    if enemy == nil or enemy:IsNull() then return 0, {}, 0, 0, 0 end
+    if not utils.ValidTarget(enemy) then return 0, {}, 0, 0, 0 end
 
     local comboQueue = {}
     local manaAvailable = bot:GetMana()
@@ -94,6 +94,8 @@ function viperAbility:nukeDamage( bot, enemy )
 end
 
 function viperAbility:queueNuke(bot, enemy, castQueue, engageDist)
+    if not utils.ValidTarget(enemy) then return false end
+    
     local dist = GetUnitToUnitDistance(bot, enemy)
 
     -- if out of range, attack move for one hit to get in range
@@ -116,6 +118,8 @@ function viperAbility:queueNuke(bot, enemy, castQueue, engageDist)
 end
 
 function CalcRightClickDmg(bot, target)
+    if not utils.ValidTarget(target) then return 0 end
+    
     local bonusDmg = 0
     if abilityW ~= nil and abilityW:GetLevel() > 0 then
         bonusDmg = abilityW:GetSpecialValueFloat("bonus_damage")
@@ -130,6 +134,8 @@ function CalcRightClickDmg(bot, target)
 end
 
 function ComboDmg(bot, target)
+    if not utils.ValidTarget(target) then return 0 end
+    
     local dmg, castQueue, castTime, stunTime, slowTime, engageDist = viperAbility:nukeDamage( bot, target )
     local rightClickTime = stunTime + slowTime -- in Viper's case we don't discount the slow as he can cast it indefinitely (mana providing)
 
@@ -151,7 +157,7 @@ end
 function viperAbility:AbilityUsageThink(bot)
     if utils.IsBusy(bot) then return true end
 
-    if utils.IsCrowdControlled(bot) then return false end
+    if utils.IsUnableToCast(bot) then return false end
 
     if abilityQ == "" then abilityQ = bot:GetAbilityByName( Abilities[1] ) end
     if abilityW == "" then abilityW = bot:GetAbilityByName( Abilities[2] ) end

@@ -655,19 +655,8 @@ end
 
 function U.IsBusy(bot)
     if bot:IsChanneling() then return true end
-    if bot:IsCastingAbility() then
-        local target = getHeroVar("Target")        
-        if U.ValidTarget(target) then
-            if bot.AbilityOnEntityUseTime and (GameTime() - bot.AbilityOnEntityUseTime) > 3.0 then return false end
-            if GetUnitToUnitDistance(bot, target) > 2000 then return false end
-        end
-        return true
-    end
-    if bot:NumQueuedActions() > 0 then
-        local target = getHeroVar("Target")        
-        if U.ValidTarget(target) and GetUnitToUnitDistance(bot, target) > 2000 then return false end
-        return true
-    end
+    if bot:IsCastingAbility() then return true end
+    if bot:NumQueuedActions() > 0 then return true end
     return false
 end
 
@@ -1280,7 +1269,7 @@ end
 
 function U.UseOrbEffect(bot)    
     local orb = getHeroVar("HasOrbAbility")
-    if orb ~= nil then
+    if orb then
         local ability = bot:GetAbilityByName(orb)
         if ability ~= nil and ability:IsFullyCastable() then
             local target = nil
@@ -1289,7 +1278,7 @@ function U.UseOrbEffect(bot)
             else
                 target, _ = U.GetWeakestHero(bot, bot:GetAttackRange()+bot:GetBoundingRadius())
             end
-            if utils.ValidTarget(target) and GetUnitToUnitDistance(bot, target) < (bot:GetAttackRange()+bot:GetBoundingRadius()) then
+            if U.ValidTarget(target) and GetUnitToUnitDistance(bot, target) < (bot:GetAttackRange()+bot:GetBoundingRadius()) then
                 U.TreadCycle(bot, constants.INTELLIGENCE)
                 gHeroVar.HeroUseAbilityOnEntity(bot, ability, target)
                 return true
@@ -1314,7 +1303,11 @@ function U.IsTargetMagicImmune(target)
 end
 
 function U.IsCrowdControlled(enemy)
-    return enemy:IsRooted() or enemy:IsHexed() or enemy:IsStunned() -- or enemy:IsNightmared()
+    return enemy:IsRooted() or enemy:IsHexed() or enemy:IsStunned()
+end
+
+function U.IsUnableToCast(enemy)
+    return U.IsCrowdControlled(enemy) or enemy:IsNightmared() or enemy:IsSilenced()
 end
 
 function U.IsUnitCrowdControlled(e)
@@ -1597,11 +1590,8 @@ function U.CourierThink(bot)
     local checkLevel, newTime = U.TimePassed(getHeroVar("LastCourierThink"), 1.0)
     if not checkLevel then return end
     setHeroVar("LastCourierThink", newTime)
-
-    local eTowers = gHeroVar.GetNearbyEnemyTowers(courier, 1000)
-    local eHeroes = gHeroVar.GetNearbyEnemies(courier, 800)
     
-    if courier:WasRecentlyDamagedByAnyHero(2) or courier:WasRecentlyDamagedByTower(2) then --or #eTowers >= 1 or #eHeroes >= 1 then
+    if courier:WasRecentlyDamagedByAnyHero(2) or courier:WasRecentlyDamagedByTower(2) then
         if IsFlyingCourier(courier) and (GameTime() - gHeroVar.GetGlobalVar("LastCourierBurst")) > 90.0 then
 			bot:ActionImmediate_Courier(courier, COURIER_ACTION_BURST)
             gHeroVar.SetGlobalVar("LastCourierBurst", GameTime())

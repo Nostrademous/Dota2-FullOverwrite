@@ -35,7 +35,7 @@ local abilityR = ""
 local ManaPerc      = 0.0
 
 function cmAbility:nukeDamage( bot, enemy )
-    if enemy == nil or enemy:IsNull() then return 0, {}, 0, 0, 0 end
+    if not utils.ValidTarget(enemy) then return 0, {}, 0, 0, 0 end
 
     local comboQueue = {}
     local manaAvailable = bot:GetMana()
@@ -103,6 +103,8 @@ function cmAbility:nukeDamage( bot, enemy )
 end
 
 function cmAbility:queueNuke(bot, enemy, castQueue, engageDist)
+    if not utils.ValidTarget(enemy) then return false end
+    
     local dist = GetUnitToUnitDistance(bot, enemy)
 
     -- if out of range, attack move for one hit to get in range
@@ -114,7 +116,7 @@ function cmAbility:queueNuke(bot, enemy, castQueue, engageDist)
             local skill = castQueue[i]
             local behaviorFlag = skill:GetBehavior()
 
-            utils.myPrint(" - skill '", skill:GetName(), "' has BehaviorFlag: ", behaviorFlag)
+            --utils.myPrint(" - skill '", skill:GetName(), "' has BehaviorFlag: ", behaviorFlag)
 
             if skill:GetName() == Abilities[1] then
                 if utils.IsCrowdControlled(enemy) then
@@ -135,6 +137,8 @@ end
 
 function cmAbility:AbilityUsageThink(bot)
     if utils.IsBusy(bot) then return true end
+    
+    if utils.IsUnableToCast(bot) then return false end
 
     if abilityQ == "" then abilityQ = bot:GetAbilityByName( Abilities[1] ) end
     if abilityW == "" then abilityW = bot:GetAbilityByName( Abilities[2] ) end
@@ -230,7 +234,7 @@ function ConsiderQ()
     local nearbyAlliedHeroes = gHeroVar.GetNearbyAllies(bot, 1000)
     local coreNear = false
     for _, ally in pairs(nearbyAlliedHeroes) do
-        if utils.IsCore(ally) then
+        if not ally:IsIllusion() and utils.IsCore(ally) then
             coreNear = true
             break
         end
@@ -343,8 +347,8 @@ function ConsiderW()
 	--------------------------------------
     
 	-- protect myself
-	local closeEnemies = gHeroVar.GetNearbyEnemies(bot, 500)
 	if bot:WasRecentlyDamagedByAnyHero(5) then
+        local closeEnemies = gHeroVar.GetNearbyEnemies(bot, 500)
 		for _, npcEnemy in pairs( closeEnemies ) do
 			if not utils.IsTargetMagicImmune( npcEnemy ) and not utils.IsCrowdControlled(npcEnemy) then
 				return BOT_ACTION_DESIRE_HIGH, npcEnemy
@@ -367,7 +371,7 @@ function ConsiderW()
         local nearbyAlliedHeroes = gHeroVar.GetNearbyAllies(bot, 1200)
         local coreNear = false
         for _, ally in pairs(nearbyAlliedHeroes) do
-            if utils.IsCore(ally) then
+            if not ally:IsIllusion() and utils.IsCore(ally) then
                 coreNear = true
                 break
             end

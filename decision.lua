@@ -164,21 +164,17 @@ function X:Think(bot)
     
     local tt = getHeroVar("Target")
     local rt = getHeroVar("RoamTarget")
-    if tt and tt:IsNull() then
+    if tt and (tt:IsNull() or not tt:IsAlive()) then
         utils.myPrint("Null Target")
         setHeroVar("Target", nil)
+        bot:Action_ClearActions(true)
+        return
     end
-    if tt and not tt:IsNull() and not tt:IsAlive() then
-        utils.myPrint("Not Null but Dead Target")
-        setHeroVar("Target", nil)
-    end
-    if rt and rt:IsNull() then
+    if rt and (rt:IsNull() or not rt:IsAlive()) then
         utils.myPrint("Null RoamTarget")
         setHeroVar("RoamTarget", nil)
-    end
-    if rt and not rt:IsNull() and not rt:IsAlive() then
-        utils.myPrint("Not Null but Dead RoamTarget")
-        setHeroVar("RoamTarget", nil)
+        bot:Action_ClearActions(true)
+        return
     end
 
     -- level up abilities if time

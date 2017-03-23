@@ -71,7 +71,8 @@ function Think()
 
     -- if we are initialized, do the rest
     if lcBot.Init then
-        if bot:GetLevel() >= 16 and getHeroVar("Role") ~= constants.ROLE_HARDCARRY then
+        if (bot:GetLevel() >= 12 or utils.HaveItem(bot, "item_blink")) and
+            getHeroVar("Role") ~= constants.ROLE_HARDCARRY then
             setHeroVar("Role", constants.ROLE_HARDCARRY)
             setHeroVar("CurLane", LANE_BOT) --FIXME: don't hardcode this
         end

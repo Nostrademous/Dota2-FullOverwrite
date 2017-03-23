@@ -81,12 +81,16 @@ function getLinaDmg(duration, hero, target)
 end
 
 function estimateRightClickDamage( hHero, hTarget, fDuration )
+    if hTarget == nil or hTarget:IsNull() or not hTarget:IsAlive() then return 0 end
+    
     local actualDmg = hTarget:GetActualIncomingDamage(hHero:GetAttackDamage(), DAMAGE_TYPE_PHYSICAL)
     local numHits = math.floor(fDuration/hHero:GetSecondsPerAttack())
     return actualDmg*numHits
 end
 
 function estimateTimeToKill(hero, target)
+    if target == nil or target:IsNull() or not target:IsAlive() then return 10000 end 
+
     local rightClickDmg = hero:GetAttackDamage()
     local rightClickCastPoint = hero:GetAttackPoint()
     local actualDmg = target:GetActualIncomingDamage(rightClickDmg, DAMAGE_TYPE_PHYSICAL)

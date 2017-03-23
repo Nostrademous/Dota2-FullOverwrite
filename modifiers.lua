@@ -77,7 +77,7 @@ function HasEulModifier(bot)
         local modName = bot:GetModifierName(i)
         
         if utils.InTable(EulEvadeModifiers, modName) then
-            if GetModifierRemainingDuration(i) < 2.0 then
+            if bot:GetModifierRemainingDuration(i) < 2.0 then
                 return true
             end
         end
@@ -118,7 +118,7 @@ function IsRuptured(bot)
 end
 
 function IsBuildingGlyphed(hBuilding)
-    return hBuilding:HasModifier("modifier_fountain_glyph")
+    return hBuilding:HasModifier("modifier_fountain_glyph") or hBuilding:IsInvulnerable() or hBuilding:IsAttackImmune()
 end
 
 -------------------------------------------------------------------------------

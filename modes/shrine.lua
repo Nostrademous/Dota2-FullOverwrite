@@ -108,7 +108,8 @@ function X:Think(bot)
     return
 end
 
-function X:Desire(bot)    
+function X:Desire(bot)
+    --[[
     if bot.useShrine ~= nil and bot.useShrine >= 0 then
         if not utils.NotNilOrDead(global_game_state.GetShrineState(bot.useShrine).handle) then
             return BOT_MODE_DESIRE_NONE
@@ -133,7 +134,7 @@ function X:Desire(bot)
             return BOT_MODE_DESIRE_VERYHIGH
         end
     end
-    
+    --]]
     return BOT_MODE_DESIRE_NONE
 end
 

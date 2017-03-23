@@ -203,7 +203,7 @@ function X:Desire(bot)
     -- push enemies out of our base
     local enemyFrontier = GetLaneFrontAmount(utils.GetOtherTeam(), getHeroVar("CurLane"), false)
     if enemyFrontier < 0.25 then
-        return BOT_MODE_DESIRE_HIGH
+        return BOT_MODE_DESIRE_MODERATE
     end
 
     -- this is hero-specific push-lane determination
@@ -220,7 +220,7 @@ function X:Desire(bot)
     end
 
     if #gHeroVar.GetNearbyAlliedCreep(bot, 1000) >= 1 and #gHeroVar.GetNearbyEnemies(bot, 1200) == 0 then
-        return BOT_MODE_DESIRE_MODERATE
+        return BOT_MODE_DESIRE_LOW
     end
 
     if bot.SelfRef:getCurrentMode():GetName() == "pushlane" then

@@ -51,7 +51,7 @@ end
 local linaBot = botLina:new{abilityPriority = LinaAbilityPriority}
 
 function linaBot:DoHeroSpecificInit(bot)
-    setHeroVar("HasStun",  {{[1]=bot:GetAbilityByName("lina_light_strike_array"), [2]=0.95+getHeroVar("AbilityDelay")}})
+    setHeroVar("HasStun",  {{[1]=bot:GetAbilityByName(LINA_SKILL_W), [2]=0.95+getHeroVar("AbilityDelay")}})
 end
 
 function linaBot:ConsiderAbilityUse()

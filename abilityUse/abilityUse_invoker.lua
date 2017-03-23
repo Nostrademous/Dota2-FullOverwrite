@@ -178,7 +178,7 @@ function invAbility:AbilityUsageThink(bot)
     -- Check if we're already using an ability
     if utils.IsBusy(bot) then return true end
     
-    if utils.IsCrowdControlled(bot) then return false end
+    if utils.IsUnableToCast(bot) then return false end
 
     if abilityQ == "" then abilityQ = bot:GetAbilityByName( "invoker_quas" ) end
     if abilityW == "" then abilityW = bot:GetAbilityByName( "invoker_wex" ) end

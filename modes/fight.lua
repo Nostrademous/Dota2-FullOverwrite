@@ -67,8 +67,6 @@ function X:Think(bot)
                     if dist < 0.3*attackRange then
                         gHeroVar.HeroMoveToLocation(bot, utils.VectorAway(bot:GetLocation(), target:GetLocation(), 0.75*attackRange-dist))
                     else
-                        if utils.UseOrbEffect(bot) then return end
-                        
                         gHeroVar.HeroAttackUnit(bot, target, true)
                     end
                 end
@@ -89,45 +87,6 @@ function X:Desire(bot)
         return BOT_MODE_DESIRE_NONE
     end
     
-    local enemyList = gHeroVar.GetNearbyEnemies(bot, 1600)
-    if #enemyList == 0 then return BOT_MODE_DESIRE_NONE end
-    
-    local eTowers = gHeroVar.GetNearbyEnemyTowers(bot, 900)
-    local aTowers = gHeroVar.GetNearbyAlliedTowers(bot, 600)
-    
-    local enemyValue = 0
-    local allyValue = 0
-    local allyList = gHeroVar.GetNearbyAllies(bot, 1200)
-    for _, enemy in pairs(enemyList) do
-        if enemy:GetHealth()/enemy:GetMaxHealth() >= 0.25 and not modifiers.HasDangerousModifiers(enemy) and 
-            not utils.IsCrowdControlled(enemy) then
-            --utils.myPrint(utils.GetHeroName(enemy), ", OP: ", enemy:GetRawOffensivePower())
-            enemyValue = enemyValue + enemy:GetHealth() + enemy:GetRawOffensivePower()
-        end
-    end
-    enemyValue = enemyValue + #eTowers*110
-     
-    for _, ally in pairs(allyList) do
-        if ally:GetHealth()/ally:GetMaxHealth() >= 0.25 and not modifiers.HasDangerousModifiers(ally) and 
-            not utils.IsCrowdControlled(ally) then
-            --utils.myPrint(ally.Name, ", OP: ", ally:GetOffensivePower())
-            allyValue = allyValue + ally:GetHealth() + ally:GetOffensivePower()
-        end
-    end
-    allyValue = allyValue + #aTowers*110
-    
-    --utils.myPrint("allyV/enemyV: ", allyValue/enemyValue)
-    
-    if allyValue/enemyValue > Max(1.0, (1.6 - bot:GetLevel()*0.1)) then
-        local target, _ = utils.GetWeakestHero(bot, bot:GetAttackRange()+bot:GetBoundingRadius())
-        if utils.ValidTarget(target) then
-            setHeroVar("Target", target)
-            return BOT_MODE_DESIRE_MODERATE
-        end
-    else
-        return BOT_MODE_DESIRE_NONE
-    end
-
     local allyList2 = gHeroVar.GetNearbyAllies(bot, 1600)
     for _, ally in pairs(allyList2) do
         if not ally:IsIllusion() then
@@ -140,10 +99,45 @@ function X:Desire(bot)
         end
     end
     
-    if not utils.ValidTarget(getHeroVar("Target")) then
-        setHeroVar("Target", nil)
-    end
+    local enemyList = gHeroVar.GetNearbyEnemies(bot, 1600)
+    if #enemyList == 0 then return BOT_MODE_DESIRE_NONE end
     
+    local eTowers = gHeroVar.GetNearbyEnemyTowers(bot, 900)
+    local aTowers = gHeroVar.GetNearbyAlliedTowers(bot, 600)
+    
+    local enemyValue = 0
+    for _, enemy in pairs(enemyList) do
+        if enemy:GetHealth()/enemy:GetMaxHealth() >= 0.25 and not modifiers.HasDangerousModifiers(enemy) and 
+            not utils.IsCrowdControlled(enemy) then
+            --utils.myPrint(utils.GetHeroName(enemy), ", OP: ", enemy:GetRawOffensivePower())
+            enemyValue = enemyValue + enemy:GetHealth() + enemy:GetRawOffensivePower()
+        end
+    end
+    enemyValue = enemyValue + #eTowers*110
+    
+    local allyValue = 0
+    local allyList = gHeroVar.GetNearbyAllies(bot, 1200)
+    for _, ally in pairs(allyList) do
+        if not ally:IsIllusion() and ally:GetHealth()/ally:GetMaxHealth() >= 0.25 and not modifiers.HasDangerousModifiers(ally) and 
+            not utils.IsCrowdControlled(ally) then
+            --utils.myPrint(ally.Name, ", OP: ", ally:GetOffensivePower())
+            allyValue = allyValue + ally:GetHealth() + ally:GetOffensivePower()
+        end
+    end
+    allyValue = allyValue + #aTowers*110
+    
+    --if enemyValue == 0 then utils.myPrint("allyV/enemyV: ", allyValue/enemyValue) end
+    
+    if allyValue/enemyValue > Max(1.0, (1.6 - bot:GetLevel()*0.1)) then
+        local target, _ = utils.GetWeakestHero(bot, 1600)
+        if utils.ValidTarget(target) then
+            setHeroVar("Target", target)
+            return BOT_MODE_DESIRE_MODERATE
+        end
+    else
+        return BOT_MODE_DESIRE_NONE
+    end
+
     return BOT_MODE_DESIRE_NONE
 end
 

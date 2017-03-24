@@ -43,7 +43,7 @@ function X:Think(bot)
     if #Towers == 0 and #Shrines == 0 and #Barracks == 0 then
         -- are we near the enemy Ancient
         if GetUnitToLocationDistance(bot, Ancient:GetLocation()) < 500 then
-            if utils.NotNilOrDead(Ancient) and not modifiers.IsBuildingGlyphed(Ancient) then
+            if utils.ValidTarget(Ancient) and not modifiers.IsBuildingGlyphed(Ancient) then
                 gHeroVar.HeroAttackUnit(bot, Ancient, true)
                 return
             end
@@ -77,9 +77,6 @@ function X:Think(bot)
 
     if #Towers > 0 then
         -- if more than one tower, sort by lowest health
-        if #Towers > 1 then
-            table.sort(Towers, function(n1,n2) return n1:GetHealth() < n2:GetHealth() end)
-        end
         local hTower = Towers[1]
 
         if utils.IsTowerAttackingMe() then
@@ -117,7 +114,7 @@ function X:Think(bot)
             local bTowerHasTarget = false
             for i = 1, 5, 1 do
                 local hTowerTarget = U.GetLaneTowerAttackTarget(U.GetOtherTeam(), getHeroVar("CurLane"), i)
-                if utils.NotNilOrDead(hTowerTarget) and GetUnitToUnitDistance(bot, hTowerTarget) < 1200 then
+                if utils.ValidTarget(hTowerTarget) and GetUnitToUnitDistance(bot, hTowerTarget) < 1200 then
                     -- make sure it is not another hero, unless illusion
                     if hTowerTarget:IsIllusion() or not hTowerTarget:IsHero() then
                         bTowerHasTarget = true
@@ -164,7 +161,7 @@ function X:Think(bot)
             end
         end
 
-        if utils.NotNilOrDead(hBarrackTarget) then
+        if utils.ValidTarget(hBarrackTarget) then
             gHeroVar.HeroAttackUnit(bot, hBarrackTarget, true)
             return
         end
@@ -172,12 +169,9 @@ function X:Think(bot)
 
     if #Shrines > 0 then
         -- if more than one, sort by lowest health
-        if #Shrines > 1 then
-            table.sort(Shrines, function(n1,n2) return n1:GetHealth() < n2:GetHealth() end)
-        end
         hShrine = Shrines[1]
 
-        if utils.NotNilOrDead(hShrine) and not modifiers.IsBuildingGlyphed(hShrine) then
+        if utils.ValidTarget(hShrine) and not modifiers.IsBuildingGlyphed(hShrine) then
             gHeroVar.HeroAttackUnit(bot, hShrine, true)
             return
         end
@@ -210,7 +204,7 @@ function X:Desire(bot)
     local nearbyETowers = gHeroVar.GetNearbyEnemyTowers(bot, Max(750, bot:GetAttackRange()))
     if #nearbyETowers > 0 then
         if ( nearbyETowers[1]:GetHealth() / nearbyETowers[1]:GetMaxHealth() ) < 0.1 and
-            not nearbyETowers[1]:HasModifier("modifier_fountain_glyph") then
+            not modifiers.IsBuildingGlyphed(nearbyETowers[1]) then
             return BOT_MODE_DESIRE_HIGH
         end
 

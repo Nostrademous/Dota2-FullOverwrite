@@ -137,8 +137,10 @@ local function Stack(bot)
         else
             local nearbyCreep = gHeroVar.GetNearbyEnemyCreep(bot, bot:GetAttackRange())
             if #nearbyCreep > 0 then
-                gHeroVar.HeroAttackUnit(bot, nearbyCreep[1], true)
-                return
+                if utils.ValidTarget(nearbyCreep[1]) then
+                    gHeroVar.HeroAttackUnit(bot, nearbyCreep[1], true)
+                    return
+                end
             end
         end
     end

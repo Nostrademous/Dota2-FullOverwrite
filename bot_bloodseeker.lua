@@ -87,7 +87,7 @@ function bloodseekerBot:GetMaxClearableCampLevel(bot)
     local bloodrage = bot:GetAbilityByName(SKILL_Q)
     if bloodrage:GetLevel() >= 4 then
         return constants.CAMP_ANCIENT
-    elseif utils.HaveItem(bot, "item_iron_talon") and bloodrage:GetLevel() >= 2 then
+    elseif (utils.HaveItem(bot, "item_iron_talon") and bloodrage:GetLevel() >= 2) or bloodrage:GetLevel() >= 3 then
         return constants.CAMP_HARD
     end
 

@@ -37,8 +37,8 @@ function UseRegenItems()
 
     local Enemies = gHeroVar.GetNearbyEnemies(bot, 850)
 
-    local bottle = utils.HaveItem(bot, "item_bottle")
-    if bottle ~= nil and bottle:GetCurrentCharges() > 0 and not bot:HasModifier("modifier_bottle_regeneration")
+    local bottle = utils.IsItemAvailable("item_bottle")
+    if bottle and bottle:GetCurrentCharges() > 0 and not bot:HasModifier("modifier_bottle_regeneration")
         and not bot:HasModifier("modifier_clarity_potion") and not bot:HasModifier("modifier_flask_healing") then
 
         if (not (bot:GetHealth() == bot:GetMaxHealth() and bot:GetMaxMana() == bot:GetMana())) and bot:HasModifier("modifier_fountain_aura_buff") then
@@ -57,21 +57,22 @@ function UseRegenItems()
 
     if not bot:HasModifier("modifier_fountain_aura_buff") then
 
-        local wand = utils.HaveItem(bot, "item_magic_wand")
-        if not wand then wand = utils.HaveItem(bot, "item_magic_stick") end
+        local wand = utils.IsItemAvailable("item_magic_wand")
+        if not wand then wand = utils.IsItemAvailable("item_magic_stick") end
         
-        if wand ~= nil and wand:IsFullyCastable() then
+        if wand then
             if wand:GetCurrentCharges() > 0 then
                 local restoreAmount = 15*wand:GetCurrentCharges()
                 if bot.SelfRef:getCurrentMode():GetName() == "retreat" then
                     gHeroVar.HeroUseAbility(bot, wand)
+                    return true
                 end
             end
         end
     
-        local mekansm = utils.HaveItem(bot, "item_mekansm")
+        local mekansm = utils.IsItemAvailable("item_mekansm")
         local Allies = gHeroVar.GetNearbyAllies(bot, 900)
-        if mekansm ~= nil and mekansm:IsFullyCastable() then
+        if mekansm then
             if (bot:GetHealth()/bot:GetMaxHealth()) < 0.5 then
                 gHeroVar.HeroUseAbility(bot, mekansm)
                 return true
@@ -86,8 +87,8 @@ function UseRegenItems()
             end
         end
 
-        local clarity = utils.HaveItem(bot, "item_clarity")
-        if clarity ~= nil then
+        local clarity = utils.IsItemAvailable("item_clarity")
+        if clarity then
             if #Enemies == 0 then
                 if (bot:GetMaxMana()-bot:GetMana()) > 200 and not bot:HasModifier("modifier_clarity_potion") and not modifiers.HasActiveDOTDebuff(bot)  then
                     gHeroVar.HeroUseAbilityOnEntity(bot, clarity, bot)
@@ -96,8 +97,8 @@ function UseRegenItems()
             end
         end
 
-        local flask = utils.HaveItem(bot, "item_flask");
-        if flask ~= nil then
+        local flask = utils.IsItemAvailable("item_flask");
+        if flask then
             if #Enemies == 0 then
                 if (bot:GetMaxHealth()-bot:GetHealth()) > 400 and not bot:HasModifier("modifier_flask_healing") and not modifiers.HasActiveDOTDebuff(bot)  then
                     gHeroVar.HeroUseAbilityOnEntity(bot, flask, bot)
@@ -106,8 +107,8 @@ function UseRegenItems()
             end
         end
 
-        local urn = utils.HaveItem(bot, "item_urn_of_shadows")
-        if urn ~= nil and urn:GetCurrentCharges() > 0 then
+        local urn = utils.IsItemAvailable("item_urn_of_shadows")
+        if urn and urn:GetCurrentCharges() > 0 then
             if #Enemies == 0 then
                 if (bot:GetMaxHealth()-bot:GetHealth()) > 400 and not bot:HasModifier("modifier_item_urn_heal") and not modifiers.HasActiveDOTDebuff(bot)  then
                     gHeroVar.HeroUseAbilityOnEntity(bot, urn, bot)
@@ -116,16 +117,16 @@ function UseRegenItems()
             end
         end
 
-        local faerie = utils.HaveItem(bot, "item_faerie_fire");
-        if faerie ~= nil then
+        local faerie = utils.IsItemAvailable("item_faerie_fire")
+        if faerie then
             if (bot:GetHealth()/bot:GetMaxHealth()) < 0.15 and (utils.IsTowerAttackingMe(2.0) or utils.IsAnyHeroAttackingMe(1.0) or modifiers.HasActiveDOTDebuff(bot)) then
                 gHeroVar.HeroUseAbility(bot, faerie)
                 return true
             end
         end
 
-        local tango_shared = utils.HaveItem(bot, "item_tango_single");
-        if tango_shared ~= nil and tango_shared:IsFullyCastable() then
+        local tango_shared = utils.IsItemAvailable("item_tango_single")
+        if tango_shared then
             if (bot:GetMaxHealth()-bot:GetHealth()) > 200 and not bot:HasModifier("modifier_tango_heal") then
                 local tree = utils.GetNearestTree(bot)
                 if tree ~= nil then
@@ -135,8 +136,8 @@ function UseRegenItems()
             end
         end
 
-        local tango = utils.HaveItem(bot, "item_tango");
-        if tango ~= nil and tango:IsFullyCastable() then
+        local tango = utils.IsItemAvailable("item_tango")
+        if tango then
             if (bot:GetMaxHealth()-bot:GetHealth()) > 200 and not bot:HasModifier("modifier_tango_heal") then
                 local tree = utils.GetNearestTree(bot)
                 if tree ~= nil then
@@ -166,28 +167,35 @@ function UseRegenItemsOnAlly()
     local lowestHealthAlly = nil
     local lowestManaAlly = nil
     local bottleTargetAlly = nil
-    for _,ally in pairs(Allies) do
-        if lowestHealthAlly == nil then lowestHealthAlly = ally end
-        if lowestManaAlly == nil then lowestManaAlly = ally end
-        if bottleTargetAlly == nil then bottleTargetAlly = ally end
+    for _, ally in pairs(Allies) do
+        if not ally:IsIllusion() then
+            if lowestHealthAlly == nil then lowestHealthAlly = ally end
+            if lowestManaAlly == nil then lowestManaAlly = ally end
+            if bottleTargetAlly == nil then bottleTargetAlly = ally end
 
-        local allyHealthPct = ally:GetHealth()/ally:GetMaxHealth()
-        local allyManaPct = ally:GetMana()/ally:GetMaxMana()
+            local allyHealthPct = ally:GetHealth()/ally:GetMaxHealth()
+            local allyManaPct = ally:GetMana()/ally:GetMaxMana()
 
-        local targetHealthPct = lowestHealthAlly:GetHealth()/lowestHealthAlly:GetMaxHealth()
-        local targetManaPct = lowestManaAlly:GetMana()/lowestManaAlly:GetMaxMana()
+            local targetHealthPct = lowestHealthAlly:GetHealth()/lowestHealthAlly:GetMaxHealth()
+            local targetManaPct = lowestManaAlly:GetMana()/lowestManaAlly:GetMaxMana()
 
-        if allyHealthPct < targetHealthPct then lowestHealthAlly = ally end -- get lowest health ally
-        if allyManaPct < targetManaPct then lowestManaAlly = ally end -- get lowest mana ally
-        if allyManaPct < targetManaPct and allyHealthPct < targetHealthPct then bottleTargetAlly = ally end -- get lowest mana and lowest health ally
+            if allyHealthPct < targetHealthPct then lowestHealthAlly = ally end -- get lowest health ally
+            if allyManaPct < targetManaPct then lowestManaAlly = ally end -- get lowest mana ally
+            if allyManaPct < targetManaPct and allyHealthPct < targetHealthPct then bottleTargetAlly = ally end -- get lowest mana and lowest health ally
+        end
     end
 
-    local bottle = utils.HaveItem(bot, "item_bottle")
-    if bottle ~= nil and bottle:GetCurrentCharges() > 0 and not bottleTargetAlly:HasModifier("modifier_bottle_regeneration")
-        and not bottleTargetAlly:HasModifier("modifier_clarity_potion") and not bottleTargetAlly:HasModifier("modifier_flask_healing")
-        and (not utils.HaveItem(bottleTargetAlly, "item_bottle"))   then
+    local bottle = utils.IsItemAvailable("item_bottle")
+    if bottle and bottle:GetCurrentCharges() > 0 and not bottleTargetAlly:HasModifier("modifier_bottle_regeneration")
+        and not bottleTargetAlly:HasModifier("modifier_clarity_potion") and not bottleTargetAlly:HasModifier("modifier_flask_healing") then
+        
+        -- check if they have their own
+        local allyBottle, _ = utils.HaveItem(bottleTargetAlly, "item_bottle")
+        if allyBottle and allyBottle:GetCurrentCharges() > 0 then return false end
 
-        if (not (bottleTargetAlly:GetHealth() == bottleTargetAlly:GetMaxHealth() and bottleTargetAlly:GetMaxMana() == bottleTargetAlly:GetMana())) and bottleTargetAlly:HasModifier("modifier_fountain_aura_buff") then
+        if (not (bottleTargetAlly:GetHealth() == bottleTargetAlly:GetMaxHealth() and 
+            bottleTargetAlly:GetMaxMana() == bottleTargetAlly:GetMana())) and
+            bottleTargetAlly:HasModifier("modifier_fountain_aura_buff") then
             gHeroVar.HeroUseAbilityOnEntity(bot, bottle, bottleTargetAlly)
             return true
         end
@@ -201,10 +209,13 @@ function UseRegenItemsOnAlly()
         end
     end
 
-    if (lowestManaAlly and (not lowestManaAlly:HasModifier("modifier_fountain_aura_buff")))  then
-
-        local clarity = utils.HaveItem(bot, "item_clarity")
-        if clarity ~= nil and (not utils.HaveItem(lowestManaAlly, "item_clarity")) then
+    if (lowestManaAlly and (not lowestManaAlly:HasModifier("modifier_fountain_aura_buff"))) then
+        local clarity = utils.IsItemAvailable("item_clarity")
+        if clarity then
+            -- check if they have their own
+            local allyClarity, _ = utils.HaveItem(lowestManaAlly, "item_clarity")
+            if allyClarity then return false end
+            
             if (Enemies == nil or #Enemies == 0) then
                 if (lowestManaAlly:GetMaxMana()-lowestManaAlly:GetMana()) > 200 and not lowestManaAlly:HasModifier("modifier_clarity_potion") and not modifiers.HasActiveDOTDebuff(lowestManaAlly)  then
                     gHeroVar.HeroUseAbilityOnEntity(bot, clarity, lowestManaAlly)
@@ -214,9 +225,13 @@ function UseRegenItemsOnAlly()
         end
     end
 
-    if (lowestHealthAlly and (not lowestHealthAlly:HasModifier("modifier_fountain_aura_buff")))  then
-        local flask = utils.HaveItem(bot, "item_flask");
-        if flask ~= nil and (not utils.HaveItem(lowestHealthAlly, "item_flask")) then
+    if (lowestHealthAlly and (not lowestHealthAlly:HasModifier("modifier_fountain_aura_buff"))) then
+        local flask = utils.IsItemAvailable("item_flask");
+        if flask then
+            -- check if they have their own
+            local allyFlask, _ = utils.HaveItem(lowestHealthAlly, "item_flask")
+            if allyFlask then return false end
+            
             if (Enemies == nil or #Enemies == 0) then
                 if (lowestHealthAlly:GetMaxHealth()-lowestHealthAlly:GetHealth()) > 400 and not lowestHealthAlly:HasModifier("modifier_flask_healing") and not modifiers.HasActiveDOTDebuff(lowestHealthAlly)  then
                     gHeroVar.HeroUseAbilityOnEntity(bot, flask, lowestHealthAlly)
@@ -225,19 +240,24 @@ function UseRegenItemsOnAlly()
             end
         end
 
-        local tango = utils.HaveItem(bot, "item_tango");
-        if tango ~= nil and tango:IsFullyCastable() and (not (utils.HaveItem(lowestHealthAlly, "item_tango") or utils.HaveItem(lowestHealthAlly, "item_tango_single")) )then
+        local tango = utils.IsItemAvailable("item_tango");
+        if tango then 
+            local allyTango, _ = utils.HaveItem(lowestHealthAlly, "item_tango")
+            if allyTango == nil then allyTango, _ = utils.HaveItem(lowestHealthAlly, "item_tango_single") end
+            
+            -- check if they have their own
+            if allyTango then return false end
+            
+            -- TODO: check if they have space
+            
             if (lowestHealthAlly:GetMaxHealth()-lowestHealthAlly:GetHealth()) > 200 and not lowestHealthAlly:HasModifier("modifier_tango_heal") then
-                local tree = utils.GetNearestTree(bot)
-                if tree ~= nil then
-                    gHeroVar.HeroUseAbilityOnEntity(bot, tango, lowestHealthAlly)
-                    return true
-                end
+                gHeroVar.HeroUseAbilityOnEntity(bot, tango, lowestHealthAlly)
+                return true
             end
         end
 
-        local urn = utils.HaveItem(bot, "item_urn_of_shadows")
-        if urn ~= nil and urn:GetCurrentCharges() > 0 then
+        local urn = utils.IsItemAvailable("item_urn_of_shadows")
+        if urn and urn:GetCurrentCharges() > 0 then
             if (Enemies == nil or #Enemies == 0) then
                 if (lowestHealthAlly:GetMaxHealth()-lowestHealthAlly:GetHealth()) > 400 and not lowestHealthAlly:HasModifier("modifier_item_urn_heal") and not modifiers.HasActiveDOTDebuff(lowestHealthAlly)  then
                     gHeroVar.HeroUseAbilityOnEntity(bot, urn, lowestHealthAlly)
@@ -258,9 +278,9 @@ function UseTeamItems()
     end
 
     if not bot:HasModifier("modifier_fountain_aura_buff") then
-        local mekansm = utils.HaveItem(bot, "item_mekansm")
+        local mekansm = utils.IsItemAvailable("item_mekansm")
         local Allies = gHeroVar.GetNearbyEnemies(bot, 900)
-        if mekansm ~= nil and mekansm:IsFullyCastable() then
+        if mekansm then
             if (bot:GetHealth()/bot:GetMaxHealth()) < 0.15 then
                 gHeroVar.HeroUseAbility(bot, mekansm)
                 return true
@@ -275,8 +295,8 @@ function UseTeamItems()
             end
         end
 
-        local arcane = utils.HaveItem(bot, "item_arcane_boots")
-        if arcane ~= nil and arcane:IsFullyCastable() then
+        local arcane = utils.IsItemAvailable("item_arcane_boots")
+        if arcane then
             if (bot:GetMaxMana() - bot:GetMana()) > 160 then
                 gHeroVar.HeroUseAbility(bot, arcane)
                 return true
@@ -345,7 +365,7 @@ function UseTP(hero, loc, lane)
         return false
     end
 
-    local tp = utils.HaveItem(hero, "item_tpscroll")
+    local tp, bMainInv = utils.HaveItem(hero, "item_tpscroll")
     if tp ~= nil and (utils.HaveItem(hero, "item_travel_boots_1") or utils.HaveItem(hero, "item_travel_boots_2"))
         and (hero:DistanceFromFountain() < 200 or hero:DistanceFromSideShop() < 200 or hero:DistanceFromSecretShop() < 200) then
         hero:SellItem(tp)
@@ -353,9 +373,9 @@ function UseTP(hero, loc, lane)
     end
 
     if tp == nil and utils.HaveTeleportation(hero) then
-        tp = utils.HaveItem(hero, "item_travel_boots_1")
+        tp, bMainInv = utils.HaveItem(hero, "item_travel_boots_1")
         if tp == nil then
-            tp = utils.HaveItem(hero, "item_travel_boots_2")
+            tp, bMainInv = utils.HaveItem(hero, "item_travel_boots_2")
         end
     end
 
@@ -380,11 +400,11 @@ function UseTP(hero, loc, lane)
             tpSwap = true
         end
         hero:ActionImmediate_PurchaseItem( "item_tpscroll" )
-        tp = utils.HaveItem(hero, "item_tpscroll")
+        tp, bMainInv = utils.HaveItem(hero, "item_tpscroll")
         hero:SetNextItemPurchaseValue(savedValue)
     end
 
-    if tp ~= nil and tp:IsFullyCastable() then
+    if tp ~= nil and bMainInv and tp:IsFullyCastable() then
         -- dest (below) should find farthest away tower to TP to in our assigned lane, even if tower is dead it will
         -- just default to closest location we can TP to in that direction
         if GetUnitToLocationDistance(hero, dest) > 3000 and hero:DistanceFromFountain() < 200 then
@@ -416,7 +436,7 @@ function UseItems()
 
     if UseTeamItems() then return true end
 
-    if UseTP(bot) then return true end
+    --if UseTP(bot) then return true end
 
     local courier = utils.IsItemAvailable("item_courier")
     if courier ~= nil then
@@ -441,8 +461,8 @@ end
 
 function UseShadowBlade()
     local bot = GetBot()
-    local sb = utils.HaveItem(bot, "item_invis_sword")
-    if sb ~= nil and sb:IsFullyCastable() then
+    local sb = utils.IsItemAvailable("item_invis_sword")
+    if sb then
         gHeroVar.HeroUseAbility(bot, sb)
         return true
     end
@@ -451,8 +471,8 @@ end
 
 function UseSilverEdge()
     local bot = GetBot()
-    local se = utils.HaveItem(bot, "item_silver_edge")
-    if se ~= nil and se:IsFullyCastable() then
+    local se = utils.IsItemAvailable("item_silver_edge")
+    if se then
         gHeroVar.HeroUseAbility(bot, se)
         return true
     end
@@ -461,8 +481,8 @@ end
 
 function UseTomeOfKnowledge()
     local bot = GetBot()
-    local tok = utils.HaveItem(bot, "item_tome_of_knowledge")
-    if tok ~= nil then
+    local tok = utils.IsItemAvailable("item_tome_of_knowledge")
+    if tok then
         gHeroVar.HeroUseAbility(bot, tok)
         return true
     end
@@ -571,12 +591,12 @@ end
 
 function UseDagon(target)
     local bot = GetBot()
-    local item = utils.HaveItem(bot, "item_dagon_1")
-    if not item then item = utils.HaveItem(bot, "item_dagon_2") end
-    if not item then item = utils.HaveItem(bot, "item_dagon_3") end
-    if not item then item = utils.HaveItem(bot, "item_dagon_4") end
-    if not item then item = utils.HaveItem(bot, "item_dagon_5") end
-    if item and item:IsFullyCastable() then
+    local item = utils.IsItemAvailable("item_dagon_1")
+    if not item then item = utils.IsItemAvailable("item_dagon_2") end
+    if not item then item = utils.IsItemAvailable("item_dagon_3") end
+    if not item then item = utils.IsItemAvailable("item_dagon_4") end
+    if not item then item = utils.IsItemAvailable("item_dagon_5") end
+    if item then
         gHeroVar.HeroUseAbilityOnEntity(bot, item, target)
         return true
     end
@@ -722,12 +742,12 @@ end
 
 function UseGlimmerCape(target)
     local gcTarget = GetBot()
-    if target ~= nil and target:IsAlive() then
+    if utils.ValidTarget(target) then
         gcTarget = target
     end
 
     local gc = utils.IsItemAvailable("item_glimmer_cape")
-    if gc and gcTarget ~= nil then
+    if gc and utils.ValidTarget(gcTarget) then
         gHeroVar.HeroUseAbilityOnEntity(GetBot(), gc, gcTarget)
         return true
     end
@@ -736,8 +756,8 @@ end
 
 function UseMidas()
     local bot = GetBot()
-    local midas = utils.HaveItem(bot, "item_hand_of_midas")
-    if midas ~= nil and midas:IsFullyCastable() then
+    local midas = utils.IsItemAvailable("item_hand_of_midas")
+    if midas then
         local creeps = gHeroVar.GetNearbyEnemyCreep(bot, 600)
         if #creeps > 1 then
             table.sort(creeps, function(n1, n2) return n1:GetHealth() > n2:GetHealth() end)
@@ -763,9 +783,9 @@ end
 
 function UseHelmOfTheDominator(target)
     local bot = GetBot()
-    local hotd = utils.IsItemAvailable("item_helm_of_the_dominator")
-    if hotd then
-        gHeroVar.HeroUseAbilityOnEntity(bot, hotd, target)
+    local item = utils.IsItemAvailable("item_helm_of_the_dominator")
+    if item then
+        gHeroVar.HeroUseAbilityOnEntity(bot, item, target)
         return true
     end
     return false
@@ -783,9 +803,9 @@ end
 
 function UseHurricanePike(target, location)
     local bot = GetBot()
-    local hp = utils.IsItemAvailable("item_hurricane_pike")
-    if hp and utils.IsFacingLocation(bot, location, 25) then
-        gHeroVar.HeroUseAbilityOnEntity(bot, hp, target)
+    local item = utils.IsItemAvailable("item_hurricane_pike")
+    if item and utils.IsFacingLocation(bot, location, 25) then
+        gHeroVar.HeroUseAbilityOnEntity(bot, item, target)
         return true
     end
     return false
@@ -793,9 +813,9 @@ end
 
 function UseLinkens(target)
     local bot = GetBot()
-    local ls = utils.IsItemAvailable("item_sphere")
-    if ls then
-        gHeroVar.HeroUseAbilityOnEntity(bot, ls, target)
+    local item = utils.IsItemAvailable("item_sphere")
+    if item then
+        gHeroVar.HeroUseAbilityOnEntity(bot, item, target)
         return true
     end
     return false
@@ -803,9 +823,9 @@ end
 
 function UseLotusOrb(target)
     local bot = GetBot()
-    local lo = utils.IsItemAvailable("item_lotus_orb")
-    if lo then
-        gHeroVar.HeroUseAbilityOnEntity(bot, lo, target)
+    local item = utils.IsItemAvailable("item_lotus_orb")
+    if item then
+        gHeroVar.HeroUseAbilityOnEntity(bot, item, target)
         return true
     end
     return false
@@ -885,9 +905,9 @@ end
 
 function UsePhaseBoots()
     local bot = GetBot()
-    local pb = utils.IsItemAvailable("item_phase_boots")
-    if pb then
-        gHeroVar.HeroUseAbility(bot, pb)
+    local item = utils.IsItemAvailable("item_phase_boots")
+    if item then
+        gHeroVar.HeroUseAbility(bot, item)
         return true
     end
     return false
@@ -925,9 +945,9 @@ end
 
 function UseRodOfAtos(target)
     local bot = GetBot()
-    local rod = utils.IsItemAvailable("item_rod_of_atos")
-    if rod then
-        gHeroVar.HeroUseAbilityOnEntity(bot, rod, target)
+    local item = utils.IsItemAvailable("item_rod_of_atos")
+    if item then
+        gHeroVar.HeroUseAbilityOnEntity(bot, item, target)
         return true
     end
     return false
@@ -945,9 +965,9 @@ end
 
 function UseScytheOfVyse(target)
     local bot = GetBot()
-    local ss = utils.IsItemAvailable("item_sheepstick")
-    if ss then
-        gHeroVar.HeroUseAbilityOnEntity(bot, ss, target)
+    local item = utils.IsItemAvailable("item_sheepstick")
+    if item then
+        gHeroVar.HeroUseAbilityOnEntity(bot, item, target)
         return true
     end
     return false
@@ -974,8 +994,8 @@ function UseShivas()
 end
 
 function UseSmoke( hUnit )
-    local item = utils.HaveItem(hUnit, "item_smoke_of_deceit")
-    if item and item:IsFullyCastable() then
+    local item, bMainInv = utils.HaveItem(hUnit, "item_smoke_of_deceit")
+    if item and bMainInv and item:IsFullyCastable() then
         gHeroVar.HeroUseAbility(hUnit, item)
         return true
     end
@@ -984,9 +1004,9 @@ end
 
 function UseSolarCrest(target)
     local bot = GetBot()
-    local sc = utils.IsItemAvailable("item_solar_crest")
-    if sc then
-        gHeroVar.HeroUseAbilityOnEntity(bot, sc, target)
+    local item = utils.IsItemAvailable("item_solar_crest")
+    if item then
+        gHeroVar.HeroUseAbilityOnEntity(bot, item, target)
         return true
     end
     return false
@@ -1004,9 +1024,9 @@ end
 
 function UseUrn(target)
     local bot = GetBot()
-    local urn = utils.IsItemAvailable("item_urn_of_shadows")
-    if urn and urn:GetCurrentCharges() > 0 then
-        gHeroVar.HeroUseAbilityOnEntity(bot, urn, target)
+    local item = utils.IsItemAvailable("item_urn_of_shadows")
+    if item and item:GetCurrentCharges() > 0 then
+        gHeroVar.HeroUseAbilityOnEntity(bot, item, target)
         return true
     end
     return false
@@ -1027,19 +1047,21 @@ end
 -- it's state to the selection we want prior to returning
 function HaveWard(wardType)
     local bot = GetBot()
-    local ward = utils.HaveItem(bot, wardType)
+    local ward, _ = utils.HaveItem(bot, wardType)
 
     if ward == nil then
-        ward = utils.HaveItem(bot, "item_ward_dispenser")
-        if ward == nil then return false end
+        ward, _ = utils.HaveItem(bot, "item_ward_dispenser")
+        if ward == nil then return nil end
         -- we have combined wards, check which is currently selected
         local bObserver = ward:GetToggleState() -- (true = observer, false = sentry)
         if wardType == "item_ward_observer" and (not bObserver) then
             -- flip selection by using on yourself
             gHeroVar.HeroUseAbilityOnEntity(bot, ward, bot)
+            return true
         elseif wardType == "item_ward_sentry" and bObserver then
             -- flip selection by using on yourself
             gHeroVar.HeroUseAbilityOnEntity(bot, ward, bot)
+            return true
         end
     end
     -- at this point we have the correct item selected, or we don't have it
@@ -1050,7 +1072,7 @@ end
 -- ITEM MANAGEMENT FUNCTIONS
 -------------------------------------------------------------------------------
 function considerDropItems()
-    swapBackpackIntoInventory()
+    if swapBackpackIntoInventory() then return end
 
     local bot = GetBot()
 
@@ -1061,6 +1083,7 @@ function considerDropItems()
                 local item = bot:GetItemInSlot(j)
                 if item ~= nil and item:GetName() == "item_branches" and bItem:GetName() ~= "item_branches" then
                     bot:ActionImmediate_SwapItems(i, j)
+                    return
                 end
             end
         end
@@ -1076,11 +1099,13 @@ function swapBackpackIntoInventory()
                     local item = bot:GetItemInSlot(j)
                     if item == nil then
                         bot:ActionImmediate_SwapItems(i, j)
+                        return true
                     end
                 end
             end
         end
     end
+    return false
 end
 
 for k,v in pairs( item_usage ) do _G._savedEnv[k] = v end

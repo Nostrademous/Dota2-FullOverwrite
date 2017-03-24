@@ -655,7 +655,10 @@ end
 
 function U.IsBusy(bot)
     if bot:IsChanneling() then return true end
-    if bot:IsCastingAbility() then return true end
+    if bot:IsCastingAbility() then
+        if bot.AbilityOnEntityUseTime and (GameTime() - bot.AbilityOnEntityUseTime) > 3.0 then return false end
+        return true 
+    end
     if bot:NumQueuedActions() > 0 then return true end
     return false
 end
@@ -738,7 +741,7 @@ end
 
 function U.TreadCycle(bot, stat)
     --[[
-    local powerTreads = U.HaveItem(bot, "item_power_treads")
+    local powerTreads = U.IsItemAvailable("item_power_treads")
     if powerTreads then
         local activeStat = powerTreads:GetPowerTreadsStat()
         if activeState == stat then return end
@@ -1428,25 +1431,27 @@ function U.HaveItem(bot, item_name)
     if slot ~= ITEM_SLOT_TYPE_INVALID then
         local slot_type = bot:GetItemSlotType(slot)
         if slot_type == ITEM_SLOT_TYPE_MAIN then
-            return bot:GetItemInSlot(slot)
+            return bot:GetItemInSlot(slot), true
         elseif slot_type == ITEM_SLOT_TYPE_BACKPACK then
             return U.MoveItemsFromBackpackToInventory(bot, slot)
         elseif slot_type == ITEM_SLOT_TYPE_STASH then
-            if bot:HasModifier("modifier_fountain_aura") then
+            if bot:DistanceFromFountain() < 500 then
                 if U.NumberOfItems(bot) < 6 then
                     U.MoveItemsFromStashToInventory(bot)
                     return U.HaveItem(bot, item_name)
                 else
                     U.myPrint("FIXME: Implement swapping STASH to MAIN INVENTORY of item: ", item_name)
+                    return nil, false
                 end
             end
-            return nil
+            return nil, false
         else
-            U.myPrint("ERROR: condition should not be hit: ", item_name)
+            U.pause("ERROR: condition should not be hit: ", item_name)
+            return nil, false
         end
     end
 
-    return nil
+    return nil, false
 end
 
 function U.MoveItemsFromBackpackToInventory(bot, bpSlot)
@@ -1454,20 +1459,20 @@ function U.MoveItemsFromBackpackToInventory(bot, bpSlot)
         for i = 0, 5, 1 do
             if bot:GetItemInSlot(i) == nil then
                 bot:ActionImmediate_SwapItems(i, bpSlot)
-                return bot:GetItemInSlot(i)
+                return bot:GetItemInSlot(i), true
             end
         end
     else
         local bpItem = bot:GetItemInSlot(bpSlot)
         if bpItem:GetName() == "item_tpscroll" or bpItem:GetName() == "item_tome_of_knowledge" then
             bot:ActionImmediate_SwapItems(5, bpSlot)
-            return bot:GetItemInSlot(5)
+            return bot:GetItemInSlot(5), true
         else
             U.myPrint("FIXME: Implement swapping BACKPACK to MAIN INVENTORY of item: ", bpItem:GetName())
-            return nil
+            return nil, false
         end
     end
-    return nil
+    return nil, false
 end
 
 function U.MoveItemsFromStashToInventory(bot)
@@ -1480,6 +1485,7 @@ function U.MoveItemsFromStashToInventory(bot)
                 local item = bot:GetItemInSlot(j)
                 if item ~= nil then
                     bot:ActionImmediate_SwapItems(i, j)
+                    return
                 end
             end
         end
@@ -1491,6 +1497,7 @@ function U.MoveItemsFromStashToInventory(bot)
                 local item = bot:GetItemInSlot(j)
                 if item ~= nil then
                     bot:ActionImmediate_SwapItems(i, j)
+                    return
                 end
             end
         end
@@ -1511,12 +1518,15 @@ function U.HaveTeleportation(bot)
         return true
     end
 
-    if U.HaveItem(bot, "item_tpscroll") ~= nil
-        or U.HaveItem(bot, "item_travel_boots_1") ~= nil
-        or U.HaveItem(bot, "item_travel_boots_2") ~= nil then
-        return true
+    local tp, _ = U.HaveItem(bot, "item_tpscroll")
+    if tp == nil then 
+        tp, _ = U.HaveItem(bot, "item_travel_boots_1")
     end
-    return false
+    if tp == nil then
+        tp, _ = U.HaveItem(bot, "item_travel_boots_2")
+    end
+    
+    return tp ~= nil
 end
 
 function U.GetTeleportationAbility(bot)
@@ -1527,18 +1537,18 @@ function U.GetTeleportationAbility(bot)
         end
     end
 
-    local tp = U.HaveItem(bot, "item_tpscroll")
-    if tp ~= nil and tp:IsFullyCastable() then
+    local tp = U.IsItemAvailable("item_tpscroll")
+    if tp then
         return tp
     end
     
-    tp = U.HaveItem(bot, "item_travel_boots_1")
-    if tp ~= nil and tp:IsFullyCastable() then
+    tp = U.IsItemAvailable("item_travel_boots_1")
+    if tp then
         return tp
     end
     
-    tp = U.HaveItem(bot, "item_travel_boots_2")
-    if tp ~= nil and tp:IsFullyCastable() then
+    tp = U.IsItemAvailable("item_travel_boots_2")
+    if tp then
         return tp
     end
     
@@ -1547,13 +1557,12 @@ end
 
 function U.IsItemAvailable(item_name)
     local bot = GetBot()
-
-    local item = U.HaveItem(bot, item_name)
-    if item ~= nil then
-        if item:IsFullyCastable() then
-            return item
-        end
+    
+    local item, bMainInv = U.HaveItem(bot, item_name)
+    if item ~= nil and bMainInv and item:IsFullyCastable() then
+        return item
     end
+
     return nil
 end
 
@@ -1571,6 +1580,12 @@ function U.HasImportantItem()
             if(item:GetName()=="item_ward_observer" and item:GetCurrentCharges() > 1) then
                 return true
             end
+            if(item:GetName()=="item_ward_sentry") then
+                return true
+            end
+            if(item:GetName()=="item_ward_dispenser") then
+                return true
+            end            
         end
     end
 
@@ -1591,15 +1606,18 @@ function U.CourierThink(bot)
     if not checkLevel then return end
     setHeroVar("LastCourierThink", newTime)
     
+    --[[
     if courier:WasRecentlyDamagedByAnyHero(2) or courier:WasRecentlyDamagedByTower(2) then
         if IsFlyingCourier(courier) and (GameTime() - gHeroVar.GetGlobalVar("LastCourierBurst")) > 90.0 then
 			bot:ActionImmediate_Courier(courier, COURIER_ACTION_BURST)
             gHeroVar.SetGlobalVar("LastCourierBurst", GameTime())
+            return
 		end
         
 		bot:ActionImmediate_Courier(courier, COURIER_ACTION_RETURN)
 		return
     end
+    --]]
     
     if IsFlyingCourier(courier) and (GameTime() - gHeroVar.GetGlobalVar("LastCourierBurst")) > 90.0 then
         if state == COURIER_STATE_DELIVERING_ITEMS then
@@ -1630,7 +1648,7 @@ function U.GetNearestTree(bot)
     local trees = bot:GetNearbyTrees(700)
     local eTowers = gHeroVar.GetNearbyEnemyTowers(bot, 1600)
 
-    for _, tree in ipairs(trees) do
+    for _, tree in pairs(trees) do
         local treeLoc = GetTreeLocation(tree)
         --U.myPrint("Tree Loc: <", treeLoc[1], ", ", treeLoc[2], ", ", treeLoc[3], ">")
         if #eTowers == 0 or U.GetDistance(treeLoc, eTowers[1]:GetLocation()) > 900 then

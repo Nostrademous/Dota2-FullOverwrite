@@ -55,7 +55,7 @@ function X:Desire(bot)
         hBuilding ~= nil and GetUnitToUnitDistance(bot, hBuilding) < 900 then
         return me:getCurrentModeValue()
     end
-    
+
     return BOT_MODE_DESIRE_NONE
 end
 

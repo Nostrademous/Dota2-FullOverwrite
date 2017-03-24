@@ -22,8 +22,6 @@ end
 
 ----------
 
-local listEnemies = {}
-local listAllies = {}
 local AttackRange       = 600
 local AttackSpeed       = 1
 local CurLane           = 0
@@ -113,8 +111,8 @@ local function MovingToPos(bot)
     local bNeedToGoHigher = false
     local higherDest = nil
     local listEnemyCreep = gHeroVar.GetNearbyEnemyCreep(bot, 1200)
-    for _, eCreep in ipairs(listEnemyCreep) do
-        if eCreep:GetHealth()/eCreep:GetMaxHealth() <= 0.5 and utils.GetHeightDiff(bot, eCreep) < 0 then
+    for _, eCreep in pairs(listEnemyCreep) do
+        if utils.ValidTarget(eCreep) and eCreep:GetHealth()/eCreep:GetMaxHealth() <= 0.5 and utils.GetHeightDiff(bot, eCreep) < 0 then
             bNeedToGoHigher = true
             higherDest = eCreep:GetLocation()
             break
@@ -131,6 +129,8 @@ local function MovingToPos(bot)
     local bpos = GetLocationAlongLane(CurLane, LanePos - 0.02)
 
     local dest = utils.VectorTowards(cpos, bpos, 500) + RandomVector(100)
+    
+    local listEnemies = gHeroVar.GetNearbyEnemies(bot, 1200)
     if bNeedToGoHigher and #listAlliedCreep > 0 and #listEnemies == 0 then
         dest = higherDest
     end
@@ -148,7 +148,7 @@ local function DenyNearbyCreeps(bot)
 
     local WeakestCreep, WeakestCreepHealth = utils.GetWeakestCreep(listAlliedCreep)
 
-    if WeakestCreep == nil then
+    if not utils.ValidTarget(WeakestCreep) then
         return false
     end
 
@@ -162,7 +162,7 @@ local function DenyNearbyCreeps(bot)
         damage = eDamage + utils.GetCreepHealthDeltaPerSec(WeakestCreep) * (bot:GetAttackPoint() / (1 + bot:GetAttackSpeed()) + GetUnitToUnitDistance(bot, WeakestCreep) / 1100)
     end
 
-    if WeakestCreep ~= nil and damage > WeakestCreep:GetMaxHealth() then
+    if utils.ValidTarget(WeakestCreep) and damage > WeakestCreep:GetMaxHealth() then
         -- this occasionally will happen when a creep gets nuked by a target or AOE ability and takes
         -- a large amount of damage so it has a huge health drop delta, in that case just use eDamage
         damage = eDamage
@@ -186,7 +186,7 @@ local function DenyNearbyCreeps(bot)
     end
     
     -- try to keep lane equilibrium
-    if WeakestCreep ~= nil then
+    if utils.ValidTarget(WeakestCreep) then
         local healthRatio = WeakestCreep:GetHealth()/WeakestCreep:GetMaxHealth()
         if healthRatio < 0.5 and WeakestCreepHealth > 2.5*damage and #listAlliedCreep >= #gHeroVar.GetNearbyEnemyCreep(bot, 1200) then
             gHeroVar.HeroAttackUnit(bot, WeakestCreep, true)
@@ -211,10 +211,12 @@ local function CSing(bot)
     
     local listEnemyTowers = gHeroVar.GetNearbyEnemyTowers(bot, 1200)
     if #listEnemyTowers > 0 then
-        local dist = GetUnitToUnitDistance(bot, listEnemyTowers[1])
-        if dist > 750 then
-            gHeroVar.HeroMoveToLocation(bot, utils.VectorAway(bot:GetLocation(), listEnemyTowers[1]:GetLocation(), 750-dist))
-            return
+        if utils.ValidTarget(listEnemyTowers[1]) then
+            local dist = GetUnitToUnitDistance(bot, listEnemyTowers[1])
+            if dist < 750 then
+                gHeroVar.HeroMoveToLocation(bot, utils.VectorAway(bot:GetLocation(), listEnemyTowers[1]:GetLocation(), 750-dist))
+                return
+            end
         end
     end
 
@@ -222,22 +224,24 @@ local function CSing(bot)
     AttackSpeed = bot:GetAttackPoint()
 
     local NoCoreAround = true
-    for _,hero in pairs(listAllies) do
-        if utils.IsCore(hero) then
+    local listAllies  = gHeroVar.GetNearbyAllies(bot, 1200)
+    for _, hero in pairs(listAllies) do
+        if not hero:IsIllusion() and utils.IsCore(hero) then
             NoCoreAround = false
         end
     end
-
+    
+    local listEnemies = gHeroVar.GetNearbyEnemies(bot, 1200)
     if utils.IsCore(bot) or (NoCoreAround and #listEnemies < 2) then
         local WeakestCreep, WeakestCreepHealth = utils.GetWeakestCreep(listEnemyCreep)
 
-        if WeakestCreep == nil then
+        if not utils.ValidTarget(WeakestCreep) then
             LaningState = LaningStates.Moving
             return
         end
 
         local nAc = 0
-        if WeakestCreep ~= nil then
+        if utils.ValidTarget(WeakestCreep) then
             for _,acreep in pairs(listAlliedCreep) do
                 if utils.NotNilOrDead(acreep) and GetUnitToUnitDistance(acreep, WeakestCreep) < 120 then
                     nAc = nAc + 1
@@ -252,14 +256,14 @@ local function CSing(bot)
             damage = eDamage + utils.GetCreepHealthDeltaPerSec(WeakestCreep) * (bot:GetAttackPoint() / (1 + bot:GetAttackSpeed()) + GetUnitToUnitDistance(bot, WeakestCreep) / 1100)
         end
 
-        if WeakestCreep ~= nil and damage > WeakestCreep:GetMaxHealth() then
+        if utils.ValidTarget(WeakestCreep) and damage > WeakestCreep:GetMaxHealth() then
             -- this occasionally will happen when a creep gets nuked by a target or AOE ability and takes
             -- a large amount of damage so it has a huge health drop delta, in that case just use eDamage
             damage = eDamage
         end
 
-        if WeakestCreep ~= nil and WeakestCreepHealth < damage then
-            utils.TreadCycle(bot, constants.AGILITY)
+        if utils.ValidTarget(WeakestCreep) and WeakestCreepHealth < damage then
+            if utils.TreadCycle(bot, constants.AGILITY) then return end
             gHeroVar.HeroAttackUnit(bot, WeakestCreep, true)
             return
         end
@@ -268,16 +272,17 @@ local function CSing(bot)
         if #listEnemies > 0 and #listEnemies <= #listAllies then
             local breakableEnemy = nil
             for _, enemy in pairs(listEnemies) do
-                if utils.EnemyHasBreakableBuff(enemy) then
+                if utils.ValidTarget(enemy) and utils.EnemyHasBreakableBuff(enemy) then
                     breakableEnemy = enemy
                     break
                 end
             end
             if breakableEnemy then
                 --print(utils.GetHeroName(breakableEnemy).." has a breakable buff running")
-                if (not utils.UseOrbEffect(bot, breakableEnemy)) then
+                setHeroVar("Target", breakableEnemy)
+                if not utils.UseOrbEffect(bot) then
                     if GetUnitToUnitDistance(bot, breakableEnemy) < (AttackRange+breakableEnemy:GetBoundingRadius()) then
-                        utils.TreadCycle(bot, constants.AGILITY)
+                        if utils.TreadCycle(bot, constants.AGILITY) then return end
                         gHeroVar.HeroAttackUnit(bot, breakableEnemy, true)
                         return
                     end
@@ -290,7 +295,8 @@ local function CSing(bot)
             approachScalar = 2.5
         end
 
-        if WeakestCreepHealth < damage*approachScalar and GetUnitToUnitDistance(bot, WeakestCreep) > AttackRange and #listEnemyTowers == 0 then
+        if utils.ValidTarget(WeakestCreep) and WeakestCreepHealth < damage*approachScalar and 
+            GetUnitToUnitDistance(bot, WeakestCreep) > AttackRange and #listEnemyTowers == 0 then
             local dest = utils.VectorTowards(WeakestCreep:GetLocation(),GetLocationAlongLane(CurLane, LanePos-0.03), AttackRange-20)
             gHeroVar.HeroMoveToLocation(bot, dest)
             return
@@ -332,18 +338,20 @@ local function GetBack(bot)
         return true
     end
     
+    local listEnemies = gHeroVar.GetNearbyEnemies(bot, 1200)
     if #listEnemies == 0 then
         return false
     end
     
     local allyTowers = gHeroVar.GetNearbyAlliedTowers(bot, 600)
+    local listAllies  = gHeroVar.GetNearbyAllies(bot, 900)
     if #allyTowers > 0 and #listEnemies <= #listAllies then
         return false
     end
     
     local enemyDmg = 0
     for _, enemy in pairs(listEnemies) do
-        if utils.NotNilOrDead(enemy) then
+        if utils.ValidTarget(enemy) then
             local damage = enemy:GetEstimatedDamageToTarget(true, bot, 4, DAMAGE_TYPE_ALL)
             enemyDmg = enemyDmg + damage
         end
@@ -363,14 +371,14 @@ local function GetBack(bot)
     local estDmgToMe = 0
     
     for _, enemy in pairs(listEnemies) do
-        if enemy:GetHealth()/enemy:GetMaxHealth() > 0.1 and 
+        if utils.ValidTarget(enemy) and enemy:GetHealth()/enemy:GetMaxHealth() > 0.1 and 
             GetUnitToUnitDistance(bot, enemy) <= (enemy:GetAttackRange() + enemy:GetBoundingRadius() + bot:GetBoundingRadius()) then
             stunDuration = stunDuration + enemy:GetStunDuration(true) + 0.5*enemy:GetSlowDuration(true)
         end
     end
     
     for _, enemy in pairs(listEnemies) do
-        if enemy:GetHealth()/enemy:GetMaxHealth() > 0.1 and 
+        if utils.ValidTarget(enemy) and enemy:GetHealth()/enemy:GetMaxHealth() > 0.1 and 
             GetUnitToUnitDistance(bot, enemy) <= (enemy:GetAttackRange() + enemy:GetBoundingRadius() + bot:GetBoundingRadius()) then
             estDmgToMe = estDmgToMe + enemy:GetEstimatedDamageToTarget(true, bot, Min(3.0, stunDuration), DAMAGE_TYPE_ALL)
         end
@@ -412,9 +420,6 @@ local function LoadLaningData(bot)
     if not bot:IsAlive() then
         LaningState = LaningStates.Moving
     end
-
-    listEnemies = gHeroVar.GetNearbyEnemies(bot, 1200)
-    listAllies  = gHeroVar.GetNearbyAllies(bot, 1200)
 end
 
 local function SaveLaningData()

@@ -58,6 +58,10 @@ function EnemyData.UpdateEnemyInfo(timeFreq)
     
     local enemies = GetUnitList(UNIT_LIST_ENEMY_HEROES)
     for _, enemy in pairs(enemies) do
+        if not utils.ValidTarget(enemy) then
+            utils.pause("enemy_data - wtf?")
+        end
+    
         local pid = enemy:GetPlayerID()
 
         EnemyData[pid].Name = utils.GetHeroName(enemy)

@@ -232,6 +232,8 @@ end
 ----------------------------------------------------------------------------------------------------
 
 function ConsiderLightStrikeArrayFighting(enemy)
+    if not utils.ValidTarget(enemy) then return BOT_ACTION_DESIRE_NONE, 0 end
+
     local bot = GetBot()
 
     if not abilityW:IsFullyCastable() then
@@ -245,7 +247,7 @@ function ConsiderLightStrikeArrayFighting(enemy)
     local locDelta = enemy:GetExtrapolatedLocation(0.95 + getHeroVar("AbilityDelay"))
     local EnemyLocation = locDelta
 
-    if enemy:IsStunned() or enemy:IsRooted() then
+    if utils.IsCrowdControlled(enemy) then
         EnemyLocation = enemy:GetLocation()
     end
 
@@ -277,7 +279,8 @@ function ConsiderLightStrikeArray(nearbyEnemyHeroes)
 
     -- Check for a channeling enemy
     for _, npcEnemy in pairs( nearbyEnemyHeroes ) do
-        if npcEnemy:IsChanneling() and GetUnitToUnitDistance(bot, npcEnemy) < (nCastRange + nRadius + 200) then
+        if utils.ValidTarget(npcEnemy) and npcEnemy:IsChanneling() and 
+            GetUnitToUnitDistance(bot, npcEnemy) < (nCastRange + nRadius + 200) then
             if CanCastLightStrikeArrayOnTarget( npcEnemy ) then
                 return BOT_ACTION_DESIRE_HIGH, npcEnemy:GetLocation()
             end
@@ -294,9 +297,8 @@ function ConsiderLightStrikeArray(nearbyEnemyHeroes)
     if ( locationAoE.count >= 3 ) then
         return BOT_ACTION_DESIRE_LOW, locationAoE.targetloc
     end
-    
-    local me = getHeroVar("Self")
-    if me:getCurrentMode():GetName() == "pushlane" and (bot:GetMana()/bot:GetMaxMana()) >= 0.4 then
+
+    if bot.SelfRef:getCurrentMode():GetName() == "pushlane" and (bot:GetMana()/bot:GetMaxMana()) >= 0.4 then
         locationAoE = bot:FindAoELocation( true, false, bot:GetLocation(), nCastRange, nRadius, abilityW:GetCastPoint(), 0 )
 
         if ( locationAoE.count >= 2 ) then
@@ -305,8 +307,8 @@ function ConsiderLightStrikeArray(nearbyEnemyHeroes)
     end
 
     -- If we're seriously retreating, see if we can land a stun on someone who's damaged us recently
-    for _,npcEnemy in pairs( nearbyEnemyHeroes ) do
-        if GetUnitToUnitDistance(bot, npcEnemy) < (nCastRange + nRadius + 200) then
+    for _, npcEnemy in pairs( nearbyEnemyHeroes ) do
+        if utils.ValidTarget(npcEnemy) and GetUnitToUnitDistance(bot, npcEnemy) < (nCastRange + nRadius + 200) then
             -- FIXME: This logic will fail against Heartstopper Aura or Radiance probably making us LSA all the time
             --        as we take damage and are below 50% health
             if bot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) and (bot:GetHealth()/bot:GetMaxHealth()) < 0.5 then
@@ -325,6 +327,8 @@ end
 ----------------------------------------------------------------------------------------------------
 
 function ConsiderDragonSlaveFighting(enemy)
+    if not utils.ValidTarget(enemy) then return BOT_ACTION_DESIRE_NONE, 0 end
+    
     local bot = GetBot()
 
     if not abilityQ:IsFullyCastable() then
@@ -370,9 +374,8 @@ function ConsiderDragonSlave()
 
     -- If we're pushing or defending a lane and can hit 3+ creeps, go for it
     -- wasting mana banned!
-    local me = getHeroVar("Self")
-    if me:getCurrentMode():GetName() == "defendlane" or 
-        (me:getCurrentMode():GetName() == "pushlane" and bot:GetMana() / bot:GetMaxMana() >= 0.4) then
+    if bot.SelfRef:getCurrentMode():GetName() == "defendlane" or 
+        (bot.SelfRef:getCurrentMode():GetName() == "pushlane" and bot:GetMana() / bot:GetMaxMana() >= 0.4) then
         local locationAoE = bot:FindAoELocation( true, false, bot:GetLocation(), nCastRange, nRadius, 0, 0 )
 
         if ( locationAoE.count >= 3 ) then
@@ -416,7 +419,8 @@ function ConsiderLagunaBlade(nearbyEnemyHeroes)
     -- If a mode has set a target, and we can kill them, do it
     if #nearbyEnemyHeroes > 0 then
         for _, npcEnemy in pairs( nearbyEnemyHeroes ) do
-            if GetUnitToUnitDistance(bot, npcEnemy) < (nCastRange + 200) and CanCastLagunaBladeOnTarget(npcEnemy) then
+            if utils.ValidTarget(npcEnemy) and GetUnitToUnitDistance(bot, npcEnemy) < (nCastRange + 200) and 
+                CanCastLagunaBladeOnTarget(npcEnemy) then
                 if npcEnemy:GetActualIncomingDamage( nDamage, eDamageType ) > npcEnemy:GetHealth() then
                     return BOT_ACTION_DESIRE_MODERATE, npcEnemy
                 end

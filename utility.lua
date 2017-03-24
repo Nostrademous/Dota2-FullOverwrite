@@ -752,6 +752,7 @@ function U.TreadCycle(bot, stat)
         end
     end
     --]]
+    return false
 end
 
 -------------------------------------------------------------------------------
@@ -1602,7 +1603,7 @@ function U.CourierThink(bot)
     local courier   = GetCourier(0)
     local state     = GetCourierState(courier)
     
-    if not state == COURIER_STATE_DEAD then return end
+    if state == COURIER_STATE_DEAD or courier:GetHealth() < 1 then return end
     
     local checkLevel, newTime = U.TimePassed(getHeroVar("LastCourierThink"), 1.0)
     if not checkLevel then return end

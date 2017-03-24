@@ -164,13 +164,13 @@ function X:Think(bot)
     
     local tt = getHeroVar("Target")
     local rt = getHeroVar("RoamTarget")
-    if tt and (tt:IsNull() or not tt:IsAlive()) then
+    if tt ~= nil and (tt:IsNull() or not tt:IsAlive()) then
         utils.myPrint("Null Target")
         setHeroVar("Target", nil)
         bot:Action_ClearActions(true)
         return
     end
-    if rt and (rt:IsNull() or not rt:IsAlive()) then
+    if rt ~= nil and (rt:IsNull() or not rt:IsAlive()) then
         utils.myPrint("Null RoamTarget")
         setHeroVar("RoamTarget", nil)
         bot:Action_ClearActions(true)

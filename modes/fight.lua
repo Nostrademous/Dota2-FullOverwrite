@@ -33,20 +33,23 @@ end
 
 function X:OnEnd()
     setHeroVar("Target", nil)
-    setHeroVar("RoamTarget", nil)
 end
 
 function X:Think(bot)
+
     if utils.IsBusy(bot) then return end
     
-    local target = getHeroVar("Target")
+    if utils.IsCrowdControlled(bot) then return end
+    
+    local target = utils.GetWeakestHero(bot, 1200)
+    
     if utils.ValidTarget(target) then
         local dist = GetUnitToUnitDistance(bot, target)
-        local attackRange = bot:GetAttackRange() + bot:GetBoundingRadius() + target:GetBoundingRadius()
+        local attackRange = bot:GetAttackRange() + bot:GetBoundingRadius()
         
         if utils.IsMelee(bot) then
             if dist < attackRange then
-                if target:IsAttackImmune() or (bot:GetLastAttackTime() + bot:GetSecondsPerAttack()) > GameTime() then
+                if modifiers.IsPhysicalImmune(target) or (bot:GetLastAttackTime() + bot:GetSecondsPerAttack()) > GameTime() then
                     gHeroVar.HeroMoveToUnit(bot, target)
                     return
                 else
@@ -60,7 +63,7 @@ function X:Think(bot)
             end
         else
             if dist < attackRange then
-                if target:IsAttackImmune() or (bot:GetLastAttackTime() + bot:GetSecondsPerAttack()) > GameTime() then
+                if modifiers.IsPhysicalImmune(target) or (bot:GetLastAttackTime() + bot:GetSecondsPerAttack()) > GameTime() then
                     -- move away if we are too close
                     if dist < 0.3*attackRange then
                         gHeroVar.HeroMoveToLocation(bot, utils.VectorAway(bot:GetLocation(), target:GetLocation(), 0.75*attackRange-dist))
@@ -85,51 +88,63 @@ function X:Think(bot)
                 return
             end
         end
-    else
-        setHeroVar("Target", nil)
     end
 end
 
-function X:Desire(bot)
-    if bot:GetHealth()/bot:GetMaxHealth() < 0.35 then
-        return BOT_MODE_DESIRE_NONE
-    end
-    
-    local enemyList = gHeroVar.GetNearbyEnemies(bot, 1600)
+function X:Desire(bot)    
+    local enemyList = gHeroVar.GetNearbyEnemies(bot, 1200)
     if #enemyList == 0 then return BOT_MODE_DESIRE_NONE end
+    local allyList = gHeroVar.GetNearbyAllies(bot, 1200)
     
-    local eTowers = gHeroVar.GetNearbyEnemyTowers(bot, 900)
+    local eTowers = gHeroVar.GetNearbyEnemyTowers(bot, 1200)
     local aTowers = gHeroVar.GetNearbyAlliedTowers(bot, 600)
     
-    local enemyValue = 0
+    local lowestEnemyHealth = 100000
+    local enemyHealth = 0
+    local enemyDmg = 0
     for _, enemy in pairs(enemyList) do
         if enemy:GetHealth()/enemy:GetMaxHealth() >= 0.25 and not modifiers.HasDangerousModifiers(enemy) and 
             not utils.IsCrowdControlled(enemy) then
-            --utils.myPrint(utils.GetHeroName(enemy), ", OP: ", enemy:GetRawOffensivePower())
-            enemyValue = enemyValue + enemy:GetHealth() + enemy:GetRawOffensivePower()
+            for _, ally in pairs(allyList) do
+                if not ally:IsIllusion() then
+                    enemyDmg = enemyDmg + enemy:GetEstimatedDamageToTarget( true, ally, 4.0, DAMAGE_TYPE_ALL )
+                end
+            end
+            enemyHealth = enemyHealth + enemy:GetHealth()
+            if enemyHealth < lowestEnemyHealth then
+                lowestEnemyHealth = enemyHealth
+            end
         end
     end
-    enemyValue = enemyValue + #eTowers*110
+    enemyDmg = enemyDmg + #eTowers*110
     
-    local allyValue = 0
-    local allyList = gHeroVar.GetNearbyAllies(bot, 1200)
+    local enemyValue = enemyDmg + enemyHealth
+    
+    local allyHealth = 0
+    local allyDmg = 0
     for _, ally in pairs(allyList) do
         if not ally:IsIllusion() and ally:GetHealth()/ally:GetMaxHealth() >= 0.25 and not modifiers.HasDangerousModifiers(ally) and 
             not utils.IsCrowdControlled(ally) then
-            --utils.myPrint(ally.Name, ", OP: ", ally:GetOffensivePower())
-            allyValue = allyValue + ally:GetHealth() + ally:GetOffensivePower()
+            for _, enemy in pairs(enemyList) do
+                allyDmg = allyDmg + ally:GetEstimatedDamageToTarget( true, enemy, 4.0, DAMAGE_TYPE_ALL )
+            end
+            allyHealth = allyHealth + ally:GetHealth()
         end
     end
-    allyValue = allyValue + #aTowers*110
+    allyDmg = allyDmg + #aTowers*110
     
-    --if enemyValue == 0 then utils.myPrint("allyV/enemyV: ", allyValue/enemyValue) end
+    local allyValue = allyDmg + allyHealth
+    
+    if enemyDmg >= 0.9*bot:GetHealth() then
+        return BOT_MODE_DESIRE_NONE
+    end
+    
+    if allyDmg >= 2.0*lowestEnemyHealth then
+        return BOT_MODE_DESIRE_MODERATE
+    end
     
     if allyValue/enemyValue > Max(1.0, (1.6 - bot:GetLevel()*0.1)) then
-        local target, _ = utils.GetWeakestHero(bot, 1600)
-        if utils.ValidTarget(target) then
-            setHeroVar("Target", target)
-            return BOT_MODE_DESIRE_MODERATE
-        end
+        return BOT_MODE_DESIRE_LOW
     end
 
     return BOT_MODE_DESIRE_NONE

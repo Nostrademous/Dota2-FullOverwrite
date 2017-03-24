@@ -1153,7 +1153,9 @@ function U.IsTowerAttackingMe()
 
     for i = 1, 5, 1 do
         local target = U.GetLaneTowerAttackTarget(U.GetOtherTeam(), lane, i)
-        if bot == target then return true end
+        if U.ValidTarget(target) then
+            if bot == target then return true end
+        end
     end
 
     return false
@@ -1321,7 +1323,7 @@ function U.DropTowerAggro(bot, nearbyAlliedCreep)
     local nearbyTowers = gHeroVar.GetNearbyEnemyTowers(bot, 750)
     if #nearbyAlliedCreep > 0 and #nearbyTowers == 1 then
         for _, aCreep in pairs(nearbyAlliedCreep) do
-            if GetUnitToUnitDistance(aCreep, nearbyTowers[1]) < 700 then
+            if U.ValidTarget(aCreep) and GetUnitToUnitDistance(aCreep, nearbyTowers[1]) < 700 then
                 gHeroVar.HeroAttackUnit(bot, aCreep, true)
                 return true
             end

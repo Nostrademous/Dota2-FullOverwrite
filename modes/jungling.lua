@@ -65,10 +65,10 @@ local function FindCamp(bot)
         local listAllies = GetUnitList(UNIT_LIST_ALLIED_HEROES)
         for _, ally in pairs(listAllies) do
             local allyID = ally:GetPlayerID()
-            if allyID ~= bot:GetPlayerID() and gHeroVar.HasID(allyId) then
+            if allyID ~= bot:GetPlayerID() and gHeroVar.HasID(allyId) and not ally:IsIllusion() then
                 local allyCamp = gHeroVar.GetVar(allyID, "currentCamp")
-                if not (allyCamp == nil or allyCamp ~= camp) then
-                    utils.myPrint(utils.GetHeroName(ally), "took nearest camp, going to another")
+                if allyCamp ~= nil and allyCamp == camp then
+                    utils.myPrint(ally.Name, "took nearest camp, going to another")
                     camp = camp2
                 end
             end
@@ -102,7 +102,7 @@ local function MoveToCamp(bot)
 
     local neutrals = gHeroVar.GetNearbyEnemyCreep(bot, 900)
     if #neutrals == 0 then -- no creeps here
-        local jungle = jungle_status.GetJungle(GetTeam()) or {}
+        local jungle = jungle_status.GetJungle(GetTeam())
         jungle = FindCampsByMaxDifficulty(jungle, bot.SelfRef:GetMaxClearableCampLevel(bot))
         if #jungle == 0 then -- jungle is empty
             setHeroVar("waituntil", utils.NextNeutralSpawn())
@@ -134,14 +134,6 @@ local function Stack(bot)
         if GetUnitToLocationDistance(bot, stackLoc) > 15 then
             gHeroVar.HeroMoveToLocation(bot, stackLoc)
             return
-        else
-            local nearbyCreep = gHeroVar.GetNearbyEnemyCreep(bot, bot:GetAttackRange())
-            if #nearbyCreep > 0 then
-                if utils.ValidTarget(nearbyCreep[1]) then
-                    gHeroVar.HeroAttackUnit(bot, nearbyCreep[1], true)
-                    return
-                end
-            end
         end
     end
     setHeroVar("JunglingState", JunglingStates.FindCamp)

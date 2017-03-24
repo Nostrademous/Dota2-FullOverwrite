@@ -104,32 +104,36 @@ function bloodseekerBot:IsReadyToGank(bot)
 end
 
 function bloodseekerBot:DoCleanCamp(bot, neutrals, difficulty)
+    if #neutrals == 0 then return end
+    
     local bloodraged = bot:HasModifier("modifier_bloodseeker_bloodrage")
-    --local bloodrage = bot:GetAbilityByName(SKILL_Q)
-    --if not bloodraged and bloodrage:IsCooldownReady() then -- bloodrage all the time
-    --    gHeroVar.HeroUseAbilityOnEntity(bot, bloodrage, bot)
-    --end
-    table.sort(neutrals, function(n1, n2) return n1:GetHealth() < n2:GetHealth() end) -- sort by health
+
+    if #neutrals > 1 then
+        table.sort(neutrals, function(n1, n2) return n1:GetHealth() < n2:GetHealth() end) -- sort by health
+    end
+    
     local it = utils.IsItemAvailable("item_iron_talon")
-    if bloodraged and it ~= nil and difficulty ~= constants.CAMP_ANCIENT then -- we are bloodraged and have an iron talon and not fighting ancients
+    if bloodraged and it and difficulty ~= constants.CAMP_ANCIENT then -- we are bloodraged and have an iron talon and not fighting ancients
         local it_target = neutrals[#neutrals] -- neutral with most health
-        if it_target:GetHealth() > 0.5 * it_target:GetMaxHealth() then -- is it worth it? TODO: add a absolute minimum / use it on big guys only
+        if utils.ValidTarget(it_target) and it_target:GetHealth() > 0.5 * it_target:GetMaxHealth() then -- is it worth it? TODO: add a absolute minimum / use it on big guys only
             gHeroVar.HeroUseAbilityOnEntity(bot, it, it_target)
             return
         end
     end
     for _, neutral in pairs(neutrals) do
         -- kill the Ghost first as they slow down our DPS tremendously by being around
-        if string.find(neutral:GetUnitName(), "ghost") ~= nil and bloodraged then
+        if utils.ValidTarget(neutral) and string.find(neutral:GetUnitName(), "ghost") ~= nil and bloodraged then
             gHeroVar.HeroAttackUnit(bot, neutral, true)
             return
         end
     end
     for _, neutral in pairs(neutrals) do
-        local eDamage = bot:GetEstimatedDamageToTarget(true, neutral, bot:GetAttackSpeed(), DAMAGE_TYPE_PHYSICAL)
-        if (eDamage < neutral:GetHealth() or bloodraged) then -- make sure we lasthit with bloodrage on
-            gHeroVar.HeroAttackUnit(bot, neutral, true)
-            return
+        if utils.ValidTarget(neutral) then
+            local eDamage = bot:GetEstimatedDamageToTarget(true, neutral, bot:GetAttackSpeed(), DAMAGE_TYPE_PHYSICAL)
+            if (eDamage < neutral:GetHealth() or bloodraged) then -- make sure we lasthit with bloodrage on
+                gHeroVar.HeroAttackUnit(bot, neutral, true)
+                return
+            end
         end
     end
     -- TODO: don't attack if we should wait on all neutrals!

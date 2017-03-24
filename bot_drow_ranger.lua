@@ -102,14 +102,16 @@ function drowRangerBot:DoCleanCamp(bot, neutrals, difficulty)
     local frostArrow = bot:GetAbilityByName(SKILL_Q)
 
     for i, neutral in ipairs(neutrals) do
+        if utils.ValidTarget(neutral) then
+            local slowed =  neutral:HasModifier("modifier_drow_ranger_frost_arrows_slow")
 
-        local slowed =  neutral:HasModifier("modifier_drow_ranger_frost_arrows_slow")
+            if not slowed and not utils.IsTargetMagicImmune(neutral) then
+                gHeroVar.HeroUseAbilityOnEntity(bot, frostArrow, neutral)
+                return
+            end
 
-        if not (slowed) then
-            gHeroVar.HeroUseAbilityOnEntity(bot, frostArrow, neutral)
+            gHeroVar.HeroAttackUnit(bot, neutral, true)
+            return
         end
-
-        gHeroVar.HeroAttackUnit(bot, neutral, true)
-        break
     end
 end

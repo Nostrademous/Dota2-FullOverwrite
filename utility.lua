@@ -1609,7 +1609,6 @@ function U.CourierThink(bot)
     if not checkLevel then return end
     setHeroVar("LastCourierThink", newTime)
     
-    --[[
     if courier:WasRecentlyDamagedByAnyHero(2) or courier:WasRecentlyDamagedByTower(2) then
         if IsFlyingCourier(courier) and (GameTime() - gHeroVar.GetGlobalVar("LastCourierBurst")) > 90.0 then
 			bot:ActionImmediate_Courier(courier, COURIER_ACTION_BURST)
@@ -1620,7 +1619,6 @@ function U.CourierThink(bot)
 		bot:ActionImmediate_Courier(courier, COURIER_ACTION_RETURN)
 		return
     end
-    --]]
     
     if IsFlyingCourier(courier) and (GameTime() - gHeroVar.GetGlobalVar("LastCourierBurst")) > 90.0 then
         if state == COURIER_STATE_DELIVERING_ITEMS then

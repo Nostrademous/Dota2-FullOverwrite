@@ -253,11 +253,6 @@ function X:Think(bot)
     
     -- consider purchasing items
     self:getHeroVar("ItemPurchaseClass"):ItemPurchaseThink(bot)
-    
-    --if getHeroVar("CurLane") > 0 then
-    --    local eFront = GetLaneFrontAmount(utils.GetOtherTeam(), getHeroVar("CurLane"), false)
-    --    utils.myPrint(eFront, ", Dist: ", utils.GetDistance(GetLocationAlongLane(getHeroVar("CurLane"), eFront), GetLocationAlongLane(getHeroVar("CurLane"), eFront-0.01)))
-    --end
 end
 
 -------------------------------------------------------------------------------

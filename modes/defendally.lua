@@ -53,19 +53,23 @@ local function GetDefendeesTarget(bot)
     local candidateEnemy = nil
     local candidateEnemyScore = 0
 
-    for _, enemy in pairs(enemies) do
-        local numAlliesDamaged = 0
-        for _, ally in pairs(alliesNeedingHelp) do
-            if ally:WasRecentlyDamagedByHero(enemy, 3.0) then
-                numAlliesDamaged = numAlliesDamaged + 1
-            end
-        end
+    if #alliesNeedingHelp > 0 then
+        for _, enemy in pairs(enemies) do
+            if utils.ValidTarget(enemy) then
+                local numAlliesDamaged = 0
+                for _, ally in pairs(alliesNeedingHelp) do
+                    if ally:WasRecentlyDamagedByHero(enemy, 3.0) then
+                        numAlliesDamaged = numAlliesDamaged + 1
+                    end
+                end
 
-        if numAlliesDamaged > 0 then
-            local dmg = bot:GetEstimatedDamageToTarget(true, enemy, 4.5, DAMAGE_TYPE_ALL)
-            if candidateEnemyScore < dmg/enemy:GetHealth() then
-                candidateEnemyScore = dmg/enemy:GetHealth()
-                candidateEnemy = enemy
+                if numAlliesDamaged > 0 then
+                    local dmg = bot:GetEstimatedDamageToTarget(true, enemy, 4.5, DAMAGE_TYPE_ALL)
+                    if candidateEnemyScore < dmg/enemy:GetHealth() then
+                        candidateEnemyScore = dmg/enemy:GetHealth()
+                        candidateEnemy = enemy
+                    end
+                end
             end
         end
     end

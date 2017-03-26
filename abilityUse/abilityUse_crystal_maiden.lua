@@ -146,8 +146,9 @@ function cmAbility:AbilityUsageThink(bot)
     if abilityR == "" then abilityR = bot:GetAbilityByName( Abilities[4] ) end
 
     local nearbyEnemyHeroes = gHeroVar.GetNearbyEnemies(bot, 1200)
+    local nearbyEnemyCreep = gHeroVar.GetNearbyEnemyCreep(bot, 1200)
     
-    if not nearbyEnemyHeroes then return false end
+    if #nearbyEnemyHeroes == 0 and #nearbyEnemyCreep == 0 then return false end
 
     if #nearbyEnemyHeroes >= 1 then
         local nRadius = abilityQ:GetSpecialValueInt( "radius" )
@@ -179,18 +180,18 @@ function cmAbility:AbilityUsageThink(bot)
 	local castWDesire, castWTarget    = ConsiderW()
 	local castRDesire                 = ConsiderR()
     
-    if castQDesire > 0 then
-        gHeroVar.HeroUseAbilityOnLocation(bot,  abilityQ, castQLocation )
+    if castQDesire > 0 and castQDesire > castWDesire and castQDesire > castRDesire then
+        gHeroVar.HeroUseAbilityOnLocation( bot, abilityQ, castQLocation )
         return true
     end
     
-    if castWDesire > 0 then
-        gHeroVar.HeroUseAbilityOnEntity(bot,  abilityW, castWTarget )
+    if castWDesire > 0 and castWDesire > castRDesire then
+        gHeroVar.HeroUseAbilityOnEntity( bot, abilityW, castWTarget )
         return true
     end
     
     if castRDesire > 0 then
-        gHeroVar.HeroUseAbility(bot,  abilityR )
+        gHeroVar.HeroUseAbility( bot, abilityR )
         return true
     end
     
@@ -319,10 +320,9 @@ function ConsiderW()
 		end
 	end
 	
-	--Try to kill enemy hero
+	-- Try to kill enemy hero
     local WeakestEnemy, HeroHealth = utils.GetWeakestHero(bot, CastRange + 150)
-    
-	if modeName ~= "retreat" then
+	if modeName ~= "retreat" or (modeName == "retreat" and bot.SelfRef:getCurrentModeValue() < BOT_MODE_DESIRE_VERYHIGH) then
 		if utils.ValidTarget(WeakestEnemy) then
 			if not utils.IsTargetMagicImmune(WeakestEnemy) and not utils.IsCrowdControlled(WeakestEnemy) then
 				if HeroHealth <= WeakestEnemy:GetActualIncomingDamage(Damage, DAMAGE_TYPE_MAGICAL) then

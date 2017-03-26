@@ -833,7 +833,7 @@ function U.GetWardingSpot(lane)
     local laneTower1 = U.GetLaneTower(U.GetOtherTeam(), lane, 1)
     local laneTower2 = U.GetLaneTower(U.GetOtherTeam(), lane, 2)
 
-    if U.NotNilOrDead(laneTower1) then
+    if U.ValidTarget(laneTower1) then
         --U.myPrint(" - WARDING - lane tower 1 still up, placing wards accordingly")
         if GetTeam() == TEAM_RADIANT then
             if lane == LANE_BOT then
@@ -852,7 +852,7 @@ function U.GetWardingSpot(lane)
                 return {Vector(4199, -4763)}
             end
         end
-    elseif U.NotNilOrDead(laneTower2) then
+    elseif U.ValidTarget(laneTower2) then
         if GetTeam() == TEAM_RADIANT then
             if lane == LANE_BOT then
                 return {Vector(5072, 761), Vector(3096, -211)}

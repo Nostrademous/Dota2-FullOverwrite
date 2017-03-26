@@ -101,7 +101,7 @@ function drAbility:queueNuke(bot, enemy, castQueue, engageDist)
             if skill:GetName() == Abilities[1] then
                 gHeroVar.HeroPushUseAbilityOnEntity(bot, skill, enemy)
             elseif skill:GetName() == Abilities[2] then
-                gHeroVar.HeroPushUseAbilityOnLocation(skill, enemy)
+                gHeroVar.HeroPushUseAbilityOnLocation(bot, skill, enemy:GetLocation())
             end
         end
         return true
@@ -160,7 +160,7 @@ function ConsiderQ()
     if modeName == "jungling" and ManaPerc > 0.25 then
         local neutralCreeps = gHeroVar.GetNearbyEnemyCreep(bot, AttackRange)
         for _, creep in pairs(neutralCreeps) do
-            if not creep:HasModifier("modifier_drow_ranger_frost_arrows_slow") and not creep:IsAncientCreep() then
+            if utils.ValidTarget(creep) and not creep:HasModifier("modifier_drow_ranger_frost_arrows_slow") and not creep:IsAncientCreep() then
                 return BOT_ACTION_DESIRE_LOW, creep
             end
         end
@@ -184,7 +184,7 @@ function ConsiderW()
     --Use gust to break channeling spells
     local enemies = gHeroVar.GetNearbyEnemies(bot, CastRange+300)
     for _, npcEnemy in pairs( enemies ) do
-        if npcEnemy:IsChanneling() and not utils.IsTargetMagicImmune(npcEnemy) then
+        if utils.ValidTarget(npcEnemy) and npcEnemy:IsChanneling() and not utils.IsTargetMagicImmune(npcEnemy) then
             return BOT_ACTION_DESIRE_HIGH, npcEnemy:GetLocation()
         end
     end
@@ -202,7 +202,7 @@ function ConsiderW()
     if modeName == "retreat" then
         local closeEnemies = gHeroVar.GetNearbyEnemies(bot, 350)
         for _, npcEnemy in pairs( closeEnemies ) do
-            if not utils.IsTargetMagicImmune( npcEnemy ) and not utils.IsCrowdControlled(npcEnemy) then
+            if utils.ValidTarget(npcEnemy) and not utils.IsTargetMagicImmune( npcEnemy ) and not utils.IsCrowdControlled(npcEnemy) then
                 return BOT_ACTION_DESIRE_HIGH, npcEnemy:GetLocation()
             end
         end

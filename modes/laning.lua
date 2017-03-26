@@ -243,7 +243,7 @@ local function CSing(bot)
         local nAc = 0
         if utils.ValidTarget(WeakestCreep) then
             for _,acreep in pairs(listAlliedCreep) do
-                if utils.NotNilOrDead(acreep) and GetUnitToUnitDistance(acreep, WeakestCreep) < 120 then
+                if utils.ValidTarget(acreep) and GetUnitToUnitDistance(acreep, WeakestCreep) < 120 then
                     nAc = nAc + 1
                 end
             end

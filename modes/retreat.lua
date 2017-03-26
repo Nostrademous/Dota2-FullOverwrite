@@ -85,14 +85,14 @@ function X:Desire(bot)
     
     local MaxStun = 0
     for _,enemy in pairs(enemies) do
-        if utils.NotNilOrDead(enemy) and enemy:GetHealth()/enemy:GetMaxHealth() > 0.25 then
+        if utils.ValidTarget(enemy) and enemy:GetHealth()/enemy:GetMaxHealth() > 0.25 then
             MaxStun = Max(MaxStun, Max(enemy:GetStunDuration(true), enemy:GetSlowDuration(true)/1.5))
         end
     end
 
     local enemyDamage = 0
     for _,enemy in pairs(enemies) do
-        if utils.NotNilOrDead(enemy) and enemy:GetHealth()/enemy:GetMaxHealth() > 0.25 then
+        if utils.ValidTarget(enemy) and enemy:GetHealth()/enemy:GetMaxHealth() > 0.25 then
             local damage = enemy:GetEstimatedDamageToTarget(true, bot, MaxStun, DAMAGE_TYPE_ALL)
             enemyDamage = enemyDamage + damage
         end

@@ -116,6 +116,35 @@ function IsPhysicalImmune(hUnit)
     return bImmune
 end
 
+function GetModifierRemainingDuration(hUnit, sName)
+    if hUnit:HasModifier(sName) then
+        local botModifierCount = hUnit:NumModifiers()
+        if botModifierCount == 0 then return 0 end
+        
+        for i = 0, botModifierCount-1, 1 do
+            local modName = hUnit:GetModifierName(i)
+            if modName == sName then
+                return hUnit:GetModifierRemainingDuration(i)
+            end
+        end
+    end
+    return 0
+end
+
+function GetModifierStackCount(hUnit, sName)
+    if hUnit:HasModifier(sName) then
+        local botModifierCount = hUnit:NumModifiers()
+        if botModifierCount == 0 then return 0 end
+        
+        for i = 0, botModifierCount-1, 1 do
+            local modName = hUnit:GetModifierName(i)
+            if modName == sName then
+                return hUnit:GetModifierStackCount(i)
+            end
+        end
+    end
+    return 0
+end
 
 function IsInvisible(bot)
     return bot:HasModifier("modifier_invisible")

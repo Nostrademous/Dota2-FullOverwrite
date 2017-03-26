@@ -221,7 +221,7 @@ function X:Desire(bot)
     -- push enemies out of our base
     local enemyFrontier = GetLaneFrontAmount(utils.GetOtherTeam(), getHeroVar("CurLane"), false)
     if enemyFrontier < 0.25 then
-        return BOT_MODE_DESIRE_MODERATE
+        return BOT_MODE_DESIRE_HIGH
     end
 
     -- this is hero-specific push-lane determination
@@ -229,7 +229,7 @@ function X:Desire(bot)
     if #nearbyETowers > 0 then
         if ( nearbyETowers[1]:GetHealth() / nearbyETowers[1]:GetMaxHealth() ) < 0.1 and
             not modifiers.IsBuildingGlyphed(nearbyETowers[1]) then
-            return BOT_MODE_DESIRE_MODERATE
+            return BOT_MODE_DESIRE_HIGH
         end
 
         if utils.IsTowerAttackingMe() and #gHeroVar.GetNearbyAlliedCreep(bot, 1000) == 0 then

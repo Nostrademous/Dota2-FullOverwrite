@@ -28,113 +28,126 @@ end
 
 function X:OnEnd()
     local bot = GetBot()
-    if bot.useShrine and bot.useShrine >= 0 then
-        global_game_state.RemovePIDFromShrine(bot.useShrine, bot:GetPlayerID())
-    end
-    bot.useShrine = -1
-    bot.shrineUseMode = nil
+    bot.useShrine = nil
 end
 
 function X:Think(bot)
     if bot:IsIllusion() then return end
     
-    -- below will happen right after we use shrine while waiting for heal
-    -- TODO: eventually we shouldn't be in this mode, but rather just know we need
-    -- to stay in range of shrine while being healed, but can do other things
-    if not bot.useShrine or bot.useShrine == -1 then return end
-    
-    local hShrine = global_game_state.GetShrineState(bot.useShrine).handle
-    
     -- if shrine is dead, clear mode
-    if not utils.NotNilOrDead(hShrine) then
-        bot.SelfRef:ClearMode()
-        return
-    end
-    
-    -- if shrine is on cooldown, clear mode 
-    -- TODO: will it be on cooldown when we get there, then ok
-    if GetShrineCooldown(hShrine) ~= 0 then
-        global_game_state.RemovePIDFromShrine(bot.useShrine, bot:GetPlayerID())
+    if not utils.ValidTarget(bot.useShrine) then
         bot.SelfRef:ClearMode()
         return
     end
 
-    -- if we somehow healed up to above 0.5 health and are not under shrine effect
-    -- then we can cancel our desire to use shrine
-    if bot:GetHealth()/bot:GetMaxHealth() > 0.5 and not bot:HasModifier("modifier_filler_heal") then
-        utils.myPrint("Don't need to use shrine, canceling")
-        global_game_state.RemovePIDFromShrine(bot.useShrine, bot:GetPlayerID())
-        bot.SelfRef:ClearMode()
-        return
-    end
-
-    if bot.shrineUseMode then
-        if hShrine and GetUnitToUnitDistance(bot, hShrine) > 300 then
-            
-            if not modifiers.IsInvisible(bot) then
-                if item_usage.UseMovementItems(hShrine:GetLocation()) then return end
-                if item_usage.UseGlimmerCape(bot) then return end
-            end
-            
-            gHeroVar.HeroMoveToLocation(bot, hShrine:GetLocation())
-            
-            return
-        elseif bot.shrineUseMode ~= constants.SHRINE_USE then
-            --utils.myPrint("Waiting on more friends: ", #global_game_state.GetShrineState(bot.useShrine).pidsLookingForHeal)
-            for _, id in pairs(global_game_state.GetShrineState(bot.useShrine).pidsLookingForHeal) do
-                --utils.myPrint("\tID: ", id)
-            end
-            return
-        elseif bot.shrineUseMode == constants.SHRINE_USE then
-            --utils.myPrint("using Shrine")
-            bot:ActionPush_UseShrine(hShrine)
-            bot.shrineUseMode = nil
-            local savedShrineID = bot.useShrine
-            for _, id in pairs(global_game_state.GetShrineState(bot.useShrine).pidsLookingForHeal) do
-                for _, ally in pairs(GetUnitList(UNIT_LIST_ALLIED_HEROES)) do
-                    if ally:IsBot() and not ally:IsIllusion() and ally:GetPlayerID() == id then
-                        ally.useShrine = -1
-                    end
-                end
-            end
-            global_game_state.GetShrineState(savedShrineID).pidsLookingForHeal = {}
-            return
-        else
-            utils.pause("Shrine Exception!")
+    if GetUnitToUnitDistance(bot, bot.useShrine) > 300 then
+        if not modifiers.IsInvisible(bot) then
+            if item_usage.UseMovementItems(bot.useShrine:GetLocation()) then return end
+            if item_usage.UseGlimmerCape(bot) then return end
         end
+        
+        gHeroVar.HeroMoveToLocation(bot, bot.useShrine:GetLocation())
+        return
+    else
+        --utils.myPrint("using Shrine")
+        bot:ActionPush_UseShrine(bot.useShrine)
+        bot.useShrine = nil
+        return
     end
-
-    bot.SelfRef:ClearMode()
-    return
 end
 
 function X:Desire(bot)
-    --[[
-    if bot.useShrine ~= nil and bot.useShrine >= 0 then
-        if not utils.NotNilOrDead(global_game_state.GetShrineState(bot.useShrine).handle) then
-            return BOT_MODE_DESIRE_NONE
-        end
     
-        local nearbyAllies = gHeroVar.GetNearbyAllies(bot, 400)
-        local numAllies = 0
-        for _, ally in pairs(nearbyAllies) do
-            if not ally:IsIllusion() and utils.InTable(global_game_state.GetShrineState(bot.useShrine).pidsLookingForHeal, ally:GetPlayerID()) then
-                if GetUnitToUnitDistance(ally, global_game_state.GetShrineState(bot.useShrine).handle) < 400 then
-                    numAllies = numAllies + 1
-                end
+    if not bot:IsIllusion() and bot:GetHealth()/bot:GetMaxHealth() < 0.3 and 
+        bot.useShrine == nil then
+        local bestShrine = nil
+        local distToShrine = 100000
+        local Team = GetTeam()
+    
+        -- determine closest usable shrine
+        local SJ1 = GetShrine(Team, SHRINE_JUNGLE_1)
+        if SJ1 and SJ1:GetHealth() > 0 and GetShrineCooldown(SJ1) == 0 then
+            local dist = GetUnitToUnitDistance(bot, SJ1)
+            if dist < distToShrine then
+                distToShrine = dist
+                bestShrine = SJ1
             end
         end
-
-        if numAllies == #global_game_state.GetShrineState(bot.useShrine).pidsLookingForHeal then
-            bot.shrineUseMode = constants.SHRINE_USE
-            return BOT_MODE_DESIRE_ABSOLUTE
-        else
-            --utils.myPrint("NumAllies: ", numAllies, ", #useShrine.allies: ", #bot.useShrine.allies)
-            bot.shrineUseMode = constants.SHRINE_WAITING
-            return BOT_MODE_DESIRE_VERYHIGH
+        local SJ2 = GetShrine(Team, SHRINE_JUNGLE_2)
+        if SJ2 and SJ2:GetHealth() > 0 and GetShrineCooldown(SJ2) == 0 then
+            local dist = GetUnitToUnitDistance(bot, SJ2)
+            if dist < distToShrine then
+                distToShrine = dist
+                bestShrine = SJ2
+            end
+        end
+        local SB1 = GetShrine(Team, SHRINE_BASE_1)
+        if SB1 and SB1:GetHealth() > 0 and GetShrineCooldown(SB1) == 0 then
+            local dist = GetUnitToUnitDistance(bot, SB1)
+            if dist < distToShrine then
+                distToShrine = dist
+                bestShrine = SB1
+            end
+        end
+        local SB2 = GetShrine(Team, SHRINE_BASE_2)
+        if SB2 and SB2:GetHealth() > 0 and GetShrineCooldown(SB2) == 0 then
+            local dist = GetUnitToUnitDistance(bot, SB2)
+            if dist < distToShrine then
+                distToShrine = dist
+                bestShrine = SB2
+            end
+        end
+        local SB3 = GetShrine(Team, SHRINE_BASE_3)
+        if SB3 and SB3:GetHealth() > 0 and GetShrineCooldown(SB3) == 0 then
+            local dist = GetUnitToUnitDistance(bot, SB3)
+            if dist < distToShrine then
+                distToShrine = dist
+                bestShrine = SB3
+            end
+        end
+        local SB4 = GetShrine(Team, SHRINE_BASE_4)
+        if SB4 and SB4:GetHealth() > 0 and GetShrineCooldown(SB4) == 0 then
+            local dist = GetUnitToUnitDistance(bot, SB4)
+            if dist < distToShrine then
+                distToShrine = dist
+                bestShrine = SB4
+            end
+        end
+        local SB5 = GetShrine(Team, SHRINE_BASE_5)
+        if SB5 and SB5:GetHealth() > 0 and GetShrineCooldown(SB5) == 0 then
+            local dist = GetUnitToUnitDistance(bot, SB5)
+            if dist < distToShrine then
+                distToShrine = dist
+                bestShrine = SB5
+            end
+        end
+        
+        if utils.ValidTarget(bestShrine) then
+            if distToShrine < (bot:DistanceFromFountain() + 3500) then
+                bot.useShrine = bestShrine
+                return BOT_MODE_DESIRE_VERYHIGH
+            end
         end
     end
-    --]]
+    
+    if bot.useShrine then
+        -- if shrine is on cooldown, clear mode 
+        -- TODO: will it be on cooldown when we get there, then ok
+        if GetShrineCooldown(bot.useShrine) ~= 0 then
+            return BOT_MODE_DESIRE_NONE
+        end
+
+        -- if we somehow healed up to above 0.5 health and are not under shrine effect
+        -- then we can cancel our desire to use shrine
+        if bot:GetHealth()/bot:GetMaxHealth() > 0.5 and not bot:HasModifier("modifier_filler_heal") then
+            return BOT_MODE_DESIRE_NONE
+        end
+        
+        if bot.SelfRef:getCurrentMode():GetName() == "shrine" then
+            return bot.SelfRef:getCurrentModeValue()
+        end
+    end
+    
     return BOT_MODE_DESIRE_NONE
 end
 

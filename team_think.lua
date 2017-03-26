@@ -245,6 +245,7 @@ end
 -- However, we should be smart about the use and see if any other
 -- friends could benefit as well rather than just being selfish.
 function ConsiderTeamShrine(playerAssignment)
+    --[[
     local bestShrine = nil
     local distToShrine = 100000
     local Team = GetTeam()
@@ -328,6 +329,7 @@ function ConsiderTeamShrine(playerAssignment)
             end
         end
     end
+    --]]
 end
 
 for k,v in pairs( team_think ) do _G._savedEnv[k] = v end

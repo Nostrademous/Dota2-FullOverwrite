@@ -259,12 +259,7 @@ end
 -- BASE DO-WHILE-DEAD - DO NOT OVER-LOAD
 -------------------------------------------------------------------------------
 
-function X:DoWhileDead(bot)
-    if bot.useShrine and bot.useShrine >= 0 then
-        global_game_state.RemovePIDFromShrine(bot.useShrine, bot:GetPlayerID())
-        bot.useShrine = -1
-    end
-    
+function X:DoWhileDead(bot)    
     self:ClearMode()
     bot:Action_ClearActions(true)
     self:setHeroVar("Target", nil)

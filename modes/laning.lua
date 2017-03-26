@@ -471,6 +471,15 @@ function X:Desire(bot)
     if curLane ~= nil and curLane ~= 0 and global_game_state.LaneState(getHeroVar("CurLane")).dontdefend then
         return BOT_MODE_DESIRE_NONE
     end
+    
+    local botRole = getHeroVar("Role")
+    if botRole == constants.ROLE_HARDCARRY then
+        if bot:GetLevel() < 6 then
+            return BOT_MODE_DESIRE_MODERATE
+        else
+            return BOT_MODE_DESIRE_LOW
+        end
+    end
     return BOT_MODE_DESIRE_VERYLOW
 end
 

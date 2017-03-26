@@ -74,10 +74,6 @@ end
 -- This just tells us if we should be part of this event.
 function ConsiderShrine(bot, playerAssignment)
     if bot:IsIllusion() then return BOT_MODE_DESIRE_NONE end
-
-    --if playerAssignment[bot:GetPlayerID()].UseShrine ~= nil then
-    --    bot.useShrine = playerAssignment[bot:GetPlayerID()].UseShrine
-    --end
     
     if bot.shrineMode ~= nil then
         return bot.shrineMode:Desire(bot)

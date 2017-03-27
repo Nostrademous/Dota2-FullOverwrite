@@ -778,7 +778,7 @@ function ConsiderTornado()
     --------------------------------------
 
     --------- RETREATING -----------------------
-    if modeName == "retreat" then
+    if modeName == "retreat" or modeName == "shrine" then
         for _, npcEnemy in pairs( nearbyEnemyHeroes ) do
             if utils.ValidTarget(npcEnemy) and bot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) and
                 not utils.IsTargetMagicImmune(npcEnemy) then
@@ -847,7 +847,7 @@ function ConsiderIceWall()
     end
 
     --------- RETREATING -----------------------
-    if modeName == "retreat" then
+    if modeName == "retreat" or modeName == "shrine" then
         local nearbyEnemyHeroes = gHeroVar.GetNearbyEnemies(bot, 1200)
         for _, npcEnemy in pairs( nearbyEnemyHeroes ) do
             if utils.ValidTarget(npcEnemy) and bot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) and
@@ -1137,7 +1137,7 @@ function ConsiderGhostWalk()
     end
 
     -- WE ARE RETREATING AND THEY ARE ON US
-    if modeName == "retreat" then
+    if modeName == "retreat" or modeName == "shrine" then
         local nearbyEnemyHeroes = gHeroVar.GetNearbyEnemies(bot, 1200)
         for _, npcEnemy in pairs( nearbyEnemyHeroes ) do
             if utils.ValidTarget(npcEnemy) and (bot:WasRecentlyDamagedByHero( npcEnemy, 1.0 ) 
@@ -1259,7 +1259,7 @@ function ConsiderColdSnap()
 	end
 	
 	-- If we're seriously retreating, see if we can land a stun on someone who's damaged us recently
-	if modeName == "retreat" then
+	if modeName == "retreat" or modeName == "shrine" then
 		local tableNearbyEnemyHeroes = gHeroVar.GetNearbyEnemies( bot, nCastRange )
 		for _, npcEnemy in pairs( tableNearbyEnemyHeroes ) do
 			if bot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) then

@@ -201,8 +201,8 @@ function ConsiderW()
 	end
 	
 	-- If we're farming
-    local creeps = gHeroVar.GetNearbyEnemyCreep( bot, 900 )
 	if modeName == "laning" or modeName == "jungling" then
+        local creeps = gHeroVar.GetNearbyEnemyCreep( bot, 900 )
 		if #creeps >= 2 and HealthPerc < 0.5 then
 			if ManaPerc > 0.4 then
                 if not utils.IsTargetMagicImmune( bot ) then
@@ -223,6 +223,10 @@ function ConsiderR()
 	end
 
     local CastRange = abilityR:GetCastRange()
+    local Duration = abilityR:GetSpecialValueFloat("duration")
+    if bot:HasScepter() then
+        Duration = abilityR:GetSpecialValueFloat("duration_scepter")
+    end
     
     local modeName = bot.SelfRef:getCurrentMode():GetName()
     
@@ -239,7 +243,13 @@ function ConsiderR()
 	if modeName ~= "retreat" then
 		if utils.ValidTarget(WeakestEnemy) then
 			if not WeakestEnemy:IsInvulnerable() then
-				if HeroHealth <= WeakestEnemy:GetActualIncomingDamage( bot:GetOffensivePower(), DAMAGE_TYPE_ALL ) and 
+                local extraDmg = 0.0
+                if utils.IsItemAvailable("item_blade_mail") then
+                    extraDmg = WeakestEnemy:GetEstimatedDamageToTarget(true, bot, Min(4.5, Duration), DAMAGE_TYPE_PHYSICAL)
+                    extraDmg = WeakestEnemy:GetActualIncomingDamage(extraDmg, DAMAGE_TYPE_PHYSICAL)
+                end
+                
+				if HeroHealth <= (bot:GetEstimatedDamageToTarget(true, WeakestEnemy, Duration, DAMAGE_TYPE_PHYSICAL) + extraDmg) and 
                     #allies >= #enemies then
 					return BOT_ACTION_DESIRE_HIGH, WeakestEnemy
 				end
@@ -256,9 +266,17 @@ function ConsiderR()
         if npcEnemy == nil then npcEnemy = getHeroVar("Target") end
 
 		if utils.ValidTarget(npcEnemy) then
-			if not npcEnemy:IsInvulnerable() and GetUnitToUnitDistance(bot, npcEnemy) < CastRange and 
-                #allies >= #enemies then
-				return BOT_ACTION_DESIRE_MODERATE, npcEnemy
+            local extraDmg = 0.0
+            if utils.IsItemAvailable("item_blade_mail") then
+                extraDmg = npcEnemy:GetEstimatedDamageToTarget(true, bot, Min(4.5, Duration), DAMAGE_TYPE_PHYSICAL)
+                extraDmg = npcEnemy:GetActualIncomingDamage(extraDmg, DAMAGE_TYPE_PHYSICAL)
+            end
+            
+			if not npcEnemy:IsInvulnerable() and GetUnitToUnitDistance(bot, npcEnemy) < CastRange then
+                if HeroHealth <= (bot:GetEstimatedDamageToTarget(true, npcEnemy, Duration, DAMAGE_TYPE_PHYSICAL) + extraDmg) and 
+                    #allies >= #enemies then
+                    return BOT_ACTION_DESIRE_MODERATE, npcEnemy
+                end
 			end
 		end
 	end
@@ -299,7 +317,13 @@ function genericAbility:AbilityUsageThink(bot)
     end
     
     if castRDesire > 0 then
-        gHeroVar.HeroUseAbilityOnEntity(bot,  abilityR, castRTarget )
+        if utils.IsItemAvailable("item_blade_mail") then
+            bot:Action_ClearActions(false)
+            item_usage.UseBladeMail(bot)
+            gHeroVar.HeroQueueUseAbilityOnEntity(bot, abilityR, castRTarget )
+        else
+            gHeroVar.HeroUseAbilityOnEntity(bot, abilityR, castRTarget )
+        end
         return true
     end
     

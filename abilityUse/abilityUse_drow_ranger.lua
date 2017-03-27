@@ -199,7 +199,7 @@ function ConsiderW()
     end
 
     -- protect myself
-    if modeName == "retreat" then
+    if modeName == "retreat" or modeName == "shrine" then
         local closeEnemies = gHeroVar.GetNearbyEnemies(bot, 350)
         for _, npcEnemy in pairs( closeEnemies ) do
             if utils.ValidTarget(npcEnemy) and not utils.IsTargetMagicImmune( npcEnemy ) and not utils.IsCrowdControlled(npcEnemy) then

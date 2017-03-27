@@ -156,7 +156,7 @@ function ConsiderQ()
 	-- Mode based usage
 	--------------------------------------
 	-- If we're retreating, see if we can run to another safe lane
-	if modeName == "retreat" then
+	if modeName == "retreat" or modeName == "shrine" then
         if bot:WasRecentlyDamagedByAnyHero( 2.0 ) then
             for _, npcAlly in pairs(GetUnitList(UNIT_LIST_ALLIED_HEROES)) do
                 if npcAlly:IsAlive() then
@@ -203,7 +203,7 @@ function ConsiderW()
 	-- Mode based usage
 	--------------------------------------
 	-- If we're retreating
-	if modeName == "retreat" then
+	if modeName == "retreat" or modeName == "shrine" then
 		if bot:WasRecentlyDamagedByAnyHero( 2.0 ) then
 			return BOT_ACTION_DESIRE_HIGH
 		end
@@ -263,7 +263,7 @@ function ConsiderR()
 	-- Mode based usage
 	--------------------------------------
 	-- If we're retreating, see if we can land a stun on someone who's damaged us recently
-	if modeName == "retreat" then
+	if modeName == "retreat" or modeName == "shrine" then
 		for _, npcEnemy in pairs( enemies ) do
 			if bot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) then
 				if not utils.IsTargetMagicImmune( npcEnemy ) and not utils.IsCrowdControlled(npcEnemy) and

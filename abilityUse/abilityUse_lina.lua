@@ -365,7 +365,7 @@ function ConsiderW()
     end
 
     -- If we're seriously retreating, see if we can land a stun on someone who's damaged us recently
-    if modeName == "retreat" then
+    if modeName == "retreat" or modeName == "shrine" then
         local tableNearbyEnemyHeroes = gHeroVar.GetNearbyEnemies( bot, CastRange )
         for _, npcEnemy in pairs( tableNearbyEnemyHeroes ) do
             if bot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) then

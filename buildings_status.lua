@@ -94,6 +94,8 @@ local function Initialize()
         tableBuildings[TEAM_DIRE][i].LastSeenHealth = health
         tableBuildings[TEAM_DIRE][i].Vector = pos_dire
     end
+    
+    --printBuildings()
 end
 
 function Update(forceUpdate)
@@ -185,11 +187,11 @@ end
 function printBuildings()
     print("Buildings Radiant")
     for i, building in pairs(tableBuildings[TEAM_RADIANT]) do
-        print(i, building.LastSeenHealth)
+        print(i, building.LastSeenHealth, building.Vector)
     end
     print("Buildings Dire")
     for i, building in pairs(tableBuildings[TEAM_DIRE]) do
-        print(i, building.LastSeenHealth)
+        print(i, building.LastSeenHealth, building.Vector)
     end
 end
 

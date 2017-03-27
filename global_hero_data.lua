@@ -61,14 +61,31 @@ function X.GetNearbyAllies(bot, range)
 end
 
 function X.GetNearbyEnemyTowers(bot, range)
-    local endList = bot:GetNearbyTowers(range, true)
-    --local startList = X[bot:GetPlayerID()].NearbyEnemyTowers
-    --local endList = {}
-    --for _, val in pairs(startList) do
-    --    if GetUnitToUnitDistance(bot, val) <= range then
-    --        table.insert(endList, val)
-    --    end
-    --end
+    local startList = bot:GetNearbyTowers(range, true)
+
+    endList = {}
+    for _, val in pairs(startList) do
+        if string.find(val:GetUnitName(), "tower") then
+            table.insert(endList, val)
+        end
+    end
+    return endList
+end
+
+function X.GetNearbyEnemyBarracks(bot, range)
+    local endList = bot:GetNearbyBarracks(range, true)
+    if #endList > 0 then
+        print("[CRITICAL]: API bug fixed. plas adjust code. random uniqe marker: AWESDFWRGWFE")
+    end
+
+    local startList = bot:GetNearbyTowers(range, true)
+
+    endList = {}
+    for _, val in pairs(startList) do
+        if string.find(val:GetUnitName(), "rax") then
+            table.insert(endList, val)
+        end
+    end
     return endList
 end
 

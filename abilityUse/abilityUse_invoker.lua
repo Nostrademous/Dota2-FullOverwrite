@@ -7,8 +7,7 @@
 BotsInit = require( "game/botsinit" )
 local invAbility = BotsInit.CreateGeneric()
 
-require( GetScriptDirectory().."/constants" )
-
+local ed = require( GetScriptDirectory().."/enemy_data" )
 local utils = require( GetScriptDirectory().."/utility" )
 local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
 
@@ -38,17 +37,19 @@ local abilityIW = ""
 local abilitySS = ""
 local abilityFS = ""
 
-local castTODesire = 0
-local castCSDesire = 0
-local castACDesire = 0
-local castGWDesire = 0
+local castTODesire  = 0
+local castCSDesire  = 0
+local castACDesire  = 0
+local castGWDesire  = 0
 local castEMPDesire = 0
-local castCMDesire = 0
-local castDBDesire = 0
-local castIWDesire = 0
-local castSSDesire = 0
-local castFSDesire = 0
+local castCMDesire  = 0
+local castDBDesire  = 0
+local castIWDesire  = 0
+local castSSDesire  = 0
+local castFSDesire  = 0
 
+local HealthPerc    = 0.0
+local ManaPerc      = 0.0
 local modeName      = nil
 
 function nukeDamageSS( bot )
@@ -195,12 +196,10 @@ function invAbility:AbilityUsageThink(bot)
     if abilitySS == "" then abilitySS = bot:GetAbilityByName( "invoker_sun_strike" ) end
     if abilityFS == "" then abilityFS = bot:GetAbilityByName( "invoker_forge_spirit" ) end
     
+    HealthPerc    = bot:GetHealth()/bot:GetMaxHealth()
+    ManaPerc      = bot:GetMana()/bot:GetMaxMana()
     modeName      = bot.SelfRef:getCurrentMode():GetName()
     
-    local nearbyEnemyHeroes = gHeroVar.GetNearbyEnemies(bot, 1200)
-    local nearbyEnemyCreep  = gHeroVar.GetNearbyEnemyCreep(bot, 1200)
-    local nearbyEnemyTowers = gHeroVar.GetNearbyEnemyTowers(bot, 750)
-
     --[[
     if abilityQ:GetLevel() >= 3 then
         if getHeroVar("nukeTOCMDB") then
@@ -250,16 +249,16 @@ function invAbility:AbilityUsageThink(bot)
     end
     --]]
     
-    castTODesire, castTOLocation = ConsiderTornado(bot)
-    castEMPDesire, castEMPLocation = ConsiderEMP(bot)
-    castCMDesire, castCMLocation = ConsiderChaosMeteor(bot)
-    castDBDesire, castDBLocation = ConsiderDeafeningBlast(bot)
-    castSSDesire, castSSLocation = ConsiderSunStrike(bot)
-    castCSDesire, castCSTarget = ConsiderColdSnap(bot)
-    castACDesire, castACTarget = ConsiderAlacrity(bot, nearbyEnemyCreep, nearbyEnemyTowers)
-    castGWDesire = ConsiderGhostWalk(bot, nearbyEnemyHeroes)
-    castIWDesire, castIWFacing = ConsiderIceWall(bot, nearbyEnemyHeroes)
-    castFSDesire = ConsiderForgedSpirit(bot, nearbyEnemyHeroes, nearbyEnemyCreep, nearbyEnemyTowers)
+    castTODesire, castTOLocation    = ConsiderTornado()
+    castEMPDesire, castEMPLocation  = ConsiderEMP()
+    castCMDesire, castCMLocation    = ConsiderChaosMeteor()
+    castDBDesire, castDBLocation    = ConsiderDeafeningBlast()
+    castSSDesire, castSSLocation    = ConsiderSunStrike()
+    castCSDesire, castCSTarget      = ConsiderColdSnap()
+    castACDesire, castACTarget      = ConsiderAlacrity()
+    castGWDesire                    = ConsiderGhostWalk()
+    castIWDesire, castIWFacing      = ConsiderIceWall()
+    castFSDesire                    = ConsiderForgedSpirit()
 
     --[[
     print("TO "..castTODesire)
@@ -273,7 +272,6 @@ function invAbility:AbilityUsageThink(bot)
     print("IW "..castIWDesire)
     print("FS "..castFSDesire)
     --]]
-    --if castSSDesire > 0 then utils.myPrint("\nSS "..castSSDesire.."\n") end
 
     if not inGhostWalk(bot) then
         -- NOTE: the castXXDesire accounts for skill being fully castable        
@@ -694,7 +692,7 @@ function ConsiderOrbs(bot)
         if (nWex + nQuas + nExort) >= 3 then break end
     end
     
-    if bot.IsRetreating then
+    if bot.IsRetreating and bot:GetHealth()/bot:GetMaxHealth() > 0.15 then
         if nWex < 3 then 
             return tripleWexBuff(bot)
         end
@@ -711,19 +709,9 @@ function ConsiderOrbs(bot)
     return false
 end
 
-function CanCastAlacrityOnTarget( target )
-    return not target:IsMagicImmune() and not target:IsInvulnerable()
-end
-
-function CanCastColdSnapOnTarget( target )
-    return target:CanBeSeen() and not target:IsMagicImmune() and not target:IsInvulnerable()
-end
-
-function CanCastDeafeningBlastOnTarget( target )
-    return target:CanBeSeen() and not target:IsMagicImmune() and not target:IsInvulnerable()
-end
-
-function ConsiderTornado(bot)
+function ConsiderTornado()
+    local bot = GetBot() 
+    
     if not quasTrained() or not wexTrained() then
         return BOT_ACTION_DESIRE_NONE, {}
     end
@@ -747,6 +735,7 @@ function ConsiderTornado(bot)
     local nDistance = abilityTO:GetSpecialValueInt( "travel_distance" )
     local nSpeed = 1000
     local nCastRange = abilityTO:GetCastRange()
+    local nDamage = 70 + abilityTO:GetSpecialValueFloat( "wex_damage" )
     
     --------------------------------------
     -- Global high-priorty usage
@@ -756,49 +745,70 @@ function ConsiderTornado(bot)
     local nearbyEnemyHeroes = gHeroVar.GetNearbyEnemies(bot, Min(1600, nCastRange + nDistance/2.0))
     
     for _, npcEnemy in pairs( nearbyEnemyHeroes ) do
-        if npcEnemy:IsChanneling() then
-            if abilityCS:IsFullyCastable() and abilityTO:IsHidden() then
-                return BOT_ACTION_DESIRE_NONE, {}
-            else
-                return BOT_ACTION_DESIRE_HIGH, npcEnemy:GetLocation()
-            end
+        if utils.ValidTarget(npcEnemy) and npcEnemy:IsChanneling() then
+            return BOT_ACTION_DESIRE_HIGH, npcEnemy:GetLocation()
         end
     end
+    
+    -- Try to kill enemy hero
+    local WeakestEnemy, HeroHealth = utils.GetWeakestHero(bot, Min(1600, nCastRange + nDistance))
+	if modeName ~= "retreat" or (modeName == "retreat" and bot.SelfRef:getCurrentModeValue() < BOT_MODE_DESIRE_VERYHIGH) then
+		if utils.ValidTarget(WeakestEnemy) then
+			if not utils.IsTargetMagicImmune(WeakestEnemy) and not utils.IsCrowdControlled(WeakestEnemy) then
+				if HeroHealth <= WeakestEnemy:GetActualIncomingDamage(nDamage, DAMAGE_TYPE_MAGICAL) then
+                    local d = GetUnitToUnitDistance(bot, WeakestEnemy)
+					return BOT_ACTION_DESIRE_HIGH, WeakestEnemy:GetExtrapolatedLocation(d/nSpeed)
+				end
+			end
+		end
+	end
+    
+    -- If we're in a teamfight, use it on most enemies
+	local tableNearbyAttackingAlliedHeroes = utils.InTeamFight(bot, 1000)
+	if #tableNearbyAttackingAlliedHeroes >= 2 then
+		local locationAoE = bot:FindAoELocation( true, true, bot:GetLocation(), Min(1600, nCastRange + nDistance), 200, 0, 0 )
+
+		if locationAoE.count >= 2 and GetUnitToLocationDistance(bot, locationAoE.targetloc) <= (nCastRange + nDistance) then
+			return BOT_ACTION_DESIRE_MODERATE, locationAoE.targetloc
+		end
+	end
 
     --------------------------------------
     -- Mode based usage
     --------------------------------------
 
     --------- RETREATING -----------------------
-    if bot.IsRetreating then
+    if modeName == "retreat" then
         for _, npcEnemy in pairs( nearbyEnemyHeroes ) do
-            if bot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) and GetUnitToUnitDistance( bot, npcEnemy ) <= nDistance then
-                return BOT_ACTION_DESIRE_MODERATE, npcEnemy:GetLocation()
+            if utils.ValidTarget(npcEnemy) and bot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) and
+                not utils.IsTargetMagicImmune(npcEnemy) then
+                local d = GetUnitToUnitDistance( bot, npcEnemy )
+                if d <= (nCastRange + nDistance) then
+                    return BOT_ACTION_DESIRE_MODERATE, npcEnemy:GetExtrapolatedLocation( d/nSpeed )
+                end
             end
         end
     end
 
-    --------- TEAM FIGHT --------------------------------
-    if #nearbyEnemyHeroes >= 2 then
-        local locationAoE = bot:FindAoELocation( true, false, bot:GetLocation(), nCastRange, nDistance, 0, 0 )
-        if locationAoE.count >= 2 then
-            return BOT_ACTION_DESIRE_HIGH, locationAoE.targetloc
-        end
-    end
+    -- If we're going after someone
+	if modeName == "roam" or modeName == "defendally" or modeName == "fight" then
+		local npcEnemy = getHeroVar("RoamTarget")
+        if npcEnemy == nil then npcEnemy = getHeroVar("Target") end
 
-    --------- CHASING --------------------------------
-    local target = getHeroVar("Target")
-    if utils.ValidTarget(target) then
-        local dist = GetUnitToUnitDistance( bot, target )
-        if dist < (nDistance - 200) then
-            return BOT_ACTION_DESIRE_MODERATE, target:GetExtrapolatedLocation( dist/nSpeed + getHeroVar("AbilityDelay") )
-        end
-    end
+		if utils.ValidTarget(npcEnemy) then
+			if not utils.IsTargetMagicImmune(npcEnemy) and not utils.IsCrowdControlled(npcEnemy) then
+                local d = GetUnitToUnitDistance( bot, npcEnemy )
+				return BOT_ACTION_DESIRE_LOW, npcEnemy:GetExtrapolatedLocation( d/nSpeed )
+			end
+		end
+	end
 
     return BOT_ACTION_DESIRE_NONE, {}
 end
 
-function ConsiderIceWall(bot, nearbyEnemyHeroes)
+function ConsiderIceWall()
+    local bot = GetBot()
+    
     if not quasTrained() or not exortTrained() then
         return BOT_ACTION_DESIRE_NONE, 0
     end
@@ -820,27 +830,44 @@ function ConsiderIceWall(bot, nearbyEnemyHeroes)
 
     -- Get some of its values
     local nCastRange = abilityIW:GetSpecialValueInt( "wall_place_distance" )
+    local nRadius = 105
     local nLength = 80*15
 
     --------------------------------------
     -- Mode based usage
     --------------------------------------
+    
+    --------- TEAM FIGHT -----------------------------
+    local tableNearbyAttackingAlliedHeroes = utils.InTeamFight(bot, 1000)
+	if #tableNearbyAttackingAlliedHeroes >= 2 then
+        local locationAoE = bot:FindAoELocation( true, true, bot:GetLocation(), nCastRange, nRadius, 0, 0 )
+        if locationAoE.count >= 2 then
+            return BOT_ACTION_DESIRE_HIGH, 90
+        end
+    end
 
     --------- RETREATING -----------------------
-    if bot.IsRetreating then
+    if modeName == "retreat" then
+        local nearbyEnemyHeroes = gHeroVar.GetNearbyEnemies(bot, 1200)
         for _, npcEnemy in pairs( nearbyEnemyHeroes ) do
-            if  bot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) and GetUnitToUnitDistance(npcEnemy, bot) < 300 then
+            if utils.ValidTarget(npcEnemy) and bot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) and
+                GetUnitToUnitDistance(npcEnemy, bot) < 350 then
                 return BOT_ACTION_DESIRE_MODERATE, 0
             end
         end
     end
 
     --------- CHASING --------------------------------
-    local target = getHeroVar("Target")
-    if utils.ValidTarget(target) then
-        --FIXME: Need to check orientation
-        if GetUnitToUnitDistance( bot, target ) < (nCastRange + nLength/2) then
-            return BOT_ACTION_DESIRE_MODERATE, 90
+    -- If we're going after someone and there is more than one
+    if modeName == "roam" or modeName == "defendally" or modeName == "fight" then
+        local npcEnemy = getHeroVar("RoamTarget")
+        if npcEnemy == nil then npcEnemy = getHeroVar("Target") end
+
+		if utils.ValidTarget(npcEnemy) then
+            --FIXME: Need to check orientation
+            if not utils.IsTargetMagicImmune(npcEnemy) and GetUnitToUnitDistance( bot, target ) < nCastRange then
+                return BOT_ACTION_DESIRE_MODERATE, 90
+            end
         end
     end
 
@@ -848,7 +875,9 @@ function ConsiderIceWall(bot, nearbyEnemyHeroes)
 end
 
 
-function ConsiderChaosMeteor(bot)
+function ConsiderChaosMeteor()
+    local bot = GetBot()
+    
     if not exortTrained() or not wexTrained() then
         return BOT_ACTION_DESIRE_NONE, {}
     end
@@ -877,11 +906,18 @@ function ConsiderChaosMeteor(bot)
     --------------------------------------
     -- Mode based usage
     --------------------------------------
-    
     --------- TEAM FIGHT -----------------------------
-    local nearbyEnemyHeroes = gHeroVar.GetNearbyEnemies(bot, Min(1600, nCastRange))
-    if #nearbyEnemyHeroes >= 2 then
-        local locationAoE = bot:FindAoELocation( true, true, bot:GetLocation(), nCastRange, nTravelDistance, nDelay, 0 )
+    local tableNearbyAttackingAlliedHeroes = utils.InTeamFight(bot, 1000)
+	if #tableNearbyAttackingAlliedHeroes >= 2 then
+        local locationAoE = bot:FindAoELocation( true, true, bot:GetLocation(), nCastRange + nTravelDistance/4, nRadius, nDelay, 0 )
+        if locationAoE.count >= 2 then
+            return BOT_ACTION_DESIRE_HIGH, locationAoE.targetloc
+        end
+    end
+    
+    -- If we're going after someone and there is more than one
+    if modeName == "roam" or modeName == "defendally" or modeName == "fight" then
+        local locationAoE = bot:FindAoELocation( true, true, bot:GetLocation(), nCastRange + nTravelDistance/4, nRadius, nDelay, 0 )
         if locationAoE.count >= 2 then
             return BOT_ACTION_DESIRE_HIGH, locationAoE.targetloc
         end
@@ -891,7 +927,9 @@ function ConsiderChaosMeteor(bot)
 end
 
 
-function ConsiderSunStrike(bot)
+function ConsiderSunStrike()
+    local bot = GetBot()
+    
     if not exortTrained() then
         return BOT_ACTION_DESIRE_NONE, {}
     end
@@ -921,30 +959,25 @@ function ConsiderSunStrike(bot)
     --------------------------------------
     local globalEnemies = GetUnitList(UNIT_LIST_ENEMY_HEROES)
     for _, enemy in pairs(globalEnemies) do
-        if enemy:GetHealth() <= nDamage then
-            --if utils.IsCrowdControlled(enemy) then
-            --    return BOT_ACTION_DESIRE_MODERATE, enemy:GetLocation()
-            --else
-                --utils.myPrint("nDelay: ", nDelay, ", loc: ", tostring(enemy:GetExtrapolatedLocation( nDelay )))
+        if utils.ValidTarget(enemy) then
+            if enemy:GetHealth() < nDamage and enemy:GetMovementDirectionStability() > 0.9 then
                 return BOT_ACTION_DESIRE_MODERATE, enemy:GetExtrapolatedLocation( nDelay )
-            --end
+            else
+                -- enemies of my enemy are my friends
+                local allies = enemy:GetNearbyHeroes( 1000, true, BOT_MODE_NONE )
+                if #allies >= 2 and utils.IsCrowdControlled(enemy) and enemy:GetHealth() < 2.0*nDamage then
+                    return BOT_ACTION_DESIRE_MODERATE, enemy:GetExtrapolatedLocation( nDelay )
+                end
+            end
         end
-    end
-
-    --------- CHASING --------------------------------
-    local target = getHeroVar("Target")
-    if utils.ValidTarget(target) and target:GetHealth()/target:GetMaxHealth() <= 0.5 then
-        --if utils.IsCrowdControlled(target) then
-        --    return BOT_ACTION_DESIRE_MODERATE, target:GetLocation()
-        --else
-            return BOT_ACTION_DESIRE_MODERATE, target:GetExtrapolatedLocation( nDelay )
-        --end
     end
 
     return BOT_ACTION_DESIRE_NONE, {}
 end
 
-function ConsiderDeafeningBlast(bot)
+function ConsiderDeafeningBlast()
+    local bot = GetBot()
+    
     if not quasTrained() or  not wexTrained() or not exortTrained() then
         return BOT_ACTION_DESIRE_NONE, {}
     end
@@ -965,27 +998,66 @@ function ConsiderDeafeningBlast(bot)
     end
 
     -- Get some of its values
-    local nCastRange = abilityDB:GetSpecialValueInt("radius_start")
-    local nRadius = abilityDB:GetSpecialValueInt("travel_distance")
+    local nCastRange = abilityDB:GetCastRange()
+    local nRadius = abilityDB:GetSpecialValueInt("radius_end")
+    local nSpeed = abilityDB:GetSpecialValueInt("travel_speed")
     local nDamage = abilityDB:GetSpecialValueInt("damage")
 
     --------------------------------------
     -- Mode based usage
     --------------------------------------
     
+    -- Try to kill enemy hero
+    local WeakestEnemy, HeroHealth = utils.GetWeakestHero(bot, nCastRange + 150)
+	if modeName ~= "retreat" or (modeName == "retreat" and bot.SelfRef:getCurrentModeValue() < BOT_MODE_DESIRE_VERYHIGH) then
+		if utils.ValidTarget(WeakestEnemy) then
+			if not utils.IsTargetMagicImmune(WeakestEnemy) and not utils.IsCrowdControlled(WeakestEnemy) then
+				if HeroHealth <= WeakestEnemy:GetActualIncomingDamage(nDamage, DAMAGE_TYPE_MAGICAL) then
+                    local dist = GetUnitToUnitDistance(bot, WeakestEnemy)
+					return BOT_ACTION_DESIRE_HIGH, WeakestEnemy:GetExtrapolatedLocation(dist/nSpeed)
+				end
+			end
+		end
+	end
+    
     --------- TEAM FIGHT -----------------------------
-    local nearbyEnemyHeroes = gHeroVar.GetNearbyEnemies(bot, Min(1600, nCastRange))
-    if #nearbyEnemyHeroes >= 2 then
+    local tableNearbyAttackingAlliedHeroes = utils.InTeamFight(bot, 1000)
+	if #tableNearbyAttackingAlliedHeroes >= 2 then
         local locationAoE = bot:FindAoELocation( true, true, bot:GetLocation(), nCastRange, nRadius, 0, 0 )
         if locationAoE.count >= 2 then
-            return BOT_ACTION_DESIRE_HIGH, locationAoE.targetloc
+            return BOT_ACTION_DESIRE_MODERATE, locationAoE.targetloc
         end
     end
 
+    -- If we're pushing or defending a lane and can hit 3+ creeps, go for it
+	if modeName == "defendlane" or (modeName == "pushlane" and ManaPerc > 0.4) then
+		local locationAoE = bot:FindAoELocation( true, false, bot:GetLocation(), nCastRange, nRadius, 0, 0 )
+
+		if locationAoE.count >= 3 and GetUnitToLocationDistance(bot, locationAoE.targetloc) <= nCastRange then
+			return BOT_ACTION_DESIRE_LOW, locationAoE.targetloc
+		end
+	end
+    
+    -- If we're going after someone that does a lot of right click damage or has satanic
+	if modeName == "roam" or modeName == "defendally" or modeName == "fight" then
+		local npcEnemy = getHeroVar("RoamTarget")
+        if npcEnemy == nil then npcEnemy = getHeroVar("Target") end
+
+		if utils.ValidTarget(npcEnemy) and (npcEnemy:HasModifier("modifier_item_satanic_unholy") or
+            utils.InTable(ed.heavyRightClickDamage, npcEnemy:GetUnitName())) then
+			if not utils.IsTargetMagicImmune(npcEnemy) and not utils.IsCrowdControlled(npcEnemy) then
+                local dist = GetUnitToUnitDistance(bot, npcEnemy)
+				return BOT_ACTION_DESIRE_HIGH, npcEnemy:GetExtrapolatedLocation( dist/nSpeed )
+			end
+		end
+	end
+    
     return BOT_ACTION_DESIRE_NONE, {}
 end
 
-function ConsiderEMP(bot)
+function ConsiderEMP()
+    local bot = GetBot()
+    
     if not wexTrained() then
         return BOT_ACTION_DESIRE_NONE, {}
     end
@@ -1008,36 +1080,43 @@ function ConsiderEMP(bot)
     -- Get some of its values
     local nCastRange = abilityEMP:GetCastRange()
     local nRadius = abilityEMP:GetSpecialValueInt( "area_of_effect" )
-    local nBurn = abilityEMP:GetSpecialValueInt( "mana_burned" )
-    local nPDamage = abilityEMP:GetSpecialValueInt( "damage_per_mana_pct" )
+    --local nBurn = abilityEMP:GetSpecialValueInt( "mana_burned" )
+    --local nPDamage = abilityEMP:GetSpecialValueInt( "damage_per_mana_pct" )
 
     --------------------------------------
     -- Mode based usage
     --------------------------------------
     
     --------- TEAM FIGHT -----------------------------
-    local nearbyEnemyHeroes = gHeroVar.GetNearbyEnemies(bot, Min(1600, nCastRange + nRadius))
-    if #nearbyEnemyHeroes >= 3 then
+    local tableNearbyAttackingAlliedHeroes = utils.InTeamFight(bot, 1000)
+	if #tableNearbyAttackingAlliedHeroes >= 2 then
         local locationAoE = bot:FindAoELocation( true, true, bot:GetLocation(), nCastRange, nRadius, 2.95 + getHeroVar("AbilityDelay"), 0 )
         if locationAoE.count >= 3 then
             return BOT_ACTION_DESIRE_HIGH, locationAoE.targetloc
         end
     end
 
+
     --------- CHASING --------------------------------
-    local target = getHeroVar("Target")
-    if utils.ValidTarget(target) then
-        if target:HasModifier("modifier_invoker_tornado") and 
-            target:GetMana() > 600 and
-            GetUnitToUnitDistance( target, bot ) < (nCastRange - (nRadius / 2)) then
-            return BOT_ACTION_DESIRE_MODERATE, target:GetLocation()
+   -- If we're going after someone
+	if modeName == "roam" or modeName == "defendally" or modeName == "fight" then
+		local npcEnemy = getHeroVar("RoamTarget")
+        if npcEnemy == nil then npcEnemy = getHeroVar("Target") end
+        if utils.ValidTarget(npcEnemy) then
+            if npcEnemy:HasModifier("modifier_invoker_tornado") or  
+                utils.InTable(ed.heavyManaDependentEnemies, npcEnemy:GetUnitName()) and
+                GetUnitToUnitDistance( npcEnemy, bot ) < (nCastRange - (nRadius / 2)) then
+                return BOT_ACTION_DESIRE_MODERATE, npcEnemy:GetLocation()
+            end
         end
     end
 
     return BOT_ACTION_DESIRE_NONE, {}
 end
 
-function ConsiderGhostWalk(bot, nearbyEnemyHeroes)
+function ConsiderGhostWalk()
+    local bot = GetBot()
+    
     if not quasTrained() or not wexTrained() then
         return BOT_ACTION_DESIRE_NONE
     end
@@ -1058,30 +1137,46 @@ function ConsiderGhostWalk(bot, nearbyEnemyHeroes)
     end
 
     -- WE ARE RETREATING AND THEY ARE ON US
-    if bot.IsRetreating then
+    if modeName == "retreat" then
+        local nearbyEnemyHeroes = gHeroVar.GetNearbyEnemies(bot, 1200)
         for _, npcEnemy in pairs( nearbyEnemyHeroes ) do
-            if bot:WasRecentlyDamagedByHero( npcEnemy, 1.0 ) or GetUnitToUnitDistance( npcEnemy, bot ) < 600 then
+            if utils.ValidTarget(npcEnemy) and (bot:WasRecentlyDamagedByHero( npcEnemy, 1.0 ) 
+                or GetUnitToUnitDistance( npcEnemy, bot ) < 600) then
                 return BOT_ACTION_DESIRE_HIGH
             end
         end
     end
     
-    -- We are roaming
-    local me = getHeroVar("Self")
-    if me:getCurrentMode():GetName() == "roam" then
-        local target = getHeroVar("RoamTarget")
-        if utils.ValidTarget(target) then
-            local dist = GetUnitToUnitDistance(bot, target)
-            if dist < 3200 then
-                return BOT_ACTION_DESIRE_MODERATE
-            end
-        end
+    -- we have a roam target
+    if modeName ~= "retreat" and modeName ~= "fight" and HealthPerc >= 0.75 and ManaPerc >= 0.4	then
+		local roamTarget = getHeroVar("RoamTarget")
+        if utils.ValidTarget(roamTarget) then
+			local enemies3  = gHeroVar.GetNearbyAllies(roamTarget, 1600)
+			local allies3   = gHeroVar.GetNearbyEnemies(roamTarget, 1600)
+			local sumdamage = bot:GetEstimatedDamageToTarget(true, roamTarget, 4.0, DAMAGE_TYPE_ALL)
+			
+			if #enemies3 <= 2 then
+				for _, npcAlly in pairs(allies3) do
+					if not npcAlly:IsIllusion() and npcAlly:GetHealth()/npcAlly:GetMaxHealth() >= 0.7 and 
+                        npcAlly.SelfRef:getCurrentMode():GetName() ~= "retreat" then
+						sumdamage = sumdamage + npcAlly:GetEstimatedDamageToTarget(true, roamTarget, 4.0, DAMAGE_TYPE_ALL)
+					end
+				end
+                
+				if roamTarget:GetHealth()*1.1 <= sumdamage then
+                    setHeroVar("Target", roamTarget)
+					return BOT_ACTION_DESIRE_MODERATE
+				end
+			end
+		end
     end
 
     return BOT_ACTION_DESIRE_NONE
 end
 
-function ConsiderColdSnap(bot)
+function ConsiderColdSnap()
+    local bot = GetBot()
+    
     if not quasTrained() then
         return BOT_ACTION_DESIRE_NONE, nil
     end
@@ -1109,29 +1204,78 @@ function ConsiderColdSnap(bot)
     --------------------------------------
 
     -- Check for a channeling enemy
-    local nearbyEnemyHeroes = gHeroVar.GetNearbyEnemies(bot, Min(1600, nCastRange))
-    for _, npcEnemy in pairs( nearbyEnemyHeroes ) do
-        if npcEnemy:IsChanneling() then
-            if abilityTO:IsFullyCastable() and not abilityTO:IsHidden() then
-                return BOT_ACTION_DESIRE_NONE, nil
-            else
-                return BOT_ACTION_DESIRE_HIGH, npcEnemy
-            end
-        end
-    end
 
+    local enemies = gHeroVar.GetNearbyEnemies(bot, nCastRange + 300)
+    
+	for _, npcEnemy in pairs( enemies ) do
+		if npcEnemy:IsChanneling() and not utils.IsTargetMagicImmune(npcEnemy) then
+			return BOT_ACTION_DESIRE_HIGH, npcEnemy
+		end
+	end
+
+    -- Try to kill enemy hero
+    local WeakestEnemy, HeroHealth = utils.GetWeakestHero(bot, nCastRange + 150)
+	if modeName ~= "retreat" or (modeName == "retreat" and bot.SelfRef:getCurrentModeValue() < BOT_MODE_DESIRE_VERYHIGH) then
+		if utils.ValidTarget(WeakestEnemy) then
+			if not utils.IsTargetMagicImmune(WeakestEnemy) and not utils.IsCrowdControlled(WeakestEnemy) then
+				if HeroHealth <= bot:GetOffensivePower() then
+					return BOT_ACTION_DESIRE_HIGH, WeakestEnemy
+				end
+			end
+		end
+	end
+    
+    -- If we're in a teamfight, use it on the scariest enemy
+	local tableNearbyAttackingAlliedHeroes = utils.InTeamFight(bot, 1000)
+	if #tableNearbyAttackingAlliedHeroes >= 2 then
+		local npcMostDangerousEnemy = utils.GetScariestEnemy(bot, nCastRange)
+
+		if utils.ValidTarget(npcMostDangerousEnemy)	then
+			return BOT_ACTION_DESIRE_HIGH, npcMostDangerousEnemy
+		end
+	end
+    
+    -- protect myself
+	if bot:WasRecentlyDamagedByAnyHero(5) then
+        local closeEnemies = gHeroVar.GetNearbyEnemies(bot, 500)
+		for _, npcEnemy in pairs( closeEnemies ) do
+			if not utils.IsTargetMagicImmune( npcEnemy ) and not utils.IsCrowdControlled(npcEnemy) then
+				return BOT_ACTION_DESIRE_HIGH, npcEnemy
+			end
+		end
+	end
+    
     -- If we're going after someone
-    local target = getHeroVar("Target")
-    if utils.ValidTarget(target) then
-        if GetUnitToUnitDistance( target, bot ) < nCastRange and CanCastColdSnapOnTarget(target) then
-            return BOT_ACTION_DESIRE_HIGH, target
-        end
-    end
+	if modeName == "roam" or modeName == "defendally" or modeName == "fight" then
+		local npcEnemy = getHeroVar("RoamTarget")
+        if npcEnemy == nil then npcEnemy = getHeroVar("Target") end
+
+		if utils.ValidTarget(npcEnemy) then
+			if not utils.IsTargetMagicImmune(npcEnemy) and not utils.IsCrowdControlled(npcEnemy) and 
+                GetUnitToUnitDistance(bot, npcEnemy) < (nCastRange + 75*#gHeroVar.GetNearbyAllies(bot,1200)) then
+				return BOT_ACTION_DESIRE_MODERATE, npcEnemy
+			end
+		end
+	end
+	
+	-- If we're seriously retreating, see if we can land a stun on someone who's damaged us recently
+	if modeName == "retreat" then
+		local tableNearbyEnemyHeroes = gHeroVar.GetNearbyEnemies( bot, nCastRange )
+		for _, npcEnemy in pairs( tableNearbyEnemyHeroes ) do
+			if bot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) then
+				if not utils.IsTargetMagicImmune(npcEnemy) and not utils.IsCrowdControlled(npcEnemy) then
+					return BOT_ACTION_DESIRE_HIGH, npcEnemy
+				end
+			end
+		end
+	end
 
     return BOT_ACTION_DESIRE_NONE, nil
 end
 
-function ConsiderAlacrity(bot, nearbyEnemyCreep, nearbyEnemyTowers)
+function ConsiderAlacrity()
+    local bot = GetBot()
+    
     if not wexTrained() or not exortTrained() then
         return BOT_ACTION_DESIRE_NONE, nil
     end
@@ -1154,36 +1298,52 @@ function ConsiderAlacrity(bot, nearbyEnemyCreep, nearbyEnemyTowers)
     --------------------------------------
     -- Global high-priorty usage
     --------------------------------------
-    local manaRatio = bot:GetMana()/bot:GetMaxMana()
     
     -- If we're pushing or defending a lane and can hit 4+ creeps, go for it
     if modeName == "pushlane" or modeName == "defendlane" then
-        if manaRatio > 0.6 then
+        if ManaPerc > 0.6 then
+            local nearbyEnemyCreep = gHeroVar.GetNearbyEnemyCreep(bot, 1200)
+            local nearbyEnemyTowers = gHeroVar.GetNearbyEnemyTowers(bot, 800)
+            
             if #nearbyEnemyCreep >= 3 or #nearbyEnemyTowers > 0 then
                 return BOT_ACTION_DESIRE_LOW, bot
             end
         end
     end
 
-    --------- CHASING --------------------------------
-    local target = getHeroVar("Target")
-    if utils.ValidTarget(target) then
-        return BOT_ACTION_DESIRE_MODERATE, bot
-    end
+    -- If we're going after someone
+	if modeName == "roam" or modeName == "defendally" or modeName == "fight" then
+		local npcEnemy = getHeroVar("RoamTarget")
+        if npcEnemy == nil then npcEnemy = getHeroVar("Target") end
+
+		if utils.ValidTarget(npcEnemy) and GetUnitToUnitDistance(bot, npcEnemy) < 1000 then
+			return BOT_ACTION_DESIRE_MODERATE, bot
+		end
+	end
 
     --------- ROSHAN --------------------------------
-    local me = getHeroVar("Self")
-    if me:getCurrentMode():GetName() == "roshan" then
-        local npcTarget = bot:GetTarget()
-        if utils.NotNilOrDead(npcTarget) then
-            return BOT_ACTION_DESIRE_LOW, bot
+    if modeName == "roshan" then
+        if GetUnitToLocationDistance(bot, utils.ROSHAN) < 600 then
+            local eCreep = gHeroVar.GetNearbyEnemyCreep(bot, 600)
+            local roshan = nil
+            for _, creep in pairs(eCreep) do
+                if creep:GetUnitName() == "npc_dota_roshan" then
+                    roshan = creep
+                    break
+                end
+            end
+            if utils.ValidTarget(roshan) then
+                return BOT_ACTION_DESIRE_MODERATE, bot
+            end
         end
     end
 
     return BOT_ACTION_DESIRE_NONE, nil
 end
 
-function ConsiderForgedSpirit(bot, nearbyEnemyHeroes, nearbyEnemyCreep, nearbyEnemyTowers)
+function ConsiderForgedSpirit()
+    local bot = GetBot()
+    
     if not quasTrained() or not exortTrained() then
         return BOT_ACTION_DESIRE_NONE
     end
@@ -1205,31 +1365,40 @@ function ConsiderForgedSpirit(bot, nearbyEnemyHeroes, nearbyEnemyCreep, nearbyEn
 
     --------- ROSHAN --------------------------------
     if modeName == "roshan" then
-        local npcTarget = bot:GetTarget()
-        if utils.NotNilOrDead(npcTarget) then
-            return BOT_ACTION_DESIRE_LOW
-        end
-    end
-
-    --------------------------------------
-    -- Global high-priorty usage
-    --------------------------------------
-    local manaRatio = bot:GetMana()/bot:GetMaxMana()
-    
-    -- If we're pushing or defending a lane, go for it
-    if modeName == "pushlane" or modeName == "defendlane" then
-        if manaRatio > 0.4 then
-            if #nearbyEnemyHeroes > 0 or #nearbyEnemyCreep >= 3 or #nearbyEnemyTowers > 0 then
+        if GetUnitToLocationDistance(bot, utils.ROSHAN) < 600 then
+            local eCreep = gHeroVar.GetNearbyEnemyCreep(bot, 600)
+            local roshan = nil
+            for _, creep in pairs(eCreep) do
+                if creep:GetUnitName() == "npc_dota_roshan" then
+                    roshan = creep
+                    break
+                end
+            end
+            if utils.ValidTarget(roshan) then
                 return BOT_ACTION_DESIRE_MODERATE
             end
         end
     end
-
-    --------- CHASING --------------------------------
-    local target = getHeroVar("Target")
-    if utils.ValidTarget(target) then
-        return BOT_ACTION_DESIRE_MODERATE
+    
+    -- If we're pushing or defending a lane, go for it
+    if modeName == "pushlane" or (modeName == "defendlane" and ManaPerc > 0.4) then
+        local nearbyEnemyHeroes = gHeroVar.GetNearbyEnemies(bot, 1200)
+        local nearbyEnemyCreep = gHeroVar.GetNearbyEnemyCreep(bot, 1200)
+        local nearbyEnemyTowers = gHeroVar.GetNearbyEnemyTowers(bot, 800)
+        if #nearbyEnemyHeroes > 0 or #nearbyEnemyCreep >= 3 or #nearbyEnemyTowers > 0 then
+            return BOT_ACTION_DESIRE_MODERATE
+        end
     end
+
+    -- If we're going after someone
+	if modeName == "roam" or modeName == "defendally" or modeName == "fight" then
+		local npcEnemy = getHeroVar("RoamTarget")
+        if npcEnemy == nil then npcEnemy = getHeroVar("Target") end
+
+		if utils.ValidTarget(npcEnemy) and GetUnitToUnitDistance(bot, npcEnemy) < 1000 then
+			return BOT_ACTION_DESIRE_LOW
+		end
+	end
 
     return BOT_ACTION_DESIRE_NONE
 end

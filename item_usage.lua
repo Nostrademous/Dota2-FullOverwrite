@@ -25,9 +25,8 @@ end
 function UseRegenItems()
     local bot = GetBot()
 
-    if utils.IsBusy(bot) or bot:IsMuted() then
-        return false
-    end
+    if utils.IsBusy(bot) then return true end
+    if bot:IsMuted() then return false end
 
     -- if we are full health and full mana, exit early
     if bot:GetHealth() == bot:GetMaxHealth() and bot:GetMana() == bot:GetMaxMana() then return false end
@@ -154,9 +153,8 @@ end
 function UseRegenItemsOnAlly()
     local bot = GetBot()
 
-    if utils.IsBusy(bot) or bot:IsMuted() then
-        return false
-    end
+    if utils.IsBusy(bot) then return true end
+    if bot:IsMuted() then return false end
 
     -- if we are under effect of a shrine, exit early
     if bot:HasModifier("modifier_filler_heal") then return false end
@@ -273,9 +271,7 @@ end
 function UseTeamItems()
     local bot = GetBot()
 
-    if utils.IsBusy(bot) then
-        return false
-    end
+    if utils.IsBusy(bot) then return true end
 
     if not bot:HasModifier("modifier_fountain_aura_buff") then
         local mekansm = utils.IsItemAvailable("item_mekansm")
@@ -310,9 +306,8 @@ end
 function UseMovementItems(location)
     local bot = GetBot()
 
-    if utils.IsBusy(bot) or bot:IsMuted() then
-        return false
-    end
+    if utils.IsBusy(bot) then return true end
+    if bot:IsMuted() then return false end
 
     if UsePhaseBoots() then return true end
 
@@ -328,7 +323,8 @@ end
 function UseDefensiveItems(enemy, triggerDistance)
     local bot = GetBot()
 
-    if utils.IsBusy(bot) or bot:IsMuted() then return false end
+    if utils.IsBusy(bot) then return true end
+    if bot:IsMuted() then return false end
 
     local hp = utils.IsItemAvailable("item_hurricane_pike")
     if hp and GetUnitToUnitDistance(bot, enemy) < triggerDistance then
@@ -340,7 +336,8 @@ end
 function UseBuffItems()
     local bot = GetBot()
 
-    if utils.IsBusy(bot) or bot:IsMuted() then return false end
+    if utils.IsBusy(bot) then return true end
+    if bot:IsMuted() then return false end
 
     if UseTomeOfKnowledge() then return true end
 
@@ -357,7 +354,8 @@ function UseTP(hero, loc, lane)
 
     if DotaTime() < 10 then return false end
 
-    if utils.IsBusy(hero) or hero:IsMuted() then return false end
+    if utils.IsBusy(bot) then return true end
+    if bot:IsMuted() then return false end
 
     -- if we are in fountain, don't TP out until we have full health & mana
     if hero:DistanceFromFountain() < 200 and
@@ -424,7 +422,8 @@ function UseItems()
 
     local bot = GetBot()
 
-    if utils.IsBusy(bot) or bot:IsMuted() then return false end
+    if utils.IsBusy(bot) then return true end
+    if bot:IsMuted() then return false end
     
     if UseEuls() then return true end
 
@@ -760,12 +759,16 @@ function UseMidas()
     if midas then
         local creeps = gHeroVar.GetNearbyEnemyCreep(bot, 600)
         if #creeps > 1 then
-            table.sort(creeps, function(n1, n2) return n1:GetHealth() > n2:GetHealth() end)
-            gHeroVar.HeroUseAbilityOnEntity(bot, midas, creeps[1])
-            return true
+            table.sort(creeps, function(n1, n2) return n1:GetHealth()/bot:GetAttackCombatProficiency(n1) > n2:GetHealth()/bot:GetAttackCombatProficiency(n2) end)
+            if not creeps[1]:IsAncientCreep() then
+                gHeroVar.HeroUseAbilityOnEntity(bot, midas, creeps[1])
+                return true
+            end
         elseif #creeps == 1 then
-            gHeroVar.HeroUseAbilityOnEntity(bot, midas, creeps[1])
-            return true
+            if not creeps[1]:IsAncientCreep() then
+                gHeroVar.HeroUseAbilityOnEntity(bot, midas, creeps[1])
+                return true
+            end
         end
     end
     return false

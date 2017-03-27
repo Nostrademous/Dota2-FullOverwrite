@@ -329,9 +329,13 @@ function X:DoChangeLane(bot)
     end
 
     -- check Tier 3 towers & buildings
-    if utils.InTable(listBuildings, 3) or utils.InTable(listBuildings, 12) or utils.InTable(listBuildings, 13) then table.insert(nLane, LANE_TOP) end
-    if utils.InTable(listBuildings, 6) or utils.InTable(listBuildings, 14) or utils.InTable(listBuildings, 15) then table.insert(nLane, LANE_MID) end
-    if utils.InTable(listBuildings, 9) or utils.InTable(listBuildings, 16) or utils.InTable(listBuildings, 17) then table.insert(nLane, LANE_BOT) end
+    local topBuildings = GetVulnerableBuildingIDs(utils.GetOtherTeam(), LANE_TOP)
+    local midBuildings = GetVulnerableBuildingIDs(utils.GetOtherTeam(), LANE_MID)
+    local botBuildings = GetVulnerableBuildingIDs(utils.GetOtherTeam(), LANE_BOT)
+    
+    if utils.InTable(listBuildings, 3) or utils.InTable(topBuildings, 12) or utils.InTable(topBuildings, 13) then table.insert(nLane, LANE_TOP) end
+    if utils.InTable(listBuildings, 6) or utils.InTable(midBuildings, 14) or utils.InTable(midBuildings, 15) then table.insert(nLane, LANE_MID) end
+    if utils.InTable(listBuildings, 9) or utils.InTable(botBuildings, 16) or utils.InTable(botBuildings, 17) then table.insert(nLane, LANE_BOT) end
     -- if we have found a standing Tier 3 tower, end
     if #nLane > 0 then
         return self:AnalyzeLanes(nLane)

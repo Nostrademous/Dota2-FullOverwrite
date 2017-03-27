@@ -354,8 +354,8 @@ function UseTP(hero, loc, lane)
 
     if DotaTime() < 10 then return false end
 
-    if utils.IsBusy(bot) then return true end
-    if bot:IsMuted() then return false end
+    if utils.IsBusy(hero) then return true end
+    if hero:IsMuted() then return false end
 
     -- if we are in fountain, don't TP out until we have full health & mana
     if hero:DistanceFromFountain() < 200 and
@@ -366,7 +366,8 @@ function UseTP(hero, loc, lane)
     local tp, bMainInv = utils.HaveItem(hero, "item_tpscroll")
     if tp ~= nil and (utils.HaveItem(hero, "item_travel_boots_1") or utils.HaveItem(hero, "item_travel_boots_2"))
         and (hero:DistanceFromFountain() < 200 or hero:DistanceFromSideShop() < 200 or hero:DistanceFromSecretShop() < 200) then
-        hero:SellItem(tp)
+        utils.myPrint("Selling TP, don't need it")
+        hero:ActionImmediate_SellItem(tp)
         tp = nil
     end
 
@@ -406,8 +407,10 @@ function UseTP(hero, loc, lane)
         -- dest (below) should find farthest away tower to TP to in our assigned lane, even if tower is dead it will
         -- just default to closest location we can TP to in that direction
         if GetUnitToLocationDistance(hero, dest) > 3000 and hero:DistanceFromFountain() < 200 then
+            utils.myPrint("Using TP")
             gHeroVar.HeroUseAbilityOnLocation(hero, tp, dest)
             if tpSwap then
+                utils.myPrint("Swapping back item for TP slot")
                 hero:ActionImmediate_SwapItems(0, backPackSlot)
             end
             return true
@@ -435,7 +438,7 @@ function UseItems()
 
     if UseTeamItems() then return true end
 
-    --if UseTP(bot) then return true end
+    if UseTP(bot) then return true end
 
     local courier = utils.IsItemAvailable("item_courier")
     if courier ~= nil then

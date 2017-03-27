@@ -36,7 +36,7 @@ function X:Think(bot)
 
     local Towers = gHeroVar.GetNearbyEnemyTowers(bot, 750)
     local Shrines = bot:GetNearbyShrines(1200, true)
-    local Barracks = gHeroVar.GetNearbyBarracks(bot, 1200)
+    local Barracks = gHeroVar.GetNearbyEnemyBarracks(bot, 1200)
     local Ancient = GetAncient(utils.GetOtherTeam())
 
     -- if there are no structures near by

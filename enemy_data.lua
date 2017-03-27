@@ -15,6 +15,19 @@ local UpdateFreq2 = 3.0
 -- FUNCTIONS - implement rudimentary atomic operation insurance
 -------------------------------------------------------------------------------
 
+local heavyRightClickDamage = {
+    "npc_dota_phantom_assassin",
+    "npc_dota_sven"
+}
+
+local heavyManaDependentEnemies = {
+    "npc_dota_hero_leshrac",
+    "npc_dota_hero_medusa",
+    "npc_dota_hero_skeleton_king",
+    "npc_dota_hero_storm_spirit",
+    "npc_dota_hero_zuus"
+}
+
 function EnemyData.PurgeEnemy(id)
     EnemyData[id] = {  Name = "", Time1 = -100, Time2 = -100, Level = 1,
                        Alive = true, Health = -1, MaxHealth = -1, Mana = -1, Items = {}, MoveSpeed = 300, 

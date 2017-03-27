@@ -453,7 +453,7 @@ function X:ConsiderSellingItems(bot)
                     end
                 end
             else
-                if not utils.IsBusy() and not utils.HaveItem(bot, "item_tpscroll") then
+                if not utils.IsBusy(bot) and not utils.HaveItem(bot, "item_tpscroll") then
                     if DEBUG then utils.pause("can't empty anything in inventory") end
                 end
                 break

@@ -24,12 +24,12 @@ end
 
 function X:OnStart(myBot)
     local bot = GetBot()
-    bot.defendLane = true
+    bot.defendingLane = true
 end
 
 function X:OnEnd()
     local bot = GetBot()
-    bot.defendLane = false
+    bot.defendingLane = false
 end
 
 function X:Desire(bot)

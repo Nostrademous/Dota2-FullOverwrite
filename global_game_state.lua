@@ -63,32 +63,16 @@ function GetPositionBetweenBuildings(unit, team)
     return d_allied / (d_allied + d_enemy)
 end
 
-function nearBuilding(unitLoc, building)
-    return utils.GetDistance(unitLoc, building) <= 1000
+function nearBuilding(unitLoc, buildingLoc)
+    return utils.GetDistance(unitLoc, buildingLoc) <= 1000
 end
 
 function numEnemiesNearBuilding(building)
     local num = 0
-    for k, enemy in pairs(enemyData) do
-        if type(k) == "number" then
-            if enemy.Alive then
-                local eLoc = enemy.LocExtra1
-                if utils.ValidTarget(enemy.Obj) then
-                    eLoc = enemy.Obj:GetLocation()
-                end
-
-                if eLoc == nil then return 0 end
-
-                if building > 0 then
-                    if nearBuilding(eLoc, buildings_status.GetLocation(GetTeam(), building)) then
-                        num = num + 1
-                    end
-                else
-                    if nearBuilding(eLoc, GetAncient(GetTeam()):GetLocation()) then
-                        num = num + 1
-                    end
-                end
-            end
+    local enemies = GetUnitList(UNIT_LIST_ENEMY_HEROES)
+    for _, enemy in pairs(enemies) do
+        if nearBuilding(enemy:GetLocation(), buildings_status.GetLocation(GetTeam(), building)) then
+            num = num + 1
         end
     end
     return num

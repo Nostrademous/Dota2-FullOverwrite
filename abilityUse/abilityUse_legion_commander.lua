@@ -201,8 +201,8 @@ function ConsiderW()
 	end
 	
 	-- If we're farming
-    local creeps = gHeroVar.GetNearbyEnemyCreep( bot, 900 )
 	if modeName == "laning" or modeName == "jungling" then
+        local creeps = gHeroVar.GetNearbyEnemyCreep( bot, 900 )
 		if #creeps >= 2 and HealthPerc < 0.5 then
 			if ManaPerc > 0.4 then
                 if not utils.IsTargetMagicImmune( bot ) then

@@ -140,7 +140,7 @@ function ConsiderE()
     local enemies = gHeroVar.GetNearbyEnemies( bot, 1200 )
 	
     -- if I'm retreating
-    if modeName == "retreat" then
+    if modeName == "retreat" or modeName == "shrine" then
         if #enemies >= 1 or bot:WasRecentlyDamagedByAnyHero(5.0) then
             return BOT_ACTION_DESIRE_MODERATE, bot:GetLocation() + RandomVector( RandomInt(0, CastRange) )
         end

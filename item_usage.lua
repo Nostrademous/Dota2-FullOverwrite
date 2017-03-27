@@ -271,9 +271,7 @@ end
 function UseTeamItems()
     local bot = GetBot()
 
-    if utils.IsBusy(bot) then
-        return false
-    end
+    if utils.IsBusy(bot) then return true end
 
     if not bot:HasModifier("modifier_fountain_aura_buff") then
         local mekansm = utils.IsItemAvailable("item_mekansm")

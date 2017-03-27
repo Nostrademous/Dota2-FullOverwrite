@@ -36,7 +36,7 @@ function X:Think(bot)
 
     local Towers = gHeroVar.GetNearbyEnemyTowers(bot, 750)
     local Shrines = bot:GetNearbyShrines(1200, true)
-    local Barracks = bot:GetNearbyBarracks(1200, true)
+    local Barracks = gHeroVar.GetNearbyEnemyBarracks(bot, 1200)
     local Ancient = GetAncient(utils.GetOtherTeam())
 
     -- if there are no structures near by
@@ -235,6 +235,17 @@ function X:Desire(bot)
         if utils.IsTowerAttackingMe() and #gHeroVar.GetNearbyAlliedCreep(bot, 1000) == 0 then
             return BOT_MODE_DESIRE_NONE
         end
+    end
+
+    local nearbyEBarracks = gHeroVar.GetNearbyEnemyBarracks(bot, Max(750, bot:GetAttackRange()))
+    if #nearbyEBarracks > 0 then
+        if not modifiers.IsBuildingGlyphed(nearbyEBarracks[1]) then
+            return BOT_MODE_DESIRE_HIGH
+        end
+    end
+
+    if GetUnitToUnitDistance(GetAncient(utils.GetOtherTeam()), bot) < 1200 then
+        return BOT_MODE_DESIRE_HIGH
     end
 
     if #gHeroVar.GetNearbyAlliedCreep(bot, 1000) >= 1 and #gHeroVar.GetNearbyEnemies(bot, 1200) == 0 then

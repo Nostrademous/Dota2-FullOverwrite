@@ -48,12 +48,11 @@ function X:Desire(bot)
     
     -- if we are defending the lane, stay until all enemy
     -- creep is pushed back and enemies are not nearby
-    local me = getHeroVar("Self")
-    if me:getCurrentMode():GetName() == "defendlane" and
+    if bot.SelfRef:getCurrentMode():GetName() == "defendlane" and
         (#gHeroVar.GetNearbyEnemyCreep(bot, 1500) > 0 or
         #gHeroVar.GetNearbyEnemies(bot, 1500)) and
-        hBuilding ~= nil and GetUnitToUnitDistance(bot, hBuilding) < 900 then
-        return me:getCurrentModeValue()
+        utils.ValidTarget(hBuilding) and GetUnitToUnitDistance(bot, hBuilding) < 900 then
+        return bot.SelfRef:getCurrentModeValue()
     end
 
     return BOT_MODE_DESIRE_NONE

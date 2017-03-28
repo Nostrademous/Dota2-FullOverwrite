@@ -91,6 +91,8 @@ function X:Think(bot)
                 return
             end
         end
+    else
+        bot.SelfRef:ClearMode()
     end
 end
 
@@ -109,7 +111,8 @@ function X:Desire(bot)
     local enemyHealth = 0
     local enemyDmg = 0
     for _, enemy in pairs(enemyList) do
-        if enemy:GetHealth()/enemy:GetMaxHealth() >= 0.25 and not modifiers.HasDangerousModifiers(enemy) and 
+        if utils.ValidTarget(enemy) and enemy:GetHealth()/enemy:GetMaxHealth() >= 0.25 and 
+            not modifiers.HasDangerousModifiers(enemy) and 
             not utils.IsCrowdControlled(enemy) then
             for _, ally in pairs(allyList) do
                 if not ally:IsIllusion() then
@@ -129,10 +132,13 @@ function X:Desire(bot)
     local allyHealth = 0
     local allyDmg = 0
     for _, ally in pairs(allyList) do
-        if not ally:IsIllusion() and ally:GetHealth()/ally:GetMaxHealth() >= 0.25 and not modifiers.HasDangerousModifiers(ally) and 
+        if not ally:IsIllusion() and ally:GetHealth()/ally:GetMaxHealth() >= 0.25 and 
+            not modifiers.HasDangerousModifiers(ally) and 
             not utils.IsCrowdControlled(ally) then
             for _, enemy in pairs(enemyList) do
-                allyDmg = allyDmg + ally:GetEstimatedDamageToTarget( true, enemy, 4.0, DAMAGE_TYPE_ALL )
+                if utils.ValidTarget(enemy) then
+                    allyDmg = allyDmg + ally:GetEstimatedDamageToTarget( true, enemy, 4.0, DAMAGE_TYPE_ALL )
+                end
             end
             allyHealth = allyHealth + ally:GetHealth()
         end

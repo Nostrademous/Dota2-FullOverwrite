@@ -168,6 +168,9 @@ function X:Think(bot)
         utils.myPrint("Null Target")
         setHeroVar("Target", nil)
         bot.teamKill = false
+        if self.currentMode:GetName() == "fighting" then
+            self:ClearMode()
+        end
         bot:Action_ClearActions(true)
         return
     end

@@ -41,7 +41,8 @@ There are files for each hero, and at least one file for each mode (for details,
 
 If you want to store some data for a bot, do so by using `bot.<modeName>_<variableName>`.
 
-There are no stub files as of yet. Just copy the file that is closest to what you need and modify it.
+There are not many stub files as of yet. Just copy the file that is closest to what you need and modify it.
+A stub file exists for ability use at: `abilityUse/abilityUse_template.lua`
 
 *Heroes*
 -------
@@ -58,8 +59,10 @@ While every hero has some files for itself, most of the logic is defined by gene
 -   checks conditions ands cast spells
 -   item usage is generic, no need to reimplement these
 
-**itemPruchase/&lt;heroName&gt;.lua**:
+**itemPurchase/&lt;heroName&gt;.lua**:
 -   defines some items the hero can buy
+-   defines what items should be sold as inventory fills up
+-   items after the `core` section will be updated based on how the game progresses (in the works)
 
 *Modes*
 -------
@@ -80,7 +83,10 @@ Files of Interest:
 	across all files
 
 *   **utility.lua** - many utility functions that are used by other files which
-	implement generic logic and behaviors of the bots
+	implement generic logic and behaviors of the bots. These are separated 
+	into `math functions`, `hero generic functions`, `creep functions`, 
+	`courier & item related functions`, `team fight functions`, etc. Chances
+	are that if we need a function to calculate something, it already exist.
 
 *   **hero_selection.lua** - basic and very simple hero selection and lane
 	assignment for the bots. The lane assignment is only useful for not
@@ -110,18 +116,16 @@ Files of Interest:
 	mana & health which will help us know probabilistic reasons for why the
 	bots disappeared (e.g., low health/mana -> probably went to heal at shrine
 	or fountain -> don't be as worried).
-
-    Currently the information is just
-	stored and not used in any way. TO BE FIXED!
+	
+	Currently the information is just stored and not used much. TO BE FIXED!
 
 *   **global_hero_data.lua** - this file holds custom versions of many bot:Get&#95;&lt;something&gt; and bot:Action&#95;&lt;action&gt; that are easier to use.
 
     Still in use, but not encouraged (use bot.&lt;variable&gt; instead):
 
-    this is a global table that allows for per-hero
-	persistant storage of variables. It is saved based on the hero's playerID.
-	If a variable is retrieved via getHeroVar("&lt;strNameOfVar&gt;") that does not
-	exist, nil is returned.
+    This is a global table that allows for per-hero persistant storage of variables. 
+    It is saved based on the hero's playerID. If a variable is retrieved via 
+    getHeroVar("&lt;strNameOfVar&gt;") that does not exist, `nil` is returned.
 
 *   **decision.lua** - this contains the core Think function for every hero. However, most of the time it'll just call a mode for the hard work.
 
@@ -142,6 +146,8 @@ Lots, we need :
 -   roshan logic, etc.
 -   **dynamic** item purchasing for heroes
 -   **dynamic** skill builds for heroes
--   implement lots more
+-   **dynamic** hero selection for synergy and countering the opposition
+-   implement lots more heroes
+-   implement dealing with disappearing heroes (b/c they go invis for example)
 
-~~Some~~ A lot of FIXMEs/TODOs are commented in code - I add them as a tag to get back to with ideas.
+A lot of FIXMEs/TODOs are commented in code - I add them as a tag to get back to with ideas.

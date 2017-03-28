@@ -7,6 +7,7 @@ BotsInit = require( "game/botsinit" )
 local X = BotsInit.CreateGeneric()
 
 require( GetScriptDirectory().."/modifiers" )
+require( GetScriptDirectory().."/global_game_state" )
 
 local utils = require( GetScriptDirectory().."/utility" )
 local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
@@ -32,7 +33,9 @@ function X:OnStart(myBot)
 end
 
 function X:OnEnd()
+    local bot = GetBot()
     setHeroVar("Target", nil)
+    bot.teamKill = false
 end
 
 function X:Think(bot)
@@ -91,7 +94,10 @@ function X:Think(bot)
     end
 end
 
-function X:Desire(bot)    
+function X:Desire(bot)
+    global_game_state.GlobalFightDetermination()
+    if bot.teamKill then return BOT_MODE_DESIRE_HIGH end
+    
     local enemyList = gHeroVar.GetNearbyEnemies(bot, 1200)
     if #enemyList == 0 then return BOT_MODE_DESIRE_NONE end
     local allyList = gHeroVar.GetNearbyAllies(bot, 1200)

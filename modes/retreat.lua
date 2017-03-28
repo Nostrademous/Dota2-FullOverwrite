@@ -114,10 +114,12 @@ function X:Desire(bot)
             --utils.myPrint("What to do... I'm almost at full health but can die to enemy burst!")
             -- TODO: need to request support from allies
         else
-            bot.IsRetreating = true
+            if HealthPerc < 0.5 then
+                bot.IsRetreating = true
+            end
         end
 
-        bot.retreat_desire_debug = "enemyDamage/#allies > bot:GetHealth()"
+        bot.retreat_desire_debug = "Reason #1"
         return BOT_MODE_DESIRE_VERYHIGH
     end
     
@@ -141,7 +143,7 @@ function X:Desire(bot)
         (ManaPerc < 0.07 and bot.SelfRef:getCurrentMode():GetName() == "laning" and
         bot:GetManaRegen() < 6.0 and not utils.IsCore(bot) ) then
 		bot.IsRetreating = true
-        bot.retreat_desire_debug = "low health% or very low mana%"
+        bot.retreat_desire_debug = "Reason #2"
 		return BOT_MODE_DESIRE_HIGH
 	end
    

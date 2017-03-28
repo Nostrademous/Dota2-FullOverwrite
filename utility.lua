@@ -1207,7 +1207,7 @@ function U.IsCreepAttackingMe(fTime)
     return false
 end
 
-function U.HarassEnemy(bot, skillName, hTarget)
+function U.CanHarass(bot, hTarget)
     --[[
     local listAlliedTowers = gHeroVar.GetNearbyAlliedTowers(bot, 600)
     for _, enemy in pairs(listEnemies) do
@@ -1231,12 +1231,10 @@ function U.HarassEnemy(bot, skillName, hTarget)
     end
     --]]
 
-    local otherEnemiesInWay = utils.GetEnemyHeroesBetweenMeAndLoc(hTarget:GetLocation()-100, 200)
+    local otherEnemiesInWay = U.GetEnemyHeroesBetweenMeAndLoc(hTarget:GetLocation()+100, 500)
     if #otherEnemiesInWay == 0 then
+        return true
     end
-
-    -- if we have an orb effect (won't aggro creep), use it
-    if U.UseOrbEffect(bot) then return true end
 
     return false
 end
@@ -1261,10 +1259,16 @@ end
 
 function U.DirectionAwayFromDanger(listDangerHandles, origDir)
     local safeDir = origDir
+    local bot = GetBot()
 
+    local otherEnemiesInWay = U.GetEnemyHeroesBetweenMeAndLoc(U.VectorTowards(bot:GetLocation(), safeDir, 1600), 1000)
+    if #otherEnemiesInWay == 0 then
+        return safeDir
+    end
+    
     if #listDangerHandles > 0 then
         local dangerPoint = U.GetCenter(listDangerHandles)
-        safeDir = U.VectorAway(GetBot():GetLocation(), dangerPoint, 500)
+        safeDir = U.VectorAway(bot:GetLocation(), dangerPoint, 500)
     end
 
     return safeDir

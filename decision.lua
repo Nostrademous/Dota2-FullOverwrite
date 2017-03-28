@@ -167,6 +167,7 @@ function X:Think(bot)
     if tt ~= nil and (tt:IsNull() or not tt:IsAlive()) then
         utils.myPrint("Null Target")
         setHeroVar("Target", nil)
+        bot.teamKill = false
         bot:Action_ClearActions(true)
         return
     end

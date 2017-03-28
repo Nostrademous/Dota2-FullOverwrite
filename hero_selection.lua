@@ -7,21 +7,21 @@ local utils = require( GetScriptDirectory().."/utility" )
 
 local Pos_1_Pool = {
     "npc_dota_hero_drow_ranger",
-    "npc_dota_hero_phantom_assassin"
+    --"npc_dota_hero_phantom_assassin"
 }
 
 local Pos_2_Pool = {
-    "npc_dota_hero_invoker",
+    --"npc_dota_hero_invoker",
     "npc_dota_hero_lina"
 }
 
 local Pos_3_Pool = {
-    "npc_dota_hero_spirit_breaker",
+    --"npc_dota_hero_spirit_breaker",
     "npc_dota_hero_viper"
 }
 
 local Pos_4_Pool = {
-    "npc_dota_hero_venomancer"
+    --"npc_dota_hero_venomancer"
 }
 
 local Pos_5_Pool = {
@@ -30,7 +30,7 @@ local Pos_5_Pool = {
 
 -- roamers, junglers
 local Pos_X_Pool = {
-    "npc_dota_hero_legion_commander",
+    --"npc_dota_hero_legion_commander",
     "npc_dota_hero_bloodseeker"
 }
 

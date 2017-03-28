@@ -175,6 +175,30 @@ function queueNukeTOCMDB(bot, location, engageDist)
     return false
 end
 
+function invAbility:nukeDamage( bot, enemy )
+    if not utils.ValidTarget(enemy) then return 0, {}, 0, 0, 0 end
+
+    local comboQueue = {}
+    local manaAvailable = bot:GetMana()
+    local dmgTotal = bot:GetOffensivePower()
+    local castTime = 0
+    local stunTime = 0
+    local slowTime = 0
+    local engageDist = 500
+    
+    -- WRITE CODE HERE --
+    
+    return dmgTotal, comboQueue, castTime, stunTime, slowTime, engageDist
+end
+
+function invAbility:queueNuke(bot, enemy, castQueue, engageDist)
+    if not utils.ValidTarget(enemy) then return false end
+    
+    -- WRITE CODE HERE --
+    
+    return false
+end
+
 function invAbility:AbilityUsageThink(bot)
     -- Check if we're already using an ability
     if utils.IsBusy(bot) then return true end

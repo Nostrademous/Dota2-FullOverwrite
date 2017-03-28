@@ -75,7 +75,7 @@ end
 function X.GetNearbyEnemyBarracks(bot, range)
     local endList = bot:GetNearbyBarracks(range, true)
     if #endList > 0 then
-        print("[CRITICAL]: API bug fixed. plas adjust code. random uniqe marker: AWESDFWRGWFE")
+        utils.pause("[CRITICAL]: API bug fixed. plas adjust code. random uniqe marker: AWESDFWRGWFE")
     end
 
     local startList = bot:GetNearbyTowers(range, true)

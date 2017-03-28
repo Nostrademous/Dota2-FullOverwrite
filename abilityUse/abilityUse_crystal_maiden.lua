@@ -362,8 +362,7 @@ function ConsiderW()
            (ManaPerc > 0.7) then
 			if utils.ValidTarget(WeakestEnemy) and GetUnitToUnitDistance(bot, WeakestEnemy) < (CastRange + 300) then
 				if not utils.IsTargetMagicImmune(WeakestEnemy) and not utils.IsCrowdControlled(WeakestEnemy) then
-                    local otherEnemiesInWay = utils.GetEnemyHeroesBetweenMeAndLoc(WeakestEnemy:GetLocation()-100, 200)
-                    if #otherEnemiesInWay == 0 then
+                    if utils.CanHarass(bot, WeakestEnemy) then
                         return BOT_ACTION_DESIRE_LOW, WeakestEnemy
                     end
 				end

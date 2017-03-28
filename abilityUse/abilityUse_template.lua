@@ -130,11 +130,11 @@ function genericAbility:nukeDamage( bot, enemy )
 
     local comboQueue = {}
     local manaAvailable = bot:GetMana()
-    local dmgTotal = 0
+    local dmgTotal = bot:GetOffensivePower()
     local castTime = 0
     local stunTime = 0
     local slowTime = 0
-    local engageDist = 10000
+    local engageDist = 500
     
     -- WRITE CODE HERE --
     

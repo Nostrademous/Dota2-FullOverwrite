@@ -41,12 +41,21 @@ function X:Think(bot)
     end
 
     if GetUnitToUnitDistance(bot, bot.useShrine) > 300 then
+        local loc = bot.useShrine:GetLocation()
+        
+        local nearbyEnemies = gHeroVar.GetNearbyEnemies(bot, 1600)
+        local nearbyETowers = gHeroVar.GetNearbyEnemyTowers(bot, 1600)
+        if #nearbyEnemies > 0 or #nearbyETowers > 0 then
+            local listDangerHandles = { unpack(nearbyEnemies), unpack(nearbyETowers) }
+            loc = utils.DirectionAwayFromDanger(listDangerHandles, loc)
+        end
+    
         if not modifiers.IsInvisible(bot) then
-            if item_usage.UseMovementItems(bot.useShrine:GetLocation()) then return end
+            if item_usage.UseMovementItems(loc) then return end
             if item_usage.UseGlimmerCape(bot) then return end
         end
         
-        gHeroVar.HeroMoveToLocation(bot, bot.useShrine:GetLocation())
+        gHeroVar.HeroMoveToLocation(bot, loc)
         return
     else
         --utils.myPrint("using Shrine")

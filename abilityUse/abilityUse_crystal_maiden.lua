@@ -315,15 +315,15 @@ function ConsiderW()
     local enemies = gHeroVar.GetNearbyEnemies(bot, CastRange + 300)
     
 	for _, npcEnemy in pairs( enemies ) do
-		if npcEnemy:IsChanneling() and not utils.IsTargetMagicImmune(npcEnemy) then
+		if utils.ValidTarget(npcEnemy) and npcEnemy:IsChanneling() and not utils.IsTargetMagicImmune(npcEnemy) then
 			return BOT_ACTION_DESIRE_HIGH, npcEnemy
 		end
 	end
 	
 	-- Try to kill enemy hero
-    local WeakestEnemy, HeroHealth = utils.GetWeakestHero(bot, CastRange + 150)
+    local WeakestEnemy, HeroHealth = utils.GetWeakestHero(bot, 1200)
 	if modeName ~= "retreat" or (modeName == "retreat" and bot.SelfRef:getCurrentModeValue() < BOT_MODE_DESIRE_VERYHIGH) then
-		if utils.ValidTarget(WeakestEnemy) then
+		if utils.ValidTarget(WeakestEnemy) and GetUnitToUnitDistance(bot, WeakestEnemy) < (CastRange + 150) then
 			if not utils.IsTargetMagicImmune(WeakestEnemy) and not utils.IsCrowdControlled(WeakestEnemy) then
 				if HeroHealth <= WeakestEnemy:GetActualIncomingDamage(Damage, DAMAGE_TYPE_MAGICAL) then
 					return BOT_ACTION_DESIRE_HIGH, WeakestEnemy
@@ -360,9 +360,12 @@ function ConsiderW()
 	if modeName == "jungling" or modeName == "laning" then
 		if (ManaPerc > 0.4 and abilityW:GetLevel() >= 2) or
            (ManaPerc > 0.7) then
-			if utils.ValidTarget(WeakestEnemy) then
+			if utils.ValidTarget(WeakestEnemy) and GetUnitToUnitDistance(bot, WeakestEnemy) < (CastRange + 300) then
 				if not utils.IsTargetMagicImmune(WeakestEnemy) and not utils.IsCrowdControlled(WeakestEnemy) then
-					return BOT_ACTION_DESIRE_LOW, WeakestEnemy
+                    local otherEnemiesInWay = utils.GetEnemyHeroesBetweenMeAndLoc(WeakestEnemy:GetLocation()-100, 200)
+                    if #otherEnemiesInWay == 0 then
+                        return BOT_ACTION_DESIRE_LOW, WeakestEnemy
+                    end
 				end
 			end
 		end

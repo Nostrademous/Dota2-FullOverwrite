@@ -322,7 +322,7 @@ local function GetBack(bot)
     end
 
     local HealthPerc = bot:GetHealth()/bot:GetMaxHealth()
-    if HealthPerc < bot.RetreatHealthPerc and bot:GetHealthRegen() >= 7.9 then
+    if HealthPerc < bot.RetreatHealthPerc and bot:GetHealthRegen() >= 7.0 then
         setHeroVar("BackTimer", GameTime()+2)
         return true
     end
@@ -346,24 +346,27 @@ local function GetBack(bot)
     local allyTowers = gHeroVar.GetNearbyAlliedTowers(bot, 600)
     local listAllies  = gHeroVar.GetNearbyAllies(bot, 900)
     if #allyTowers > 0 and #listEnemies <= #listAllies then
-        return false
+        if HealthPerc > 0.5 or (HealthPerc > 0.35 and bot:GetHealthRegen() > 5.0) then
+            return false
+        end
+        return true
     end
     
     local enemyDmg = 0
     for _, enemy in pairs(listEnemies) do
-        if utils.ValidTarget(enemy) then
-            local damage = enemy:GetEstimatedDamageToTarget(true, bot, 4, DAMAGE_TYPE_ALL)
-            enemyDmg = enemyDmg + damage
+        if utils.ValidTarget(enemy) and enemy:GetHealth()/enemy:GetMaxHealth() > 0.1 then
+            local damage = enemy:GetRawOffensivePower() + enemy:GetEstimatedDamageToTarget(true, bot, 4, DAMAGE_TYPE_ALL)
+            enemyDmg = enemyDmg + damage/2
         end
     end
     
-    if enemyDmg*0.7 > bot:GetHealth() then
-        setHeroVar("BackTimer", GameTime())
+    if 0.7*enemyDmg*(1.15-0.15*#listAllies) > bot:GetHealth() then
+        setHeroVar("BackTimer", GameTime()+3)
         return true
     end
     
     if enemyDmg > bot:GetHealth() and bot:TimeSinceDamagedByAnyHero() < 2 then
-        setHeroVar("BackTimer", GameTime())
+        setHeroVar("BackTimer", GameTime()+3)
         return true
     end
 
@@ -385,7 +388,7 @@ local function GetBack(bot)
     end
     
     if (1.15-0.15*#listAllies)*estDmgToMe > bot:GetHealth() then
-        setHeroVar("BackTimer", GameTime())
+        setHeroVar("BackTimer", GameTime()+3)
         return true
     end
 

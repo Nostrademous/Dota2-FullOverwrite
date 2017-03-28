@@ -207,11 +207,29 @@ function X:Think(bot)
 end
 
 function X:Desire(bot)
-    -- don't push for at least first 3 minutes
-    if DotaTime() < 3*60 then return BOT_MODE_DESIRE_NONE end
+    -- don't push for at least first 5 minutes
+    if DotaTime() < 5*60 then return BOT_MODE_DESIRE_NONE end
 
-    if #gHeroVar.GetNearbyEnemies(bot, 900) > 0 then -- TODO: what about allies?
+    if not utils.IsCore(bot) then
+        local nearAllies = gHeroVar.GetNearbyAllies(bot, 1200)
+        if #nearAllies > 1 then
+            for _, ally in pairs(nearAllies) do
+                if not ally:IsIllusion() and ally:IsBot() and utils.IsCore(ally) then
+                    if ally.SelfRef:getCurrentMode():GetName() == "pushlane" then
+                        return BOT_MODE_DESIRE_LOW
+                    end
+                end
+            end
+        end
         return BOT_MODE_DESIRE_NONE
+    end
+    
+    local nearEnemies = gHeroVar.GetNearbyEnemies(bot, 1200)
+    if #nearEnemies > 0 then
+        local nearAllies = gHeroVar.GetNearbyAllies(bot, 1200)
+        if #nearAllies < #nearEnemies+1 then
+            return BOT_MODE_DESIRE_NONE
+        end
     end
 
     if getHeroVar("Role") == constants.ROLE_JUNGLER then

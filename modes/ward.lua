@@ -12,6 +12,8 @@ require( GetScriptDirectory().."/constants" )
 local utils = require( GetScriptDirectory().."/utility" )
 local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
 
+require( GetScriptDirectory().."/item_usage" )
+
 local function setHeroVar(var, value)
     gHeroVar.SetVar(GetBot():GetPlayerID(), var, value)
 end
@@ -47,6 +49,18 @@ function X:Think(bot)
                 getHeroVar("Self"):ClearMode()
             end
         else
+            local nearbyEnemies = gHeroVar.GetNearbyEnemies(bot, 1600)
+            local nearbyETowers = gHeroVar.GetNearbyEnemyTowers(bot, 1600)
+            if #nearbyEnemies > 0 or #nearbyETowers > 0 then
+                local listDangerHandles = { unpack(nearbyEnemies), unpack(nearbyETowers) }
+                dest = utils.DirectionAwayFromDanger(listDangerHandles, dest)
+            end
+            
+            if not modifiers.IsInvisible(bot) then
+                if item_usage.UseGlimmerCape() then return end                
+                if item_usage.UseMovementItems(dest) then return end
+            end
+            
             gHeroVar.HeroMoveToLocation(bot, dest)
         end
     end

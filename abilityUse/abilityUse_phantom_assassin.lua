@@ -171,7 +171,7 @@ function ConsiderW()
         local combinedList = { unpack(nearAllies), unpack(nearAlliedCreep) }
         if #combinedList > 0 then
             table.sort(combinedList, function(n1,n2) return n1:DistanceFromFountain() < n2:DistanceFromFountain() end)
-            return BOT_ACTION_DESIRE_HIGH, combinedList[1]
+            return BOT_ACTION_DESIRE_VERYHIGH, combinedList[1]
         end
     end
 

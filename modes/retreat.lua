@@ -35,6 +35,7 @@ function X:OnEnd()
     setHeroVar("RetreatLane", nil)
     setHeroVar("RetreatPos", nil)
     bot.IsRetreating = false
+    bot.retreat_desire_debug = ""
 end
 
 local function Updates(bot)
@@ -56,6 +57,13 @@ function X:Think(bot)
     end
 
     --utils.myPrint("MyLanePos: ", tostring(bot:GetLocation()), ", RetreatPos: ", tostring(nextmove))
+    
+    local nearbyEnemies = gHeroVar.GetNearbyEnemies(bot, 1600)
+    local nearbyETowers = gHeroVar.GetNearbyEnemyTowers(bot, 1600)
+    if #nearbyEnemies > 0 or #nearbyETowers > 0 then
+        local listDangerHandles = { unpack(nearbyEnemies), unpack(nearbyETowers) }
+        nextmove = utils.DirectionAwayFromDanger(listDangerHandles, nextmove)
+    end
     
     if utils.IsItemAvailable("item_blink") then
         local value = 1200 -- max blink distance
@@ -98,13 +106,20 @@ function X:Desire(bot)
         end
     end
     
-    if enemyDamage/#allies > bot:GetHealth() then
-        bot.IsRetreating = true
-        return BOT_MODE_DESIRE_VERYHIGH
-    end
-    
     local HealthPerc    = bot:GetHealth()/bot:GetMaxHealth()
     local ManaPerc      = bot:GetMana()/bot:GetMaxMana()
+    
+    if enemyDamage/#allies > bot:GetHealth() then
+        if #allies == 1 and HealthPerc > 0.6 then
+            --utils.myPrint("What to do... I'm almost at full health but can die to enemy burst!")
+            -- TODO: need to request support from allies
+        else
+            bot.IsRetreating = true
+        end
+
+        bot.retreat_desire_debug = "enemyDamage/#allies > bot:GetHealth()"
+        return BOT_MODE_DESIRE_VERYHIGH
+    end
     
     if HealthPerc > 0.9 and ManaPerc > 0.9 then
         return BOT_MODE_DESIRE_NONE
@@ -123,9 +138,10 @@ function X:Desire(bot)
     end
     
     if HealthPerc < bot.RetreatHealthPerc and bot:GetHealthRegen() < 7.9 or 
-        (ManaPerc < 0.07 and bot.SelfRef:getCurrentMode():GetName() == "laning" and bot:GetManaRegen() < 6.0)
-        then
+        (ManaPerc < 0.07 and bot.SelfRef:getCurrentMode():GetName() == "laning" and
+        bot:GetManaRegen() < 6.0 and not utils.IsCore(bot) ) then
 		bot.IsRetreating = true
+        bot.retreat_desire_debug = "low health% or very low mana%"
 		return BOT_MODE_DESIRE_HIGH
 	end
    

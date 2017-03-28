@@ -48,6 +48,8 @@ local function updateBotStates()
                 if utils.ValidTarget(target) then
                     state = state .. " " .. utils.GetHeroName(target)
                 end
+            elseif state == "retreat" then
+                state = state .. " " .. ally.retreat_desire_debug
             end
             SetBotState(hMyBot.Name, 1, state)
         end

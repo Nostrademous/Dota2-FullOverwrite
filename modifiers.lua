@@ -110,7 +110,6 @@ function HasDangerousModifiers(hUnit)
 end
 
 function IsPhysicalImmune(hUnit)
-    utils.myPrint(hUnit:GetUnitName())
     local bImmune = hUnit:IsAttackImmune() or hUnit:HasModifier("modifier_item_cyclone") or
                     hUnit:HasModifier("modifier_ghost_state") or hUnit:HasModifier("modifier_item_ethereal_blade_ethereal")
     return bImmune

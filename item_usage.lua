@@ -407,7 +407,7 @@ function UseTP(hero, loc, lane)
         -- dest (below) should find farthest away tower to TP to in our assigned lane, even if tower is dead it will
         -- just default to closest location we can TP to in that direction
         if GetUnitToLocationDistance(hero, dest) > 3000 and hero:DistanceFromFountain() < 200 then
-            utils.myPrint("Using TP")
+            --utils.myPrint("Using TP")
             gHeroVar.HeroUseAbilityOnLocation(hero, tp, dest)
             if tpSwap then
                 utils.myPrint("Swapping back item for TP slot")

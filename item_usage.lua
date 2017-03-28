@@ -429,6 +429,8 @@ function UseItems()
     if bot:IsMuted() then return false end
     
     if UseEuls() then return true end
+    
+    if UseGlimmerCape() then return true end
 
     if UseBuffItems() then return true end
 
@@ -742,16 +744,16 @@ function UseGhostScepter()
     return false 
 end
 
-function UseGlimmerCape(target)
-    local gcTarget = GetBot()
-    if utils.ValidTarget(target) then
-        gcTarget = target
-    end
-
+function UseGlimmerCape()
     local gc = utils.IsItemAvailable("item_glimmer_cape")
-    if gc and utils.ValidTarget(gcTarget) then
-        gHeroVar.HeroUseAbilityOnEntity(GetBot(), gc, gcTarget)
-        return true
+    if gc then
+        local bot = GetBot()
+        local modeName = bot.SelfRef:getCurrentMode():GetName()
+        
+        if modeName == "retreat" or modeName == "shrine" then
+            gHeroVar.HeroUseAbilityOnEntity(GetBot(), gc, bot)
+            return true
+        end        
     end
     return false
 end

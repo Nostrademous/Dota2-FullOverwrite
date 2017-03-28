@@ -287,7 +287,7 @@ function X:BuySupportItems()
             end
 
             if wards > 0 and currWardCount < 1 then
-                while wards > 0 do
+                if wards > 0 then
                     table.insert(self.PurchaseOrder, 1, "item_ward_observer")
                     wards = wards - 1
                 end
@@ -451,6 +451,9 @@ function X:ConsiderSellingItems(bot)
                     else
                         table.remove(ItemsToConsiderSelling, 1)
                     end
+                else
+                    utils.pause("bad item to sell")
+                    break
                 end
             else
                 if not utils.IsBusy(bot) and not utils.HaveItem(bot, "item_tpscroll") then

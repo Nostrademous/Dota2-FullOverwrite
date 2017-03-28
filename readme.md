@@ -49,17 +49,17 @@ A stub file exists for ability use at: `abilityUse/abilityUse_template.lua`
 
 While every hero has some files for itself, most of the logic is defined by generic modes (see below).
 
-**bot_&lt;heroName&gt;.lua**:
+**`bot_<heroName>.lua`**:
 -   defines the hero's abilities (not how to use them), the skillbuild, and general stuff
--   links the heroes abilityUse/abilityUse_&lt;heroName&gt;.lua
+-   links the heroes `abilityUse/abilityUse_<heroName>.lua`
 -   calls a generic Think method, that will take care of everything.
 -   overwrites some methods if needed (e.g. a specific way of clearing camps in the early game)
 
-**abilityUse/abilityUse_&lt;heroName&gt;.lua**:
+**`abilityUse/abilityUse_<heroName>.lua`**:
 -   checks conditions ands cast spells
 -   item usage is generic, no need to reimplement these
 
-**itemPurchase/&lt;heroName&gt;.lua**:
+**`itemPurchase/<heroName>.lua`**:
 -   defines some items the hero can buy
 -   defines what items should be sold as inventory fills up
 -   items after the `core` section will be updated based on how the game progresses (in the works)
@@ -68,12 +68,12 @@ While every hero has some files for itself, most of the logic is defined by gene
 -------
 Modes contain generic concepts that can be used by every hero.
 
-**modes/&lt;modeName&gt;.lua**:
+**`modes/<modeName>.lua`**:
 -   `mode:Desire(bot)` is called every frame, and determines the desire of the mode to go active. If it is higher than every other modes desire, it'll become the active mod.
 -   `mode:Think(bot)` is called every frame for the active mode. This is where the logic happens.
 -   `mode:OnStart(bot)` and `mode:OnEnd()` are called if the active mode changes.
 
-modes/&lt;modeName&gt;_&lt;heroName&gt;.lua:
+`modes/<modeName>_<heroName>.lua`:
 -   if this file is present, it is used instead of the generic mode file. If you just need a partial overwrite, you can call the generic modes functions where needed.
 
 Files of Interest:
@@ -119,13 +119,14 @@ Files of Interest:
 	
 	Currently the information is just stored and not used much. TO BE FIXED!
 
-*   **global_hero_data.lua** - this file holds custom versions of many bot:Get&#95;&lt;something&gt; and bot:Action&#95;&lt;action&gt; that are easier to use.
+*   **global_hero_data.lua** - this file holds custom versions of many 
+    bot:GetNearby*() and bot:Action_*() that are easier to use.
 
-    Still in use, but not encouraged (use bot.&lt;variable&gt; instead):
-
-    This is a global table that allows for per-hero persistant storage of variables. 
-    It is saved based on the hero's playerID. If a variable is retrieved via 
-    getHeroVar("&lt;strNameOfVar&gt;") that does not exist, `nil` is returned.
+    This file also defines a way to persistantly store hero-specific variables.
+    This method is still in use, but not encouraged (use `bot.<variable>` instead).
+    
+    Previously, information was saved based on the hero's playerID using `setHeroVar("<strNameOfVar>", "<Value>")`. 
+    If a variable is retrieved via `getHeroVar("<strNameOfVar>")` that does not exist, `nil` is returned.
 
 *   **decision.lua** - this contains the core Think function for every hero. However, most of the time it'll just call a mode for the hard work.
 
@@ -139,7 +140,6 @@ Files of Interest:
 
 TODOs/FIXMEs:
 -------------
-
 Lots, we need :
 -   **advanced** fighting logic
 -   bot 5-man assembly logic, general map movement

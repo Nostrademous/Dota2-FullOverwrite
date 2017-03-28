@@ -1344,7 +1344,7 @@ function U.InTeamFight(bot, range)
     
     local allyList = GetUnitList(UNIT_LIST_ALLIED_HEROES)
     for _, ally in pairs(allyList) do
-        if ally:IsAlive() and not ally:IsIllusion() and 
+        if ally:IsAlive() and not ally:IsIllusion() and ally:IsBot() and 
             GetUnitToUnitDistance(bot, ally) <= checkDist and
             ally.SelfRef:getCurrentMode():GetName() == "fight" then
             table.insert(alliesInTeamfight, ally)

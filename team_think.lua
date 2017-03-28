@@ -106,7 +106,9 @@ function ConsiderTeamLaneDefense()
     local listAlly = GetUnitList(UNIT_LIST_ALLIED_HEROES)
 
     for _, ally in pairs(listAlly) do
-        gHeroVar.SetVar(ally:GetPlayerID(), "DoDefendLane", {}) -- reset this for all
+        if not ally:IsIllusion() and ally:IsBot() then
+            gHeroVar.SetVar(ally:GetPlayerID(), "DoDefendLane", {}) -- reset this for all
+        end
     end
 
     -- reset some states

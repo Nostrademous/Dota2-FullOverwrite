@@ -56,19 +56,20 @@ function ConsiderQ()
     -- farming/laning
 	if modeName == "jungling" or modeName == "laning" then
         if ManaPerc > 0.25 then
-            local eCreep = gHeroVar.GetNearbyEnemyCreep(bot, daggerCastRange)
-            local weakestCreep, weakestCreepHealth = utils.GetWeakestCreep(eCreep)
-            if utils.ValidTarget(weakestCreep) then
-                local dist = GetUnitToUnitDistance(bot, weakestCreep)
-                if dist > 1.25*AttackRange then
-                    return BOT_ACTION_DESIRE_LOW, weakestCreep
-                end
-            end
-            
             -- in lane harass
             if utils.ValidTarget(WeakestEnemy) then
                 if not modifiers.IsPhysicalImmune(WeakestEnemy) then
                     return BOT_ACTION_DESIRE_LOW, WeakestEnemy
+                end
+            end
+            
+            local eCreep = gHeroVar.GetNearbyEnemyCreep(bot, daggerCastRange)
+            local weakestCreep, weakestCreepHealth = utils.GetWeakestCreep(eCreep)
+            if utils.ValidTarget(weakestCreep) then
+                local dist = GetUnitToUnitDistance(bot, weakestCreep)
+                if dist > 1.25*AttackRange and 
+                    weakestCreepHealth < weakestCreep:GetActualIncomingDamage(daggerDamage, DAMAGE_TYPE_PHYSICAL) then
+                    return BOT_ACTION_DESIRE_LOW, weakestCreep
                 end
             end
         end
@@ -140,6 +141,7 @@ function ConsiderW()
         end
     end
 
+    --[[
     --phantom_assassin_phantom_strike to farm, pushlane, defendlane
     if (modeName == "jungling" and ManaPerc > 0.5) or
        (modeName == "defendlane" and ManaPerc > 0.3) or
@@ -150,6 +152,7 @@ function ConsiderW()
             return BOT_ACTION_DESIRE_LOW, eCreep[1]
         end
     end
+    --]]
     
     -- If we're going after someone
 	if modeName == "roam" or modeName == "defendally" or modeName == "fight" then
@@ -200,6 +203,10 @@ function genericAbility:AbilityUsageThink(bot)
 
     if castWDesire > 0 and castWDesire > castQDesire then
         gHeroVar.HeroUseAbilityOnEntity(bot, abilityW, castWTarget)
+        local numAttacks = math.ceil(3/bot:GetSecondsPerAttack())
+        for i = 1, numAttacks, 1 do
+            gHeroVar.HeroQueueAttackUnit(bot, castWTarget, true)
+        end
 		return true
     end
     

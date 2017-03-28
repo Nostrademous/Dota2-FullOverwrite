@@ -42,7 +42,7 @@ local function GetDefendeesTarget(bot)
 
     local alliesNeedingHelp = {}
     for _, ally in pairs(nearAllies) do
-        if not ally:IsIllusion() and (ally.SelfRef:getCurrentMode():GetName() == "retreat"
+        if not ally:IsIllusion() and ally:IsBot() and (ally.SelfRef:getCurrentMode():GetName() == "retreat"
             or ally.SelfRef:getCurrentMode():GetName() == "shrine") then
             table.insert(alliesNeedingHelp, ally)
         end

@@ -69,7 +69,7 @@ function X:Think(bot)
     end
     
     if not modifiers.IsInvisible(bot) then
-        if item_usage.UseGlimmerCape(bot) then return end
+        if item_usage.UseGlimmerCape() then return end
     
         if item_usage.UseRegenItems() then return end
         

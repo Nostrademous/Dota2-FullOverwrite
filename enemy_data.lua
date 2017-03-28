@@ -16,8 +16,15 @@ local UpdateFreq2 = 3.0
 -------------------------------------------------------------------------------
 
 local heavyRightClickDamage = {
-    "npc_dota_phantom_assassin",
-    "npc_dota_sven"
+    "npc_dota_hero_drow_ranger",
+    "npc_dota_hero_legion_commander",
+    "npc_dota_hero_phantom_assassin",
+    "npc_dota_hero_sniper",
+    "npc_dota_hero_sven",
+    "npc_dota_hero_templar_assassin",
+    "npc_dota_hero_ursa",
+    "npc_dota_hero_weaver",
+    "npc_dota_hero_skeleton_king"
 }
 
 local heavyManaDependentEnemies = {

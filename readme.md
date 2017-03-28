@@ -22,7 +22,7 @@ given the appropriate credit.
 ------------
 To get going please visit [this wiki page](https://github.com/Nostrademous/Dota2-FullOverwrite/wiki/Workflow-for-Debugging-Bots) and the wiki in general.
 
-If you want to contribute feel free to implement new heroes or improve existing code. In the latter case you might want to file an issue first to make sure no one else is working on the exact same topic.
+If you want to contribute feel free to implement new heroes or improve existing code. You might want to file an issue first to make sure no one else is working on the exact same topic.
 
 Make sure you checkout the next section (Code Layout and Common Patterns).
 

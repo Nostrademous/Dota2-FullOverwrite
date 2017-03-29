@@ -137,6 +137,56 @@ function genericAbility:nukeDamage( bot, enemy )
     local engageDist = 500
     
     -- WRITE CODE HERE --
+    -- local physImmune = modifiers.IsPhysicalImmune(enemy)
+    -- local magicImmune = utils.IsTargetMagicImmune(enemy)
+    
+    if abilityQ:IsFullyCastable() then
+    local manaCostQ = abilityQ:GetManaCost()
+        if manaCostQ <= manaAvailable then
+            manaAvailable = manaAvailable - manaCostQ
+            --dmgTotal = dmgTotal + XYZ
+            --castTime = castTime + abilityQ:GetCastPoint()
+            --stunTime = stunTime + XYZ
+            --engageDist = Min(engageDist, abilityQ:GetCastRange())
+            table.insert(comboQueue, abilityQ)
+        end
+    end
+    
+    if abilityW:IsFullyCastable() then
+        local manaCostW = abilityW:GetManaCost()
+        if manaCostW <= manaAvailable then
+            manaAvailable = manaAvailable - manaCostW
+            --dmgTotal = dmgTotal + XYZ
+            --castTime = castTime + abilityW:GetCastPoint()
+            --stunTime = stunTime + XYZ
+            --engageDist = Min(engageDist, abilityW:GetCastRange())
+            table.insert(comboQueue, abilityW)
+        end
+    end
+    
+    if abilityE:IsFullyCastable() then
+        local manaCostE = abilityE:GetManaCost()
+        if manaCostE <= manaAvailable then
+            manaAvailable = manaAvailable - manaCostE
+            --dmgTotal = dmgTotal + XYZ
+            --castTime = castTime + abilityE:GetCastPoint()
+            --stunTime = stunTime + XYZ
+            --engageDist = Min(engageDist, abilityE:GetCastRange())
+            table.insert(comboQueue, abilityE)
+        end
+    end
+    
+    if abilityR:IsFullyCastable() then
+        local manaCostR = abilityR:GetManaCost()
+        if manaCostR <= manaAvailable then
+            manaAvailable = manaAvailable - manaCostR
+            --dmgTotal = dmgTotal + 200  -- 200 pure damage every 1/4 second if moving
+            --castTime = castTime + abilityR:GetCastPoint()
+            --stunTime = stunTime + 12.0
+            --engageDist = Min(engageDist, abilityR:GetCastRange())
+            table.insert(comboQueue, abilityR)
+        end
+    end
     
     return dmgTotal, comboQueue, castTime, stunTime, slowTime, engageDist
 end

@@ -70,23 +70,12 @@ local EulEvadeModifiers = {
 }
 
 function HasEulModifier(bot)
-    local botModifierCount = bot:NumModifiers()
-    if botModifierCount == 0 then return false end
-    
-    for i = 0, botModifierCount-1, 1 do
-        local modName = bot:GetModifierName(i)
-        
-        if utils.InTable(EulEvadeModifiers, modName) then
-            if bot:GetModifierRemainingDuration(i) < 2.0 then
-                return true
-            end
-        end
-        
-        if utils.InTable(DispellableModifiers, modName) then
-            return true
-        end
+    for _, mod in pairs(EulEvadeModifiers) do
+        if bot:HasModifier(mod) then return true end
     end
-    
+    for _, mod in pairs(DispellableModifiers) do
+        if bot:HasModifier(mod) then return true end
+    end
     return false
 end
 
@@ -95,17 +84,9 @@ local DangerousModifiers = {
 }
 
 function HasDangerousModifiers(hUnit)
-    local botModifierCount = hUnit:NumModifiers()
-    if botModifierCount == 0 then return false end
-    
-    for i = 0, botModifierCount-1, 1 do
-        local modName = hUnit:GetModifierName(i)
-        
-        if utils.InTable(DangerousModifiers, modName) then
-            return true
-        end
+    for _, mod in pairs(DangerousModifiers) do
+        if hUnit:HasModifier(mod) then return true end
     end
-    
     return false
 end
 
@@ -154,7 +135,7 @@ function IsRuptured(bot)
 end
 
 function IsBuildingGlyphed(hBuilding)
-    return hBuilding:HasModifier("modifier_fountain_glyph") or hBuilding:IsInvulnerable() or hBuilding:IsAttackImmune()
+    return hBuilding:HasModifier("modifier_fountain_glyph") or hBuilding:IsInvulnerable() or hBuilding:IsAttackImmune() or hBuilding:HasModifier("modifier_backdoor_protection")
 end
 
 -------------------------------------------------------------------------------

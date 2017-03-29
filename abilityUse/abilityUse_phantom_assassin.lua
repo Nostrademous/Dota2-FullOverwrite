@@ -26,6 +26,7 @@ local abilityW = ""
 local abilityE = ""
 local abilityR = ""
 
+local AvgCritMult   = 0.0
 local AttackRange   = 0
 local ManaPerc      = 0.0
 local HealthPerc    = 0.0
@@ -40,6 +41,7 @@ function ConsiderQ()
 
     local daggerCastRange = abilityQ:GetCastRange()
     local daggerDamage = abilityQ:GetSpecialValueInt("base_damage") + abilityQ:GetSpecialValueInt("attack_factor_tooltip") / 100 * bot:GetAttackDamage()
+    daggerDamage = daggerDamage * AvgCritMult
     
     -- Try to kill enemy hero
     local WeakestEnemy, HeroHealth = utils.GetWeakestHero(bot, daggerCastRange)
@@ -110,7 +112,8 @@ function ConsiderW()
     end
 
     local phantomStrikeCastRange = abilityW:GetCastRange()
-    local totalAttackDamage = 4 * bot:GetAttackDamage() -- phantom_assassin_phantom_strike adds 4 very fast attacks
+    -- phantom_assassin_phantom_strike adds 4 very fast attacks
+    local totalAttackDamage = 4 * bot:GetAttackDamage() * AvgCritMult
 
     -- Try to kill enemy hero
     local WeakestEnemy, HeroHealth = utils.GetWeakestHero(bot, phantomStrikeCastRange + 300)
@@ -196,7 +199,39 @@ function genericAbility:AbilityUsageThink(bot)
 	HealthPerc    = bot:GetHealth()/bot:GetMaxHealth()
     modeName      = bot.SelfRef:getCurrentMode():GetName()
     
+    local critChance = 0.0
+    local critDmg = 0.0
+    if abilityR:GetLevel() >= 1 then
+        critChance = 0.15
+        critDmg = abilityR:GetSpecialValueInt("crit_chance")/100.0
+    end
+    AvgCritMult = (1 + critChance * critDmg)
+    
     -- WRITE CODE HERE --
+    local nearbyEnemyHeroes = gHeroVar.GetNearbyEnemies(bot, 1200)
+    local nearbyEnemyCreep = gHeroVar.GetNearbyEnemyCreep(bot, 1200)
+    
+    if #nearbyEnemyHeroes == 0 and #nearbyEnemyCreep == 0 then return false end
+
+    if #nearbyEnemyHeroes == 1 and nearbyEnemyHeroes[1]:GetHealth() > 0 then
+        local enemy = nearbyEnemyHeroes[1]
+        local dmg, castQueue, castTime, stunTime, slowTime, engageDist = self:nukeDamage( bot, enemy )
+
+        local rightClickTime = stunTime + 0.5*slowTime
+        if rightClickTime > 0.5 then
+            dmg = dmg + fight_simul.estimateRightClickDamage( bot, enemy, rightClickTime ) * AvgCritMult
+        end
+
+        -- magic/physical immunity is already accounted for by nukeDamage()
+        if utils.ValidTarget(enemy) and dmg > enemy:GetHealth() then
+            local bKill = self:queueNuke(bot, enemy, castQueue, engageDist)
+            if bKill then
+                setHeroVar("Target", enemy)
+                return true
+            end
+        end
+    end
+    
     -- Consider using each ability
 	local castQDesire, castQTarget  = ConsiderQ()
 	local castWDesire, castWTarget  = ConsiderW()
@@ -227,9 +262,39 @@ function genericAbility:nukeDamage( bot, enemy )
     local castTime = 0
     local stunTime = 0
     local slowTime = 0
-    local engageDist = 500
+    local engageDist = 0
 
     -- WRITE CODE HERE --
+    local physImmune = modifiers.IsPhysicalImmune(enemy)
+    --local magicImmune = utils.IsTargetMagicImmune(enemy)
+    
+    if abilityQ:IsFullyCastable() then
+    local manaCostQ = abilityQ:GetManaCost()
+        if manaCostQ <= manaAvailable then
+            if not physImmune then
+                manaAvailable = manaAvailable - manaCostQ
+                local damageQ = abilityQ:GetSpecialValueInt("base_damage") + abilityQ:GetSpecialValueInt("attack_factor_tooltip") / 100 * bot:GetAttackDamage()
+                dmgTotal = dmgTotal + damageQ*AvgCritMult
+                castTime = castTime + abilityQ:GetCastPoint()
+                slowTime = slowTime + abilityQ:GetDuration()
+                engageDist = Min(engageDist, abilityQ:GetCastRange())
+                table.insert(comboQueue, abilityQ)
+            end
+        end
+    end
+    
+    if abilityW:IsFullyCastable() then
+        local manaCostW = abilityW:GetManaCost()
+        if manaCostW <= manaAvailable then
+            if not physImmune then
+                manaAvailable = manaAvailable - manaCostW
+                dmgTotal = dmgTotal + 4*bot:GetAttackDamage()*AvgCritMult
+                castTime = castTime + abilityW:GetCastPoint()
+                engageDist = Min(engageDist, abilityW:GetCastRange())
+                table.insert(comboQueue, abilityW)
+            end
+        end
+    end
 
     return dmgTotal, comboQueue, castTime, stunTime, slowTime, engageDist
 end
@@ -238,6 +303,26 @@ function genericAbility:queueNuke(bot, enemy, castQueue, engageDist)
     if not utils.ValidTarget(enemy) then return false end
 
     -- WRITE CODE HERE --
+    local dist = GetUnitToUnitDistance(bot, enemy)
+
+    -- if out of range, attack move for one hit to get in range
+    if dist < engageDist then
+        bot:Action_ClearActions(true)
+        utils.AllChat("Killing "..utils.GetHeroName(enemy).." softly with my song")
+        utils.myPrint("Queue Nuke Damage: ", utils.GetHeroName(enemy))
+        for i = #castQueue, 1, -1 do
+            local skill = castQueue[i]
+
+            if skill:GetName() == "phantom_assassin_stifling_dagger" then
+                gHeroVar.HeroPushUseAbilityOnEntity(bot, skill, enemy)
+            elseif skill:GetName() == "phantom_assassin_phantom_strike" then
+                gHeroVar.HeroPushUseAbilityOnEntity(bot, skill, enemy)
+            end
+        end
+        gHeroVar.HeroQueueAttackUnit( bot, enemy, false )
+        bot:ActionQueue_Delay(0.01)
+        return true
+    end
 
     return false
 end

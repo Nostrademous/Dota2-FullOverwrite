@@ -171,7 +171,7 @@ function linaAbility:AbilityUsageThink(bot)
         end
 
         -- magic immunity is already accounted for by nukeDamage()
-        if dmg > enemy:GetHealth() then
+        if utils.ValidTarget(enemy) and dmg > enemy:GetHealth() then
             local bKill = self:queueNuke(bot, enemy, castQueue, engageDist)
             if bKill then
                 setHeroVar("Target", enemy)

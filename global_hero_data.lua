@@ -74,6 +74,7 @@ end
 
 function X.GetNearbyEnemyBarracks(bot, range)
     local endList = bot:GetNearbyBarracks(range, true)
+    --[[
     if #endList > 0 then
         utils.pause("[CRITICAL]: API bug fixed. plas adjust code. random uniqe marker: AWESDFWRGWFE")
     end
@@ -86,6 +87,7 @@ function X.GetNearbyEnemyBarracks(bot, range)
             table.insert(endList, val)
         end
     end
+    --]]
     return endList
 end
 

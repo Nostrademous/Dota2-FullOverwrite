@@ -37,14 +37,17 @@ function X:Think(bot)
     end
 end
 
-local function GetDefendeesTarget(bot)
-    local nearAllies = gHeroVar.GetNearbyAllies(bot, 1600)
+local function GetDefendeesTarget(bot, range)
+    local nearAllies = GetUnitList(UNIT_LIST_ALLIED_HEROES)
 
     local alliesNeedingHelp = {}
     for _, ally in pairs(nearAllies) do
-        if not ally:IsIllusion() and ally:IsBot() and (ally.SelfRef:getCurrentMode():GetName() == "retreat"
-            or ally.SelfRef:getCurrentMode():GetName() == "shrine") then
-            table.insert(alliesNeedingHelp, ally)
+        if not ally:IsIllusion() and ally:IsBot() then
+            if GetUnitToUnitDistance(bot, ally) <= range and
+            (ally.SelfRef:getCurrentMode():GetName() == "retreat" or 
+             ally.SelfRef:getCurrentMode():GetName() == "shrine") then
+                table.insert(alliesNeedingHelp, ally)
+            end
         end
     end
 
@@ -82,7 +85,8 @@ function X:Desire(bot)
         return BOT_MODE_DESIRE_NONE
     end
 
-    bot.defendAllyTarget = GetDefendeesTarget(bot)
+    local range = 2400
+    bot.defendAllyTarget = GetDefendeesTarget(bot, range)
     if utils.ValidTarget(bot.defendAllyTarget) then
         return BOT_MODE_DESIRE_MODERATE
     end

@@ -22,13 +22,15 @@ given the appropriate credit.
 ------------
 To get going please visit [this wiki page](https://github.com/Nostrademous/Dota2-FullOverwrite/wiki/Workflow-for-Debugging-Bots) and the wiki in general.
 
-If you want to contribute feel free to implement new heroes or improve existing code. You might want to file an issue first to make sure no one else is working on the exact same topic.
+If you want to contribute feel free to implement new heroes or improve existing
+code. You might want to file an issue first to make sure no one else is working
+on the exact same topic.
 
 Make sure you checkout the next section (Code Layout and Common Patterns).
 
 **We'll appreciate any contributions!**
 
-Also: **Lua is not hard to learn, and we'll gladly help if you're stuck. You *can* dot it!**
+Also: **Lua is not hard to learn, and we'll gladly help if you're stuck. You *can* do it!**
 
 
 **Code Layout and Common Patterns**
@@ -41,8 +43,12 @@ There are files for each hero, and at least one file for each mode (for details,
 
 If you want to store some data for a bot, do so by using `bot.<modeName>_<variableName>`.
 
-There are not many stub files as of yet. Just copy the file that is closest to what you need and modify it.
-A stub file exists for ability use at: `abilityUse/abilityUse_template.lua`
+There are some stub files, just not for everything. Just copy the `template` 
+file if one exist and open an implemented hero file similar to what you are 
+looking to do for a boost to your productivity.
+The following stub files currently exist: 
+- for ability usage use: `abilityUse/abilityUse_template.lua`
+- for item purchase use: `itemPurchase/template.lua`
 
 *Heroes*
 -------
@@ -71,7 +77,7 @@ Modes contain generic concepts that can be used by every hero.
 **`modes/<modeName>.lua`**:
 -   `mode:Desire(bot)` is called every frame, and determines the desire of the mode to go active. If it is higher than every other modes desire, it'll become the active mod.
 -   `mode:Think(bot)` is called every frame for the active mode. This is where the logic happens.
--   `mode:OnStart(bot)` and `mode:OnEnd()` are called if the active mode changes.
+-   `mode:OnStart(bot)` and `mode:OnEnd()` are called as part of active mode transitions.
 
 `modes/<modeName>_<heroName>.lua`:
 -   if this file is present, it is used instead of the generic mode file. If you just need a partial overwrite, you can call the generic modes functions where needed.
@@ -141,13 +147,14 @@ Files of Interest:
 TODOs/FIXMEs:
 -------------
 Lots, we need :
--   **advanced** fighting logic
--   bot 5-man assembly logic, general map movement
+-   **advanced** fighting logic (i.e., pre-assignment of stun overlaps and CC of enemies in team fights)
+-   bot 5-man assembly logic, and general map movement (currently bots kind of move as lone wolves)
 -   roshan logic, etc.
 -   **dynamic** item purchasing for heroes
 -   **dynamic** skill builds for heroes
 -   **dynamic** hero selection for synergy and countering the opposition
 -   implement lots more heroes
--   implement dealing with disappearing heroes (b/c they go invis for example)
+-   implement dealing with disappearing heroes (b/c they go invis for example, or juke)
+-   implement recognizing/attacking enemy non-hero units (e.g., Jugg's Healing Ward, Pugna's Nether Ward, etc.)
 
 A lot of FIXMEs/TODOs are commented in code - I add them as a tag to get back to with ideas.

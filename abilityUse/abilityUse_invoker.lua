@@ -224,7 +224,7 @@ function invAbility:AbilityUsageThink(bot)
     ManaPerc      = bot:GetMana()/bot:GetMaxMana()
     modeName      = bot.SelfRef:getCurrentMode():GetName()
     
-    local modeDesire    = bot.SelfRef:getCurrentModeValue()
+    local modeDesire    = Max(0.01, bot.SelfRef:getCurrentModeValue())
     
     --[[
     if abilityQ:GetLevel() >= 3 then
@@ -306,10 +306,10 @@ function invAbility:AbilityUsageThink(bot)
             castTODesire >= Max(castGWDesire, castIWDesire) and castTODesire >= castFSDesire then
             --utils.myPrint("I want to Tornado")
             if not abilityTO:IsHidden() then
-                gHeroVar.HeroPushUseAbilityOnLocation(bot,  abilityTO, castTOLocation )
+                gHeroVar.HeroPushUseAbilityOnLocation(bot, abilityTO, castTOLocation )
                 return true
             elseif abilityR:IsFullyCastable() then
-                gHeroVar.HeroPushUseAbilityOnLocation(bot,  abilityTO, castTOLocation )
+                gHeroVar.HeroPushUseAbilityOnLocation(bot, abilityTO, castTOLocation )
                 local bRes = invokeTornado(bot)
                 if bRes then return true end
                 bot:Action_ClearActions(false)

@@ -197,7 +197,7 @@ function linaAbility:AbilityUsageThink(bot)
     ManaPerc      = bot:GetMana()/bot:GetMaxMana()
     modeName      = bot.SelfRef:getCurrentMode():GetName()
     
-    local modeDesire = bot.SelfRef:getCurrentModeValue()
+    local modeDesire = Max(0.01, bot.SelfRef:getCurrentModeValue())
     
     -- Consider using each ability
 	local castQDesire, castQLocation  = ConsiderQ()

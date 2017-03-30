@@ -302,7 +302,7 @@ function bsAbility:AbilityUsageThink(bot)
 
     modeName      = bot.SelfRef:getCurrentMode():GetName()
     
-    local modeDesire    = bot.SelfRef:getCurrentModeValue()
+    local modeDesire = Max(0.01, bot.SelfRef:getCurrentModeValue())
 
     -- CHECK BELOW TO SEE WHICH ABILITIES ARE NOT PASSIVE AND WHAT RETURN TYPES ARE --
     -- Consider using each ability

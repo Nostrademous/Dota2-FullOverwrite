@@ -267,17 +267,17 @@ function genericAbility:AbilityUsageThink(bot)
     local castEDesire, castELocation  = ConsiderE()
     local castRDesire, castRTarget    = ConsiderR()
     
-    if castRDesire > modeDesire and castRDesire > Max(castQDesire, castEDesire) then
+    if castRDesire >= modeDesire and castRDesire >= Max(castQDesire, castEDesire) then
         gHeroVar.HeroUseAbility(bot,  abilityR )
         return true
     end
     
-    if castEDesire > modeDesire and castEDesire > castQDesire then
+    if castEDesire >= modeDesire and castEDesire >= castQDesire then
         gHeroVar.HeroUseAbilityOnLocation(bot,  abilityE, castELocation )
         return true
     end
     
-    if castQDesire > modeDesire then
+    if castQDesire >= modeDesire then
         gHeroVar.HeroUseAbilityOnLocation(bot,  abilityQ, castQLocation )
         return true
     end

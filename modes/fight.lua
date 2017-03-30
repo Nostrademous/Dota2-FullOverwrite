@@ -158,6 +158,15 @@ function X:Desire(bot)
     if allyValue/enemyValue > Max(1.0, (1.6 - bot:GetLevel()*0.1)) then
         return BOT_MODE_DESIRE_LOW
     end
+    
+    if #enemyList > 0 and not bot:WasRecentlyDamagedByAnyHero(2.0) and #eTowers == 0
+        and #gHeroVar.GetNearbyEnemyCreep(bot, 1200) == 0 then
+        local weakest, _ = utils.GetWeakestHero(bot, 1200, enemyList)
+        if utils.ValidTarget(weakest) then
+            setHeroVar("Target", weakest)
+            return BOT_MODE_DESIRE_LOW + 0.01
+        end
+    end
 
     return BOT_MODE_DESIRE_NONE
 end

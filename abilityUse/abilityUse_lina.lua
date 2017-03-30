@@ -129,17 +129,19 @@ function linaAbility:queueNuke(bot, enemy, castQueue, engageDist)
             --utils.myPrint(" - skill '", skill:GetName(), "' has BehaviorFlag: ", behaviorFlag)
 
             if skill:GetName() == "lina_light_strike_array" then
-                modifiers.printAllMods(enemy)
-                if enemy:HasModifier("modifier_item_cyclone") then
-                    bot:ActionPush_Delay(modifiers.GetModifierRemainingDuration(enemy, "modifier_item_cyclone") - .95)
+                if enemy:HasModifier("modifier_eul_cyclone") then
                     gHeroVar.HeroPushUseAbilityOnLocation(bot, skill, enemy:GetLocation())
+                    bot:ActionPush_Delay(modifiers.GetModifierRemainingDuration(enemy, "modifier_eul_cyclone") - .95)
                 elseif utils.IsCrowdControlled(enemy) then
                     gHeroVar.HeroPushUseAbilityOnLocation(bot, skill, enemy:GetLocation())
                 else
                     gHeroVar.HeroPushUseAbilityOnLocation(bot, skill, utils.PredictPosition(enemy, 0.95))
                 end
             elseif skill:GetName() == "lina_dragon_slave" then
-                if utils.IsCrowdControlled(enemy) then
+                if enemy:HasModifier("modifier_eul_cyclone") then
+                    gHeroVar.HeroPushUseAbilityOnLocation(bot, skill, enemy:GetLocation())
+                    bot:ActionPush_Delay(modifiers.GetModifierRemainingDuration(enemy, "modifier_eul_cyclone") - (0.45 + dist/1200))
+                elseif utils.IsCrowdControlled(enemy) then
                     gHeroVar.HeroPushUseAbilityOnLocation(bot, skill, enemy:GetLocation())
                 else
                     -- account for 0.45 cast point and speed of wave (1200) needed to travel the distance between us
@@ -148,7 +150,7 @@ function linaAbility:queueNuke(bot, enemy, castQueue, engageDist)
             elseif skill:GetName() == "lina_laguna_blade" then
                 gHeroVar.HeroPushUseAbilityOnEntity(bot, skill, enemy)
             elseif skill:GetName() == "item_cyclone" then
-                bot:ActionPush_Delay(0.25)
+                bot:ActionPush_Delay(0.35)
                 gHeroVar.HeroPushUseAbilityOnEntity(bot, skill, enemy)
             end
         end
@@ -202,17 +204,17 @@ function linaAbility:AbilityUsageThink(bot)
 	local castWDesire, castWLocation  = ConsiderW()
 	local castRDesire, castRTarget    = ConsiderR()
     
-    if castQDesire > modeDesire and castQDesire > castWDesire and castQDesire > castRDesire then
+    if castQDesire >= modeDesire and castQDesire >= castWDesire and castQDesire >= castRDesire then
         gHeroVar.HeroUseAbilityOnLocation( bot, abilityQ, castQLocation )
         return true
     end
     
-    if castWDesire > modeDesire and castWDesire > castRDesire then
+    if castWDesire >= modeDesire and castWDesire >= castRDesire then
         gHeroVar.HeroUseAbilityOnLocation( bot, abilityW, castWLocation )
         return true
     end
     
-    if castRDesire > modeDesire then
+    if castRDesire >= modeDesire then
         gHeroVar.HeroUseAbilityOnEntity( bot, abilityR, castRTarget )
         return true
     end

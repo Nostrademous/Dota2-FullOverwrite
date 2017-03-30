@@ -304,17 +304,17 @@ function genericAbility:AbilityUsageThink(bot)
 	local castWDesire, castWTarget    = ConsiderW()
 	local castRDesire, castRTarget    = ConsiderR()
     
-    if castQDesire > modeDesire and castQDesire > Max(castWDesire, castRDesire) then
+    if castQDesire >= modeDesire and castQDesire >= Max(castWDesire, castRDesire) then
         gHeroVar.HeroUseAbilityOnLocation(bot,  abilityQ, castQLocation )
         return true
     end
     
-    if castWDesire > modeDesire and castWDesire > castRDesire then
+    if castWDesire >= modeDesire and castWDesire >= castRDesire then
         gHeroVar.HeroUseAbilityOnEntity(bot,  abilityW, castWTarget )
         return true
     end
     
-    if castRDesire > modeDesire then
+    if castRDesire >= modeDesire then
         if utils.IsItemAvailable("item_blade_mail") then
             gHeroVar.HeroPushUseAbilityOnEntity(bot, abilityR, castRTarget )
             item_usage.UseBladeMail(constants.PUSH)

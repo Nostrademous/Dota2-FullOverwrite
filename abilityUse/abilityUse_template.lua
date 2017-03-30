@@ -58,23 +58,23 @@ function genericAbility:AbilityUsageThink(bot)
     -- CHECK BELOW TO SEE WHAT PRIORITY OF ABILITIES YOU WANT FOR THIS HERO --
     -- YOU MIGHT ALSO WANT TO ADD OTHER CONDITIONS TO WHEN TO CAST WHAT     --
     -- EXAMPLE: 
-    -- if castRDesire > modeDesire and castRDesire > Max(CastEDesire, CastWDesire) then
-    if castRDesire > modeDesire then
+    -- if castRDesire >= modeDesire and castRDesire >= Max(CastEDesire, CastWDesire) then
+    if castRDesire >= modeDesire then
 		gHeroVar.HeroUseAbilityOnEntity(bot, abilityR, castRTarget)
 		return true
 	end
     
-    if castEDesire > modeDesire then
+    if castEDesire >= modeDesire then
 		gHeroVar.HeroUseAbilityOnLocation(bot, abilityE, castELoc)
 		return true
 	end
 	
-	if castWDesire > modeDesire then
+	if castWDesire >= modeDesire then
 		gHeroVar.HeroUseAbility(bot, abilityW)
 		return true
 	end
 
-	if castQDesire > modeDesire then
+	if castQDesire >= modeDesire then
 		gHeroVar.HeroUseAbilityOnEntity(bot, abilityQ, castQTarget)
 		return true
 	end

@@ -174,12 +174,12 @@ function viperAbility:AbilityUsageThink(bot)
     local castQDesire, castQTarget  = ConsiderQ()
     local castRDesire, castRTarget  = ConsiderR()
 
-    if castRDesire > modeDesire and castRDesire > castQDesire then
+    if castRDesire >= modeDesire and castRDesire >= castQDesire then
         gHeroVar.HeroUseAbilityOnEntity(bot, abilityR, castRTarget)
         return true
     end
 
-    if castQDesire > modeDesire then
+    if castQDesire >= modeDesire then
         gHeroVar.HeroUseAbilityOnEntity(bot, abilityQ, castQTarget)
         return true
     end

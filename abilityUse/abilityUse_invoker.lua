@@ -301,9 +301,9 @@ function invAbility:AbilityUsageThink(bot)
 
     if not inGhostWalk(bot) then
         -- NOTE: the castXXDesire accounts for skill being fully castable        
-        if castTODesire > modeDesire and castTODesire > Max(castEMPDesire, castCMDesire) and
-            castTODesire > Max(castDBDesire, castSSDesire) and castTODesire > Max(castCSDesire, castACDesire) and
-            castTODesire > Max(castGWDesire, castIWDesire) and castTODesire > castFSDesire then
+        if castTODesire >= modeDesire and castTODesire >= Max(castEMPDesire, castCMDesire) and
+            castTODesire >= Max(castDBDesire, castSSDesire) and castTODesire >= Max(castCSDesire, castACDesire) and
+            castTODesire >= Max(castGWDesire, castIWDesire) and castTODesire >= castFSDesire then
             --utils.myPrint("I want to Tornado")
             if not abilityTO:IsHidden() then
                 gHeroVar.HeroPushUseAbilityOnLocation(bot,  abilityTO, castTOLocation )
@@ -316,9 +316,9 @@ function invAbility:AbilityUsageThink(bot)
             end
         end
         
-        if castCMDesire > modeDesire and castCMDesire > castEMPDesire and
-            castCMDesire > Max(castDBDesire, castSSDesire) and castCMDesire > Max(castCSDesire, castACDesire) and
-            castCMDesire > Max(castGWDesire, castIWDesire) and castCMDesire > castFSDesire then
+        if castCMDesire >= modeDesire and castCMDesire >= castEMPDesire and
+            castCMDesire >= Max(castDBDesire, castSSDesire) and castCMDesire >= Max(castCSDesire, castACDesire) and
+            castCMDesire >= Max(castGWDesire, castIWDesire) and castCMDesire >= castFSDesire then
             --utils.myPrint("I want to Chaos Meteor")
             if not abilityCM:IsHidden() then
                 gHeroVar.HeroPushUseAbilityOnLocation(bot,  abilityCM, castCMLocation )
@@ -331,9 +331,9 @@ function invAbility:AbilityUsageThink(bot)
             end
         end
 
-        if castEMPDesire > modeDesire and castEMPDesire > Max(castDBDesire, castSSDesire) and 
-            castEMPDesire > Max(castCSDesire, castACDesire) and castEMPDesire > Max(castGWDesire, castIWDesire) and
-            castEMPDesire > castFSDesire then
+        if castEMPDesire >= modeDesire and castEMPDesire >= Max(castDBDesire, castSSDesire) and 
+            castEMPDesire >= Max(castCSDesire, castACDesire) and castEMPDesire >= Max(castGWDesire, castIWDesire) and
+            castEMPDesire >= castFSDesire then
             --utils.myPrint("I want to EMP")
             if not abilityEMP:IsHidden() then
                 gHeroVar.HeroPushUseAbilityOnLocation(bot,  abilityEMP, castEMPLocation )
@@ -346,9 +346,9 @@ function invAbility:AbilityUsageThink(bot)
             end
         end
 
-        if castDBDesire > modeDesire and castDBDesire > castSSDesire and 
-            castDBDesire > Max(castCSDesire, castACDesire) and castDBDesire > Max(castGWDesire, castIWDesire) and
-            castDBDesire > castFSDesire then
+        if castDBDesire >= modeDesire and castDBDesire >= castSSDesire and 
+            castDBDesire >= Max(castCSDesire, castACDesire) and castDBDesire >= Max(castGWDesire, castIWDesire) and
+            castDBDesire >= castFSDesire then
             --utils.myPrint("I want to Deafening Blast")
             if not abilityDB:IsHidden() then
                 gHeroVar.HeroPushUseAbilityOnLocation(bot,  abilityDB, castDBLocation )
@@ -361,9 +361,9 @@ function invAbility:AbilityUsageThink(bot)
             end
         end
 
-        if castCSDesire > modeDesire and castCSDesire > Max(castSSDesire, castACDesire) and 
-            castCSDesire > Max(castGWDesire, castIWDesire) and
-            castCSDesire > castFSDesire then
+        if castCSDesire >= modeDesire and castCSDesire >= Max(castSSDesire, castACDesire) and 
+            castCSDesire >= Max(castGWDesire, castIWDesire) and
+            castCSDesire >= castFSDesire then
             --utils.myPrint("I want to Cold Snap")
             if not abilityCS:IsHidden() then
                 gHeroVar.HeroPushUseAbilityOnEntity(bot,  abilityCS, castCSTarget )
@@ -376,9 +376,9 @@ function invAbility:AbilityUsageThink(bot)
             end
         end
 
-        if castSSDesire > modeDesire and castSSDesire > castACDesire and 
-            castSSDesire > Max(castGWDesire, castIWDesire) and
-            castSSDesire > castFSDesire then
+        if castSSDesire >= modeDesire and castSSDesire >= castACDesire and 
+            castSSDesire >= Max(castGWDesire, castIWDesire) and
+            castSSDesire >= castFSDesire then
             --utils.myPrint("I want to Sunstrike")
             if not abilitySS:IsHidden() then
                 gHeroVar.HeroPushUseAbilityOnLocation(bot,  abilitySS, castSSLocation )
@@ -391,8 +391,8 @@ function invAbility:AbilityUsageThink(bot)
             end
         end
         
-        if castACDesire > modeDesire and castACDesire > Max(castGWDesire, castIWDesire) and
-            castACDesire > castFSDesire then
+        if castACDesire >= modeDesire and castACDesire >= Max(castGWDesire, castIWDesire) and
+            castACDesire >= castFSDesire then
             --utils.myPrint("I want to Alacrity")
             if not abilityAC:IsHidden() then
                 gHeroVar.HeroPushUseAbilityOnEntity(bot,  abilityAC, castACTarget )
@@ -405,7 +405,7 @@ function invAbility:AbilityUsageThink(bot)
             end
         end
 
-        if castFSDesire > modeDesire and castFSDesire > Max(castGWDesire, castIWDesire) then
+        if castFSDesire >= modeDesire and castFSDesire >= Max(castGWDesire, castIWDesire) then
             --utils.myPrint("I want to Forge Spirit")
             if not abilityFS:IsHidden() then
                 gHeroVar.HeroPushUseAbility(bot,  abilityFS )
@@ -418,7 +418,7 @@ function invAbility:AbilityUsageThink(bot)
             end
         end
         
-        if castGWDesire > modeDesire and castGWDesire > castIWDesire then
+        if castGWDesire >= modeDesire and castGWDesire >= castIWDesire then
             --utils.myPrint("I want to Ghost Walk")
             if not abilityGW:IsHidden() then
                 bot:ActionPush_Delay( 0.25 )
@@ -433,7 +433,7 @@ function invAbility:AbilityUsageThink(bot)
             end
         end
 
-        if castIWDesire > modeDesire then
+        if castIWDesire >= modeDesire then
             --utils.myPrint("I want to Ice Wall")
             if not abilityIW:IsHidden() then
                 gHeroVar.HeroPushUseAbility(bot,  abilityIW )

@@ -728,6 +728,15 @@ function UseEuls()
                 return true
             end
         end
+        --[[ TEST CODE
+    else
+        if utils.HaveItem(bot, "item_cyclone") then
+            local enemies = gHeroVar.GetNearbyEnemies(bot, 900)
+            for _, enemy in pairs(enemies) do
+                modifiers.printAllMods(enemy)
+            end
+        end
+        --]]
     end
     
     return false

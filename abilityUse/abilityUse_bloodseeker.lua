@@ -311,17 +311,17 @@ function bsAbility:AbilityUsageThink(bot)
 	local castRDesire, castRTarget  = ConsiderR()
     
     -- CHECK BELOW TO SEE WHAT PRIORITY OF ABILITIES YOU WANT FOR THIS HERO --
-    if castWDesire > modeDesire and castWDesire > Max(castRDesire, castQDesire) then
+    if castWDesire >= modeDesire and castWDesire >= Max(castRDesire, castQDesire) then
 		gHeroVar.HeroUseAbilityOnLocation(bot, abilityW, castWLoc)
 		return true
 	end
     
-    if castRDesire > modeDesire and castRDesire > castQDesire then
+    if castRDesire >= modeDesire and castRDesire >= castQDesire then
 		gHeroVar.HeroUseAbilityOnEntity(bot, abilityR, castRTarget)
 		return true
 	end
 
-	if castQDesire > modeDesire then
+	if castQDesire >= modeDesire then
 		gHeroVar.HeroUseAbilityOnEntity(bot, abilityQ, castQTarget)
 		return true
 	end

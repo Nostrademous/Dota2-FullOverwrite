@@ -238,7 +238,7 @@ function genericAbility:AbilityUsageThink(bot)
 	local castQDesire, castQTarget  = ConsiderQ()
 	local castWDesire, castWTarget  = ConsiderW()
 
-    if castWDesire > modeDesire and castWDesire > castQDesire then
+    if castWDesire >= modeDesire and castWDesire >= castQDesire then
         gHeroVar.HeroUseAbilityOnEntity(bot, abilityW, castWTarget)
         local numAttacks = math.ceil(3/bot:GetSecondsPerAttack())
         for i = 1, numAttacks, 1 do
@@ -247,7 +247,7 @@ function genericAbility:AbilityUsageThink(bot)
 		return true
     end
     
-    if castQDesire > modeDesire then
+    if castQDesire >= modeDesire then
         gHeroVar.HeroUseAbilityOnEntity(bot, abilityQ, castQTarget)
 		return true
     end

@@ -184,17 +184,17 @@ function cmAbility:AbilityUsageThink(bot)
 	local castWDesire, castWTarget    = ConsiderW()
 	local castRDesire                 = ConsiderR()
     
-    if castQDesire > modeDesire and castQDesire > castWDesire and castQDesire > castRDesire then
+    if castQDesire >= modeDesire and castQDesire >= castWDesire and castQDesire >= castRDesire then
         gHeroVar.HeroUseAbilityOnLocation( bot, abilityQ, castQLocation )
         return true
     end
     
-    if castWDesire > modeDesire and castWDesire > castRDesire then
+    if castWDesire >= modeDesire and castWDesire >= castRDesire then
         gHeroVar.HeroUseAbilityOnEntity( bot, abilityW, castWTarget )
         return true
     end
     
-    if castRDesire > modeDesire then
+    if castRDesire >= modeDesire then
         gHeroVar.HeroUseAbility( bot, abilityR )
         return true
     end

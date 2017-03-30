@@ -57,17 +57,17 @@ function genericAbility:AbilityUsageThink(bot)
 	local castWDesire               = ConsiderW()
 	local castRDesire, castRTarget  = ConsiderR()
     
-    if castRDesire > modeDesire and castRDesire > Max(castWDesire, castQDesire) then
+    if castRDesire >= modeDesire and castRDesire >= Max(castWDesire, castQDesire) then
 		gHeroVar.HeroUseAbilityOnEntity(bot, abilityR, castRTarget )
 		return true
 	end
 	
-	if castWDesire > modeDesire and castWDesire > castQDesire then
+	if castWDesire >= modeDesire and castWDesire >= castQDesire then
 		gHeroVar.HeroUseAbility(bot,  abilityW )
 		return true
 	end
 
-	if castQDesire > modeDesire then
+	if castQDesire >= modeDesire then
         bot:ActionPush_Delay(0.25)
 		gHeroVar.HeroPushUseAbilityOnEntity(bot, abilityQ, castQTarget )
 		return true

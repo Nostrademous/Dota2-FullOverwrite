@@ -62,14 +62,25 @@ function GetSecretShop()
     end
 end
 
-function ThinkSecretShop( NextItem )
+local function BuyItem( bot, sItem )
+    if bot:GetGold() >= GetItemCost( sItem ) then
+        bot:ActionImmediate_PurchaseItem( sItem )
+        table.remove(getHeroVar("ItemPurchaseClass"):GetPurchaseOrder() , 1)
+        bot:SetNextItemPurchaseValue( 0 )
+        --getHeroVar("ItemPurchaseClass"):UpdateTeamBuyList(sItem)
+        return true
+    end
+    return false
+end
+
+function ThinkSecretShop( sNextItem )
     local bot = GetBot()
     
-    if  NextItem == nil then
+    if  sNextItem == nil then
         return false
     end
 
-    if (not IsItemPurchasedFromSecretShop(NextItem)) or bot:GetGold() < GetItemCost( NextItem ) then
+    if (not IsItemPurchasedFromSecretShop(sNextItem)) or bot:GetGold() < GetItemCost( sNextItem ) then
         return false
     end
 
@@ -77,29 +88,21 @@ function ThinkSecretShop( NextItem )
     if secLoc == nil then return false end
 
     if GetUnitToLocationDistance(bot, secLoc) < constants.SHOP_USE_DISTANCE then
-        if bot:GetGold() >= GetItemCost( NextItem ) then
-            bot:ActionImmediate_PurchaseItem( NextItem )
-            table.remove(getHeroVar("ItemPurchaseClass"):GetPurchaseOrder() , 1)
-            bot:SetNextItemPurchaseValue( 0 )
-            getHeroVar("ItemPurchaseClass"):UpdateTeamBuyList(NextItem)
-            return true
-        else
-            return false
-        end
+        return BuyItem( bot, sNextItem )
     else
         gHeroVar.HeroMoveToLocation(bot, secLoc)
         return false
     end
 end
 
-function ThinkSideShop( NextItem )
+function ThinkSideShop( sNextItem )
     local bot = GetBot()
 
-    if  NextItem == nil then
+    if  sNextItem == nil then
         return false
     end
 
-    if (not IsItemPurchasedFromSideShop(NextItem)) or bot:GetGold() < GetItemCost( NextItem ) then
+    if (not IsItemPurchasedFromSideShop(sNextItem)) or bot:GetGold() < GetItemCost( sNextItem ) then
         return false
     end
 
@@ -107,15 +110,7 @@ function ThinkSideShop( NextItem )
     if sideLoc == nil then return false end
 
     if GetUnitToLocationDistance(bot, sideLoc) < constants.SHOP_USE_DISTANCE then
-        if bot:GetGold() >= GetItemCost( NextItem ) then
-            bot:ActionImmediate_PurchaseItem( NextItem )
-            table.remove(getHeroVar("ItemPurchaseClass"):GetPurchaseOrder() , 1)
-            bot:SetNextItemPurchaseValue( 0 )
-            getHeroVar("ItemPurchaseClass"):UpdateTeamBuyList(NextItem)
-            return true
-        else
-            return false
-        end
+        return BuyItem( bot, sNextItem )
     else
         gHeroVar.HeroMoveToLocation(bot, sideLoc)
         return false
@@ -138,7 +133,7 @@ function X:Think(bot)
     if utils.IsBusy(bot) then return end
 
     local bDone = false
-    if  getHeroVar("ShopType") == constants.SHOP_TYPE_SIDE then
+    if getHeroVar("ShopType") == constants.SHOP_TYPE_SIDE then
         bDone = ThinkSideShop( getHeroVar("NextShopItem") )
     elseif getHeroVar("ShopType") == constants.SHOP_TYPE_SECRET then
         bDone = ThinkSecretShop( getHeroVar("NextShopItem") )
@@ -147,7 +142,7 @@ function X:Think(bot)
     end
     
     if bDone then
-        getHeroVar("Self"):ClearMode()
+        bot.SelfRef:ClearMode()
     end
 end
 

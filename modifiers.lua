@@ -49,13 +49,6 @@ function HasActiveDOTDebuff(bot)
             return true
         end
     end
-
-    --[[
-    for i = 1, #DoTModifiers do
-        if bot:HasModifier(DoTModifiers[i]) then return true end
-    end
-    --]]
-
     return false
 end
 
@@ -120,6 +113,17 @@ end
 
 function IsBuildingGlyphed(hBuilding)
     return hBuilding:HasModifier("modifier_fountain_glyph") or hBuilding:IsInvulnerable() or hBuilding:IsAttackImmune() or hBuilding:HasModifier("modifier_backdoor_protection")
+end
+
+function printAllMods(hUnit)
+    local botModifierCount = hUnit:NumModifiers()
+    if botModifierCount == 0 then return false end
+
+    --NOTE: I don't know why, but this one is 0 indexed
+    for i = 0, botModifierCount-1, 1 do
+        local modName = hUnit:GetModifierName(i)
+        utils.myPrint(utils.GetHeroName(hUnit), " mod ["..i.."]: ", modName)
+   end
 end
 
 -------------------------------------------------------------------------------

@@ -1290,7 +1290,7 @@ function U.GetWeakestHero(bot, r, unitList)
     else
         local filteredList = {}
         for _, hero in pairs(EnemyHeroes) do
-            if GetUnitToUnitDistance(bot, hero) <= r then
+            if U.ValidTarget(hero) and GetUnitToUnitDistance(bot, hero) <= r then
                 table.insert(filteredList, hero)
             end
         end
@@ -1305,7 +1305,7 @@ function U.GetWeakestHero(bot, r, unitList)
     local LowestHealth = 10000
 
     for _, hero in ipairs(EnemyHeroes) do
-        if U.ValidTarget(hero) and hero:IsAlive() then
+        if U.ValidTarget(hero) then
             if hero:GetHealth() < LowestHealth then
                 LowestHealth = hero:GetHealth()
                 WeakestHero = hero

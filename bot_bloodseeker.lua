@@ -95,7 +95,7 @@ function bloodseekerBot:GetMaxClearableCampLevel(bot)
 end
 
 function bloodseekerBot:DoHeroSpecificInit(bot)
-    bot.RetreatHealthPerc = 0.1
+    bot.RetreatHealthPerc = Min(0.1, 100/bot:GetMaxHealth())
 end
 
 function bloodseekerBot:IsReadyToGank(bot)

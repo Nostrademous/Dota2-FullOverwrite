@@ -42,7 +42,7 @@ function X:Desire(bot)
             -- if building falls, don't stick around and defend area
             return BOT_MODE_DESIRE_NONE
         else
-            return BOT_MODE_DESIRE_VERYHIGH
+            return BOT_MODE_DESIRE_MODERATE
         end
     end
     
@@ -65,23 +65,34 @@ function X:DefendTower(bot, hBuilding)
     local eCreep = gHeroVar.GetNearbyEnemyCreep(bot, 1200)
     
     if #enemies > 0 and #allies >= #enemies then -- we are good to go
-        gHeroVar.HeroAttackUnit(bot, enemies[1], true) -- Charge! at the closes enemy
+        if utils.ValidTarget(enemies[1]) then
+            gHeroVar.HeroAttackUnit(bot, enemies[1], true) -- Charge! at the closes enemy
+            return
+        end
     else -- stay back
         local closestEnemyDist = 10000
         if #enemies > 0 then
             closestEnemyDist = GetUnitToUnitDistance(bot, enemies[1])
             if closestEnemyDist < 900 then -- they are too close
-                gHeroVar.HeroMoveToLocation(bot, utils.VectorAway(bot:GetLocation(), enemies[1]:GetLocation(), 950-closestEnemyDist))
+                gHeroVar.HeroMoveToLocation(bot, utils.VectorAway(bot:GetLocation(), enemies[1]:GetLocation(), 900-closestEnemyDist))
                 return
             end
         end
         
         if #eCreep > 0 then
             local weakestCreep, _ = utils.GetWeakestCreep(eCreep)
-            if weakestCreep and GetUnitToUnitDistance(bot, weakestCreep) < closestEnemyDist then
+            if utils.ValidTarget(weakestCreep) and GetUnitToUnitDistance(bot, weakestCreep) < closestEnemyDist then
                 gHeroVar.HeroAttackUnit(bot, weakestCreep, true)
                 return
             end
+            
+            getHeroVar("AbilityUsageClass"):AbilityUsageThink(bot)
+            return
+        end
+        
+        if GetUnitToUnitDistance(bot, hBuilding) < 400 then
+            gHeroVar.HeroMoveToUnit(bot, hBuilding)
+            return
         end
     end
 end
@@ -123,6 +134,7 @@ function X:Think(bot)
             vec = vec * 575 / #vec -- resize to 575 units (max tp range from tower)
             pos = pos + vec
             gHeroVar.HeroUseAbilityOnLocation(bot, tp, pos)
+            return
         end
     end
 

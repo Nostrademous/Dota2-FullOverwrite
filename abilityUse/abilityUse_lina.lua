@@ -129,8 +129,9 @@ function linaAbility:queueNuke(bot, enemy, castQueue, engageDist)
             --utils.myPrint(" - skill '", skill:GetName(), "' has BehaviorFlag: ", behaviorFlag)
 
             if skill:GetName() == "lina_light_strike_array" then
-                if enemy:HasModifier("modifier_eul_cyclone") then
-                    bot:ActionPush_Delay(modifiers.GetModifierRemainingDuration(enemy, "modifier_eul_cyclone") - .95)
+                modifiers.printAllMods(enemy)
+                if enemy:HasModifier("modifier_item_cyclone") then
+                    bot:ActionPush_Delay(modifiers.GetModifierRemainingDuration(enemy, "modifier_item_cyclone") - .95)
                     gHeroVar.HeroPushUseAbilityOnLocation(bot, skill, enemy:GetLocation())
                 elseif utils.IsCrowdControlled(enemy) then
                     gHeroVar.HeroPushUseAbilityOnLocation(bot, skill, enemy:GetLocation())

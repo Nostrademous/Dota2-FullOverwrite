@@ -162,7 +162,7 @@ function ConsiderQ()
             end
             if utils.ValidTarget(roshan) then
                 if not roshan:HasModifier("modifier_bloodseeker_bloodrage") then
-                    return BOT_ACTION_DESIRE_LOW, roshan
+                    return BOT_ACTION_DESIRE_HIGH, roshan
                 end
             end
         end 
@@ -170,7 +170,7 @@ function ConsiderQ()
     
     if modeName == "jungling" or modeName == "laning" or modeName == "pushlane" or modeName == "roshan" then
         if not bot:HasModifier("modifier_bloodseeker_bloodrage") and #gHeroVar.GetNearbyEnemyCreep(bot, 1200) > 0 then
-            return BOT_ACTION_DESIRE_LOW, bot
+            return BOT_ACTION_DESIRE_MODERATE, bot
         end
     end
     
@@ -202,7 +202,7 @@ function ConsiderW()
 	if #tableNearbyAttackingAlliedHeroes >= 2 then
         local locationAoE = bot:FindAoELocation( true, true, bot:GetLocation(), CastRange, Radius, Delay, 0 )
         if locationAoE.count >= 2 and GetUnitToLocationDistance(bot, locationAoE.targetloc) <= CastRange then
-            return BOT_ACTION_DESIRE_LOW, locationAoE.targetloc
+            return BOT_ACTION_DESIRE_MODERATE, locationAoE.targetloc
         end
     end
     

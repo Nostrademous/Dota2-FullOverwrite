@@ -124,15 +124,17 @@ function X:Think(bot)
         if ( GetGameState() ~= GAME_STATE_GAME_IN_PROGRESS and GetGameState() ~= GAME_STATE_PRE_GAME ) then return end
 
         -- Put Team-wide Logic Assigned Items in our list
+        --[[
         local myTeamBuyList = getHeroVar("TeamBuy")
         if #myTeamBuyList > 0 then
-            for _, item in ipairs(myTeamBuyList) do
+            for _, item in pairs(myTeamBuyList) do
                 if not utils.InTable(self.PurchaseOrder, item) then
                     utils.myPrint("Adding team mandated item to my purchase list: ", item)
                     table.insert(self.PurchaseOrder, 1, item)
                 end
             end
         end
+        --]]
 
         -- Put support items in list if we are a support (even if we already wanted to buy something else)
         if GetNumCouriers() == 0 then
@@ -176,10 +178,11 @@ function X:Think(bot)
             -- Enough gold -> buy, remove
             if(bot:GetGold() >= GetItemCost(sNextItem)) then
                 if bot:IsAlive() then
-                    if bot.SelfRef:getCurrentMode():GetName() ~= "shop" then
+                    if bot.SelfRef:getCurrentMode():GetName() ~= "shop" and
+                        not IsItemPurchasedFromSecretShop( sNextItem) then
                         bot:ActionImmediate_PurchaseItem(sNextItem)
                         table.remove(self.PurchaseOrder, 1)
-                        UpdateTeamBuyList(sNextItem)
+                        --UpdateTeamBuyList(sNextItem)
                         bot:SetNextItemPurchaseValue(0)
                     end
                 end
@@ -341,10 +344,12 @@ function X:UpdatePurchaseOrder()
                         if remove then
                             for _,k in pairs(compare) do
                                 local pos = utils.PosInTable(toBuy, k)
+                                utils.myPrint("[UpdatePurchaseOrder] - 1 - removing: ", toBuy[pos])
                                 table.remove(toBuy, pos)
                             end
                             -- remove the bought item also (since we are going to use it in the new item)
                             local pos = utils.PosInTable(self.BoughtItems, p)
+                            utils.myPrint("[UpdatePurchaseOrder] - 2 - removing: ", self.BoughtItems[pos])
                             table.remove(self.BoughtItems, pos)
                         end
                     else
@@ -352,9 +357,11 @@ function X:UpdatePurchaseOrder()
                         if utils.InTable(toBuy, p) then
                             -- if so remove it from the item to buy
                             local pos = utils.PosInTable(toBuy, p)
+                            utils.myPrint("[UpdatePurchaseOrder] - 3 - removing: ", toBuy[pos])
                             table.remove(toBuy, pos)
                             -- remove it from bought items
                             pos = utils.PosInTable(self.BoughtItems, p)
+                            utils.myPrint("[UpdatePurchaseOrder] - 4 - removing: ", self.BoughtItems[pos])
                             table.remove(self.BoughtItems, pos)
                         end
                     end
@@ -364,8 +371,9 @@ function X:UpdatePurchaseOrder()
             for _,p in pairs(toBuy) do
                 table.insert(self.PurchaseOrder, p)
             end
-            -- insert the item to buy in bought items, remove it from starting items
+            -- insert the item to buy in bought items, remove it from core items
             table.insert(self.BoughtItems, self.CoreItems[1])
+            utils.myPrint("[UpdatePurchaseOrder] - 5 - removing: ", self.CoreItems[1])
             table.remove(self.CoreItems, 1)
         end
     else
@@ -392,10 +400,12 @@ function X:UpdatePurchaseOrder()
                     if remove then
                         for _,k in pairs(compare) do
                             local pos = utils.PosInTable(toBuy, k)
+                            utils.myPrint("[UpdatePurchaseOrder] - 5 - removing: ", toBuy[pos])
                             table.remove(toBuy, pos)
                         end
                         -- remove the bought item also (since we are going to use it in the new item)
                         local pos = utils.PosInTable(self.BoughtItems, p)
+                        utils.myPrint("[UpdatePurchaseOrder] - 6 - removing: ", self.BoughtItems[pos])
                         table.remove(self.BoughtItems, pos)
                     end
                 else
@@ -403,9 +413,11 @@ function X:UpdatePurchaseOrder()
                     if utils.InTable(toBuy, p) then
                         -- if so remove it from the item to buy
                         local pos = utils.PosInTable(toBuy, p)
+                        utils.myPrint("[UpdatePurchaseOrder] - 7 - removing: ", toBuy[pos])
                         table.remove(toBuy, pos)
                         -- remove it from bought items
                         pos = utils.PosInTable(self.BoughtItems, p)
+                        utils.myPrint("[UpdatePurchaseOrder] - 8 - removing: ", self.BoughtItems[pos])
                         table.remove(self.BoughtItems, pos)
                     end
                 end
@@ -417,6 +429,7 @@ function X:UpdatePurchaseOrder()
         end
         -- insert the item to buy in bought items, remove it from starting items
         table.insert(self.BoughtItems, self.StartingItems[1])
+        utils.myPrint("[UpdatePurchaseOrder] - 9 - removing: ", self.StartingItems[pos])
         table.remove(self.StartingItems, 1)
     end
 end

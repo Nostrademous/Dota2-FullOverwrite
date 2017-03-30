@@ -441,6 +441,8 @@ function UseItems()
 
     if UseTeamItems() then return true end
 
+    if UseIronTalon() then return true end
+    
     if UseTP(bot) then return true end
 
     local courier = utils.IsItemAvailable("item_courier")
@@ -822,6 +824,36 @@ function UseHurricanePike(target, location)
     if item and utils.IsFacingLocation(bot, location, 25) then
         gHeroVar.HeroUseAbilityOnEntity(bot, item, target)
         return true
+    end
+    return false
+end
+
+function UseIronTalon()
+    local bot = GetBot()
+    local item = utils.IsItemAvailable("item_iron_talon")
+    if item then
+        -- use Talon to 1-shot enemy wards
+        local eWards = GetUnitList(UNIT_LIST_ENEMY_WARDS)
+        if #eWards > 0 then
+            local target = eWards[1]
+            if GetUnitToUnitDistance(bot, target) < 3000 then
+                gHeroVar.HeroUseAbilityOnEntity(bot, item, target)
+                return true
+            end
+        end
+    
+        -- use Talon on highest-health & defense enemy unit, if not ancient, and we won't kill in 2 shots
+        local creeps = gHeroVar.GetNearbyEnemyCreep(bot, 350)
+        if #creeps > 0 then
+            if #creeps > 1 then
+                table.sort(creeps, function(n1,n2) return n1:GetHealth()/bot:GetAttackCombatProficiency(n1) > n2:GetHealth()/bot:GetAttackCombatProficiency(n2) end)
+            end
+            local target = creeps[1]
+            if utils.ValidTarget(target) and not target:IsAncientCreep() and target:GetHealth() > bot:GetAttackDamage()*2.0 then
+                gHeroVar.HeroUseAbilityOnEntity(bot, item, target)
+                return true
+            end
+        end
     end
     return false
 end

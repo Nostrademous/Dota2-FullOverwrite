@@ -222,9 +222,7 @@ function X:Think(bot)
     self:getHeroVar("ItemPurchaseClass"):ItemPurchaseThink(bot)
     
     -- consider using items
-    if not utils.IsBusy(bot) then
-        if item_usage.UseItems() then return end
-    end
+    if item_usage.UseItems() then return end
     
     -- if we are in fountain, heal fully
     if bot:HasModifier("modifier_fountain_aura_buff") then

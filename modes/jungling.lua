@@ -164,7 +164,7 @@ local function CleanCamp(bot)
         --utils.myPrint("finds camp")
         setHeroVar("JunglingState", JunglingStates.FindCamp)
     else
-        bot.SelfRef:DoCleanCamp(bot, neutrals, getHeroVar("currentCamp").difficulty)
+        bot.SelfRef:DoCleanCamp(bot, neutrals)
     end
 end
 

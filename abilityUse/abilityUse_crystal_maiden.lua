@@ -33,6 +33,7 @@ local abilityE = ""
 local abilityR = ""
 
 local ManaPerc      = 0.0
+local modeName      = nil
 
 function cmAbility:nukeDamage( bot, enemy )
     if not utils.ValidTarget(enemy) then return 0, {}, 0, 0, 0 end
@@ -174,23 +175,26 @@ function cmAbility:AbilityUsageThink(bot)
     end
     
 	ManaPerc      = bot:GetMana()/bot:GetMaxMana()
+    modeName      = bot.SelfRef:getCurrentMode():GetName()
+    
+    local modeDesire    = bot.SelfRef:getCurrentModeValue()
     
     -- Consider using each ability
 	local castQDesire, castQLocation  = ConsiderQ()
 	local castWDesire, castWTarget    = ConsiderW()
 	local castRDesire                 = ConsiderR()
     
-    if castQDesire > 0 and castQDesire > castWDesire and castQDesire > castRDesire then
+    if castQDesire > modeDesire and castQDesire > castWDesire and castQDesire > castRDesire then
         gHeroVar.HeroUseAbilityOnLocation( bot, abilityQ, castQLocation )
         return true
     end
     
-    if castWDesire > 0 and castWDesire > castRDesire then
+    if castWDesire > modeDesire and castWDesire > castRDesire then
         gHeroVar.HeroUseAbilityOnEntity( bot, abilityW, castWTarget )
         return true
     end
     
-    if castRDesire > 0 then
+    if castRDesire > modeDesire then
         gHeroVar.HeroUseAbility( bot, abilityR )
         return true
     end
@@ -204,8 +208,6 @@ function ConsiderQ()
     if not abilityQ:IsFullyCastable() then
         return BOT_ACTION_DESIRE_NONE, {}
     end
-    
-    local modeName  = bot.SelfRef:getCurrentMode():GetName()
     
     local CastRange = abilityQ:GetCastRange()
     local Radius    = 425
@@ -302,8 +304,6 @@ function ConsiderW()
     if not abilityW:IsFullyCastable() then
         return BOT_ACTION_DESIRE_NONE, nil
     end
-    
-    local modeName  = bot.SelfRef:getCurrentMode():GetName()
     
     local CastRange = abilityW:GetCastRange()
     local Damage    = abilityW:GetSpecialValueInt("hero_damage_tooltip")
@@ -424,8 +424,6 @@ function ConsiderR()
     if not abilityR:IsFullyCastable() then
         return BOT_ACTION_DESIRE_NONE
     end
-    
-    local modeName  = bot.SelfRef:getCurrentMode():GetName()
 
 	local Radius    = abilityR:GetAOERadius()
 

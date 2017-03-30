@@ -167,17 +167,19 @@ function viperAbility:AbilityUsageThink(bot)
     AttackRange   = bot:GetAttackRange() + bot:GetBoundingRadius()
     ManaPerc      = bot:GetMana()/bot:GetMaxMana()
     modeName      = bot.SelfRef:getCurrentMode():GetName()
+    
+    local modeDesire    = bot.SelfRef:getCurrentModeValue()
 
     -- Consider using each ability
     local castQDesire, castQTarget  = ConsiderQ()
     local castRDesire, castRTarget  = ConsiderR()
 
-    if castRDesire > 0 then
+    if castRDesire > modeDesire and castRDesire > castQDesire then
         gHeroVar.HeroUseAbilityOnEntity(bot, abilityR, castRTarget)
         return true
     end
 
-    if castQDesire > 0 then
+    if castQDesire > modeDesire then
         gHeroVar.HeroUseAbilityOnEntity(bot, abilityQ, castQTarget)
         return true
     end

@@ -57,14 +57,7 @@ function ConsiderQ()
     
     -- farming/laning
 	if modeName == "jungling" or modeName == "laning" then
-        if ManaPerc > 0.25 then
-            -- in lane harass
-            if utils.ValidTarget(WeakestEnemy) then
-                if not modifiers.IsPhysicalImmune(WeakestEnemy) then
-                    return BOT_ACTION_DESIRE_LOW, WeakestEnemy
-                end
-            end
-            
+        if ManaPerc > 0.5 then            
             local eCreep = gHeroVar.GetNearbyEnemyCreep(bot, daggerCastRange)
             local weakestCreep, weakestCreepHealth = utils.GetWeakestCreep(eCreep)
             if utils.ValidTarget(weakestCreep) then
@@ -72,6 +65,13 @@ function ConsiderQ()
                 if dist > 1.25*AttackRange and 
                     weakestCreepHealth < weakestCreep:GetActualIncomingDamage(daggerDamage, DAMAGE_TYPE_PHYSICAL) then
                     return BOT_ACTION_DESIRE_LOW, weakestCreep
+                end
+            end
+            
+            -- in lane harass
+            if utils.ValidTarget(WeakestEnemy) and weakestCreepHealth > 150 then
+                if not modifiers.IsPhysicalImmune(WeakestEnemy) then
+                    return BOT_ACTION_DESIRE_LOW, WeakestEnemy
                 end
             end
         end
@@ -199,6 +199,8 @@ function genericAbility:AbilityUsageThink(bot)
 	HealthPerc    = bot:GetHealth()/bot:GetMaxHealth()
     modeName      = bot.SelfRef:getCurrentMode():GetName()
     
+    local modeDesire = bot.SelfRef:getCurrentModeValue()
+    
     local critChance = 0.0
     local critDmg = 0.0
     if abilityR:GetLevel() >= 1 then
@@ -236,7 +238,7 @@ function genericAbility:AbilityUsageThink(bot)
 	local castQDesire, castQTarget  = ConsiderQ()
 	local castWDesire, castWTarget  = ConsiderW()
 
-    if castWDesire > 0 and castWDesire > castQDesire then
+    if castWDesire > modeDesire and castWDesire > castQDesire then
         gHeroVar.HeroUseAbilityOnEntity(bot, abilityW, castWTarget)
         local numAttacks = math.ceil(3/bot:GetSecondsPerAttack())
         for i = 1, numAttacks, 1 do
@@ -245,7 +247,7 @@ function genericAbility:AbilityUsageThink(bot)
 		return true
     end
     
-    if castQDesire > 0 then
+    if castQDesire > modeDesire then
         gHeroVar.HeroUseAbilityOnEntity(bot, abilityQ, castQTarget)
 		return true
     end

@@ -679,6 +679,13 @@ function U.GetEnemyHeroesBetweenMeAndLoc(loc, lineOfSightThickness)
     return fHeroList
 end
 
+-- use this only when movement stability is fairly high
+function U.PredictPosition(hHero, fTime)
+    local loc = hHero:GetLocation()
+	local v = hHero:GetVelocity()
+	return Vector( loc.x + fTime * v.x, loc.y + fTime * v.y, loc.z )
+end
+
 -------------------------------------------------------------------------------
 -- General Hero Functions
 -------------------------------------------------------------------------------
@@ -690,11 +697,11 @@ end
 
 function U.IsBusy(bot)
     if bot:IsChanneling() then return true end
+    if bot:NumQueuedActions() > 0 then return true end
     if bot:IsCastingAbility() then
         if bot.AbilityOnEntityUseTime and (GameTime() - bot.AbilityOnEntityUseTime) > 3.0 then return false end
         return true
     end
-    if bot:NumQueuedActions() > 0 then return true end
     return false
 end
 

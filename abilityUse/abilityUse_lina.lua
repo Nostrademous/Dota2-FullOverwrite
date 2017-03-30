@@ -9,6 +9,8 @@ local linaAbility = BotsInit.CreateGeneric()
 local utils = require( GetScriptDirectory().."/utility" )
 local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
 
+require( GetScriptDirectory().."/modifiers" )
+
 function setHeroVar(var, value)
     local bot = GetBot()
     gHeroVar.SetVar(bot:GetPlayerID(), var, value)
@@ -92,14 +94,17 @@ function linaAbility:nukeDamage( bot, enemy )
                 engageDist = Min(engageDist, abilityW:GetCastRange())
                 table.insert(comboQueue, 1, abilityW)
                 
-                --[[
+                -- using Eul's only makes sense if we can LSA too
                 local euls = utils.IsItemAvailable("item_cyclone")
                 if euls then
-                    engageDist = 575
-                    table.insert(comboQueue, 1, bot:ActionPush_Delay())
-                    table.insert(comboQueue, 1, euls)
+                    local manaCostEuls = euls:GetManaCost()
+                    if manaCostEuls <= manaAvailable then
+                        manaAvailable = manaAvailable - manaCostW
+                        dmgTotal = dmgTotal + 50
+                        engageDist = 575
+                        table.insert(comboQueue, 1, euls)
+                    end
                 end
-                --]]
             end
         end
     end
@@ -124,19 +129,25 @@ function linaAbility:queueNuke(bot, enemy, castQueue, engageDist)
             --utils.myPrint(" - skill '", skill:GetName(), "' has BehaviorFlag: ", behaviorFlag)
 
             if skill:GetName() == "lina_light_strike_array" then
-                if utils.IsCrowdControlled(enemy) then
+                if enemy:HasModifier("modifier_eul_cyclone") then
+                    bot:ActionPush_Delay(modifiers.GetModifierRemainingDuration(enemy, "modifier_eul_cyclone") - .95)
+                    gHeroVar.HeroPushUseAbilityOnLocation(bot, skill, enemy:GetLocation())
+                elseif utils.IsCrowdControlled(enemy) then
                     gHeroVar.HeroPushUseAbilityOnLocation(bot, skill, enemy:GetLocation())
                 else
-                    gHeroVar.HeroPushUseAbilityOnLocation(bot, skill, enemy:GetExtrapolatedLocation(0.95))
+                    gHeroVar.HeroPushUseAbilityOnLocation(bot, skill, utils.PredictPosition(enemy, 0.95))
                 end
             elseif skill:GetName() == "lina_dragon_slave" then
                 if utils.IsCrowdControlled(enemy) then
                     gHeroVar.HeroPushUseAbilityOnLocation(bot, skill, enemy:GetLocation())
                 else
                     -- account for 0.45 cast point and speed of wave (1200) needed to travel the distance between us
-                    gHeroVar.HeroPushUseAbilityOnLocation(bot, skill, enemy:GetExtrapolatedLocation(0.45 + dist/1200))
+                    gHeroVar.HeroPushUseAbilityOnLocation(bot, skill, utils.PredictPosition(enemy, 0.45 + dist/1200))
                 end
             elseif skill:GetName() == "lina_laguna_blade" then
+                gHeroVar.HeroPushUseAbilityOnEntity(bot, skill, enemy)
+            elseif skill:GetName() == "item_cyclone" then
+                bot:ActionPush_Delay(0.25)
                 gHeroVar.HeroPushUseAbilityOnEntity(bot, skill, enemy)
             end
         end
@@ -183,22 +194,24 @@ function linaAbility:AbilityUsageThink(bot)
     ManaPerc      = bot:GetMana()/bot:GetMaxMana()
     modeName      = bot.SelfRef:getCurrentMode():GetName()
     
+    local modeDesire = bot.SelfRef:getCurrentModeValue()
+    
     -- Consider using each ability
 	local castQDesire, castQLocation  = ConsiderQ()
 	local castWDesire, castWLocation  = ConsiderW()
 	local castRDesire, castRTarget    = ConsiderR()
     
-    if castQDesire > 0 and castQDesire > castWDesire and castQDesire > castRDesire then
+    if castQDesire > modeDesire and castQDesire > castWDesire and castQDesire > castRDesire then
         gHeroVar.HeroUseAbilityOnLocation( bot, abilityQ, castQLocation )
         return true
     end
     
-    if castWDesire > 0 and castWDesire > castRDesire then
+    if castWDesire > modeDesire and castWDesire > castRDesire then
         gHeroVar.HeroUseAbilityOnLocation( bot, abilityW, castWLocation )
         return true
     end
     
-    if castRDesire > 0 then
+    if castRDesire > modeDesire then
         gHeroVar.HeroUseAbilityOnEntity( bot, abilityR, castRTarget )
         return true
     end
@@ -225,7 +238,7 @@ function ConsiderQ()
 			if not utils.IsTargetMagicImmune(WeakestEnemy) and not utils.IsCrowdControlled(WeakestEnemy) then
 				if HeroHealth <= WeakestEnemy:GetActualIncomingDamage(Damage, DAMAGE_TYPE_MAGICAL) then
                     local d = GetUnitToUnitDistance(bot, WeakestEnemy)
-					return BOT_ACTION_DESIRE_HIGH, WeakestEnemy:GetExtrapolatedLocation(0.45 + d/1200 + getHeroVar("AbilityDelay"))
+					return BOT_ACTION_DESIRE_HIGH, utils.PredictPosition(WeakestEnemy, 0.45 + d/1200 + getHeroVar("AbilityDelay"))
 				end
 			end
 		end
@@ -253,7 +266,7 @@ function ConsiderQ()
             local d = GetUnitToUnitDistance(bot, npcEnemy)
 			if not utils.IsTargetMagicImmune(npcEnemy) and not utils.IsCrowdControlled(npcEnemy) and 
                 d < (CastRange + 75*#gHeroVar.GetNearbyAllies(bot,1200)) then
-				return BOT_ACTION_DESIRE_HIGH, npcEnemy:GetExtrapolatedLocation(0.45 + d/1200 + getHeroVar("AbilityDelay"))
+				return BOT_ACTION_DESIRE_HIGH, utils.PredictPosition(npcEnemy, 0.45 + d/1200 + getHeroVar("AbilityDelay"))
 			end
 		end
 	end
@@ -318,7 +331,7 @@ function ConsiderW()
 		if utils.ValidTarget(WeakestEnemy) then
 			if not utils.IsTargetMagicImmune(WeakestEnemy) and not utils.IsCrowdControlled(WeakestEnemy) then
 				if HeroHealth <= WeakestEnemy:GetActualIncomingDamage(Damage, DAMAGE_TYPE_MAGICAL) then
-					return BOT_ACTION_DESIRE_HIGH, WeakestEnemy:GetExtrapolatedLocation(0.95 + getHeroVar("AbilityDelay"))
+					return BOT_ACTION_DESIRE_HIGH, utils.PredictPosition(WeakestEnemy, 0.95 + getHeroVar("AbilityDelay"))
 				end
 			end
 		end
@@ -336,7 +349,7 @@ function ConsiderW()
 		if utils.ValidTarget(npcEnemy) then
 			if not utils.IsTargetMagicImmune(npcEnemy) and not utils.IsCrowdControlled(npcEnemy) and 
                 GetUnitToUnitDistance(bot, npcEnemy) < (CastRange + 75*#gHeroVar.GetNearbyAllies(bot,1200)) then
-				return BOT_ACTION_DESIRE_HIGH, npcEnemy:GetExtrapolatedLocation(0.95 + getHeroVar("AbilityDelay"))
+				return BOT_ACTION_DESIRE_HIGH, utils.PredictPosition(npcEnemy, 0.95 + getHeroVar("AbilityDelay"))
 			end
 		end
 	end
@@ -370,7 +383,7 @@ function ConsiderW()
         for _, npcEnemy in pairs( tableNearbyEnemyHeroes ) do
             if bot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) then
 				if not utils.IsTargetMagicImmune(npcEnemy) and not utils.IsCrowdControlled(npcEnemy) then
-					return BOT_ACTION_DESIRE_HIGH, npcEnemy:GetExtrapolatedLocation(0.95 + getHeroVar("AbilityDelay"))
+					return BOT_ACTION_DESIRE_HIGH, utils.PredictPosition(npcEnemy, 0.95 + getHeroVar("AbilityDelay"))
 				end
 			end
         end

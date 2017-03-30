@@ -9,6 +9,7 @@ require( GetScriptDirectory().."/buildings_status" )
 require( GetScriptDirectory().."/global_game_state" )
 require( GetScriptDirectory().."/item_usage" )
 require( GetScriptDirectory().."/debugging" )
+require( GetScriptDirectory().."/modifiers" )
 
 none = dofile( GetScriptDirectory().."/modes/none" )
 
@@ -180,7 +181,7 @@ function X:Think(bot)
         bot:Action_ClearActions(true)
         return
     end
-
+    
     -- level up abilities if time
     local checkLevel, newTime = utils.TimePassed(self:getHeroVar("LastLevelUpThink"), 2.0)
     if checkLevel then
@@ -212,8 +213,13 @@ function X:Think(bot)
     -- update our building information
     buildings_status.Update()
     
+    if utils.IsBusy(bot) then return end
+    
     -- check if we should change lanes
     self:DoChangeLane(bot)
+    
+    -- consider purchasing items
+    self:getHeroVar("ItemPurchaseClass"):ItemPurchaseThink(bot)
     
     -- consider using items
     if not utils.IsBusy(bot) then
@@ -236,7 +242,7 @@ function X:Think(bot)
             bot.DontMove = true
             return
         end
-    else
+    elseif not modifiers.IsRuptured(bot) then
         bot.DontMove = false
     end
     
@@ -254,9 +260,6 @@ function X:Think(bot)
         local bAbilityQueued = self:getHeroVar("AbilityUsageClass"):AbilityUsageThink(bot)
         if bAbilityQueued then return end
     end
-    
-    -- consider purchasing items
-    self:getHeroVar("ItemPurchaseClass"):ItemPurchaseThink(bot)
 end
 
 -------------------------------------------------------------------------------

@@ -246,6 +246,8 @@ function drAbility:AbilityUsageThink(bot)
     AttackRange   = bot:GetAttackRange() + bot:GetBoundingRadius()
     ManaPerc      = bot:GetMana()/bot:GetMaxMana()
     modeName      = bot.SelfRef:getCurrentMode():GetName()
+    
+    local modeDesire    = bot.SelfRef:getCurrentModeValue()
 
     -- CHECK BELOW TO SEE WHICH ABILITIES ARE NOT PASSIVE AND WHAT RETURN TYPES ARE --
     -- Consider using each ability
@@ -254,17 +256,17 @@ function drAbility:AbilityUsageThink(bot)
     local castEDesire               = ConsiderE()
 
     -- CHECK BELOW TO SEE WHAT PRIORITY OF ABILITIES YOU WANT FOR THIS HERO --
-    if castEDesire > 0 then
+    if castEDesire > modeDesire and castEDesire > Max(castWDesire, castQDesire) then
         gHeroVar.HeroUseAbility(bot,  abilityE)
         return true
     end
 
-    if castWDesire > 0 then
+    if castWDesire > modeDesire and castWDesire > castQDesire then
         gHeroVar.HeroUseAbilityOnLocation(bot, abilityW, castWLoc)
         return true
     end
 
-    if castQDesire > 0 then
+    if castQDesire > modeDesire then
         gHeroVar.HeroUseAbilityOnEntity(bot, abilityQ, castQTarget)
         return true
     end

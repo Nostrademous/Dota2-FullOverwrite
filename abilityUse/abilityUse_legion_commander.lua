@@ -31,6 +31,7 @@ local castRDesire   = 0
 local AttackRange   = 0
 local ManaPerc      = 0.0
 local HealthPerc    = 0.0
+local modeName      = nil
 
 function ConsiderQ()
     local bot = GetBot()
@@ -48,8 +49,6 @@ function ConsiderQ()
     
     
 	local WeakestEnemy, HeroHealth = utils.GetWeakestHero(bot, CastRange+150)
-    
-    local modeName = bot.SelfRef:getCurrentMode():GetName()
 
     --------------------------------------
 	-- Global high-priorty usage
@@ -134,8 +133,6 @@ function ConsiderW()
 			end
 		end
 	end
-	
-    local modeName = bot.SelfRef:getCurrentMode():GetName()
     
     -- save allies from other disables
 	if modeName == "fight" or modeName == "defendally" or ManaPerc > 0.4 then
@@ -228,8 +225,6 @@ function ConsiderR()
         Duration = abilityR:GetSpecialValueFloat("duration_scepter")
     end
     
-    local modeName = bot.SelfRef:getCurrentMode():GetName()
-    
 	--------------------------------------
 	-- Global high-priorty usage
 	--------------------------------------
@@ -300,27 +295,29 @@ function genericAbility:AbilityUsageThink(bot)
     AttackRange   = bot:GetAttackRange()
 	ManaPerc      = bot:GetMana()/bot:GetMaxMana()
 	HealthPerc    = bot:GetHealth()/bot:GetMaxHealth()
+    modeName      = bot.SelfRef:getCurrentMode():GetName()
+    
+    local modeDesire    = bot.SelfRef:getCurrentModeValue()
     
     -- Consider using each ability
 	local castQDesire, castQLocation  = ConsiderQ()
 	local castWDesire, castWTarget    = ConsiderW()
 	local castRDesire, castRTarget    = ConsiderR()
     
-    if castQDesire > 0 then
+    if castQDesire > modeDesire and castQDesire > Max(castWDesire, castRDesire) then
         gHeroVar.HeroUseAbilityOnLocation(bot,  abilityQ, castQLocation )
         return true
     end
     
-    if castWDesire > 0 then
+    if castWDesire > modeDesire and castWDesire > castRDesire then
         gHeroVar.HeroUseAbilityOnEntity(bot,  abilityW, castWTarget )
         return true
     end
     
-    if castRDesire > 0 then
+    if castRDesire > modeDesire then
         if utils.IsItemAvailable("item_blade_mail") then
-            bot:Action_ClearActions(false)
-            item_usage.UseBladeMail(bot)
-            gHeroVar.HeroQueueUseAbilityOnEntity(bot, abilityR, castRTarget )
+            gHeroVar.HeroPushUseAbilityOnEntity(bot, abilityR, castRTarget )
+            item_usage.UseBladeMail(constants.PUSH)
         else
             gHeroVar.HeroUseAbilityOnEntity(bot, abilityR, castRTarget )
         end

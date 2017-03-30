@@ -32,7 +32,7 @@ local function updateBotStates()
     local listAllies = GetUnitList(UNIT_LIST_ALLIED_HEROES)
     for _, ally in pairs(listAllies) do
         if ally:IsBot() and not ally:IsIllusion() and gHeroVar.HasID(ally:GetPlayerID()) then
-            local hMyBot = gHeroVar.GetVar(ally:GetPlayerID(), "Self")
+            local hMyBot = ally.SelfRef
             local mode = hMyBot:getCurrentMode()
             local state = mode:GetName()
             if state == "laning" then

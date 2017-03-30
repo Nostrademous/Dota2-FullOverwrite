@@ -98,30 +98,14 @@ end
 
 function GetModifierRemainingDuration(hUnit, sName)
     if hUnit:HasModifier(sName) then
-        local botModifierCount = hUnit:NumModifiers()
-        if botModifierCount == 0 then return 0 end
-        
-        for i = 0, botModifierCount-1, 1 do
-            local modName = hUnit:GetModifierName(i)
-            if modName == sName then
-                return hUnit:GetModifierRemainingDuration(i)
-            end
-        end
+        return hUnit:GetModifierRemainingDuration( hUnit:GetModifierByName(sName) )
     end
     return 0
 end
 
 function GetModifierStackCount(hUnit, sName)
     if hUnit:HasModifier(sName) then
-        local botModifierCount = hUnit:NumModifiers()
-        if botModifierCount == 0 then return 0 end
-        
-        for i = 0, botModifierCount-1, 1 do
-            local modName = hUnit:GetModifierName(i)
-            if modName == sName then
-                return hUnit:GetModifierStackCount(i)
-            end
-        end
+        return hUnit:GetModifierStackCount( hUnit:GetModifierByName(sName) )
     end
     return 0
 end

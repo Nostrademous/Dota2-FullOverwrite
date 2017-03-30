@@ -301,6 +301,8 @@ function bsAbility:AbilityUsageThink(bot)
     if abilityR == "" then abilityR = bot:GetAbilityByName( Abilities[4] ) end
 
     modeName      = bot.SelfRef:getCurrentMode():GetName()
+    
+    local modeDesire    = bot.SelfRef:getCurrentModeValue()
 
     -- CHECK BELOW TO SEE WHICH ABILITIES ARE NOT PASSIVE AND WHAT RETURN TYPES ARE --
     -- Consider using each ability
@@ -309,17 +311,17 @@ function bsAbility:AbilityUsageThink(bot)
 	local castRDesire, castRTarget  = ConsiderR()
     
     -- CHECK BELOW TO SEE WHAT PRIORITY OF ABILITIES YOU WANT FOR THIS HERO --
-    if castWDesire > 0 then
+    if castWDesire > modeDesire and castWDesire > Max(castRDesire, castQDesire) then
 		gHeroVar.HeroUseAbilityOnLocation(bot, abilityW, castWLoc)
 		return true
 	end
     
-    if castRDesire > 0 then
+    if castRDesire > modeDesire and castRDesire > castQDesire then
 		gHeroVar.HeroUseAbilityOnEntity(bot, abilityR, castRTarget)
 		return true
 	end
 
-	if castQDesire > 0 then
+	if castQDesire > modeDesire then
 		gHeroVar.HeroUseAbilityOnEntity(bot, abilityQ, castQTarget)
 		return true
 	end

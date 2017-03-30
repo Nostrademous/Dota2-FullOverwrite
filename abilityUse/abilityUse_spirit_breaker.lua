@@ -48,6 +48,8 @@ function genericAbility:AbilityUsageThink(bot)
 	HealthPerc    = bot:GetHealth()/bot:GetMaxHealth()
     modeName      = bot.SelfRef:getCurrentMode():GetName()
     
+    local modeDesire    = bot.SelfRef:getCurrentModeValue()
+    
     -- WRITE CODE HERE --
     
     -- Consider using each ability
@@ -55,20 +57,19 @@ function genericAbility:AbilityUsageThink(bot)
 	local castWDesire               = ConsiderW()
 	local castRDesire, castRTarget  = ConsiderR()
     
-    if castRDesire > 0 then
-		gHeroVar.HeroUseAbilityOnEntity(bot,  abilityR, castRTarget )
+    if castRDesire > modeDesire and castRDesire > Max(castWDesire, castQDesire) then
+		gHeroVar.HeroUseAbilityOnEntity(bot, abilityR, castRTarget )
 		return true
 	end
 	
-	if castWDesire > 0 then
+	if castWDesire > modeDesire and castWDesire > castQDesire then
 		gHeroVar.HeroUseAbility(bot,  abilityW )
 		return true
 	end
 
-	if castQDesire > 0 then
-        bot:Action_ClearActions(false)
+	if castQDesire > modeDesire then
         bot:ActionPush_Delay(0.25)
-		gHeroVar.HeroPushUseAbilityOnEntity(bot,  abilityQ, castQTarget )
+		gHeroVar.HeroPushUseAbilityOnEntity(bot, abilityQ, castQTarget )
 		return true
 	end
     

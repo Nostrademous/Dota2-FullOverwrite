@@ -260,22 +260,24 @@ function genericAbility:AbilityUsageThink(bot)
     HealthPerc    = bot:GetHealth()/bot:GetMaxHealth()
     modeName      = bot.SelfRef:getCurrentMode():GetName()
     
+    local modeDesire    = bot.SelfRef:getCurrentModeValue()
+    
     -- Consider using each ability
     local castQDesire, castQLocation  = ConsiderQ()
     local castEDesire, castELocation  = ConsiderE()
     local castRDesire, castRTarget    = ConsiderR()
     
-    if castRDesire > 0 then
+    if castRDesire > modeDesire and castRDesire > Max(castQDesire, castEDesire) then
         gHeroVar.HeroUseAbility(bot,  abilityR )
         return true
     end
     
-    if castEDesire > 0 then
+    if castEDesire > modeDesire and castEDesire > castQDesire then
         gHeroVar.HeroUseAbilityOnLocation(bot,  abilityE, castELocation )
         return true
     end
     
-    if castQDesire > 0 then
+    if castQDesire > modeDesire then
         gHeroVar.HeroUseAbilityOnLocation(bot,  abilityQ, castQLocation )
         return true
     end

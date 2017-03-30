@@ -224,6 +224,8 @@ function invAbility:AbilityUsageThink(bot)
     ManaPerc      = bot:GetMana()/bot:GetMaxMana()
     modeName      = bot.SelfRef:getCurrentMode():GetName()
     
+    local modeDesire    = bot.SelfRef:getCurrentModeValue()
+    
     --[[
     if abilityQ:GetLevel() >= 3 then
         if getHeroVar("nukeTOCMDB") then
@@ -299,126 +301,139 @@ function invAbility:AbilityUsageThink(bot)
 
     if not inGhostWalk(bot) then
         -- NOTE: the castXXDesire accounts for skill being fully castable        
-        if castTODesire > 0 then
+        if castTODesire > modeDesire and castTODesire > Max(castEMPDesire, castCMDesire) and
+            castTODesire > Max(castDBDesire, castSSDesire) and castTODesire > Max(castCSDesire, castACDesire) and
+            castTODesire > Max(castGWDesire, castIWDesire) and castTODesire > castFSDesire then
             --utils.myPrint("I want to Tornado")
             if not abilityTO:IsHidden() then
                 gHeroVar.HeroPushUseAbilityOnLocation(bot,  abilityTO, castTOLocation )
                 return true
             elseif abilityR:IsFullyCastable() then
-                bot:Action_ClearActions(true)
-                invokeTornado(bot)
-                gHeroVar.HeroQueueUseAbilityOnLocation(bot,  abilityTO, castTOLocation )
-                return true
+                gHeroVar.HeroPushUseAbilityOnLocation(bot,  abilityTO, castTOLocation )
+                local bRes = invokeTornado(bot)
+                if bRes then return true end
+                bot:Action_ClearActions(false)
             end
         end
         
-        if castCMDesire > 0 then
+        if castCMDesire > modeDesire and castCMDesire > castEMPDesire and
+            castCMDesire > Max(castDBDesire, castSSDesire) and castCMDesire > Max(castCSDesire, castACDesire) and
+            castCMDesire > Max(castGWDesire, castIWDesire) and castCMDesire > castFSDesire then
             --utils.myPrint("I want to Chaos Meteor")
             if not abilityCM:IsHidden() then
                 gHeroVar.HeroPushUseAbilityOnLocation(bot,  abilityCM, castCMLocation )
                 return true
             elseif abilityR:IsFullyCastable() then
-                bot:Action_ClearActions(true)
-                invokeChaosMeteor(bot)
-                gHeroVar.HeroQueueUseAbilityOnLocation(bot,  abilityCM, castCMLocation )
-                return true
+                gHeroVar.HeroPushUseAbilityOnLocation(bot,  abilityCM, castCMLocation )
+                local bRes = invokeChaosMeteor(bot)
+                if bRes then return true end
+                bot:Action_ClearActions(false)
             end
         end
 
-        if castEMPDesire > 0 then
+        if castEMPDesire > modeDesire and castEMPDesire > Max(castDBDesire, castSSDesire) and 
+            castEMPDesire > Max(castCSDesire, castACDesire) and castEMPDesire > Max(castGWDesire, castIWDesire) and
+            castEMPDesire > castFSDesire then
             --utils.myPrint("I want to EMP")
             if not abilityEMP:IsHidden() then
                 gHeroVar.HeroPushUseAbilityOnLocation(bot,  abilityEMP, castEMPLocation )
                 return true
             elseif abilityR:IsFullyCastable() then
-                bot:Action_ClearActions(true)
-                invokeEMP(bot)
-                gHeroVar.HeroQueueUseAbilityOnLocation(bot,  abilityEMP, castEMPLocation )
-                return true
+                gHeroVar.HeroPushUseAbilityOnLocation(bot,  abilityEMP, castEMPLocation )
+                local bRes = invokeEMP(bot)
+                if bRes then return true end
+                bot:Action_ClearActions(false)
             end
         end
 
-        if castDBDesire > 0 then
+        if castDBDesire > modeDesire and castDBDesire > castSSDesire and 
+            castDBDesire > Max(castCSDesire, castACDesire) and castDBDesire > Max(castGWDesire, castIWDesire) and
+            castDBDesire > castFSDesire then
             --utils.myPrint("I want to Deafening Blast")
             if not abilityDB:IsHidden() then
                 gHeroVar.HeroPushUseAbilityOnLocation(bot,  abilityDB, castDBLocation )
                 return true
             elseif abilityR:IsFullyCastable() then
-                bot:Action_ClearActions(true)
-                invokeDeafeningBlast(bot)
-                gHeroVar.HeroQueueUseAbilityOnLocation(bot,  abilityDB, castDBLocation )
-                return true
+                gHeroVar.HeroPushUseAbilityOnLocation(bot,  abilityDB, castDBLocation )
+                local bRes = invokeDeafeningBlast(bot)
+                if bRes then return true end
+                bot:Action_ClearActions(false)
             end
         end
 
-        if castCSDesire > 0 then
+        if castCSDesire > modeDesire and castCSDesire > Max(castSSDesire, castACDesire) and 
+            castCSDesire > Max(castGWDesire, castIWDesire) and
+            castCSDesire > castFSDesire then
             --utils.myPrint("I want to Cold Snap")
             if not abilityCS:IsHidden() then
                 gHeroVar.HeroPushUseAbilityOnEntity(bot,  abilityCS, castCSTarget )
                 return true
             elseif abilityR:IsFullyCastable() then
-                bot:Action_ClearActions(true)
-                invokeColdSnap(bot)
-                gHeroVar.HeroQueueUseAbilityOnEntity(bot,  abilityCS, castCSTarget )
-                return true
+                gHeroVar.HeroPushUseAbilityOnEntity(bot,  abilityCS, castCSTarget )
+                local bRes = invokeColdSnap(bot)
+                if bRes then return true end
+                bot:Action_ClearActions(false)
             end
         end
 
-        if castSSDesire > 0 then
+        if castSSDesire > modeDesire and castSSDesire > castACDesire and 
+            castSSDesire > Max(castGWDesire, castIWDesire) and
+            castSSDesire > castFSDesire then
             --utils.myPrint("I want to Sunstrike")
             if not abilitySS:IsHidden() then
                 gHeroVar.HeroPushUseAbilityOnLocation(bot,  abilitySS, castSSLocation )
                 return true
             elseif abilityR:IsFullyCastable() then
-                bot:Action_ClearActions(true)
-                invokeSunStrike(bot)
-                gHeroVar.HeroQueueUseAbilityOnLocation(bot,  abilitySS, castSSLocation )
-                return true
+                gHeroVar.HeroPushUseAbilityOnLocation(bot,  abilitySS, castSSLocation )
+                local bRes = invokeSunStrike(bot)
+                if bRes then return true end
+                bot:Action_ClearActions(false)
             end
         end
         
-        if castACDesire > 0 then
+        if castACDesire > modeDesire and castACDesire > Max(castGWDesire, castIWDesire) and
+            castACDesire > castFSDesire then
             --utils.myPrint("I want to Alacrity")
             if not abilityAC:IsHidden() then
                 gHeroVar.HeroPushUseAbilityOnEntity(bot,  abilityAC, castACTarget )
                 return true
             elseif abilityR:IsFullyCastable() then
-                bot:Action_ClearActions(true)
-                invokeAlacrity(bot)
-                gHeroVar.HeroQueueUseAbilityOnEntity(bot,  abilityAC, castACTarget )
-                return true
+                gHeroVar.HeroPushUseAbilityOnEntity(bot,  abilityAC, castACTarget )
+                local bRes = invokeAlacrity(bot)
+                if bRes then return true end
+                bot:Action_ClearActions(false)
             end
         end
 
-        if castFSDesire > 0 then
+        if castFSDesire > modeDesire and castFSDesire > Max(castGWDesire, castIWDesire) then
             --utils.myPrint("I want to Forge Spirit")
             if not abilityFS:IsHidden() then
                 gHeroVar.HeroPushUseAbility(bot,  abilityFS )
                 return true
             elseif abilityR:IsFullyCastable() then
-                bot:Action_ClearActions(true)
-                invokeForgedSpirit(bot)
-                gHeroVar.HeroQueueUseAbility(bot,  abilityFS )
-                return true
+                gHeroVar.HeroPushUseAbility(bot,  abilityFS )
+                local bRes = invokeForgedSpirit(bot)
+                if bRes then return true end
+                bot:Action_ClearActions(false)
             end
         end
         
-        if castGWDesire > 0 then
+        if castGWDesire > modeDesire and castGWDesire > castIWDesire then
             --utils.myPrint("I want to Ghost Walk")
             if not abilityGW:IsHidden() then
                 bot:ActionPush_Delay( 0.25 )
                 gHeroVar.HeroPushUseAbility(bot,  abilityGW )
                 return true
             elseif abilityR:IsFullyCastable() then
-                bot:Action_ClearActions(true)
-                invokeGhostWalk(bot)
+                bot:ActionPush_Delay( 0.25 )
                 gHeroVar.HeroQueueUseAbility(bot,  abilityGW )
-                bot:ActionQueue_Delay( 0.25 )
-                return true
+                local bRes = invokeGhostWalk(bot)
+                if bRes then return true end
+                bot:Action_ClearActions(false)
             end
         end
 
-        if castIWDesire > 0 then
+        if castIWDesire > modeDesire then
             --utils.myPrint("I want to Ice Wall")
             if not abilityIW:IsHidden() then
                 gHeroVar.HeroPushUseAbility(bot,  abilityIW )
@@ -432,8 +447,8 @@ function invAbility:AbilityUsageThink(bot)
                 end
                 return true
             elseif abilityR:IsFullyCastable() then
-                bot:Action_ClearActions(true)
-                invokeIceWall(bot)
+                gHeroVar.HeroPushUseAbility(bot,  abilityIW )
+                local bRes = invokeIceWall(bot)
                 -- if we have a facing modifier, turn there first
                 if castIWFacing ~= 0 then
                     local currentFacing = bot:GetFacing() -- returns 0 - 359 degrees. East is 0, North is 90
@@ -441,17 +456,15 @@ function invAbility:AbilityUsageThink(bot)
                     local myLoc = bot:GetLocation()
                     local yDisp = utils.Round(math.sin(math.rad(desiredFacing)), 0)
                     local xDisp = utils.Round(math.cos(math.rad(desiredFacing)), 0)
-                    gHeroVar.HeroQueueMoveToLocation(bot, utils.VectorTowards(myLoc, myLoc+Vector( xDisp, yDisp, 0 ), 50) )
+                    gHeroVar.HeroPushMoveToLocation(bot, utils.VectorTowards(myLoc, myLoc+Vector( xDisp, yDisp, 0 ), 50) )
                 end
-                gHeroVar.HeroQueueUseAbility(bot,  abilityIW )
-                return true
+                if bRes then return true end
+                bot:Action_ClearActions(false)
             end
         end
         
         -- Determine what orbs we want
-        if not getHeroVar("nukeTOCMDB") then
-            if ConsiderOrbs(bot) then return true end
-        end
+        if ConsiderOrbs(bot) then return true end
     else
         if ConsiderShowUp(bot, nearbyEnemyHeroes) then return true end
     end
@@ -781,7 +794,7 @@ function ConsiderTornado()
 			if not utils.IsTargetMagicImmune(WeakestEnemy) and not utils.IsCrowdControlled(WeakestEnemy) then
 				if HeroHealth <= WeakestEnemy:GetActualIncomingDamage(nDamage, DAMAGE_TYPE_MAGICAL) then
                     local d = GetUnitToUnitDistance(bot, WeakestEnemy)
-					return BOT_ACTION_DESIRE_HIGH, WeakestEnemy:GetExtrapolatedLocation(d/nSpeed)
+					return BOT_ACTION_DESIRE_HIGH, utils.PredictPosition(WeakestEnemy, d/nSpeed)
 				end
 			end
 		end
@@ -808,7 +821,7 @@ function ConsiderTornado()
                 not utils.IsTargetMagicImmune(npcEnemy) then
                 local d = GetUnitToUnitDistance( bot, npcEnemy )
                 if d <= (nCastRange + nDistance) then
-                    return BOT_ACTION_DESIRE_MODERATE, npcEnemy:GetExtrapolatedLocation( d/nSpeed )
+                    return BOT_ACTION_DESIRE_MODERATE, utils.PredictPosition( npcEnemy, d/nSpeed )
                 end
             end
         end
@@ -822,7 +835,7 @@ function ConsiderTornado()
 		if utils.ValidTarget(npcEnemy) then
 			if not utils.IsTargetMagicImmune(npcEnemy) and not utils.IsCrowdControlled(npcEnemy) then
                 local d = GetUnitToUnitDistance( bot, npcEnemy )
-				return BOT_ACTION_DESIRE_LOW, npcEnemy:GetExtrapolatedLocation( d/nSpeed )
+				return BOT_ACTION_DESIRE_LOW, utils.PredictPosition( npcEnemy, d/nSpeed )
 			end
 		end
 	end
@@ -985,12 +998,16 @@ function ConsiderSunStrike()
     for _, enemy in pairs(globalEnemies) do
         if utils.ValidTarget(enemy) then
             if enemy:GetHealth() < nDamage and enemy:GetMovementDirectionStability() > 0.9 then
-                return BOT_ACTION_DESIRE_MODERATE, enemy:GetExtrapolatedLocation( nDelay )
+                --utils.myPrint(tostring(enemy:GetExtrapolatedLocation( nDelay )))
+                --utils.myPrint(tostring(utils.PredictPosition( enemy, nDelay )))
+                --return BOT_ACTION_DESIRE_MODERATE, enemy:GetExtrapolatedLocation( nDelay )
+                utils.AllChat("Sun Strike on " .. utils.GetHeroName(enemy))
+                return BOT_ACTION_DESIRE_MODERATE, utils.PredictPosition( enemy, nDelay )
             else
                 -- enemies of my enemy are my friends
                 local allies = enemy:GetNearbyHeroes( 1000, true, BOT_MODE_NONE )
                 if #allies >= 2 and utils.IsCrowdControlled(enemy) and enemy:GetHealth() < 2.0*nDamage then
-                    return BOT_ACTION_DESIRE_MODERATE, enemy:GetExtrapolatedLocation( nDelay )
+                    return BOT_ACTION_DESIRE_MODERATE, utils.PredictPosition( enemy, nDelay )
                 end
             end
         end
@@ -1038,7 +1055,7 @@ function ConsiderDeafeningBlast()
 			if not utils.IsTargetMagicImmune(WeakestEnemy) and not utils.IsCrowdControlled(WeakestEnemy) then
 				if HeroHealth <= WeakestEnemy:GetActualIncomingDamage(nDamage, DAMAGE_TYPE_MAGICAL) then
                     local dist = GetUnitToUnitDistance(bot, WeakestEnemy)
-					return BOT_ACTION_DESIRE_HIGH, WeakestEnemy:GetExtrapolatedLocation(dist/nSpeed)
+					return BOT_ACTION_DESIRE_HIGH, utils.PredictPosition(WeakestEnemy, dist/nSpeed)
 				end
 			end
 		end
@@ -1071,7 +1088,7 @@ function ConsiderDeafeningBlast()
             utils.InTable(ed.heavyRightClickDamage, npcEnemy:GetUnitName())) then
 			if not utils.IsTargetMagicImmune(npcEnemy) and not utils.IsCrowdControlled(npcEnemy) then
                 local dist = GetUnitToUnitDistance(bot, npcEnemy)
-				return BOT_ACTION_DESIRE_HIGH, npcEnemy:GetExtrapolatedLocation( dist/nSpeed )
+				return BOT_ACTION_DESIRE_HIGH, utils.PredictPosition( npcEnemy, dist/nSpeed )
 			end
 		end
 	end
@@ -1130,7 +1147,7 @@ function ConsiderEMP()
             if npcEnemy:HasModifier("modifier_invoker_tornado") or  
                 utils.InTable(ed.heavyManaDependentEnemies, npcEnemy:GetUnitName()) and
                 GetUnitToUnitDistance( npcEnemy, bot ) < (nCastRange - (nRadius / 2)) then
-                return BOT_ACTION_DESIRE_MODERATE, npcEnemy:GetLocation()
+                return BOT_ACTION_DESIRE_HIGH, npcEnemy:GetLocation()
             end
         end
     end

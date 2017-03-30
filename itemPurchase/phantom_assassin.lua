@@ -18,10 +18,9 @@ generic.ItemsToBuyAsHardCarry = {
         "item_infused_raindrop"
 	},
 	CoreItems = {
-		"item_ring_of_health",
         "item_boots",
 		"item_bfury",
-		"item_power_treads_agility",
+		"item_power_treads_agi",
 		"item_lifesteal",
 		"item_basher",
         "item_black_king_bar",

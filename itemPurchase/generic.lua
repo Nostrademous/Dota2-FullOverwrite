@@ -424,7 +424,7 @@ end
 function X:ConsiderSellingItems(bot)
     local ItemsToConsiderSelling = self:GetSellItems()
 
-    if utils.NumberOfItems(bot) == 6 and utils.NumberOfItemsInBackpack(bot) == 3 then
+    if utils.NumberOfItems(bot) == 6 and utils.NumberOfItemsInBackpack(bot) >= 2 then
         local soldNum = 0
         local alwaysSellIfNoRoom = {"item_tango_single", "item_tango", "item_clarity", "item_salve", "item_faerie_fire", "item_enchanted_mango"}
         ItemsToConsiderSelling = {unpack(alwaysSellIfNoRoom), unpack(ItemsToConsiderSelling)}

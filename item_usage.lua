@@ -6,6 +6,7 @@
 _G._savedEnv = getfenv()
 module( "item_usage", package.seeall )
 
+require( GetScriptDirectory().."/constants" )
 require( GetScriptDirectory().."/modifiers" )
 
 local utils = require( GetScriptDirectory().."/utility" )
@@ -523,11 +524,17 @@ function UseBlink(location)
     return false
 end
 
-function UseBladeMail()
+function UseBladeMail(actionType)
     local bot = GetBot()
     local item = utils.IsItemAvailable("item_blade_mail")
     if item then
-        gHeroVar.HeroUseAbility(bot, item)
+        if actionType and actionType == constants.PUSH then
+            gHeroVar.HeroPushUseAbility(bot, item)
+        elseif actionType and actionType == constants.QUEUE then
+            gHeroVar.HeroQueueUseAbility(bot, item)
+        else
+            gHeroVar.HeroUseAbility(bot, item)
+        end
         return true
     end
     return false

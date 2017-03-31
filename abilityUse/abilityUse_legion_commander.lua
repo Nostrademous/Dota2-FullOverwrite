@@ -88,8 +88,10 @@ function ConsiderQ()
 	end
 
 	-- If we're going after someone
-	if modeName == "roam" then
+	if modeName == "roam" or modeName == "defendally" or modeName == "fight" then
 		local npcEnemy = getHeroVar("RoamTarget")
+        if npcEnemy == nil then npcEnemy = getHeroVar("Target") end
+        
 		if utils.ValidTarget(npcEnemy) then
 			if not utils.IsTargetMagicImmune( npcEnemy ) then
 				return BOT_ACTION_DESIRE_MODERATE, utils.VectorTowards(npcEnemy:GetLocation(), bot:GetLocation(), Radius/2)
@@ -137,12 +139,14 @@ function ConsiderW()
     -- save allies from other disables
 	if modeName == "fight" or modeName == "defendally" or ManaPerc > 0.4 then
 		for _, npcTarget in pairs( allies ) do
-			if (npcTarget:GetCurrentMovementSpeed() < 250 or utils.IsUnitCrowdControlled(npcTarget) or npcTarget:IsBlockDisabled())
-			then
-				if not utils.IsTargetMagicImmune( npcTarget ) then
-					return BOT_ACTION_DESIRE_HIGH, npcTarget
-				end
-			end
+            if not npcTarget:IsIllusion() then
+                if (npcTarget:GetCurrentMovementSpeed() < 250 or utils.IsUnitCrowdControlled(npcTarget) or npcTarget:IsBlockDisabled())
+                then
+                    if not utils.IsTargetMagicImmune( npcTarget ) then
+                        return BOT_ACTION_DESIRE_HIGH, npcTarget
+                    end
+                end
+            end
 		end
 	end
     
@@ -163,12 +167,14 @@ function ConsiderW()
 	-- team fight usage
 	if modeName == "fight" or modeName == "defendally" then
 		for _, npcTarget in pairs( allies ) do
-			if npcTarget:GetHealth()/npcTarget:GetMaxHealth() < (0.2+#enemies*0.05+0.2*ManaPerc) or 
-                npcTarget:WasRecentlyDamagedByAnyHero(3.0) then
-				if not utils.IsTargetMagicImmune( npcTarget ) then
-					return BOT_ACTION_DESIRE_MODERATE, npcTarget
-				end
-			end
+            if not npcTarget:IsIllusion() then
+                if npcTarget:GetHealth()/npcTarget:GetMaxHealth() < (0.2+#enemies*0.05+0.2*ManaPerc) or 
+                    npcTarget:WasRecentlyDamagedByAnyHero(3.0) then
+                    if not utils.IsTargetMagicImmune( npcTarget ) then
+                        return BOT_ACTION_DESIRE_MODERATE, npcTarget
+                    end
+                end
+            end
 		end
 	end
 
@@ -185,8 +191,9 @@ function ConsiderW()
 	end
 
 	-- If we're going after someone
-	if modeName == "roam" then
+	if modeName == "roam" or modeName == "defendally" or modeName == "fight" then
 		local npcEnemy = getHeroVar("RoamTarget")
+        if npcEnemy == nil then npcEnemy = getHeroVar("Target") end
 		
 		if ManaPerc > 0.4 then
 			if utils.ValidTarget(npcEnemy) then
@@ -339,6 +346,8 @@ function genericAbility:nukeDamage( bot, enemy )
     local engageDist = 500
     
     -- WRITE CODE HERE --
+    local physImmune = modifiers.IsPhysicalImmune(enemy)
+    local magicImmune = utils.IsTargetMagicImmune(enemy)
     
     return dmgTotal, comboQueue, castTime, stunTime, slowTime, engageDist
 end

@@ -81,7 +81,7 @@ function ConsiderQ()
 	if modeName == "retreat" then
 		local tableNearbyEnemyHeroes = gHeroVar.GetNearbyEnemies( bot, daggerCastRange )
 		for _, npcEnemy in pairs( tableNearbyEnemyHeroes ) do
-			if bot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) then
+			if utils.ValidTarget(npcEnemy) and bot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) then
 				if not modifiers.IsPhysicalImmune( npcEnemy ) then
 					return BOT_ACTION_DESIRE_MODERATE, npcEnemy
 				end
@@ -133,7 +133,7 @@ function ConsiderW()
             local eCreep = gHeroVar.GetNearbyEnemyCreep(bot, 600)
             local roshan = nil
             for _, creep in pairs(eCreep) do
-                if creep:GetUnitName() == "npc_dota_roshan" then
+                if utils.ValidTarget(creep) and creep:GetUnitName() == "npc_dota_roshan" then
                     roshan = creep
                     break
                 end

@@ -224,7 +224,7 @@ function invAbility:AbilityUsageThink(bot)
     ManaPerc      = bot:GetMana()/bot:GetMaxMana()
     modeName      = bot.SelfRef:getCurrentMode():GetName()
     
-    local modeDesire    = Max(0.01, bot.SelfRef:getCurrentModeValue())
+    local modeDesire = Max(0.01, bot.SelfRef:getCurrentModeValue())
     
     --[[
     if abilityQ:GetLevel() >= 3 then
@@ -380,6 +380,7 @@ function invAbility:AbilityUsageThink(bot)
             castSSDesire >= Max(castGWDesire, castIWDesire) and
             castSSDesire >= castFSDesire then
             --utils.myPrint("I want to Sunstrike")
+            --utils.pause("")
             if not abilitySS:IsHidden() then
                 gHeroVar.HeroPushUseAbilityOnLocation(bot,  abilitySS, castSSLocation )
                 return true
@@ -466,7 +467,7 @@ function invAbility:AbilityUsageThink(bot)
         -- Determine what orbs we want
         if ConsiderOrbs(bot) then return true end
     else
-        if ConsiderShowUp(bot, nearbyEnemyHeroes) then return true end
+        if ConsiderShowUp(bot) then return true end
     end
     
     -- Initial invokes at low levels
@@ -486,7 +487,9 @@ function inGhostWalk(bot)
     return bot:HasModifier("modifier_invoker_ghost_walk")
 end
 
-function ConsiderShowUp(bot, nearbyEnemyHeroes)
+function ConsiderShowUp(bot)
+    local nearbyEnemyHeroes = gHeroVar.GetNearbyEnemies(bot, 1200)
+    
     if inGhostWalk(bot) then
         if #nearbyEnemyHeroes <= 1 or bot:HasModifier("modifier_item_dust") then
             return tripleWexBuff(bot)
@@ -794,7 +797,7 @@ function ConsiderTornado()
 			if not utils.IsTargetMagicImmune(WeakestEnemy) and not utils.IsCrowdControlled(WeakestEnemy) then
 				if HeroHealth <= WeakestEnemy:GetActualIncomingDamage(nDamage, DAMAGE_TYPE_MAGICAL) then
                     local d = GetUnitToUnitDistance(bot, WeakestEnemy)
-					return BOT_ACTION_DESIRE_HIGH, utils.PredictPosition(WeakestEnemy, d/nSpeed)
+					return BOT_ACTION_DESIRE_HIGH, WeakestEnemy:GetExtrapolatedLocation(d/nSpeed)
 				end
 			end
 		end
@@ -821,7 +824,7 @@ function ConsiderTornado()
                 not utils.IsTargetMagicImmune(npcEnemy) then
                 local d = GetUnitToUnitDistance( bot, npcEnemy )
                 if d <= (nCastRange + nDistance) then
-                    return BOT_ACTION_DESIRE_MODERATE, utils.PredictPosition( npcEnemy, d/nSpeed )
+                    return BOT_ACTION_DESIRE_MODERATE, npcEnemy:GetExtrapolatedLocation( d/nSpeed )
                 end
             end
         end
@@ -835,7 +838,7 @@ function ConsiderTornado()
 		if utils.ValidTarget(npcEnemy) then
 			if not utils.IsTargetMagicImmune(npcEnemy) and not utils.IsCrowdControlled(npcEnemy) then
                 local d = GetUnitToUnitDistance( bot, npcEnemy )
-				return BOT_ACTION_DESIRE_LOW, utils.PredictPosition( npcEnemy, d/nSpeed )
+				return BOT_ACTION_DESIRE_LOW, npcEnemy:GetExtrapolatedLocation( d/nSpeed )
 			end
 		end
 	end
@@ -988,7 +991,7 @@ function ConsiderSunStrike()
 
     -- Get some of its values
     local nRadius = 175
-    local nDelay = 1.75 + getHeroVar("AbilityDelay") -- 0.05 cast point, 1.7 delay
+    local nDelay = 1.75 + getHeroVar("AbilityDelay") + 0.2 -- 0.05 cast point, 1.7 delay
     local nDamage = abilitySS:GetSpecialValueFloat("damage")
 
     --------------------------------------
@@ -1000,14 +1003,15 @@ function ConsiderSunStrike()
             if enemy:GetHealth() < nDamage and enemy:GetMovementDirectionStability() > 0.9 then
                 --utils.myPrint(tostring(enemy:GetExtrapolatedLocation( nDelay )))
                 --utils.myPrint(tostring(utils.PredictPosition( enemy, nDelay )))
+                --utils.myPrint("Diff: ", tostring(utils.GetDistance(enemy:GetExtrapolatedLocation( nDelay ), utils.PredictPosition( enemy, nDelay ))))
                 --return BOT_ACTION_DESIRE_MODERATE, enemy:GetExtrapolatedLocation( nDelay )
                 utils.AllChat("Sun Strike on " .. utils.GetHeroName(enemy))
-                return BOT_ACTION_DESIRE_MODERATE, utils.PredictPosition( enemy, nDelay )
+                return BOT_ACTION_DESIRE_MODERATE, enemy:GetExtrapolatedLocation( nDelay )
             else
                 -- enemies of my enemy are my friends
                 local allies = enemy:GetNearbyHeroes( 1000, true, BOT_MODE_NONE )
-                if #allies >= 2 and utils.IsCrowdControlled(enemy) and enemy:GetHealth() < 2.0*nDamage then
-                    return BOT_ACTION_DESIRE_MODERATE, utils.PredictPosition( enemy, nDelay )
+                if #allies >= 2 and utils.IsCrowdControlled(enemy) and enemy:GetHealth() < 3.0*nDamage then
+                    return BOT_ACTION_DESIRE_MODERATE, enemy:GetExtrapolatedLocation( nDelay )
                 end
             end
         end
@@ -1055,7 +1059,7 @@ function ConsiderDeafeningBlast()
 			if not utils.IsTargetMagicImmune(WeakestEnemy) and not utils.IsCrowdControlled(WeakestEnemy) then
 				if HeroHealth <= WeakestEnemy:GetActualIncomingDamage(nDamage, DAMAGE_TYPE_MAGICAL) then
                     local dist = GetUnitToUnitDistance(bot, WeakestEnemy)
-					return BOT_ACTION_DESIRE_HIGH, utils.PredictPosition(WeakestEnemy, dist/nSpeed)
+					return BOT_ACTION_DESIRE_HIGH, WeakestEnemy:GetExtrapolatedLocation( dist/nSpeed )
 				end
 			end
 		end
@@ -1088,7 +1092,7 @@ function ConsiderDeafeningBlast()
             utils.InTable(ed.heavyRightClickDamage, npcEnemy:GetUnitName())) then
 			if not utils.IsTargetMagicImmune(npcEnemy) and not utils.IsCrowdControlled(npcEnemy) then
                 local dist = GetUnitToUnitDistance(bot, npcEnemy)
-				return BOT_ACTION_DESIRE_HIGH, utils.PredictPosition( npcEnemy, dist/nSpeed )
+				return BOT_ACTION_DESIRE_HIGH, npcEnemy:GetExtrapolatedLocation( dist/nSpeed )
 			end
 		end
 	end
@@ -1199,7 +1203,7 @@ function ConsiderGhostWalk()
 			if #enemies3 <= 2 then
 				for _, npcAlly in pairs(allies3) do
 					if not npcAlly:IsIllusion() and npcAlly:GetHealth()/npcAlly:GetMaxHealth() >= 0.7 and 
-                        npcAlly.SelfRef:getCurrentMode():GetName() ~= "retreat" then
+                        (not npcAlly:IsBot() or npcAlly.SelfRef:getCurrentMode():GetName() ~= "retreat") then
 						sumdamage = sumdamage + npcAlly:GetEstimatedDamageToTarget(true, roamTarget, 4.0, DAMAGE_TYPE_ALL)
 					end
 				end
@@ -1249,8 +1253,10 @@ function ConsiderColdSnap()
     local enemies = gHeroVar.GetNearbyEnemies(bot, nCastRange + 300)
     
 	for _, npcEnemy in pairs( enemies ) do
-		if npcEnemy:IsChanneling() and not utils.IsTargetMagicImmune(npcEnemy) then
-			return BOT_ACTION_DESIRE_HIGH, npcEnemy
+		if utils.ValidTarget(npcEnemy) then
+            if npcEnemy:IsChanneling() and not utils.IsTargetMagicImmune(npcEnemy) then
+                return BOT_ACTION_DESIRE_HIGH, npcEnemy
+            end
 		end
 	end
 
@@ -1280,9 +1286,11 @@ function ConsiderColdSnap()
 	if bot:WasRecentlyDamagedByAnyHero(5) then
         local closeEnemies = gHeroVar.GetNearbyEnemies(bot, 500)
 		for _, npcEnemy in pairs( closeEnemies ) do
-			if not utils.IsTargetMagicImmune( npcEnemy ) and not utils.IsCrowdControlled(npcEnemy) then
-				return BOT_ACTION_DESIRE_HIGH, npcEnemy
-			end
+            if utils.ValidTarget(npcEnemy) then
+                if not utils.IsTargetMagicImmune( npcEnemy ) and not utils.IsCrowdControlled(npcEnemy) then
+                    return BOT_ACTION_DESIRE_HIGH, npcEnemy
+                end
+            end
 		end
 	end
     
@@ -1303,11 +1311,13 @@ function ConsiderColdSnap()
 	if modeName == "retreat" or modeName == "shrine" then
 		local tableNearbyEnemyHeroes = gHeroVar.GetNearbyEnemies( bot, nCastRange )
 		for _, npcEnemy in pairs( tableNearbyEnemyHeroes ) do
-			if bot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) then
-				if not utils.IsTargetMagicImmune(npcEnemy) and not utils.IsCrowdControlled(npcEnemy) then
-					return BOT_ACTION_DESIRE_HIGH, npcEnemy
-				end
-			end
+            if utils.ValidTarget(npcEnemy) then
+                if bot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) then
+                    if not utils.IsTargetMagicImmune(npcEnemy) and not utils.IsCrowdControlled(npcEnemy) then
+                        return BOT_ACTION_DESIRE_HIGH, npcEnemy
+                    end
+                end
+            end
 		end
 	end
 
@@ -1368,7 +1378,7 @@ function ConsiderAlacrity()
             local eCreep = gHeroVar.GetNearbyEnemyCreep(bot, 600)
             local roshan = nil
             for _, creep in pairs(eCreep) do
-                if creep:GetUnitName() == "npc_dota_roshan" then
+                if utils.ValidTarget(creep) and creep:GetUnitName() == "npc_dota_roshan" then
                     roshan = creep
                     break
                 end
@@ -1410,7 +1420,7 @@ function ConsiderForgedSpirit()
             local eCreep = gHeroVar.GetNearbyEnemyCreep(bot, 600)
             local roshan = nil
             for _, creep in pairs(eCreep) do
-                if creep:GetUnitName() == "npc_dota_roshan" then
+                if utils.ValidTarget(creep) and creep:GetUnitName() == "npc_dota_roshan" then
                     roshan = creep
                     break
                 end

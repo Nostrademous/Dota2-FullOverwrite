@@ -92,7 +92,7 @@ function ConsiderQ()
 	-- Check for a channeling enemy
 	if modeName ~= "retreat" then
 		for _, npcEnemy in pairs( enemies ) do
-			if npcEnemy:IsChanneling() and not utils.IsTargetMagicImmune(npcEnemy) then
+			if utils.ValidTarget(npcEnemy) and npcEnemy:IsChanneling() and not utils.IsTargetMagicImmune(npcEnemy) then
 				return BOT_ACTION_DESIRE_HIGH, npcEnemy
 			end
 		end
@@ -117,12 +117,12 @@ function ConsiderQ()
 			local enemies3  = gHeroVar.GetNearbyEnemies(npcAlly, 1200)
 			local allies3   = gHeroVar.GetNearbyAllies(npcAlly, 1200)
             if npcAlly:GetPlayerID() ~= bot:GetPlayerID() then
-                if not npcAlly:IsIllusion() and (npcAlly.SelfRef:getCurrentMode():GetName() == "retreat" or
+                if not npcAlly:IsIllusion() and ((not npcAlly:IsBot() or npcAlly.SelfRef:getCurrentMode():GetName() == "retreat") or
                     npcAlly:GetHealth()/npcAlly:GetMaxHealth() <= (0.4+0.1*#enemies3)) then
                     if #enemies3 == 1 then
                         local npcEnemy = enemies3[1]
                         local timeToGetThere = GetUnitToUnitDistance(bot, npcAlly)/abilityQ:GetSpecialValueInt("movement_speed")
-                        if npcAlly:GetHealth() > npcEnemy:GetEstimatedDamageToTarget(true, npcAlly, timeToGetThere, DAMAGE_TYPE_ALL) then
+                        if utils.ValidTarget(npcEnemy) and npcAlly:GetHealth() > npcEnemy:GetEstimatedDamageToTarget(true, npcAlly, timeToGetThere, DAMAGE_TYPE_ALL) then
                             return BOT_ACTION_DESIRE_HIGH, npcEnemy
                         end
                     end
@@ -140,7 +140,7 @@ function ConsiderQ()
 			if #enemies3 <= 2 then
 				for _, npcAlly in pairs(allies3) do
 					if not npcAlly:IsIllusion() and npcAlly:GetHealth()/npcAlly:GetMaxHealth() >= 0.7 and 
-                        npcAlly.SelfRef:getCurrentMode():GetName() ~= "retreat" then
+                        (npcAlly.SelfRef:getCurrentMode():GetName() ~= "retreat" or not npcAlly:IsBot()) then
 						sumdamage = sumdamage + npcAlly:GetEstimatedDamageToTarget(true, roamTarget, 4.0, DAMAGE_TYPE_ALL)
 					end
 				end
@@ -163,10 +163,12 @@ function ConsiderQ()
                 if npcAlly:IsAlive() then
                     local enemies3 = gHeroVar.GetNearbyEnemies(npcAlly, 1600)
                     local creep    = gHeroVar.GetNearbyEnemyCreep(npcAlly, 1600)
-                    if #enemies3 == 0 and #creep > 0 then
-                        return BOT_ACTION_DESIRE_HIGH, creep[1]
-                    elseif #enemies3 == 1 and #creep > 0 then
-                        return BOT_ACTION_DESIRE_HIGH, creep[1]
+                    if utils.ValidTarget(creep[1]) then
+                        if #enemies3 == 0 and #creep > 0 then
+                            return BOT_ACTION_DESIRE_HIGH, creep[1]
+                        elseif #enemies3 == 1 and #creep > 0 then
+                            return BOT_ACTION_DESIRE_HIGH, creep[1]
+                        end
                     end
                 end
 			end
@@ -243,7 +245,7 @@ function ConsiderR()
     
 	-- Check for a channeling enemy
 	for _, npcEnemy in pairs( enemies )	do
-		if npcEnemy:IsChanneling() and not utils.IsTargetMagicImmune( npcEnemy ) then
+		if utils.ValidTarget(npcEnemy) and npcEnemy:IsChanneling() and not utils.IsTargetMagicImmune( npcEnemy ) then
 			return BOT_ACTION_DESIRE_HIGH, npcEnemy
 		end
 	end
@@ -266,7 +268,7 @@ function ConsiderR()
 	-- If we're retreating, see if we can land a stun on someone who's damaged us recently
 	if modeName == "retreat" or modeName == "shrine" then
 		for _, npcEnemy in pairs( enemies ) do
-			if bot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) then
+			if utils.ValidTarget(npcEnemy) and bot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) then
 				if not utils.IsTargetMagicImmune( npcEnemy ) and not utils.IsCrowdControlled(npcEnemy) and
                     GetUnitToUnitDistance(bot, npcEnemy) < CastRange then
 					return BOT_ACTION_DESIRE_HIGH, npcEnemy

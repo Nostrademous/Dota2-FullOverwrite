@@ -347,9 +347,15 @@ function UseBuffItems()
     return false
 end
 
-function UseTP(hero, loc, lane)
-    local loc = loc or nil
-    local lane = lane or getHeroVar("CurLane")
+function UseTP(hero, arg1, arg2)
+    if hero:IsIllusion() then return false end
+    
+    local loc = nil
+    if arg1 then loc = arg1 end
+    
+    local lane = getHeroVar("CurLane")
+    if arg2 then lane = arg2 end
+    
     local tpSwap = false
     local backPackSlot = 0
 
@@ -373,6 +379,11 @@ function UseTP(hero, loc, lane)
     end
 
     if tp == nil and utils.HaveTeleportation(hero) then
+        if utils.GetHeroName(hero) == "furion" then
+            tp = hero:GetAbilityInSlot(1)
+            bMainInv = true
+        end
+        
         tp, bMainInv = utils.HaveItem(hero, "item_travel_boots_1")
         if tp == nil then
             tp, bMainInv = utils.HaveItem(hero, "item_travel_boots_2")

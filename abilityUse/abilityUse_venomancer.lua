@@ -55,7 +55,7 @@ function ConsiderQ()
     --------------------------------------
     --try to kill enemy hero
     if modeName ~= "retreat" then
-        if WeakestEnemy ~= nil then
+        if utils.ValidTarget(WeakestEnemy) then
             if not utils.IsTargetMagicImmune( WeakestEnemy ) then
                 if HeroHealth <= WeakestEnemy:GetActualIncomingDamage(Damage, DAMAGE_TYPE_MAGICAL) then
                     local dist = GetUnitToUnitDistance(bot, WeakestEnemy)
@@ -153,7 +153,7 @@ function ConsiderE()
     -- If we're pushing a lane and attacking a tower
     if modeName == "pushlane" or modeName == "defendlane" then
         local target = bot:GetAttackTarget()
-        if utils.NotNilOrDead(target) then
+        if utils.ValidTarget(target) then
             if ManaPerc > 0.4 and target:IsTower() then
                 if not utils.IsTargetMagicImmune( bot ) then
                     return BOT_ACTION_DESIRE_LOW, target:GetLocation() + RandomVector( RandomInt(0, CastRange) )
@@ -162,7 +162,7 @@ function ConsiderE()
         end
     
         local friendlyTower = gHeroVar.GetNearbyAlliedTowers(bot, CastRange+300)
-        if #friendlyTower >= 1 then
+        if #friendlyTower >= 1 and utils.ValidTarget(friendlyTower[1]) then
             if ManaPerc > 0.4 and #gHeroVar.GetNearbyEnemyCreep(bot, 900) > 1 then
                 return BOT_ACTION_DESIRE_LOW, friendlyTower[1]:GetLocation() + RandomVector( RandomInt(0, CastRange) )
             end
@@ -185,7 +185,7 @@ function ConsiderE()
     local creeps = gHeroVar.GetNearbyEnemyCreep( bot, 900 )
     if modeName == "laning" or modeName == "jungling" then
         if #creeps >= 2 then
-            if ManaPerc > 0.4 then
+            if ManaPerc > 0.4 and utils.ValidTarget(creeps[1]) then
                 return BOT_ACTION_DESIRE_LOW, utils.VectorTowards(bot:GetLocation(), creeps[1]:GetLocation(), RandomInt(0, CastRange))
             end	
         end
@@ -204,7 +204,6 @@ function ConsiderR()
     local CastRange = abilityR:GetCastRange()
     local Radius    = abilityR:GetAOERadius()
     
-    
     --------------------------------------
     -- Global high-priorty usage
     --------------------------------------
@@ -213,7 +212,7 @@ function ConsiderR()
     local enemies = gHeroVar.GetNearbyEnemies(bot, Radius)
     local disabledHeroCount = 0
     for _, eHero in pairs(enemies) do
-        if utils.IsCrowdControlled(eHero) or eHero:GetCurrentMovementSpeed() <= 200 then
+        if utils.ValidTarget(eHero) and utils.IsCrowdControlled(eHero) or eHero:GetCurrentMovementSpeed() <= 200 then
             disabledHeroCount = disabledHeroCount + 1
         end
     end

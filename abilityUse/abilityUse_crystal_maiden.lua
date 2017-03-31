@@ -123,7 +123,7 @@ function cmAbility:queueNuke(bot, enemy, castQueue, engageDist)
                 if utils.IsCrowdControlled(enemy) then
                     gHeroVar.HeroPushUseAbilityOnLocation(bot, skill, enemy:GetLocation())
                 else
-                    gHeroVar.HeroPushUseAbilityOnLocation(bot, skill, enemy:GetExtrapolatedLocation(0.95))
+                    gHeroVar.HeroPushUseAbilityOnLocation(bot, skill, enemy:GetExtrapolatedLocation(0.3))
                 end
             elseif skill:GetName() == Abilities[2] then
                 gHeroVar.HeroPushUseAbilityOnEntity(bot, skill, enemy)
@@ -275,7 +275,7 @@ function ConsiderQ()
 	if modeName == "retreat" or modeName == "shrine" then
 		local tableNearbyEnemyHeroes = gHeroVar.GetNearbyEnemies( bot, CastRange + Radius + 200 )
 		for _, npcEnemy in pairs( tableNearbyEnemyHeroes ) do
-			if bot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) then
+			if utils.ValidTarget(npcEnemy) and bot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) then
 				if not utils.IsTargetMagicImmune( npcEnemy ) then
 					return BOT_ACTION_DESIRE_MODERATE, npcEnemy:GetExtrapolatedLocation( CastPoint )
 				end
@@ -350,7 +350,7 @@ function ConsiderW()
 	if bot:WasRecentlyDamagedByAnyHero(5) then
         local closeEnemies = gHeroVar.GetNearbyEnemies(bot, 500)
 		for _, npcEnemy in pairs( closeEnemies ) do
-			if not utils.IsTargetMagicImmune( npcEnemy ) and not utils.IsCrowdControlled(npcEnemy) then
+			if utils.ValidTarget(npcEnemy) and not utils.IsTargetMagicImmune( npcEnemy ) and not utils.IsCrowdControlled(npcEnemy) then
 				return BOT_ACTION_DESIRE_HIGH, npcEnemy
 			end
 		end
@@ -385,7 +385,9 @@ function ConsiderW()
                 if #enemyCreep > 1 then
                     table.sort(enemyCreep, function(n1,n2) return n1:GetHealth() > n2:GetHealth() end)
                 end
-                return BOT_ACTION_DESIRE_LOW, enemyCreep[1]
+                if utils.ValidTarget(enemyCreep[1]) and not enemyCreep[1]:IsAncientCreep() then
+                    return BOT_ACTION_DESIRE_LOW, enemyCreep[1]
+                end
             end
         end
 	end
@@ -407,7 +409,7 @@ function ConsiderW()
 	if modeName == "retreat" or modeName == "shrine" then
 		local tableNearbyEnemyHeroes = gHeroVar.GetNearbyEnemies( bot, CastRange )
 		for _, npcEnemy in pairs( tableNearbyEnemyHeroes ) do
-			if bot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) then
+			if utils.ValidTarget(npcEnemy) and bot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) then
 				if not utils.IsTargetMagicImmune(npcEnemy) and not utils.IsCrowdControlled(npcEnemy) then
 					return BOT_ACTION_DESIRE_HIGH, npcEnemy
 				end
@@ -434,7 +436,7 @@ function ConsiderR()
     local enemies = gHeroVar.GetNearbyEnemies(bot, Radius)
     local disabledHeroCount = 0
 	for _, eHero in pairs(enemies) do
-		if utils.IsCrowdControlled(eHero) or eHero:GetCurrentMovementSpeed() <= 200 then
+		if utils.ValidTarget(eHero) and (utils.IsCrowdControlled(eHero) or eHero:GetCurrentMovementSpeed() <= 200) then
 			disabledHeroCount = disabledHeroCount + 1
 		end
 	end

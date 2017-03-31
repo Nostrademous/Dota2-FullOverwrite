@@ -114,7 +114,18 @@ function ComboDamage(bot, enemy)
     
     local dmg, castQueue, castTime, stunTime, slowTime, engageDist = bsAbility:nukeDamage( bot, enemy )
 
-    dmg = dmg + fight_simul.estimateRightClickDamage( bot, enemy, 5.0 )
+    local bloodRageMultiplier = abilityQ:GetSpecialValueInt("damage_increase_pct")/100.0
+    local dmgMult = 1.0
+    
+    if bot:HasModifier("modifier_bloodseeker_bloodrage") then
+        dmgMult = 1.0 + bloodRageMultiplier
+    end
+    
+    if modifiers.IsRuptured(enemy) then
+        dmg = (dmg + fight_simul.estimateRightClickDamage( bot, enemy, 12.0 )) * dmgMult
+    else
+        dmg = (dmg + fight_simul.estimateRightClickDamage( bot, enemy, 5.0 )) * dmgMult
+    end
 
     return dmg
 end
@@ -155,7 +166,7 @@ function ConsiderQ()
             local eCreep = gHeroVar.GetNearbyEnemyCreep(bot, 600)
             local roshan = nil
             for _, creep in pairs(eCreep) do
-                if creep:GetUnitName() == "npc_dota_roshan" then
+                if utils.ValidTarget(creep) and creep:GetUnitName() == "npc_dota_roshan" then
                     roshan = creep
                     break
                 end
@@ -171,6 +182,17 @@ function ConsiderQ()
     if modeName == "jungling" or modeName == "laning" or modeName == "pushlane" or modeName == "roshan" then
         if not bot:HasModifier("modifier_bloodseeker_bloodrage") and #gHeroVar.GetNearbyEnemyCreep(bot, 1200) > 0 then
             return BOT_ACTION_DESIRE_MODERATE, bot
+        end
+        
+        -- check our "core" nearby allies, cast on them if they below 0.6 health
+        local nearAllies = gHeroVar.GetNearbyAllies(bot, 800)
+        for _, ally in pairs(nearAllies) do
+            if not ally:IsIllusion() then
+                if (utils.IsCore(ally) or not ally:IsBot()) and ally:GetHealth()/ally:GetMaxHealth() < 0.6 
+                    and #gHeroVar.GetNearbyEnemyCreep(bot, 1200) > 1 then
+                    return BOT_ACTION_DESIRE_LOW, ally
+                end
+            end
         end
     end
     
@@ -192,7 +214,7 @@ function ConsiderW()
     local enemies = gHeroVar.GetNearbyEnemies(bot, 1600)
     
 	for _, npcEnemy in pairs( enemies ) do
-		if npcEnemy:IsChanneling() and not utils.IsTargetMagicImmune(npcEnemy) then
+		if utils.ValidTarget(npcEnemy) and npcEnemy:IsChanneling() and not utils.IsTargetMagicImmune(npcEnemy) then
 			return BOT_ACTION_DESIRE_HIGH, npcEnemy:GetLocation()
 		end
 	end

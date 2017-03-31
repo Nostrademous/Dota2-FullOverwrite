@@ -199,7 +199,7 @@ function ConsiderQ()
         if utils.ValidTarget(WeakestEnemy) then
             if not utils.IsTargetMagicImmune(WeakestEnemy) and not utils.IsCrowdControlled(WeakestEnemy) then
                 if HeroHealth <= WeakestEnemy:GetActualIncomingDamage(ComboDmg(bot, WeakestEnemy), DAMAGE_TYPE_PHYSICAL) then
-                    return BOT_ACTION_DESIRE_HIGH, WeakestEnemy
+                    return BOT_ACTION_DESIRE_HIGH+0.01, WeakestEnemy
                 end
             end
         end
@@ -213,7 +213,7 @@ function ConsiderQ()
         if utils.ValidTarget(npcEnemy) then
             if not utils.IsTargetMagicImmune(npcEnemy) and not utils.IsCrowdControlled(npcEnemy) and
                 GetUnitToUnitDistance(bot, npcEnemy) < (AttackRange + 75*#gHeroVar.GetNearbyAllies(bot,1200)) then
-                return BOT_ACTION_DESIRE_MODERATE, npcEnemy
+                return BOT_ACTION_DESIRE_MODERATE+0.01, npcEnemy
             end
         end
     end
@@ -223,8 +223,8 @@ function ConsiderQ()
         local unique1 = bot:GetAbilityByName("special_bonus_unique_viper_1")
         if unique1 and unique1:GetLevel() >= 1 then
             local at = bot:GetAttackTarget()
-            if utils.NotNilOrDead(at) and at:IsBuilding() then
-                return BOT_ACTION_DESIRE_MODERATE, at
+            if utils.ValidTarget(at) and at:IsBuilding() then
+                return BOT_ACTION_DESIRE_MODERATE+0.01, at
             end
         end
     end
@@ -234,7 +234,7 @@ function ConsiderQ()
         local WeakestEnemy, HeroHealth = utils.GetWeakestHero(bot, AttackRange)
         if utils.ValidTarget(WeakestEnemy) then
             if not utils.IsTargetMagicImmune(WeakestEnemy) and not utils.IsCrowdControlled(WeakestEnemy) then
-                return BOT_ACTION_DESIRE_LOW, WeakestEnemy
+                return BOT_ACTION_DESIRE_LOW+0.01, WeakestEnemy
             end
         end
     end
@@ -243,8 +243,8 @@ function ConsiderQ()
     if modeName == "jungling" and ManaPerc > 0.25 then
         local neutralCreeps = gHeroVar.GetNearbyEnemyCreep(bot, AttackRange)
         for _, creep in pairs(neutralCreeps) do
-            if not creep:HasModifier("modifier_viper_poison_attack_slow") and not creep:IsAncientCreep() then
-                return BOT_ACTION_DESIRE_LOW, creep
+            if utils.ValidTarget(creep) and not creep:HasModifier("modifier_viper_poison_attack_slow") and not creep:IsAncientCreep() then
+                return BOT_ACTION_DESIRE_LOW+0.01, creep
             end
         end
     end

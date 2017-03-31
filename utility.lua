@@ -435,21 +435,21 @@ function U.Round(num, numDecimalPlaces)
 end
 
 function U.GetHeightDiff(hUnit1, hUnit2)
+    if not U.ValidTarget(hUnit1) then return 0 end
+    
     if type(hUnit2) == "number" then -- case for trees
         return (hUnit1:GetLocation().z - hUnit2)
     end
+    
+    if not U.ValidTarget(hUnit2) then return 0 end
+    
     return (hUnit1:GetLocation().z - hUnit2:GetLocation().z)
 end
 
 function U.EnemyDistanceFromTheirAncient( hEnemy )
     local locAncient = GetAncient(U.GetOtherTeam()):GetLocation()
-    if not hEnemy:IsNull() then
+    if U.ValidTarget(hEnemy) then
         return U.GetDistance( locAncient, hEnemy:GetLocation() )
-    else
-        local timeSinceSeen = GetHeroLastSeenInfo(hEnemy:GetPlayerID()).time
-        if timeSinceSeen < 2 then
-            return U.GetDistance( locAncient, GetHeroLastSeenInfo(hEnemy:GetPlayerID()).location )
-        end
     end
     return 0
 end
@@ -461,6 +461,8 @@ end
 
 -- CONTRIBUTOR: Function below was coded by Platinum_dota2
 function U.IsFacingLocation(hero, loc, delta)
+    if not U.ValidTarget(hero) then return false end
+
     local facing = hero:GetFacing()
     local moveVect = loc - hero:GetLocation()
 
@@ -488,7 +490,7 @@ function U.AreTreesBetweenMeAndLoc(loc, lineOfSightThickness)
     local trees = bot:GetNearbyTrees(Min(1600, GetUnitToLocationDistance(bot, loc)))
 
     --check if there are trees between us and location with line-of-sight thickness
-    for _, tree in ipairs(trees) do
+    for _, tree in pairs(trees) do
         local x = GetTreeLocation(tree)
         local y = bot:GetLocation()
         local z = loc
@@ -525,27 +527,29 @@ function U.GetEnemyCreepsBetweenMeAndLoc(loc, lineOfSightThickness)
 
     --check if there are enemy creeps between us and location with line-of-sight thickness
     for _, eCreep in pairs(eCreeps) do
-        local x = eCreep:GetLocation()
-        local y = bot:GetLocation()
-        local z = loc
+        if U.ValidTarget(eCreep) then
+            local x = eCreep:GetLocation()
+            local y = bot:GetLocation()
+            local z = loc
 
-        if x ~= y then
-            local a = 1
-            local b = 1
-            local c = 0
+            if x ~= y then
+                local a = 1
+                local b = 1
+                local c = 0
 
-            if x.x - y.x == 0 then
-                b = 0
-                c = -x.x
-            else
-                a =- (x.y - y.y)/(x.x - y.x)
-                c =- (x.y + x.x*a)
-            end
+                if x.x - y.x == 0 then
+                    b = 0
+                    c = -x.x
+                else
+                    a =- (x.y - y.y)/(x.x - y.x)
+                    c =- (x.y + x.x*a)
+                end
 
-            local d = math.abs((a*z.x + b*z.y + c)/math.sqrt(a*a + b*b))
-            if d <= lineOfSightThickness and
-                GetUnitToLocationDistance(bot, loc) > (U.GetDistance(x,loc) + 50) then
-                table.insert(fCreepList, eCreep)
+                local d = math.abs((a*z.x + b*z.y + c)/math.sqrt(a*a + b*b))
+                if d <= lineOfSightThickness and
+                    GetUnitToLocationDistance(bot, loc) > (U.GetDistance(x,loc) + 50) then
+                    table.insert(fCreepList, eCreep)
+                end
             end
         end
     end
@@ -565,27 +569,29 @@ function U.GetFriendlyCreepsBetweenMeAndLoc(loc, lineOfSightThickness)
 
     --check if there are enemy creeps between us and location with line-of-sight thickness
     for _, fCreep in pairs(fCreeps) do
-        local x = fCreep:GetLocation()
-        local y = bot:GetLocation()
-        local z = loc
+        if U.ValidTarget(fCreep) then
+            local x = fCreep:GetLocation()
+            local y = bot:GetLocation()
+            local z = loc
 
-        if x ~= y then
-            local a = 1
-            local b = 1
-            local c = 0
+            if x ~= y then
+                local a = 1
+                local b = 1
+                local c = 0
 
-            if x.x - y.x == 0 then
-                b = 0
-                c = -x.x
-            else
-                a =- (x.y - y.y)/(x.x - y.x)
-                c =- (x.y + x.x*a)
-            end
+                if x.x - y.x == 0 then
+                    b = 0
+                    c = -x.x
+                else
+                    a =- (x.y - y.y)/(x.x - y.x)
+                    c =- (x.y + x.x*a)
+                end
 
-            local d = math.abs((a*z.x + b*z.y + c)/math.sqrt(a*a + b*b))
-            if d <= lineOfSightThickness and
-                GetUnitToLocationDistance(bot, loc) > (U.GetDistance(x,loc) + 50) then
-                table.insert(fCreepList, fCreep)
+                local d = math.abs((a*z.x + b*z.y + c)/math.sqrt(a*a + b*b))
+                if d <= lineOfSightThickness and
+                    GetUnitToLocationDistance(bot, loc) > (U.GetDistance(x,loc) + 50) then
+                    table.insert(fCreepList, fCreep)
+                end
             end
         end
     end
@@ -617,27 +623,29 @@ function U.GetFriendlyHeroesBetweenMeAndLoc(loc, lineOfSightThickness)
 
     --check if there are enemy creeps between us and location with line-of-sight thickness
     for _, fHero in pairs(fHeroes) do
-        local x = fHero:GetLocation()
-        local y = bot:GetLocation()
-        local z = loc
+        if U.ValidTarget(fHero) then
+            local x = fHero:GetLocation()
+            local y = bot:GetLocation()
+            local z = loc
 
-        if x ~= y then
-            local a = 1
-            local b = 1
-            local c = 0
+            if x ~= y then
+                local a = 1
+                local b = 1
+                local c = 0
 
-            if x.x - y.x == 0 then
-                b = 0
-                c = -x.x
-            else
-                a =- (x.y - y.y)/(x.x - y.x)
-                c =- (x.y + x.x*a)
-            end
+                if x.x - y.x == 0 then
+                    b = 0
+                    c = -x.x
+                else
+                    a =- (x.y - y.y)/(x.x - y.x)
+                    c =- (x.y + x.x*a)
+                end
 
-            local d = math.abs((a*z.x + b*z.y + c)/math.sqrt(a*a + b*b))
-            if d <= lineOfSightThickness and
-                GetUnitToLocationDistance(bot, loc) > (U.GetDistance(x,loc) + 50) then
-                table.insert(fHeroList, fHero)
+                local d = math.abs((a*z.x + b*z.y + c)/math.sqrt(a*a + b*b))
+                if d <= lineOfSightThickness and
+                    GetUnitToLocationDistance(bot, loc) > (U.GetDistance(x,loc) + 50) then
+                    table.insert(fHeroList, fHero)
+                end
             end
         end
     end
@@ -652,27 +660,29 @@ function U.GetEnemyHeroesBetweenMeAndLoc(loc, lineOfSightThickness)
 
     --check if there are enemy creeps between us and location with line-of-sight thickness
     for _, fHero in pairs(fHeroes) do
-        local x = fHero:GetLocation()
-        local y = bot:GetLocation()
-        local z = loc
+        if U.ValidTarget(fHero) then
+            local x = fHero:GetLocation()
+            local y = bot:GetLocation()
+            local z = loc
 
-        if x ~= y then
-            local a = 1
-            local b = 1
-            local c = 0
+            if x ~= y then
+                local a = 1
+                local b = 1
+                local c = 0
 
-            if x.x - y.x == 0 then
-                b = 0
-                c = -x.x
-            else
-                a =- (x.y - y.y)/(x.x - y.x)
-                c =- (x.y + x.x*a)
-            end
+                if x.x - y.x == 0 then
+                    b = 0
+                    c = -x.x
+                else
+                    a =- (x.y - y.y)/(x.x - y.x)
+                    c =- (x.y + x.x*a)
+                end
 
-            local d = math.abs((a*z.x + b*z.y + c)/math.sqrt(a*a + b*b))
-            if d <= lineOfSightThickness and
-                GetUnitToLocationDistance(bot, loc) > (U.GetDistance(x,loc) + 50) then
-                table.insert(fHeroList, fHero)
+                local d = math.abs((a*z.x + b*z.y + c)/math.sqrt(a*a + b*b))
+                if d <= lineOfSightThickness and
+                    GetUnitToLocationDistance(bot, loc) > (U.GetDistance(x,loc) + 50) then
+                    table.insert(fHeroList, fHero)
+                end
             end
         end
     end
@@ -774,7 +784,7 @@ function U.LevelUp(bot, AbilityPriority)
 end
 
 function U.GetOtherTeam()
-    if GetTeam()==TEAM_RADIANT then
+    if GetTeam() == TEAM_RADIANT then
         return TEAM_DIRE
     else
         return TEAM_RADIANT
@@ -826,12 +836,6 @@ function U.MoveSafelyToLocation(bot, dest)
     gHeroVar.HeroMoveToLocation(bot, dest)
 end
 
-function U.InitPathFinding()
-end
-
-function U.InitPath(bot)
-end
-
 function U.IsInLane()
     local bot = GetBot()
 
@@ -861,7 +865,7 @@ function U.EnemiesNearLocation(bot, loc, dist)
     local num = 0
     local listEnemies = GetUnitList(UNIT_LIST_ENEMY_HEROES)
     for _, enemy in pairs(listEnemies) do
-        if not enemy:IsNull() and U.GetDistance(enemy:GetLocation(), loc) <= dist then
+        if U.ValidTarget(enemy) and U.GetDistance(enemy:GetLocation(), loc) <= dist then
             num = num + 1
         end
     end
@@ -1048,10 +1052,10 @@ function U.GetLaneTowerAttackTarget(team, lane, i)
 end
 
 function U.Fountain(team)
-    if team==TEAM_RADIANT then
-        return Vector(-7093,-6542);
+    if team == TEAM_RADIANT then
+        return Vector(-7093, -6542)
     end
-    return Vector(7015,6534);
+    return Vector(7015, 6534)
 end
 
 -------------------------------------------------------------------------------
@@ -1147,7 +1151,7 @@ function U.GetWeakestCreep(creeps)
 
     for _,creep in pairs(creeps) do
         U.UpdateCreepHealth(creep)
-        if creep:IsAlive() then
+        if U.ValidTarget(creep) then
             if creep:GetHealth() < LowestHealth then
                 LowestHealth = creep:GetHealth()
                 WeakestCreep = creep
@@ -1163,7 +1167,7 @@ end
 -------------------------------------------------------------------------------
 
 function U.IsHeroAttackingMe(hero, fTime)
-    if (hero == nil) or (not hero:IsAlive()) then return false end
+    if not U.ValidTarget(hero) then return false end
 
     local fTime = fTime or 2.0
     local bot = GetBot()
@@ -1317,7 +1321,7 @@ function U.GetWeakestHero(bot, r, unitList)
 end
 
 function U.EnemyHasBreakableBuff(enemy)
-    if enemy:IsNull() then return false end
+    if not U.ValidTarget(enemy) then return false end
 
     if enemy:HasModifier("modifier_clarity_potion") or
         enemy:HasModifier("modifier_flask_healing") or
@@ -1495,10 +1499,11 @@ function U.HaveItem(bot, item_name)
             if bot:DistanceFromFountain() < 500 then
                 if U.NumberOfItems(bot) < 6 then
                     U.MoveItemsFromStashToInventory(bot)
-                    return U.HaveItem(bot, item_name)
+                    return nil, false
+                    --return U.HaveItem(bot, item_name)
                 else
                     U.myPrint("FIXME: Implement swapping STASH to MAIN INVENTORY of item: ", item_name)
-                    return nil, false
+                    return bot:GetItemInSlot(slot), false
                 end
             end
             return nil, false
@@ -1526,7 +1531,7 @@ function U.MoveItemsFromBackpackToInventory(bot, bpSlot)
             return bot:GetItemInSlot(5), true
         else
             U.myPrint("FIXME: Implement swapping BACKPACK to MAIN INVENTORY of item: ", bpItem:GetName())
-            return nil, false
+            return bpItem, false
         end
     end
     return nil, false

@@ -135,7 +135,7 @@ function linaAbility:queueNuke(bot, enemy, castQueue, engageDist)
                 elseif utils.IsCrowdControlled(enemy) then
                     gHeroVar.HeroPushUseAbilityOnLocation(bot, skill, enemy:GetLocation())
                 else
-                    gHeroVar.HeroPushUseAbilityOnLocation(bot, skill, utils.PredictPosition(enemy, 0.95))
+                    gHeroVar.HeroPushUseAbilityOnLocation(bot, skill, enemy:GetExtrapolatedLocation(0.95))
                 end
             elseif skill:GetName() == "lina_dragon_slave" then
                 if enemy:HasModifier("modifier_eul_cyclone") then
@@ -145,7 +145,7 @@ function linaAbility:queueNuke(bot, enemy, castQueue, engageDist)
                     gHeroVar.HeroPushUseAbilityOnLocation(bot, skill, enemy:GetLocation())
                 else
                     -- account for 0.45 cast point and speed of wave (1200) needed to travel the distance between us
-                    gHeroVar.HeroPushUseAbilityOnLocation(bot, skill, utils.PredictPosition(enemy, 0.45 + dist/1200))
+                    gHeroVar.HeroPushUseAbilityOnLocation(bot, skill, enemy:GetExtrapolatedLocation(0.45 + dist/1200))
                 end
             elseif skill:GetName() == "lina_laguna_blade" then
                 gHeroVar.HeroPushUseAbilityOnEntity(bot, skill, enemy)
@@ -241,7 +241,7 @@ function ConsiderQ()
 			if not utils.IsTargetMagicImmune(WeakestEnemy) and not utils.IsCrowdControlled(WeakestEnemy) then
 				if HeroHealth <= WeakestEnemy:GetActualIncomingDamage(Damage, DAMAGE_TYPE_MAGICAL) then
                     local d = GetUnitToUnitDistance(bot, WeakestEnemy)
-					return BOT_ACTION_DESIRE_HIGH, utils.PredictPosition(WeakestEnemy, 0.45 + d/1200 + getHeroVar("AbilityDelay"))
+					return BOT_ACTION_DESIRE_HIGH, WeakestEnemy:GetExtrapolatedLocation(0.45 + d/1200 + getHeroVar("AbilityDelay"))
 				end
 			end
 		end
@@ -269,7 +269,7 @@ function ConsiderQ()
             local d = GetUnitToUnitDistance(bot, npcEnemy)
 			if not utils.IsTargetMagicImmune(npcEnemy) and not utils.IsCrowdControlled(npcEnemy) and 
                 d < (CastRange + 75*#gHeroVar.GetNearbyAllies(bot,1200)) then
-				return BOT_ACTION_DESIRE_HIGH, utils.PredictPosition(npcEnemy, 0.45 + d/1200 + getHeroVar("AbilityDelay"))
+				return BOT_ACTION_DESIRE_HIGH, npcEnemy:GetExtrapolatedLocation(0.45 + d/1200 + getHeroVar("AbilityDelay"))
 			end
 		end
 	end
@@ -334,7 +334,7 @@ function ConsiderW()
 		if utils.ValidTarget(WeakestEnemy) then
 			if not utils.IsTargetMagicImmune(WeakestEnemy) and not utils.IsCrowdControlled(WeakestEnemy) then
 				if HeroHealth <= WeakestEnemy:GetActualIncomingDamage(Damage, DAMAGE_TYPE_MAGICAL) then
-					return BOT_ACTION_DESIRE_HIGH, utils.PredictPosition(WeakestEnemy, 0.95 + getHeroVar("AbilityDelay"))
+					return BOT_ACTION_DESIRE_HIGH, WeakestEnemy:GetExtrapolatedLocation(0.95 + getHeroVar("AbilityDelay"))
 				end
 			end
 		end
@@ -352,7 +352,7 @@ function ConsiderW()
 		if utils.ValidTarget(npcEnemy) then
 			if not utils.IsTargetMagicImmune(npcEnemy) and not utils.IsCrowdControlled(npcEnemy) and 
                 GetUnitToUnitDistance(bot, npcEnemy) < (CastRange + 75*#gHeroVar.GetNearbyAllies(bot,1200)) then
-				return BOT_ACTION_DESIRE_HIGH, utils.PredictPosition(npcEnemy, 0.95 + getHeroVar("AbilityDelay"))
+				return BOT_ACTION_DESIRE_HIGH, npcEnemy:GetExtrapolatedLocation(0.95 + getHeroVar("AbilityDelay"))
 			end
 		end
 	end
@@ -384,9 +384,9 @@ function ConsiderW()
     if modeName == "retreat" or modeName == "shrine" then
         local tableNearbyEnemyHeroes = gHeroVar.GetNearbyEnemies( bot, CastRange )
         for _, npcEnemy in pairs( tableNearbyEnemyHeroes ) do
-            if bot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) then
+            if utils.ValidTarget(npcEnemy) and bot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) then
 				if not utils.IsTargetMagicImmune(npcEnemy) and not utils.IsCrowdControlled(npcEnemy) then
-					return BOT_ACTION_DESIRE_HIGH, utils.PredictPosition(npcEnemy, 0.95 + getHeroVar("AbilityDelay"))
+					return BOT_ACTION_DESIRE_HIGH, npcEnemy:GetExtrapolatedLocation(0.95 + getHeroVar("AbilityDelay"))
 				end
 			end
         end

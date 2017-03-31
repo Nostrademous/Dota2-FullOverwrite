@@ -242,7 +242,17 @@ function GlobalFightDetermination()
                             -- if global we picked a 1v? fight then let it work out at the hero-level
                             if numAttackers == 1 then break end
 
-                            if totalNukeDmg/#gHero.GetNearbyEnemies(ally, 1200) >= enemy:GetHealth() then
+                            local nearbyEnemyHeroes = gHero.GetNearbyEnemies(ally, 1200)
+                            local numEnemiesWithStun = 1
+                            for _, nearEnemy in pairs(nearbyEnemyHeroes) do
+                                if utils.ValidTarget(nearEnemy) and nearEnemy:GetPlayerID() ~= enemy:GetPlayerID() then
+                                    local stun = nearEnemy:GetStunDuration(true)
+                                    local slow = nearEnemy:GetSlowDuration(true)
+                                    numEnemiesWithStun = numEnemiesWithStun + stun + 0.5/slow
+                                end
+                            end
+                            
+                            if totalNukeDmg/numEnemiesWithStun >= enemy:GetHealth() then
                                 utils.myPrint(#participatingAllies+1, " of us can Nuke ", enemy:GetUnitName())
                                 utils.myPrint(utils.GetHeroName(ally), " - Engaging!")
 
@@ -267,7 +277,7 @@ function GlobalFightDetermination()
                                 end
 
                                 return
-                            elseif (anticipatedTimeToKill - timeToKillBonus) < 6.0/#gHero.GetNearbyEnemies(ally, 1200) then
+                            elseif (anticipatedTimeToKill - timeToKillBonus) < 6.0/numEnemiesWithStun then
                                 utils.myPrint(#participatingAllies+#globalAllies+1, " of us can Stun for: ", totalStun, " and Slow for: ", totalSlow, ". AnticipatedTimeToKill ", enemy:GetUnitName() ,": ", anticipatedTimeToKill)
                                 utils.myPrint(utils.GetHeroName(ally), " - Engaging! Anticipated Time to kill: ", anticipatedTimeToKill)
                                 gHero.SetVar(ally:GetPlayerID(), "Target", enemy)

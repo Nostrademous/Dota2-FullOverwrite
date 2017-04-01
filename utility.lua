@@ -1352,16 +1352,6 @@ function U.UseOrbEffect(bot)
     return false
 end
 
-function U.GetEnemyHeroFromId( id )
-    local enemyList = GetUnitList(UNIT_LIST_ENEMY_HEROES)
-    for _, enemy in pairs(enemyList) do
-        if enemy:GetPlayerID() == id then
-            return enemy
-        end
-    end
-    return nil
-end
-
 function U.IsTargetMagicImmune(target)
     return target:IsInvulnerable() or target:IsMagicImmune()
 end

@@ -17,6 +17,7 @@ local utils = require( GetScriptDirectory().."/utility" )
 local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
 local think = require( GetScriptDirectory().."/think" )
 local enemyData = require( GetScriptDirectory().."/enemy_data" )
+local enemyInfo = require( GetScriptDirectory().."/enemy_info" )
 
 -------------------------------------------------------------------------------
 -- BASE CLASS - DO NOT MODIFY THIS SECTION
@@ -198,8 +199,10 @@ function X:Think(bot)
     utils.CourierThink(bot)
 
     -- update our global enemy info cache
+    enemyInfo.BuildEnemyList()
     enemyData.UpdateEnemyInfo()
-    --enemyData.PrintEnemyInfo()
+    
+    --enemyInfo.PrintEnemyInfo()
 
     -- draw debug stuff (actual drawing is done on the first call in a frame)
     debugging.draw()

@@ -811,9 +811,9 @@ end
 -- Hero Movement Functions
 -------------------------------------------------------------------------------
 
-function U.PositionAlongLane(bot, lane)
-    local botPos = bot:GetLocation()
-    local fAmount = GetAmountAlongLane(lane, botPos)
+function U.PositionAlongLane(hUnit, lane)
+    local unitPos = hUnit:GetLocation()
+    local fAmount = GetAmountAlongLane(lane, unitPos)
     local bInLane = false
     if fAmount.distance <= 1600 then
         bInLane = true
@@ -823,10 +823,10 @@ function U.PositionAlongLane(bot, lane)
     return fAmount.amount
 end
 
-function U.NearestLane(bot)
-    local botPos = bot:GetLocation()
+function U.NearestLane(hUnit)
+    local unitPos = hUnit:GetLocation()
     for i = 1, 3, 1 do
-        local fAmount = GetAmountAlongLane(i, botPos)
+        local fAmount = GetAmountAlongLane(i, unitPos)
         if fAmount.distance <= 1600 then return i end
     end
     return 0

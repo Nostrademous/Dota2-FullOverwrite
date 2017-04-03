@@ -5,48 +5,81 @@
 
 local utils = require( GetScriptDirectory().."/utility" )
 
-local EnemyInfo= {}
+local EnemyInfo = {}
 
 -- GLOBAL ENEMY INFORMATION ARRAY
-local UpdateFreq1 = 0.01
+local LastEnemyUpdate = -1000.0
+local UpdateFreq1 = 0.25
+local UpdateFreq2 = 1.00
 
 function EnemyInfo.BuildEnemyList()
-    local listEnemyIDs = GetTeamPlayers(utils.GetOtherTeam())
+    if GameTime() - LastEnemyUpdate > UpdateFreq1 then
+        local listEnemyIDs = GetTeamPlayers(utils.GetOtherTeam())
 
-    for slot_id, pid in ipairs(listEnemyIDs) do
-        -- initialize if we have not seen this enemy before
-        if EnemyInfo[pid] == nil then
-            EnemyInfo[pid] = {}
+        for slot_id, pid in ipairs(listEnemyIDs) do
+            -- initialize if we have not seen this enemy before
+            if EnemyInfo[pid] == nil then
+                EnemyInfo[pid] = {}
 
-            -- Let's try to figure out their role
-            EnemyInfo.InferRole(pid)
-        end
+                -- Let's try to figure out their role
+                EnemyInfo.InferRole(pid)
+            end
 
-        --------------------------------------------
-        -- update our understanding of this enemy --
-        --------------------------------------------
+            --------------------------------------------
+            -- update our understanding of this enemy --
+            --------------------------------------------
 
-        -- are they alive
-        EnemyInfo[pid].Alive = IsHeroAlive(pid)
+            -- are they alive
+            EnemyInfo[pid].Alive = IsHeroAlive(pid)
 
-        -- can we see them now
-        local hEnemy = EnemyInfo.GetEnemyHeroFromId(pid)
-        if hEnemy then
-            -- yes we can see them (at least some of them if multiple)
-            if EnemyInfo[pid].multiple then
-                for _, hEnemyCopy in pairs(hEnemy) do
-                    -- TODO: Figure out how to handle
+            -- can we see them now
+            local hEnemy = EnemyInfo.GetEnemyHeroFromId(pid)
+            if hEnemy then
+                -- yes we can see them (at least some of them if multiple)
+                if EnemyInfo[pid].multiple then
+                    for _, hEnemyCopy in pairs(hEnemy) do
+                        -- TODO: Figure out how to handle
+                    end
+                else
+                    if not hEnemy:IsNull() then
+                        EnemyInfo[pid].Name = utils.GetHeroName(hEnemy)
+                        EnemyInfo[pid].Level = hEnemy:GetLevel()
+                        
+                        EnemyInfo[pid].Location = hEnemy:GetLocation()
+                        EnemyInfo[pid].LastSeen = GameTime()
+                        EnemyInfo[pid].Lane = utils.NearestLane(hEnemy)
+                        EnemyInfo[pid].ExtraLoc1 = hEnemy:GetExtrapolatedLocation(1.0)
+                        EnemyInfo[pid].ExtraLoc3 = hEnemy:GetExtrapolatedLocation(3.0)
+                        EnemyInfo[pid].ExtraLoc5 = hEnemy:GetExtrapolatedLocation(5.0)
+                    end
+                end
+                
+                if GameTime() - LastEnemyUpdate > UpdateFreq2 then
+                    for i = 0, 5, 1 do
+                    local item = hEnemy:GetItemInSlot(i)
+                    if item ~= nil then
+                        EnemyInfo[pid].Items[i] = item:GetName()
+                    end
+                end
                 end
             else
-                if not hEnemy:IsNull() then
-                    EnemyInfo[pid].Location = hEnemy:GetLocation()
+                -- we cannot see them at this time
+                local lastSeenLoc, lastSeenTime = GetHeroLastSeenInfo(pid)
+                if lastSeenTime then
+                    EnemyInfo[pid].Location = lastSeenLoc
+                    EnemyInfo[pid].LastSeen = lastSeenTime
+                    
+                    if lastSeenTime > 6.0 then
+                        EnemyInfo[pid].Lane = -1
+                        EnemyInfo[pid].ExtraLoc1 = nil
+                        EnemyInfo[pid].ExtraLoc3 = nil
+                        EnemyInfo[pid].ExtraLoc5 = nil
+                    end
                 end
             end
-        else
-            -- we cannot see them at this time
-            local lastSeenLoc, lastSeenTime = GetHeroLastSeenInfo(pid)
-            EnemyInfo[pid].Location = lastSeenLoc
         end
+        
+        LastEnemyUpdate = GameTime()
     end
 end
 
@@ -63,12 +96,22 @@ function EnemyInfo.InferRole( id )
     end
 end
 
+function EnemyInfo.PrintEnemyInfo()
+    local pids = GetTeamPlayers(utils.GetOtherTeam())
+    for _, pid in pairs(pids) do
+        if EnemyInfo[pid].Name then
+            print(EnemyInfo[pid].Name .. " (Lvl: " .. EnemyInfo[pid].Level .. ")")
+            print("    Lane: " .. EnemyInfo[pid].Lane)
+        end
+    end
+end
+
 function EnemyInfo.GetEnemyHeroFromId( id )
     local enemyList = GetUnitList(UNIT_LIST_ENEMY_HEROES)
 
     local list = {}
     for _, enemy in pairs(enemyList) do
-        if enemy:GetPlayerID() == id then
+        if not enemy:IsNull() and enemy:GetPlayerID() == id then
             if not EnemyInfo[id].Alive then
                 enemy.Illusion = true
             end
@@ -88,3 +131,5 @@ function EnemyInfo.GetEnemyHeroFromId( id )
 
     return nil
 end
+
+return EnemyInfo

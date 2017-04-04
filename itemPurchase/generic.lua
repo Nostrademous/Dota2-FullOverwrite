@@ -431,7 +431,7 @@ function X:UpdatePurchaseOrder()
         end
         -- insert the item to buy in bought items, remove it from starting items
         table.insert(self.BoughtItems, self.StartingItems[1])
-        utils.myPrint("[UpdatePurchaseOrder] - 9 - removing: ", self.StartingItems[pos])
+        utils.myPrint("[UpdatePurchaseOrder] - 9 - removing: ", self.StartingItems[1])
         table.remove(self.StartingItems, 1)
     end
 end

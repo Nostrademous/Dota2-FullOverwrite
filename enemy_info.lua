@@ -54,13 +54,29 @@ function EnemyInfo.BuildEnemyList()
                     end
                 end
                 
+                if hEnemy:IsUnableToMiss() then
+                    EnemyInfo[pid].HasTruestrike = true
+                    EnemyInfo.HasTruestrike = true
+                else
+                    EnemyInfo[pid].HasTruestrike = false
+                end
+                
                 if GameTime() - LastEnemyUpdate > UpdateFreq2 then
                     for i = 0, 5, 1 do
-                    local item = hEnemy:GetItemInSlot(i)
-                    if item ~= nil then
-                        EnemyInfo[pid].Items[i] = item:GetName()
+                        local item = hEnemy:GetItemInSlot(i)
+                        if item ~= nil then
+                            local sItemName = item:GetName()
+                            EnemyInfo[pid].Items[i] = sItemName
+                            
+                            if sItemName == "item_gem" or sItemName == "item_ward_dispenser" or 
+                                sItemName == "item_ward_sentry" or sItemName == "item_dust" or 
+                                sItemName == "item_necronomicon_3" then
+                                EnemyInfo[pid].HasDetection = true
+                            else
+                                EnemyInfo[pid].HasDetection = false
+                            end
+                        end
                     end
-                end
                 end
             else
                 -- we cannot see them at this time
@@ -81,6 +97,23 @@ function EnemyInfo.BuildEnemyList()
         
         LastEnemyUpdate = GameTime()
     end
+end
+
+function EnemyInfo.GetLocation( id )
+    if EnemyInfo[id] then
+        return EnemyInfo[id].Location
+    end
+    
+    local tDelta = GameTime() - EnemyInfo[id].LastSeen
+    if tDelta <= 1.0 then
+        return EnemyInfo[id].ExtraLoc1
+    elseif tDelta <= 3.0 then
+        return EnemyInfo[id].ExtraLoc3
+    elseif tDelta <= 5.0 then
+        return EnemyInfo[id].ExtraLoc5
+    end
+    
+    return nil
 end
 
 function EnemyInfo.InferRole( id )

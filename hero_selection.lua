@@ -30,7 +30,7 @@ local Pos_5_Pool = {
 
 -- roamers, junglers
 local Pos_X_Pool = {
-    --"npc_dota_hero_legion_commander",
+    "npc_dota_hero_legion_commander",
     "npc_dota_hero_bloodseeker"
 }
 

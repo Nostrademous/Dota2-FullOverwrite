@@ -144,19 +144,21 @@ function ConsiderQ()
 	if #tableNearbyAttackingAlliedHeroes >= 2 then
         local targetCountTable = {}
 		for _, ally in pairs(tableNearbyAttackingAlliedHeroes) do
-            local allyTarget = gHeroVar.GetVar(ally:GetPlayerID(), "Target")
-            if utils.ValidTarget(allyTarget) then
-                local pos = utils.PosInTable(targetCountTable, allyTarget)
-                if pos == -1 then
-                    targetCountTable[allyTarget] = 1
-                else
-                    targetCountTable[allyTarget] = targetCountTable[allyTarget] + 1
+            if ally:IsBot() then
+                local allyTarget = gHeroVar.GetVar(ally:GetPlayerID(), "Target")
+                if utils.ValidTarget(allyTarget) then
+                    local pos = utils.PosInTable(targetCountTable, allyTarget)
+                    if pos == -1 then
+                        targetCountTable[allyTarget] = 1
+                    else
+                        targetCountTable[allyTarget] = targetCountTable[allyTarget] + 1
+                    end
                 end
-            end
-            table.sort(targetCountTable)
-            
-            if #targetCountTable > 0 and utils.ValidTarget(targetCountTable[1])	then
-                return BOT_ACTION_DESIRE_HIGH, targetCountTable[1]
+                table.sort(targetCountTable)
+                
+                if #targetCountTable > 0 and utils.ValidTarget(targetCountTable[1])	then
+                    return BOT_ACTION_DESIRE_HIGH, targetCountTable[1]
+                end
             end
         end
 	end
@@ -188,7 +190,7 @@ function ConsiderQ()
         local nearAllies = gHeroVar.GetNearbyAllies(bot, 800)
         for _, ally in pairs(nearAllies) do
             if not ally:IsIllusion() then
-                if (utils.IsCore(ally) or not ally:IsBot()) and ally:GetHealth()/ally:GetMaxHealth() < 0.6 
+                if (not ally:IsBot() or utils.IsCore(ally)) and ally:GetHealth()/ally:GetMaxHealth() < 0.6 
                     and #gHeroVar.GetNearbyEnemyCreep(bot, 1200) > 1 then
                     return BOT_ACTION_DESIRE_LOW, ally
                 end

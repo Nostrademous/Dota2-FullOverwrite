@@ -119,7 +119,6 @@ function linaAbility:queueNuke(bot, enemy, castQueue, engageDist)
 
     -- if out of range, attack move for one hit to get in range
     if dist < engageDist then
-        bot:Action_ClearActions(false)
         utils.AllChat("Killing "..utils.GetHeroName(enemy).." softly with my song")
         utils.myPrint("Queue Nuke Damage: ", utils.GetHeroName(enemy))
         for i = #castQueue, 1, -1 do

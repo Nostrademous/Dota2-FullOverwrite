@@ -41,13 +41,11 @@ function ConsiderQ()
 	end
 	
 	local CastRange = abilityQ:GetCastRange()
-	local Damage    = abilityQ:GetLevel()*75
-	local Radius    = abilityQ:GetAOERadius()
-	
-	local HeroHealth    = 10000
-	local CreepHealth   = 10000
-    
-    
+	local Damage    = abilityQ:GetSpecialValueInt("damage")
+    local eDamageCreep = abilityQ:GetSpecialValueInt("damage_per_unit")
+    local eDamageHero  = abilityQ:GetSpecialValueInt("damage_per_hero")
+	local Radius    = 330
+
 	local WeakestEnemy, HeroHealth = utils.GetWeakestHero(bot, CastRange+150)
 
     --------------------------------------
@@ -57,8 +55,14 @@ function ConsiderQ()
 	if modeName ~= "retreat" then
 		if utils.ValidTarget(WeakestEnemy) then
 			if not utils.IsTargetMagicImmune( WeakestEnemy ) then
+                local numCreepNearEnemy = #gHeroVar.GetNearbyAlliedCreep(WeakestEnemy, 330)
+                local numEnemiesNearEnemy = #gHeroVar.GetNearbyAllies(WeakestEnemy, 330)
+                Damage = Damage + abilityQ:GetSpecialValueInt("damage")
+                Damage = Damage + numEnemiesNearEnemy*eDamageHero
+                Damage = Damage + numCreepNearEnemy*eDamageCreep
+            
 				if HeroHealth <= WeakestEnemy:GetActualIncomingDamage(Damage, DAMAGE_TYPE_MAGICAL) then
-					return BOT_ACTION_DESIRE_HIGH, utils.VectorTowards(WeakestEnemy:GetLocation(), bot:GetLocation(), Radius/2)
+					return BOT_ACTION_DESIRE_HIGH, WeakestEnemy:GetLocation()
 				end
 			end
 		end
@@ -339,15 +343,83 @@ function genericAbility:nukeDamage( bot, enemy )
 
     local comboQueue = {}
     local manaAvailable = bot:GetMana()
-    local dmgTotal = bot:GetOffensivePower()
+    local dmgTotal = 0
     local castTime = 0
     local stunTime = 0
     local slowTime = 0
-    local engageDist = 500
+    local engageDist = 10000
     
     -- WRITE CODE HERE --
     local physImmune = modifiers.IsPhysicalImmune(enemy)
     local magicImmune = utils.IsTargetMagicImmune(enemy)
+    
+    local attackSpeedBonus = 1.0
+    
+    -- Press The Attack
+    if abilityW:IsFullyCastable() then
+        local manaCostW = abilityW:GetManaCost()
+        if utils.IsTargetMagicImmune(bot) and manaCostW <= manaAvailable then
+            manaAvailable = manaAvailable - manaCostW
+            castTime = castTime + abilityW:GetCastPoint()
+            attackSpeedBonus = attackSpeedBonus + abilityW:GetSpecialValueInt("attack_speed")/bot:GetAttackSpeed()
+            table.insert(comboQueue, abilityW)
+        end
+    end
+    
+    -- Overwhelming Odds
+    if abilityQ:IsFullyCastable() then
+        local manaCostQ = abilityQ:GetManaCost()
+        if not magicImmune and manaCostQ <= manaAvailable then
+            manaAvailable = manaAvailable - manaCostQ
+            castTime = castTime + abilityQ:GetCastPoint()
+            
+            local numCreepNearEnemy = #gHeroVar.GetNearbyAlliedCreep(enemy, 330)
+            local numEnemiesNearEnemy = #gHeroVar.GetNearbyAllies(enemy, 330)
+            dmgTotal = dmgTotal + abilityQ:GetSpecialValueInt("damage")
+            dmgTotal = dmgTotal + numEnemiesNearEnemy*abilityQ:GetSpecialValueInt("damage_per_hero")
+            dmgTotal = dmgTotal + numCreepNearEnemy*abilityQ:GetSpecialValueInt("damage_per_unit")
+            
+            engageDist = Min(engageDist, abilityQ:GetCastRange())
+            table.insert(comboQueue, abilityQ)
+        end
+    end
+    
+    -- Duel
+    if abilityR:IsFullyCastable() then
+        local manaCostR = abilityR:GetManaCost()
+        if not enemy:IsInvulnerable() and manaCostR <= manaAvailable then
+            manaAvailable = manaAvailable - manaCostR
+            castTime = castTime + abilityR:GetCastPoint()
+            
+            local Duration = abilityR:GetSpecialValueFloat("duration")
+            if bot:HasScepter() then
+                Duration = abilityR:GetSpecialValueFloat("duration_scepter")
+            end
+            
+            local extraDmg = 0.0
+            if manaAvailable >= 25.0 then
+                local bm = utils.IsItemAvailable("item_blade_mail")
+                manaAvailable = manaAvailable - 25.0
+                if bm then
+                    extraDmg = enemy:GetEstimatedDamageToTarget(true, bot, Min(4.5, Duration), DAMAGE_TYPE_PHYSICAL)
+                    extraDmg = enemy:GetActualIncomingDamage(extraDmg, DAMAGE_TYPE_PHYSICAL)
+                    table.insert(comboQueue, bm)
+                end
+            end
+            
+            stunTime = stunTime + Duration
+            
+            dmgTotal = dmgTotal + attackSpeedBonus*bot:GetEstimatedDamageToTarget(true, enemy, Duration, DAMAGE_TYPE_PHYSICAL) + extraDmg
+            engageDist = Min(engageDist, abilityR:GetCastRange())
+            table.insert(comboQueue, abilityR)
+        end
+    end
+    
+    local blink = utils.IsItemAvailable("item_blink")
+    if blink then
+        engageDist = 1200
+        table.insert(comboQueue, Min(#comboQueue, 3), blink)
+    end
     
     return dmgTotal, comboQueue, castTime, stunTime, slowTime, engageDist
 end
@@ -356,6 +428,35 @@ function genericAbility:queueNuke(bot, enemy, castQueue, engageDist)
     if not utils.ValidTarget(enemy) then return false end
     
     -- WRITE CODE HERE --
+    local dist = GetUnitToUnitDistance(bot, enemy)
+
+    -- if out of range, attack move for one hit to get in range
+    if dist < engageDist then
+        utils.myPrint("Queue Nuke Damage: ", utils.GetHeroName(enemy))
+        for i = #castQueue, 1, -1 do
+            local skill = castQueue[i]
+            local behaviorFlag = skill:GetBehavior()
+
+            --utils.myPrint(" - skill '", skill:GetName(), "' has BehaviorFlag: ", behaviorFlag)
+
+            if skill:GetName() == abilityQ:GetName() then
+                if utils.IsCrowdControlled(enemy) then
+                    gHeroVar.HeroPushUseAbilityOnLocation(bot, skill, enemy:GetLocation())
+                else
+                    gHeroVar.HeroPushUseAbilityOnLocation(bot, skill, enemy:GetExtrapolatedLocation(0.3))
+                end
+            elseif skill:GetName() == abilityW:GetName() then
+                gHeroVar.HeroPushUseAbilityOnEntity(bot, skill, bot)
+            elseif skill:GetName() == abilityR:GetName() then
+                gHeroVar.HeroPushUseAbilityOnEntity(bot, skill, enemy)
+            elseif skill:GetName() == "item_blade_mail" then
+                gHeroVar.HeroPushUseAbility(bot, skill)
+            elseif skill:GetName() == "item_blink" then
+                gHeroVar.HeroPushUseAbilityOnLocation(bot, skill, enemy:GetLocation())
+            end
+        end
+        return true
+    end
     
     return false
 end

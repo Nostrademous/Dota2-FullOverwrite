@@ -383,6 +383,7 @@ function U.SortFunc(a , b)
     if a < b then
         return true
     end
+    return false
 end
 
 function U.deepcopy(orig)
@@ -716,6 +717,8 @@ function U.IsBusy(bot)
 end
 
 function U.IsCore( hHero )
+    if not hHero:IsBot() then return true end
+
     if gHeroVar.GetVar(hHero:GetPlayerID(), "Role") == constants.ROLE_HARDCARRY
         or gHeroVar.GetVar(hHero:GetPlayerID(), "Role") == constants.ROLE_MID
         or gHeroVar.GetVar(hHero:GetPlayerID(), "Role") == constants.ROLE_OFFLANE

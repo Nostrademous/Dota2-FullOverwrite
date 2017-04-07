@@ -213,22 +213,27 @@ function GlobalFightDetermination()
                                     end
 
                                     local allyTimeToReach = distToEnemy/ally2:GetCurrentMovementSpeed()
-                                    local allyNukeDmg, allyActionQueue, allyCastTime, allyStun, allySlow, allyEngageDist = ally2.SelfRef:GetNukeDamage( ally2, enemy )
+                                    
+                                    if ally2:IsBot() then
+                                        local allyNukeDmg, allyActionQueue, allyCastTime, allyStun, allySlow, allyEngageDist = ally2.SelfRef:GetNukeDamage( ally2, enemy )
 
-                                    -- update our total nuke damage
-                                    totalNukeDmg = totalNukeDmg + allyNukeDmg
+                                        -- update our total nuke damage
+                                        totalNukeDmg = totalNukeDmg + allyNukeDmg
 
-                                    local globalAbility = gHero.GetVar(ally2:GetPlayerID(), "HasGlobal")
-                                    if allyTimeToReach <= 6.0 then
-                                        --utils.myPrint("ally ", utils.GetHeroName(ally2), " is ", distToEnemy, " units away. Time to reach: ", allyTimeToReach)
+                                        local globalAbility = gHero.GetVar(ally2:GetPlayerID(), "HasGlobal")
+                                        if allyTimeToReach <= 6.0 then
+                                            --utils.myPrint("ally ", utils.GetHeroName(ally2), " is ", distToEnemy, " units away. Time to reach: ", allyTimeToReach)
 
-                                        allAllyStun = allAllyStun + allyStun
-                                        allAllySlow = allAllySlow + allySlow
-                                        local allyTimeToKillTarget = fight_simul.estimateTimeToKill(ally2, enemy)
-                                        totalTimeToKillTarget = totalTimeToKillTarget + allyTimeToKillTarget
-                                        table.insert(participatingAllies, {ally2, allyActionQueue, allyEngageDist})
-                                    elseif globalAbility and globalAbility[1]:IsFullyCastable() then
-                                        table.insert(globalAllies, {ally2, globalAbility})
+                                            allAllyStun = allAllyStun + allyStun
+                                            allAllySlow = allAllySlow + allySlow
+                                            local allyTimeToKillTarget = fight_simul.estimateTimeToKill(ally2, enemy)
+                                            totalTimeToKillTarget = totalTimeToKillTarget + allyTimeToKillTarget
+                                            table.insert(participatingAllies, {ally2, allyActionQueue, allyEngageDist})
+                                        elseif globalAbility and globalAbility[1]:IsFullyCastable() then
+                                            table.insert(globalAllies, {ally2, globalAbility})
+                                        end
+                                    else
+                                        totalNukeDmg = totalNukeDmg + ally2:GetOffensivePower()
                                     end
                                 end
                             end

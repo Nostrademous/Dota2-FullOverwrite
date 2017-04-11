@@ -264,7 +264,7 @@ X["item_soul_booster"] = { "item_point_booster", "item_vitality_booster", "item_
 
 X["item_soul_ring"] = { "item_ring_of_regen", "item_sobi_mask", "item_recipe_soul_ring" }
 
-X["item_tranquil_boots"] = { "item_ring_of_protection", "item_ring_of_regen", "item_boots" }
+X["item_tranquil_boots"] = { "item_wind_lace", "item_ring_of_regen", "item_boots" }
 
 X["item_urn_of_shadows"] = { "item_gauntlets", "item_gauntlets", "item_sobi_mask", "item_recipe_urn_of_shadows" }
 

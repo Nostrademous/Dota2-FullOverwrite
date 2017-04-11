@@ -16,19 +16,19 @@ local SKILL_E = "viper_corrosive_skin";
 local SKILL_R = "viper_viper_strike";
 
 local ABILITY1 = "special_bonus_attack_damage_15"
-local ABILITY2 = "special_bonus_hp_150"
-local ABILITY3 = "special_bonus_strength_8"
-local ABILITY4 = "special_bonus_agility_14"
-local ABILITY5 = "special_bonus_armor_7"
+local ABILITY2 = "special_bonus_hp_175"
+local ABILITY3 = "special_bonus_strength_10"
+local ABILITY4 = "special_bonus_agility_16"
+local ABILITY5 = "special_bonus_unique_viper_1" -- poison attacks affects buildings
 local ABILITY6 = "special_bonus_attack_range_75"
-local ABILITY7 = "special_bonus_unique_viper_1" -- poison attacks affects buildings
+local ABILITY7 = "special_bonus_armor_20" 
 local ABILITY8 = "special_bonus_unique_viper_2" -- +80 DPS on Ult
 
 local ViperAbilityPriority = {
     SKILL_Q,    SKILL_E,    SKILL_W,    SKILL_E,    SKILL_W,
-    SKILL_R,    SKILL_W,    SKILL_W,    SKILL_Q,    ABILITY2,
+    SKILL_R,    SKILL_W,    SKILL_W,    SKILL_Q,    ABILITY1,
     SKILL_Q,    SKILL_R,    SKILL_Q,    SKILL_E,    ABILITY4,
-    SKILL_E,    SKILL_R,    ABILITY6,   ABILITY8
+    SKILL_E,    SKILL_R,    ABILITY6,   ABILITY7
 }
 
 local botViper = dt:new()

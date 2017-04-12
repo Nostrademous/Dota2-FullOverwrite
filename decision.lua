@@ -23,7 +23,7 @@ local enemyInfo = require( GetScriptDirectory().."/enemy_info" )
 -- BASE CLASS - DO NOT MODIFY THIS SECTION
 -------------------------------------------------------------------------------
 
-local X = { init = false, currentMode = none, currentModeValue = BOT_MODE_DESIRE_NONE, prevMode = none, abilityPriority = {} }
+local X = { init = false, currentMode = none, currentModeValue = BOT_MODE_DESIRE_NONE, prevMode = none, abilityPriority = {}, itemFuncList = {} }
 
 function X:new(o)
     o = o or {}

@@ -473,6 +473,24 @@ function UseItems()
     return false
 end
 
+function UseMyItems()
+    if ( GetGameState() ~= GAME_STATE_GAME_IN_PROGRESS and GetGameState() ~= GAME_STATE_PRE_GAME ) then return false end
+
+    local hBot = GetBot()
+
+    if utils.IsBusy(hBot) then return true end
+    if hBot:IsMuted() then return false end
+
+    for indx, itemFunc in pairs(hBot.itemFuncList) do
+        if itemFunc ~= nil then
+            local bRet = itemFunc()
+            if bRet then return true end
+        end
+    end
+
+    return false
+end
+
 -------------------------------------------------------------------------------
 -- INDIVIDUAL ITEM USE FUNCTIONS
 -------------------------------------------------------------------------------

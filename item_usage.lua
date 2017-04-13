@@ -473,6 +473,26 @@ function UseItems()
     return false
 end
 
+function ItemFuncName( name )
+    local _, pos = string.find(name, "item_")
+    local sItemName = string.sub(name, pos+1)
+    
+    local fName = ""
+    local part = string.find(sItemName, "_")
+    if part == nil then
+       fName = sItemName:sub(1,1):upper()..sItemName:sub(2) 
+    else
+        while string.find(sItemName, "_") do
+            local place = string.find(sItemName, "_")
+            local sStr = string.sub(sItemName, 1, place-1)
+            fName = fName .. sStr:sub(1,1):upper() .. sStr:sub(2)
+            sItemName = string.sub(sItemName, place+1)
+        end
+        fName = fName .. sItemName:sub(1,1):upper()..sItemName:sub(2)
+    end    
+    return "Use"..fName
+end
+
 function UseMyItems()
     if ( GetGameState() ~= GAME_STATE_GAME_IN_PROGRESS and GetGameState() ~= GAME_STATE_PRE_GAME ) then return false end
 

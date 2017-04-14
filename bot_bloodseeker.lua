@@ -5,6 +5,7 @@
 
 require( GetScriptDirectory().."/constants" )
 
+local heroData = require( GetScriptDirectory().."/hero_data" )
 local utils = require( GetScriptDirectory().."/utility" )
 local dt = require( GetScriptDirectory().."/decision" )
 local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
@@ -20,25 +21,25 @@ function getHeroVar(var)
     return gHeroVar.GetVar(bot:GetPlayerID(), var)
 end
 
-local SKILL_Q = "bloodseeker_bloodrage";
-local SKILL_W = "bloodseeker_blood_bath";
-local SKILL_E = "bloodseeker_thirst";
-local SKILL_R = "bloodseeker_rupture";
+local SKILL_Q = heroData.bloodseeker.SKILL_0
+local SKILL_W = heroData.bloodseeker.SKILL_1
+local SKILL_E = heroData.bloodseeker.SKILL_2
+local SKILL_R = heroData.bloodseeker.SKILL_3
 
-local ABILITY1 = "special_bonus_attack_damage_25"
-local ABILITY2 = "special_bonus_hp_225"
-local ABILITY3 = "special_bonus_attack_speed_30"
-local ABILITY4 = "special_bonus_unique_bloodseeker_2"
-local ABILITY5 = "special_bonus_unique_bloodseeker_3"
-local ABILITY6 = "special_bonus_all_stats_10"
-local ABILITY7 = "special_bonus_unique_bloodseeker"
-local ABILITY8 = "special_bonus_lifesteal_30"
+local TALENT1 = heroData.bloodseeker.TALENT_0
+local TALENT2 = heroData.bloodseeker.TALENT_1
+local TALENT3 = heroData.bloodseeker.TALENT_2
+local TALENT4 = heroData.bloodseeker.TALENT_3
+local TALENT5 = heroData.bloodseeker.TALENT_4
+local TALENT6 = heroData.bloodseeker.TALENT_5
+local TALENT7 = heroData.bloodseeker.TALENT_6
+local TALENT8 = heroData.bloodseeker.TALENT_7
 
 local AbilityPriority = {
     SKILL_Q,    SKILL_E,    SKILL_Q,    SKILL_E,    SKILL_Q,
-    SKILL_R,    SKILL_W,    SKILL_E,    SKILL_Q,    ABILITY2,
-    SKILL_W,    SKILL_R,    SKILL_W,    SKILL_W,    ABILITY4,
-    SKILL_E,    SKILL_R,    ABILITY5,   ABILITY8
+    SKILL_R,    SKILL_W,    SKILL_E,    SKILL_Q,    TALENT2,
+    SKILL_W,    SKILL_R,    SKILL_W,    SKILL_W,    TALENT4,
+    SKILL_E,    SKILL_R,    TALENT5,    TALENT8
 }
 
 local botBS = dt:new()

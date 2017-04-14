@@ -3,6 +3,7 @@
 --- GITHUB REPO: https://github.com/Nostrademous/Dota2-FullOverwrite
 -------------------------------------------------------------------------------
 
+local heroData = require( GetScriptDirectory().."/hero_data" )
 local utils = require( GetScriptDirectory().."/utility" )
 local dt = require( GetScriptDirectory().."/decision" )
 local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
@@ -18,25 +19,25 @@ function getHeroVar(var)
     return gHeroVar.GetVar(bot:GetPlayerID(), var)
 end
 
-local SKILL_Q = "phantom_assassin_stifling_dagger"
-local SKILL_W = "phantom_assassin_phantom_strike"
-local SKILL_E = "phantom_assassin_blur"
-local SKILL_R = "phantom_assassin_coup_de_grace"
+local SKILL_Q = heroData.phantom_assassin.SKILL_0
+local SKILL_W = heroData.phantom_assassin.SKILL_1
+local SKILL_E = heroData.phantom_assassin.SKILL_2
+local SKILL_R = heroData.phantom_assassin.SKILL_3
 
-local ABILITY1 = "special_bonus_hp_150"
-local ABILITY2 = "special_bonus_attack_damage_15"
-local ABILITY3 = "special_bonus_lifesteal_10"
-local ABILITY4 = "special_bonus_movement_speed_20"
-local ABILITY5 = "special_bonus_attack_speed_35"
-local ABILITY6 = "special_bonus_all_stats_10"
-local ABILITY7 = "special_bonus_agility_25"
-local ABILITY8 = "special_bonus_unique_phantom_assassin"
+local TALENT1 = heroData.phantom_assassin.TALENT_0
+local TALENT2 = heroData.phantom_assassin.TALENT_1
+local TALENT3 = heroData.phantom_assassin.TALENT_2
+local TALENT4 = heroData.phantom_assassin.TALENT_3
+local TALENT5 = heroData.phantom_assassin.TALENT_4
+local TALENT6 = heroData.phantom_assassin.TALENT_5
+local TALENT7 = heroData.phantom_assassin.TALENT_6
+local TALENT8 = heroData.phantom_assassin.TALENT_7
 
 local AbilityPriority = {
     SKILL_Q,    SKILL_W,    SKILL_Q,    SKILL_E,    SKILL_Q,
-    SKILL_R,    SKILL_Q,    SKILL_E,    SKILL_E,    ABILITY2,
-    SKILL_E,    SKILL_R,    SKILL_W,    SKILL_W,    ABILITY3,
-    SKILL_W,    SKILL_R,    ABILITY6,   ABILITY7
+    SKILL_R,    SKILL_Q,    SKILL_E,    SKILL_E,    TALENT2,
+    SKILL_E,    SKILL_R,    SKILL_W,    SKILL_W,    TALENT3,
+    SKILL_W,    SKILL_R,    TALENT6,    TALENT7
 }
 
 local botPA = dt:new()

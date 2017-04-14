@@ -9,6 +9,7 @@ local cmAbility = BotsInit.CreateGeneric()
 require( GetScriptDirectory().."/fight_simul" )
 require( GetScriptDirectory().."/modifiers" )
 
+local heroData = require( GetScriptDirectory().."/hero_data" )
 local utils = require( GetScriptDirectory().."/utility" )
 local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
 
@@ -21,10 +22,10 @@ function getHeroVar(var)
 end
 
 local Abilities ={
-    "crystal_maiden_crystal_nova",
-    "crystal_maiden_frostbite",
-    "crystal_maiden_brilliance_aura",
-    "crystal_maiden_freezing_field"
+    heroData.crystal_maiden.SKILL_0,
+    heroData.crystal_maiden.SKILL_1,
+    heroData.crystal_maiden.SKILL_2,
+    heroData.crystal_maiden.SKILL_3
 }
 
 local abilityQ = ""
@@ -312,7 +313,7 @@ function ConsiderW()
 	-- Global high-priorty usage
 	--------------------------------------
 	-- Check for a channeling enemy
-    local enemies = gHeroVar.GetNearbyEnemies(bot, CastRange + 300)
+    local enemies = gHeroVar.GetNearbyEnemies(bot, CastRange + 250)
     
 	for _, npcEnemy in pairs( enemies ) do
 		if utils.ValidTarget(npcEnemy) and npcEnemy:IsChanneling() and not utils.IsTargetMagicImmune(npcEnemy) then
@@ -360,7 +361,7 @@ function ConsiderW()
 	if modeName == "jungling" or modeName == "laning" then
 		if (ManaPerc > 0.4 and abilityW:GetLevel() >= 2) or
            (ManaPerc > 0.7) then
-			if utils.ValidTarget(WeakestEnemy) and GetUnitToUnitDistance(bot, WeakestEnemy) < (CastRange + 300) then
+			if utils.ValidTarget(WeakestEnemy) and GetUnitToUnitDistance(bot, WeakestEnemy) < (CastRange + 100) then
 				if not utils.IsTargetMagicImmune(WeakestEnemy) and not utils.IsCrowdControlled(WeakestEnemy) then
                     if utils.CanHarass(bot, WeakestEnemy) then
                         return BOT_ACTION_DESIRE_LOW, WeakestEnemy
@@ -380,7 +381,7 @@ function ConsiderW()
         end
     
         if not coreNear and ManaPerc > 0.4 and #enemies == 0 then
-            local enemyCreep = gHeroVar.GetNearbyEnemyCreep(bot, CastRange+300)
+            local enemyCreep = gHeroVar.GetNearbyEnemyCreep(bot, CastRange + 200)
             if #enemyCreep > 0 then
                 if #enemyCreep > 1 then
                     table.sort(enemyCreep, function(n1,n2) return n1:GetHealth() > n2:GetHealth() end)

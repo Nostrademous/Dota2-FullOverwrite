@@ -3,6 +3,7 @@
 --- GITHUB REPO: https://github.com/Nostrademous/Dota2-FullOverwrite
 -------------------------------------------------------------------------------
 
+local heroData = require( GetScriptDirectory().."/hero_data" )
 local utils = require( GetScriptDirectory().."/utility" )
 local dt = require( GetScriptDirectory().."/decision" )
 local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
@@ -18,25 +19,25 @@ function getHeroVar(var)
     return gHeroVar.GetVar(bot:GetPlayerID(), var)
 end
 
-local SKILL_Q = "crystal_maiden_crystal_nova"
-local SKILL_W = "crystal_maiden_frostbite"
-local SKILL_E = "crystal_maiden_brilliance_aura"
-local SKILL_R = "crystal_maiden_freezing_field"
+local SKILL_Q = heroData.crystal_maiden.SKILL_0
+local SKILL_W = heroData.crystal_maiden.SKILL_1
+local SKILL_E = heroData.crystal_maiden.SKILL_2
+local SKILL_R = heroData.crystal_maiden.SKILL_3
 
-local ABILITY1 = "special_bonus_magic_resistance_15"
-local ABILITY2 = "special_bonus_attack_damage_60"
-local ABILITY3 = "special_bonus_cast_range_125"
-local ABILITY4 = "special_bonus_hp_250"
-local ABILITY5 = "special_bonus_gold_income_20"
-local ABILITY6 = "special_bonus_respawn_reduction_35"
-local ABILITY7 = "special_bonus_unique_crystal_maiden_1"
-local ABILITY8 = "special_bonus_unique_crystal_maiden_2"
+local TALENT1 = heroData.crystal_maiden.TALENT_0
+local TALENT2 = heroData.crystal_maiden.TALENT_1
+local TALENT3 = heroData.crystal_maiden.TALENT_2
+local TALENT4 = heroData.crystal_maiden.TALENT_3
+local TALENT5 = heroData.crystal_maiden.TALENT_4
+local TALENT6 = heroData.crystal_maiden.TALENT_5
+local TALENT7 = heroData.crystal_maiden.TALENT_6
+local TALENT8 = heroData.crystal_maiden.TALENT_7
 
 local AbilityPriority = {
     SKILL_W,    SKILL_E,    SKILL_E,    SKILL_Q,    SKILL_Q,
-    SKILL_R,    SKILL_Q,    SKILL_Q,    SKILL_E,    ABILITY2,
-    SKILL_E,    SKILL_R,    SKILL_W,    SKILL_W,    ABILITY4,
-    SKILL_W,    SKILL_R,    ABILITY6,   ABILITY7
+    SKILL_R,    SKILL_Q,    SKILL_Q,    SKILL_E,    TALENT2,
+    SKILL_E,    SKILL_R,    SKILL_W,    SKILL_W,    TALENT4,
+    SKILL_W,    SKILL_R,    TALENT6,    TALENT7
 }
 
 local botCM = dt:new()
@@ -63,7 +64,7 @@ function cmBot:QueueNuke(bot, target, actionQueue, engageDist)
 end
 
 function cmBot:DoHeroSpecificInit(bot)
-    setHeroVar("HasStun",  {{[1]=bot:GetAbilityByName("crystal_maiden_frostbite"), [2]=0.3}})
+    setHeroVar("HasStun",  {{[1]=bot:GetAbilityByName(SKILL_W), [2]=0.3}})
 end
 
 function Think()

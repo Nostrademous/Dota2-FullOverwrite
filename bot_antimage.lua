@@ -3,6 +3,7 @@
 --- GITHUB REPO: https://github.com/Nostrademous/Dota2-FullOverwrite
 -------------------------------------------------------------------------------
 
+local heroData = require( GetScriptDirectory().."/hero_data" )
 local utils = require( GetScriptDirectory().."/utility" )
 local dt = require( GetScriptDirectory().."/decision" )
 local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
@@ -18,25 +19,25 @@ function getHeroVar(var)
     return gHeroVar.GetVar(bot:GetPlayerID(), var)
 end
 
-local SKILL_Q = "antimage_mana_break";
-local SKILL_W = "antimage_blink";
-local SKILL_E = "antimage_spell_shield";
-local SKILL_R = "antimage_mana_void";
+local SKILL_Q = heroData.antimage.SKILL_0
+local SKILL_W = heroData.antimage.SKILL_1
+local SKILL_E = heroData.antimage.SKILL_2
+local SKILL_R = heroData.antimage.SKILL_3
 
-local ABILITY1 = "special_bonus_hp_150"
-local ABILITY2 = "special_bonus_attack_damage_20"
-local ABILITY3 = "special_bonus_attack_speed_20"
-local ABILITY4 = "special_bonus_unique_antimage"
-local ABILITY5 = "special_bonus_evasion_15"
-local ABILITY6 = "special_bonus_all_stats_10"
-local ABILITY7 = "special_bonus_agility_25"
-local ABILITY8 = "special_bonus_unique_antimage_2"
+local TALENT1 = heroData.antimage.TALENT_0
+local TALENT2 = heroData.antimage.TALENT_1
+local TALENT3 = heroData.antimage.TALENT_2
+local TALENT4 = heroData.antimage.TALENT_3
+local TALENT5 = heroData.antimage.TALENT_4
+local TALENT6 = heroData.antimage.TALENT_5
+local TALENT7 = heroData.antimage.TALENT_6
+local TALENT8 = heroData.antimage.TALENT_7
 
 local AntimageAbilityPriority = {
     SKILL_W,    SKILL_Q,    SKILL_Q,    SKILL_E,    SKILL_Q,
-    SKILL_R,    SKILL_Q,    SKILL_W,    SKILL_W,    ABILITY1,
-    SKILL_W,    SKILL_R,    SKILL_E,    SKILL_E,    ABILITY4,
-    SKILL_E,    SKILL_R,    ABILITY6,   ABILITY8
+    SKILL_R,    SKILL_Q,    SKILL_W,    SKILL_W,    TALENT1,
+    SKILL_W,    SKILL_R,    SKILL_E,    SKILL_E,    TALENT4,
+    SKILL_E,    SKILL_R,    TALENT6,    TALENT8
 }
 
 local botAM = dt:new()

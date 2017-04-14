@@ -21,7 +21,7 @@ function getHeroVar(var)
     return gHeroVar.GetVar(GetBot():GetPlayerID(), var)
 end
 
-local Abilities ={
+local Abilities = {
     heroData.viper.SKILL_0,
     heroData.viper.SKILL_1,
     heroData.viper.SKILL_2,

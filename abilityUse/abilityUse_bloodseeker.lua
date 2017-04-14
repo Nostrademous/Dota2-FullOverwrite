@@ -9,6 +9,7 @@ local bsAbility = BotsInit.CreateGeneric()
 require( GetScriptDirectory().."/fight_simul" )
 require( GetScriptDirectory().."/modifiers" )
 
+local heroData = require( GetScriptDirectory().."/hero_data" )
 local utils = require( GetScriptDirectory().."/utility" )
 local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
 
@@ -23,10 +24,10 @@ end
 local bsTarget = nil
 
 local Abilities = {
-    "bloodseeker_bloodrage",
-    "bloodseeker_blood_bath",
-    "bloodseeker_thirst",
-    "bloodseeker_rupture"
+    heroData.bloodseeker.SKILL_0,
+    heroData.bloodseeker.SKILL_1,
+    heroData.bloodseeker.SKILL_2,
+    heroData.bloodseeker.SKILL_3
 }
 
 local abilityQ = ""

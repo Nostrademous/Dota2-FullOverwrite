@@ -6,6 +6,7 @@
 BotsInit = require( "game/botsinit" )
 local genericAbility = BotsInit.CreateGeneric()
 
+local heroData = require( GetScriptDirectory().."/hero_data" )
 local utils = require( GetScriptDirectory().."/utility" )
 local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
 
@@ -20,6 +21,13 @@ function getHeroVar(var)
     local bot = GetBot()
     return gHeroVar.GetVar(bot:GetPlayerID(), var)
 end
+
+local Abilities = {
+    heroData.phantom_assassin.SKILL_0,
+    heroData.phantom_assassin.SKILL_1,
+    heroData.phantom_assassin.SKILL_2,
+    heroData.phantom_assassin.SKILL_3
+}
 
 local abilityQ = ""
 local abilityW = ""
@@ -189,10 +197,10 @@ function genericAbility:AbilityUsageThink(bot)
     -- Check to see if we are CC'ed
     if utils.IsUnableToCast(bot) then return false end
 
-    if abilityQ == "" then abilityQ = bot:GetAbilityByName( "phantom_assassin_stifling_dagger" ) end
-    if abilityW == "" then abilityW = bot:GetAbilityByName( "phantom_assassin_phantom_strike" ) end
-    if abilityE == "" then abilityE = bot:GetAbilityByName( "phantom_assassin_blur" ) end
-    if abilityR == "" then abilityR = bot:GetAbilityByName( "phantom_assassin_coup_de_grace" ) end
+    if abilityQ == "" then abilityQ = bot:GetAbilityByName( Abilities[1] ) end
+    if abilityW == "" then abilityW = bot:GetAbilityByName( Abilities[2] ) end
+    if abilityE == "" then abilityE = bot:GetAbilityByName( Abilities[3] ) end
+    if abilityR == "" then abilityR = bot:GetAbilityByName( Abilities[4] ) end
 
     AttackRange   = bot:GetAttackRange() + bot:GetBoundingRadius()
     ManaPerc      = bot:GetMana()/bot:GetMaxMana()

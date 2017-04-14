@@ -3,6 +3,7 @@
 --- GITHUB REPO: https://github.com/Nostrademous/Dota2-FullOverwrite
 -------------------------------------------------------------------------------
 
+local heroData = require( GetScriptDirectory().."/hero_data" )
 local utils = require( GetScriptDirectory().."/utility" )
 local dt = require( GetScriptDirectory().."/decision" )
 local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
@@ -18,25 +19,25 @@ function getHeroVar(var)
     return gHeroVar.GetVar(bot:GetPlayerID(), var)
 end
 
-local ENIGMA_SKILL_Q = "enigma_malefice"
-local ENIGMA_SKILL_W = "enigma_demonic_conversion"
-local ENIGMA_SKILL_E = "enigma_midnight_pulse"
-local ENIGMA_SKILL_R = "enigma_black_hole"
+local SKILL_Q = heroData.enigma.SKILL_0
+local SKILL_W = heroData.enigma.SKILL_1
+local SKILL_E = heroData.enigma.SKILL_2
+local SKILL_R = heroData.enigma.SKILL_3
 
-local ENIGMA_ABILITY1 = "special_bonus_movement_speed_20"
-local ENIGMA_ABILITY2 = "special_bonus_magic_resistance_12"
-local ENIGMA_ABILITY3 = "special_bonus_cooldown_reduction_15"
-local ENIGMA_ABILITY4 = "special_bonus_gold_income_20"
-local ENIGMA_ABILITY5 = "special_bonus_hp_300"
-local ENIGMA_ABILITY6 = "special_bonus_respawn_reduction_40"
-local ENIGMA_ABILITY7 = "special_bonus_armor_12"
-local ENIGMA_ABILITY8 = "special_bonus_unique_enigma"
+local TALENT1 = heroData.enigma.TALENT_0
+local TALENT2 = heroData.enigma.TALENT_1
+local TALENT3 = heroData.enigma.TALENT_2
+local TALENT4 = heroData.enigma.TALENT_3
+local TALENT5 = heroData.enigma.TALENT_4
+local TALENT6 = heroData.enigma.TALENT_5
+local TALENT7 = heroData.enigma.TALENT_6
+local TALENT8 = heroData.enigma.TALENT_7
 
 local EnigmaAbilityPriority = {
-    ENIGMA_SKILL_W,    ENIGMA_SKILL_Q,    ENIGMA_SKILL_W,    ENIGMA_SKILL_E,    ENIGMA_SKILL_W,
-    ENIGMA_SKILL_R,    ENIGMA_SKILL_W,    ENIGMA_SKILL_Q,    ENIGMA_SKILL_E,    ENIGMA_ABILITY1,
-    ENIGMA_SKILL_Q,    ENIGMA_SKILL_R,    ENIGMA_SKILL_E,    ENIGMA_SKILL_Q,    ENIGMA_ABILITY3,
-    ENIGMA_SKILL_E,    ENIGMA_SKILL_R,    ENIGMA_ABILITY6,   ENIGMA_ABILITY7
+    SKILL_W,    SKILL_Q,    SKILL_W,    SKILL_E,    SKILL_W,
+    SKILL_R,    SKILL_W,    SKILL_Q,    SKILL_E,    TALENT1,
+    SKILL_Q,    SKILL_R,    SKILL_E,    SKILL_Q,    TALENT3,
+    SKILL_E,    SKILL_R,    TALENT6,    TALENT7
 }
 
 local botEnigma = dt:new()

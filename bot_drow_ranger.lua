@@ -5,6 +5,7 @@
 
 require( GetScriptDirectory().."/constants" )
 
+local heroData = require( GetScriptDirectory().."/hero_data" )
 local utils = require( GetScriptDirectory().."/utility" )
 local dt = require( GetScriptDirectory().."/decision" )
 local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
@@ -20,25 +21,25 @@ function getHeroVar(var)
     return gHeroVar.GetVar(bot:GetPlayerID(), var)
 end
 
-local SKILL_Q = "drow_ranger_frost_arrows"
-local SKILL_W = "drow_ranger_wave_of_silence"
-local SKILL_E = "drow_ranger_trueshot"
-local SKILL_R = "drow_ranger_marksmanship"
+local SKILL_Q = heroData.drow_ranger.SKILL_0
+local SKILL_W = heroData.drow_ranger.SKILL_1
+local SKILL_E = heroData.drow_ranger.SKILL_2
+local SKILL_R = heroData.drow_ranger.SKILL_3
 
-local ABILITY1 = "special_bonus_movement_speed_15"
-local ABILITY2 = "special_bonus_all_stats_5"
-local ABILITY3 = "special_bonus_hp_175"
-local ABILITY4 = "special_bonus_attack_speed_20"
-local ABILITY5 = "special_bonus_unique_drow_ranger_1"
-local ABILITY6 = "special_bonus_strength_14"
-local ABILITY7 = "special_bonus_unique_drow_ranger_2"
-local ABILITY8 = "special_bonus_unique_drow_ranger_3"
+local TALENT1 = heroData.drow_ranger.TALENT_0
+local TALENT2 = heroData.drow_ranger.TALENT_1
+local TALENT3 = heroData.drow_ranger.TALENT_2
+local TALENT4 = heroData.drow_ranger.TALENT_3
+local TALENT5 = heroData.drow_ranger.TALENT_4
+local TALENT6 = heroData.drow_ranger.TALENT_5
+local TALENT7 = heroData.drow_ranger.TALENT_6
+local TALENT8 = heroData.drow_ranger.TALENT_7
 
 local DrowRangerAbilityPriority = {
     SKILL_Q,    SKILL_E,    SKILL_W,    SKILL_Q,    SKILL_Q,
-    SKILL_R,    SKILL_Q,    SKILL_E,    SKILL_E,    ABILITY1,
-    SKILL_W,    SKILL_R,    SKILL_E,    SKILL_W,    ABILITY3,
-    SKILL_W,    SKILL_R,    ABILITY5,   ABILITY8
+    SKILL_R,    SKILL_Q,    SKILL_E,    SKILL_E,    TALENT1,
+    SKILL_W,    SKILL_R,    SKILL_E,    SKILL_W,    TALENT3,
+    SKILL_W,    SKILL_R,    TALENT5,    TALENT8
 }
 
 local botDrow = dt:new()

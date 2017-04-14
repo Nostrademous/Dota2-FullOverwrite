@@ -9,6 +9,7 @@ local drAbility = BotsInit.CreateGeneric()
 require( GetScriptDirectory().."/fight_simul" )
 require( GetScriptDirectory().."/modifiers" )
 
+local heroData = require( GetScriptDirectory().."/hero_data" )
 local utils = require( GetScriptDirectory().."/utility" )
 local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
 
@@ -20,11 +21,11 @@ function getHeroVar(var)
     return gHeroVar.GetVar(GetBot():GetPlayerID(), var)
 end
 
-local Abilities ={
-    "drow_ranger_frost_arrows",
-    "drow_ranger_wave_of_silence",
-    "drow_ranger_trueshot",
-    "drow_ranger_marksmanship"
+local Abilities = {
+    heroData.drow_ranger.SKILL_0,
+    heroData.drow_ranger.SKILL_1,
+    heroData.drow_ranger.SKILL_2,
+    heroData.drow_ranger.SKILL_3
 }
 
 local abilityQ = ""

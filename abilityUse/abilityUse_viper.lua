@@ -9,6 +9,7 @@ local viperAbility = BotsInit.CreateGeneric()
 require( GetScriptDirectory().."/fight_simul" )
 require( GetScriptDirectory().."/modifiers" )
 
+local heroData = require( GetScriptDirectory().."/hero_data" )
 local utils = require( GetScriptDirectory().."/utility" )
 local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
 
@@ -21,10 +22,10 @@ function getHeroVar(var)
 end
 
 local Abilities ={
-    "viper_poison_attack",
-    "viper_nethertoxin",
-    "viper_corrosive_skin",
-    "viper_viper_strike"
+    heroData.viper.SKILL_0,
+    heroData.viper.SKILL_1,
+    heroData.viper.SKILL_2,
+    heroData.viper.SKILL_3
 }
 
 local abilityQ = ""

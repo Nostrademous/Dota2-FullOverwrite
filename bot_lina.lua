@@ -3,6 +3,7 @@
 --- GITHUB REPO: https://github.com/Nostrademous/Dota2-FullOverwrite
 -------------------------------------------------------------------------------
 
+local heroData = require( GetScriptDirectory().."/hero_data" )
 local utils = require( GetScriptDirectory().."/utility" )
 local dt = require( GetScriptDirectory().."/decision" )
 local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
@@ -18,25 +19,25 @@ function getHeroVar(var)
     return gHeroVar.GetVar(bot:GetPlayerID(), var)
 end
 
-local LINA_SKILL_Q = "lina_dragon_slave"
-local LINA_SKILL_W = "lina_light_strike_array"
-local LINA_SKILL_E = "lina_fiery_soul"
-local LINA_SKILL_R = "lina_laguna_blade"
+local SKILL_Q = heroData.lina.SKILL_0
+local SKILL_W = heroData.lina.SKILL_1
+local SKILL_E = heroData.lina.SKILL_2
+local SKILL_R = heroData.lina.SKILL_3
 
-local LINA_ABILITY1 = "special_bonus_unique_lina_3"
-local LINA_ABILITY2 = "special_bonus_cast_range_125"
-local LINA_ABILITY3 = "special_bonus_attack_damage_50"
-local LINA_ABILITY4 = "special_bonus_respawn_reduction_30"
-local LINA_ABILITY5 = "special_bonus_spell_amplify_6"
-local LINA_ABILITY6 = "special_bonus_attack_range_150"
-local LINA_ABILITY7 = "special_bonus_unique_lina_1"
-local LINA_ABILITY8 = "special_bonus_unique_lina_2"
+local TALENT1 = heroData.lina.TALENT_0
+local TALENT2 = heroData.lina.TALENT_1
+local TALENT3 = heroData.lina.TALENT_2
+local TALENT4 = heroData.lina.TALENT_3
+local TALENT5 = heroData.lina.TALENT_4
+local TALENT6 = heroData.lina.TALENT_5
+local TALENT7 = heroData.lina.TALENT_6
+local TALENT8 = heroData.lina.TALENT_7
 
 local LinaAbilityPriority = {
-    LINA_SKILL_Q,    LINA_SKILL_E,    LINA_SKILL_Q,    LINA_SKILL_W,    LINA_SKILL_Q,
-    LINA_SKILL_R,    LINA_SKILL_Q,    LINA_SKILL_E,    LINA_SKILL_E,    LINA_ABILITY1,
-    LINA_SKILL_E,    LINA_SKILL_R,    LINA_SKILL_W,    LINA_SKILL_W,    LINA_ABILITY3,
-    LINA_SKILL_W,    LINA_SKILL_R,    LINA_ABILITY5,   LINA_ABILITY7
+    SKILL_Q,    SKILL_E,    SKILL_Q,     SKILL_W,    SKILL_Q,
+    SKILL_R,    SKILL_Q,    SKILL_E,     SKILL_E,    TALENT1,
+    SKILL_E,    SKILL_R,    SKILL_W,     SKILL_W,    TALENT3,
+    SKILL_W,    SKILL_R,    TALENT5,     TALENT7
 }
 
 local botLina = dt:new()
@@ -51,7 +52,7 @@ end
 local linaBot = botLina:new{abilityPriority = LinaAbilityPriority}
 
 function linaBot:DoHeroSpecificInit(bot)
-    setHeroVar("HasStun",  {{[1]=bot:GetAbilityByName(LINA_SKILL_W), [2]=0.95+getHeroVar("AbilityDelay")}})
+    setHeroVar("HasStun",  {{[1]=bot:GetAbilityByName(SKILL_W), [2]=0.95+getHeroVar("AbilityDelay")}})
 end
 
 function linaBot:ConsiderAbilityUse()
@@ -67,7 +68,7 @@ function linaBot:QueueNuke(bot, target, actionQueue, engageDist)
 end
 
 function linaBot:IsReadyToGank(bot)
-    local ult = bot:GetAbilityByName(LINA_SKILL_R)
+    local ult = bot:GetAbilityByName(SKILL_R)
     if ult:IsFullyCastable() and utils.HaveItem(bot, "item_blink") then
         return true
     end

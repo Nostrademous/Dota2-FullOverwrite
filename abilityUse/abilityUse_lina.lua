@@ -6,6 +6,7 @@
 BotsInit = require( "game/botsinit" )
 local linaAbility = BotsInit.CreateGeneric()
 
+local heroData = require( GetScriptDirectory().."/hero_data" )
 local utils = require( GetScriptDirectory().."/utility" )
 local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
 
@@ -20,6 +21,13 @@ function getHeroVar(var)
     local bot = GetBot()
     return gHeroVar.GetVar(bot:GetPlayerID(), var)
 end
+
+local Abilities ={
+    heroData.lina.SKILL_0,
+    heroData.lina.SKILL_1,
+    heroData.lina.SKILL_2,
+    heroData.lina.SKILL_3
+}
 
 local abilityQ = ""
 local abilityW = ""
@@ -164,10 +172,10 @@ function linaAbility:AbilityUsageThink(bot)
     
     if utils.IsUnableToCast(bot) then return false end
     
-    if abilityQ == "" then abilityQ = bot:GetAbilityByName( "lina_dragon_slave" ) end
-    if abilityW == "" then abilityW = bot:GetAbilityByName( "lina_light_strike_array" ) end
-    if abilityE == "" then abilityE = bot:GetAbilityByName( "lina_fiery_soul" ) end
-    if abilityR == "" then abilityR = bot:GetAbilityByName( "lina_laguna_blade" ) end
+    if abilityQ == "" then abilityQ = bot:GetAbilityByName( Abilities[1] ) end
+    if abilityW == "" then abilityW = bot:GetAbilityByName( Abilities[2] ) end
+    if abilityE == "" then abilityE = bot:GetAbilityByName( Abilities[3] ) end
+    if abilityR == "" then abilityR = bot:GetAbilityByName( Abilities[4] ) end
     
     local nearbyEnemyHeroes = gHeroVar.GetNearbyEnemies(bot, 1200)
     local nearbyEnemyCreep = gHeroVar.GetNearbyEnemyCreep(bot, 1200)

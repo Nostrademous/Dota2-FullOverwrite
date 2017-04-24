@@ -18,7 +18,10 @@ def writeHeroDataLua(obj):
     for heroName in heroes:
         try:
             st = '\nX.%s = {}\n' % heroName
-            st = st + 'X.%s.%s = "%s"\n' % (heroName, 'Type', heroes[heroName]['Type'])
+            try:
+                st = st + 'X.%s.%s = "%s"\n' % (heroName, 'Type', heroes[heroName]['Type'])
+            except KeyError as e:
+                print 'Error dumping [Type]: ', heroName
 
             indx = 0
             for ability in heroes[heroName]['Abilities']:
@@ -30,21 +33,25 @@ def writeHeroDataLua(obj):
                 st = st + 'X.%s.TALENT_%d = "%s"\n' % (heroName, indx, ability)
                 indx += 1
 
-            roles = heroes[heroName]['Role'].split(',')
-            rolevals = heroes[heroName]['Rolelevels'].split(',')
-            st = st + 'X.%s.Role = {}\n' % (heroName)
-            for i in range(0, len(roles)):
-                st = st + 'X.%s.Role.%s = %s\n' % (heroName, roles[i], rolevals[i])
+            try:
+                roles = heroes[heroName]['Role'].split(',')
+                rolevals = heroes[heroName]['Rolelevels'].split(',')
+                st = st + 'X.%s.Role = {}\n' % (heroName)
+                for i in range(0, len(roles)):
+                    st = st + 'X.%s.Role.%s = %s\n' % (heroName, roles[i], rolevals[i])
+            except KeyError as e:
+                print 'Error dumping [Role]: ', heroName
 
-            st = st + 'X.%s.LaneInfo = {}\n' % (heroName)
-            for key in heroes[heroName]['LaneInfo']:
-                st = st + 'X.%s.LaneInfo.%s = %s\n' % (heroName, key, heroes[heroName]['LaneInfo'][key])
-            
-            #print st
+            try:
+                st = st + 'X.%s.LaneInfo = {}\n' % (heroName)
+                for key in heroes[heroName]['LaneInfo']:
+                    st = st + 'X.%s.LaneInfo.%s = %s\n' % (heroName, key, heroes[heroName]['LaneInfo'][key])
+            except KeyError as e:
+                print 'Error dumping [LaneInfo]: ', heroName
+
             f.write(st)
         except KeyError as e:
-            print 'Error: ', heroName
-            #raise e
+            print 'Generic Error: ', heroName
 
     f.write('\nreturn X\n')
     f.close()

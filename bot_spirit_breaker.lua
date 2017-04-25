@@ -20,25 +20,25 @@ function getHeroVar(var)
     return gHeroVar.GetVar(bot:GetPlayerID(), var)
 end
 
-local SKILL_Q = "spirit_breaker_charge_of_darkness"
-local SKILL_W = "spirit_breaker_empowering_haste"
-local SKILL_E = "spirit_breaker_greater_bash"
-local SKILL_R = "spirit_breaker_nether_strike"
+local SKILL_Q = heroData.spirit_breaker.SKILL_0
+local SKILL_W = heroData.spirit_breaker.SKILL_1
+local SKILL_E = heroData.spirit_breaker.SKILL_2
+local SKILL_R = heroData.spirit_breaker.SKILL_3
 
-local ABILITY1 = "special_bonus_all_stats_5"
-local ABILITY2 = "special_bonus_movement_speed_20"
-local ABILITY3 = "special_bonus_attack_damage_20"
-local ABILITY4 = "special_bonus_armor_5"
-local ABILITY5 = "special_bonus_gold_income_20"
-local ABILITY6 = "special_bonus_respawn_reduction_40"
-local ABILITY7 = "special_bonus_unique_spirit_breaker_1" -- +17% greater bash chance
-local ABILITY8 = "special_bonus_unique_spirit_breaker_2" -- +500 charge speed
+local TALENT1 = heroData.spirit_breaker.TALENT_0
+local TALENT2 = heroData.spirit_breaker.TALENT_1
+local TALENT3 = heroData.spirit_breaker.TALENT_2
+local TALENT4 = heroData.spirit_breaker.TALENT_3
+local TALENT5 = heroData.spirit_breaker.TALENT_4
+local TALENT6 = heroData.spirit_breaker.TALENT_5
+local TALENT7 = heroData.spirit_breaker.TALENT_6
+local TALENT8 = heroData.spirit_breaker.TALENT_7
 
 local AbilityPriority = {
     SKILL_Q,    SKILL_E,    SKILL_Q,    SKILL_E,    SKILL_Q,
-    SKILL_R,    SKILL_Q,    SKILL_E,    SKILL_E,    ABILITY1,
-    SKILL_W,    SKILL_R,    SKILL_W,    SKILL_W,    ABILITY4,
-    SKILL_W,    SKILL_R,    ABILITY5,   ABILITY7
+    SKILL_R,    SKILL_Q,    SKILL_E,    SKILL_E,    TALENT1,
+    SKILL_W,    SKILL_R,    SKILL_W,    SKILL_W,    TALENT3,
+    SKILL_W,    SKILL_R,    TALENT6,    TALENT7
 }
 
 local botSB = dt:new()

@@ -20,25 +20,25 @@ function getHeroVar(var)
     return gHeroVar.GetVar(bot:GetPlayerID(), var)
 end
 
-local SKILL_Q = "legion_commander_overwhelming_odds"
-local SKILL_W = "legion_commander_press_the_attack"
-local SKILL_E = "legion_commander_moment_of_courage"
-local SKILL_R = "legion_commander_duel"
+local SKILL_Q = heroData.legion_commander.SKILL_0
+local SKILL_W = heroData.legion_commander.SKILL_1
+local SKILL_E = heroData.legion_commander.SKILL_2
+local SKILL_R = heroData.legion_commander.SKILL_3
 
-local ABILITY1 = "special_bonus_strength_7"
-local ABILITY2 = "special_bonus_exp_boost_20"
-local ABILITY3 = "special_bonus_attack_damage_30"
-local ABILITY4 = "special_bonus_movement_speed_20"
-local ABILITY5 = "special_bonus_armor_7"
-local ABILITY6 = "special_bonus_respawn_reduction_20"
-local ABILITY7 = "special_bonus_unique_legion_commander"   -- +40 dmg duel bonus
-local ABILITY8 = "special_bonus_unique_legion_commander_2" -- -8s Press the Attack
+local TALENT1 = heroData.legion_commander.TALENT_0
+local TALENT2 = heroData.legion_commander.TALENT_1
+local TALENT3 = heroData.legion_commander.TALENT_2
+local TALENT4 = heroData.legion_commander.TALENT_3
+local TALENT5 = heroData.legion_commander.TALENT_4
+local TALENT6 = heroData.legion_commander.TALENT_5
+local TALENT7 = heroData.legion_commander.TALENT_6
+local TALENT8 = heroData.legion_commander.TALENT_7
 
 local AbilityPriority = {
     SKILL_E,    SKILL_W,    SKILL_E,    SKILL_W,    SKILL_Q,
-    SKILL_R,    SKILL_E,    SKILL_W,    SKILL_W,    ABILITY2,
-    SKILL_Q,    SKILL_R,    SKILL_E,    SKILL_Q,    ABILITY4,
-    SKILL_Q,    SKILL_R,    ABILITY6,   ABILITY8
+    SKILL_R,    SKILL_E,    SKILL_W,    SKILL_W,    TALENT2,
+    SKILL_Q,    SKILL_R,    SKILL_E,    SKILL_Q,    TALENT3,
+    SKILL_Q,    SKILL_R,    TALENT5,    TALENT7
 }
 
 local botLC = dt:new()

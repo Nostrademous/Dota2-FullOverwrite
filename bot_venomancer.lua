@@ -18,25 +18,25 @@ function getHeroVar(var)
     return gHeroVar.GetVar(bot:GetPlayerID(), var)
 end
 
-local SKILL_Q = "venomancer_venomous_gale"
-local SKILL_W = "venomancer_poison_sting"
-local SKILL_E = "venomancer_plague_ward"
-local SKILL_R = "venomancer_poison_nova"
+local SKILL_Q = heroData.venomancer.SKILL_0
+local SKILL_W = heroData.venomancer.SKILL_1
+local SKILL_E = heroData.venomancer.SKILL_2
+local SKILL_R = heroData.venomancer.SKILL_3
 
-local ABILITY1 = "special_bonus_exp_boost_30"
-local ABILITY2 = "special_bonus_movement_speed_30"
-local ABILITY3 = "special_bonus_hp_200"
-local ABILITY4 = "special_bonus_cast_range_150"
-local ABILITY5 = "special_bonus_attack_damage_75"
-local ABILITY6 = "special_bonus_magic_resistance_15"
-local ABILITY7 = "special_bonus_respawn_reduction_60"
-local ABILITY8 = "special_bonus_unique_venomancer"
+local TALENT1 = heroData.venomancer.TALENT_0
+local TALENT2 = heroData.venomancer.TALENT_1
+local TALENT3 = heroData.venomancer.TALENT_2
+local TALENT4 = heroData.venomancer.TALENT_3
+local TALENT5 = heroData.venomancer.TALENT_4
+local TALENT6 = heroData.venomancer.TALENT_5
+local TALENT7 = heroData.venomancer.TALENT_6
+local TALENT8 = heroData.venomancer.TALENT_7
 
 local AbilityPriority = {
     SKILL_Q,    SKILL_W,    SKILL_E,    SKILL_E,    SKILL_E,
     SKILL_R,    SKILL_E,    SKILL_W,    SKILL_W,    SKILL_W,
-    ABILITY2,   SKILL_R,    SKILL_Q,    SKILL_Q,    ABILITY4,
-    SKILL_Q,    SKILL_R,    ABILITY5,   ABILITY8
+    TALENT1,    SKILL_R,    SKILL_Q,    SKILL_Q,    TALENT4,
+    SKILL_Q,    SKILL_R,    TALENT5,    TALENT8
 }
 
 local botVM = dt:new()

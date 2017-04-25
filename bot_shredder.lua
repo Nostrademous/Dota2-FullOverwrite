@@ -19,25 +19,26 @@ function getHeroVar(var)
     return gHeroVar.GetVar(bot:GetPlayerID(), var)
 end
 
-local SKILL_Q   = "shredder_whirling_death"
-local SKILL_W   = "shredder_timber_chain"
-local SKILL_E   = "shredder_reactive_armor"
-local SKILL_R   = "shredder_chakram"
+local SKILL_Q = heroData.shredder.SKILL_0
+local SKILL_W = heroData.shredder.SKILL_1
+local SKILL_E = heroData.shredder.SKILL_2
+local SKILL_R = heroData.shredder.SKILL_5
+local SKILL_R2= heroData.shredder.SKILL_3 -- chakram 2 (from Aghs)
 
-local ABILITY1 = "special_bonus_hp_150"
-local ABILITY2 = "special_bonus_exp_boost_20"
-local ABILITY3 = "special_bonus_hp_regen_14"
-local ABILITY4 = "special_bonus_intelligence_20"
-local ABILITY5 = "special_bonus_spell_amplify_5"
-local ABILITY6 = "special_bonus_cast_range_150"
-local ABILITY7 = "special_bonus_unique_timbersaw"
-local ABILITY8 = "special_bonus_strength_20"
+local TALENT1 = heroData.shredder.TALENT_0
+local TALENT2 = heroData.shredder.TALENT_1
+local TALENT3 = heroData.shredder.TALENT_2
+local TALENT4 = heroData.shredder.TALENT_3
+local TALENT5 = heroData.shredder.TALENT_4
+local TALENT6 = heroData.shredder.TALENT_5
+local TALENT7 = heroData.shredder.TALENT_6
+local TALENT8 = heroData.shredder.TALENT_7
 
 local TimberAbilityPriority = {
     SKILL_E,    SKILL_Q,    SKILL_E,    SKILL_W,    SKILL_W,
-    SKILL_R,    SKILL_E,    SKILL_E,    SKILL_W,    ABILITY2,
-    SKILL_W,    SKILL_R,    SKILL_Q,    SKILL_Q,    ABILITY3,
-    SKILL_Q,    SKILL_R,    ABILITY5,   ABIILTY8
+    SKILL_R,    SKILL_E,    SKILL_E,    SKILL_W,    TALENT1,
+    SKILL_W,    SKILL_R,    SKILL_Q,    SKILL_Q,    TALENT4,
+    SKILL_Q,    SKILL_R,    TALENT6,    TALENT8
 }
 
 local botTimber = dt:new()

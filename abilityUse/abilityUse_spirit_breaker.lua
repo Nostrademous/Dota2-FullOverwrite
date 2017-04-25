@@ -8,6 +8,7 @@ local genericAbility = BotsInit.CreateGeneric()
 
 require( GetScriptDirectory().."/fight_simul" )
 
+local heroData = require( GetScriptDirectory().."/hero_data" )
 local utils = require( GetScriptDirectory().."/utility" )
 local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
 
@@ -20,6 +21,13 @@ function getHeroVar(var)
     local bot = GetBot()
     return gHeroVar.GetVar(bot:GetPlayerID(), var)
 end
+
+local Abilities = {
+    heroData.spirit_breaker.SKILL_0,
+    heroData.spirit_breaker.SKILL_1,
+    heroData.spirit_breaker.SKILL_2,
+    heroData.spirit_breaker.SKILL_3
+}
 
 local abilityQ = ""
 local abilityW = ""
@@ -38,10 +46,10 @@ function genericAbility:AbilityUsageThink(bot)
     -- Check to see if we are CC'ed
     if utils.IsUnableToCast(bot) then return false end
 
-    if abilityQ == "" then abilityQ = bot:GetAbilityByName( "spirit_breaker_charge_of_darkness" ) end
-    if abilityW == "" then abilityW = bot:GetAbilityByName( "spirit_breaker_empowering_haste" ) end
-    if abilityE == "" then abilityE = bot:GetAbilityByName( "spirit_breaker_greater_bash" ) end
-    if abilityR == "" then abilityR = bot:GetAbilityByName( "spirit_breaker_nether_strike" ) end
+    if abilityQ == "" then abilityQ = bot:GetAbilityByName( Abilities[1] ) end
+    if abilityW == "" then abilityW = bot:GetAbilityByName( Abilities[2] ) end
+    if abilityE == "" then abilityE = bot:GetAbilityByName( Abilities[3] ) end
+    if abilityR == "" then abilityR = bot:GetAbilityByName( Abilities[4] ) end
     
     AttackRange   = bot:GetAttackRange()
 	ManaPerc      = bot:GetMana()/bot:GetMaxMana()

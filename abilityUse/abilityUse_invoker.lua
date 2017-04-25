@@ -7,6 +7,7 @@
 BotsInit = require( "game/botsinit" )
 local invAbility = BotsInit.CreateGeneric()
 
+local heroData = require( GetScriptDirectory().."/hero_data" )
 local ed = require( GetScriptDirectory().."/enemy_data" )
 local utils = require( GetScriptDirectory().."/utility" )
 local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
@@ -20,6 +21,13 @@ function getHeroVar(var)
     local bot = GetBot()
     return gHeroVar.GetVar(bot:GetPlayerID(), var)
 end
+
+local Abilities = {
+    heroData.invoker.SKILL_0,
+    heroData.invoker.SKILL_1,
+    heroData.invoker.SKILL_2,
+    heroData.invoker.SKILL_5
+}
 
 local abilityQ = ""
 local abilityW = ""
@@ -205,10 +213,11 @@ function invAbility:AbilityUsageThink(bot)
     
     if utils.IsUnableToCast(bot) then return false end
 
-    if abilityQ == "" then abilityQ = bot:GetAbilityByName( "invoker_quas" ) end
-    if abilityW == "" then abilityW = bot:GetAbilityByName( "invoker_wex" ) end
-    if abilityE == "" then abilityE = bot:GetAbilityByName( "invoker_exort" ) end
-    if abilityR == "" then abilityR = bot:GetAbilityByName( "invoker_invoke" ) end
+    if abilityQ == "" then abilityQ = bot:GetAbilityByName( Abilities[1] ) end
+    if abilityW == "" then abilityW = bot:GetAbilityByName( Abilities[2] ) end
+    if abilityE == "" then abilityE = bot:GetAbilityByName( Abilities[3] ) end
+    if abilityR == "" then abilityR = bot:GetAbilityByName( Abilities[4] ) end
+    
     if abilityTO == "" then abilityTO = bot:GetAbilityByName( "invoker_tornado" ) end
     if abilityCS == "" then abilityCS = bot:GetAbilityByName( "invoker_cold_snap" ) end
     if abilityAC == "" then abilityAC = bot:GetAbilityByName( "invoker_alacrity" ) end

@@ -6,6 +6,7 @@
 BotsInit = require( "game/botsinit" )
 local genericAbility = BotsInit.CreateGeneric()
 
+local heroData = require( GetScriptDirectory().."/hero_data" )
 local utils = require( GetScriptDirectory().."/utility" )
 local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
 
@@ -18,6 +19,13 @@ function getHeroVar(var)
     local bot = GetBot()
     return gHeroVar.GetVar(bot:GetPlayerID(), var)
 end
+
+local Abilities = {
+    heroData.venomancer.SKILL_0,
+    heroData.venomancer.SKILL_1,
+    heroData.venomancer.SKILL_2,
+    heroData.venomancer.SKILL_3
+}
 
 local abilityQ = ""
 local abilityW = ""
@@ -248,10 +256,10 @@ function genericAbility:AbilityUsageThink(bot)
     -- Check to see if we are CC'ed
     if utils.IsUnableToCast(bot) then return false end
 
-    if abilityQ == "" then abilityQ = bot:GetAbilityByName( "venomancer_venomous_gale" ) end
-    if abilityW == "" then abilityW = bot:GetAbilityByName( "venomancer_poison_sting" ) end
-    if abilityE == "" then abilityE = bot:GetAbilityByName( "venomancer_plague_ward" ) end
-    if abilityR == "" then abilityR = bot:GetAbilityByName( "venomancer_poison_nova" ) end
+    if abilityQ == "" then abilityQ = bot:GetAbilityByName( Abilities[1] ) end
+    if abilityW == "" then abilityW = bot:GetAbilityByName( Abilities[2] ) end
+    if abilityE == "" then abilityE = bot:GetAbilityByName( Abilities[3] ) end
+    if abilityR == "" then abilityR = bot:GetAbilityByName( Abilities[4] ) end
     
     -- WRITE CODE HERE --
     AttackRange   = bot:GetAttackRange()

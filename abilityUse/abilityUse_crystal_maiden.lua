@@ -317,7 +317,7 @@ function ConsiderW()
     
 	for _, npcEnemy in pairs( enemies ) do
 		if utils.ValidTarget(npcEnemy) and npcEnemy:IsChanneling() and not utils.IsTargetMagicImmune(npcEnemy) then
-			return BOT_ACTION_DESIRE_HIGH, npcEnemy
+			return BOT_ACTION_DESIRE_HIGH+0.1, npcEnemy
 		end
 	end
 	
@@ -327,7 +327,7 @@ function ConsiderW()
 		if utils.ValidTarget(WeakestEnemy) and GetUnitToUnitDistance(bot, WeakestEnemy) < (CastRange + 150) then
 			if not utils.IsTargetMagicImmune(WeakestEnemy) and not utils.IsCrowdControlled(WeakestEnemy) then
 				if HeroHealth <= WeakestEnemy:GetActualIncomingDamage(Damage, DAMAGE_TYPE_MAGICAL) then
-					return BOT_ACTION_DESIRE_HIGH, WeakestEnemy
+					return BOT_ACTION_DESIRE_HIGH+0.1, WeakestEnemy
 				end
 			end
 		end
@@ -387,7 +387,7 @@ function ConsiderW()
                     table.sort(enemyCreep, function(n1,n2) return n1:GetHealth() > n2:GetHealth() end)
                 end
                 if utils.ValidTarget(enemyCreep[1]) and not enemyCreep[1]:IsAncientCreep() then
-                    return BOT_ACTION_DESIRE_LOW, enemyCreep[1]
+                    return BOT_ACTION_DESIRE_LOW-0.01, enemyCreep[1]
                 end
             end
         end
@@ -412,7 +412,7 @@ function ConsiderW()
 		for _, npcEnemy in pairs( tableNearbyEnemyHeroes ) do
 			if utils.ValidTarget(npcEnemy) and bot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) then
 				if not utils.IsTargetMagicImmune(npcEnemy) and not utils.IsCrowdControlled(npcEnemy) then
-					return BOT_ACTION_DESIRE_HIGH, npcEnemy
+					return BOT_ACTION_DESIRE_HIGH+0.01, npcEnemy
 				end
 			end
 		end

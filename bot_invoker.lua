@@ -71,6 +71,6 @@ end
 
 function Think()
     local bot = GetBot()
-
+    
     invBot:Think(bot)
 end

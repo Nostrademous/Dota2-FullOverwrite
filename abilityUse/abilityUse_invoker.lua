@@ -7,6 +7,8 @@
 BotsInit = require( "game/botsinit" )
 local invAbility = BotsInit.CreateGeneric()
 
+require( GetScriptDirectory().."/modifiers" )
+
 local heroData = require( GetScriptDirectory().."/hero_data" )
 local ed = require( GetScriptDirectory().."/enemy_data" )
 local utils = require( GetScriptDirectory().."/utility" )
@@ -308,7 +310,7 @@ function invAbility:AbilityUsageThink(bot)
     print("FS "..castFSDesire)
     --]]
 
-    if not inGhostWalk(bot) then
+    if ConsiderShowUp(bot) then
         -- NOTE: the castXXDesire accounts for skill being fully castable        
         if castTODesire >= modeDesire and castTODesire >= Max(castEMPDesire, castCMDesire) and
             castTODesire >= Max(castDBDesire, castSSDesire) and castTODesire >= Max(castCSDesire, castACDesire) and
@@ -475,8 +477,6 @@ function invAbility:AbilityUsageThink(bot)
         
         -- Determine what orbs we want
         if ConsiderOrbs(bot) then return true end
-    else
-        if ConsiderShowUp(bot) then return true end
     end
     
     -- Initial invokes at low levels
@@ -492,20 +492,14 @@ function invAbility:AbilityUsageThink(bot)
     return false
 end
 
-function inGhostWalk(bot)
-    return bot:HasModifier("modifier_invoker_ghost_walk")
-end
-
-function ConsiderShowUp(bot)
-    local nearbyEnemyHeroes = gHeroVar.GetNearbyEnemies(bot, 1200)
-    
-    if inGhostWalk(bot) then
-        if #nearbyEnemyHeroes <= 1 or bot:HasModifier("modifier_item_dust") then
-            return tripleWexBuff(bot)
+function ConsiderShowUp(bot)    
+    if modifiers.IsInvisible(bot) then
+        if modeName == "retreat" or modeName == "shrine" then
+            return false
         end
     end
     
-    return false
+    return true
 end
 
 function quasTrained()

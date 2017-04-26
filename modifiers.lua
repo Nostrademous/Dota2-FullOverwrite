@@ -104,7 +104,11 @@ function GetModifierStackCount(hUnit, sName)
 end
 
 function IsInvisible(bot)
-    return bot:HasModifier("modifier_invisible")
+    if bot:HasModifier("modifier_item_dustofappearance") then return false end
+    if bot:HasModifier("modifier_bounty_hunter_track") then return false end
+    if bot:HasModifier("modifier_slardar_amplify_damage") then return false end
+    
+    return bot:IsInvisible()
 end
 
 function IsRuptured(bot)

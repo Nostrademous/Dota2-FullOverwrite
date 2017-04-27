@@ -168,7 +168,7 @@ function queueNukeTOCMDB(bot, location, engageDist)
     
     if dist < engageDist then
         bot:Action_ClearActions(true)
-        --utils.AllChat("Too EZ for Arteezy")
+        --utils.PartyChat("Too EZ for Arteezy")
         utils.myPrint("INVOKER TO CM DB combo!!!")
 
         gHeroVar.HeroQueueUseAbilityOnLocation(bot, abilityTO, location)
@@ -1008,7 +1008,7 @@ function ConsiderSunStrike()
                 --utils.myPrint(tostring(utils.PredictPosition( enemy, nDelay )))
                 --utils.myPrint("Diff: ", tostring(utils.GetDistance(enemy:GetExtrapolatedLocation( nDelay ), utils.PredictPosition( enemy, nDelay ))))
                 --return BOT_ACTION_DESIRE_MODERATE, enemy:GetExtrapolatedLocation( nDelay )
-                utils.AllChat("Sun Strike on " .. utils.GetHeroName(enemy))
+                utils.PartyChat("Sun Strike on " .. utils.GetHeroName(enemy))
                 return BOT_ACTION_DESIRE_MODERATE, enemy:GetExtrapolatedLocation( nDelay )
             else
                 -- enemies of my enemy are my friends

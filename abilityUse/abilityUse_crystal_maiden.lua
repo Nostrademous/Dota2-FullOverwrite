@@ -380,8 +380,8 @@ function ConsiderW()
             end
         end
     
-        if not coreNear and ManaPerc > 0.4 and #enemies == 0 then
-            local enemyCreep = gHeroVar.GetNearbyEnemyCreep(bot, CastRange + 200)
+        if not coreNear and ManaPerc > 0.4 and #gHeroVar.GetNearbyEnemies(bot, 1500) == 0 then
+            local enemyCreep = gHeroVar.GetNearbyEnemyCreep(bot, CastRange + 225)
             if #enemyCreep > 0 then
                 if #enemyCreep > 1 then
                     table.sort(enemyCreep, function(n1,n2) return n1:GetHealth() > n2:GetHealth() end)

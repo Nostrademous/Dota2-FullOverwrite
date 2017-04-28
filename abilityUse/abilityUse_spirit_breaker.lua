@@ -95,23 +95,23 @@ function ConsiderQ()
 	-- Global high-priorty usage
 	--------------------------------------
     
-    local enemies   = gHeroVar.GetNearbyEnemies(bot, 1600)
+    local enemies = gHeroVar.GetNearbyEnemies(bot, 1600)
     
 	-- Check for a channeling enemy
-	if modeName ~= "retreat" then
-		for _, npcEnemy in pairs( enemies ) do
-			if utils.ValidTarget(npcEnemy) and npcEnemy:IsChanneling() and not utils.IsTargetMagicImmune(npcEnemy) then
-				return BOT_ACTION_DESIRE_HIGH, npcEnemy
-			end
-		end
-	end
+    for _, npcEnemy in pairs( enemies ) do
+        if utils.ValidTarget(npcEnemy) and npcEnemy:IsChanneling() and not utils.IsTargetMagicImmune(npcEnemy) then
+            bot.dontInterruptTimer = GameTime()
+            return BOT_ACTION_DESIRE_HIGH, npcEnemy
+        end
+    end
 	
 	-- Try to kill enemy hero
-	if modeName ~= "retreat" then
+	if modeName ~= "retreat" or (modeName == "retreat" and bot.SelfRef:getCurrentModeValue() < BOT_MODE_DESIRE_VERYHIGH) then
 		local WeakestEnemy, HeroHealth = utils.GetWeakestHero(bot, 1600, enemies)
 		if utils.ValidTarget(WeakestEnemy) then
             if not utils.IsTargetMagicImmune(WeakestEnemy) and not utils.IsCrowdControlled(WeakestEnemy) then
 				if HeroHealth <= WeakestEnemy:GetActualIncomingDamage(ComboDmg(bot, WeakestEnemy), DAMAGE_TYPE_PHYSICAL) then
+                    bot.dontInterruptTimer = GameTime()
 					return BOT_ACTION_DESIRE_HIGH, WeakestEnemy
 				end
 			end
@@ -131,6 +131,7 @@ function ConsiderQ()
                         local npcEnemy = enemies3[1]
                         local timeToGetThere = GetUnitToUnitDistance(bot, npcAlly)/abilityQ:GetSpecialValueInt("movement_speed")
                         if utils.ValidTarget(npcEnemy) and npcAlly:GetHealth() > npcEnemy:GetEstimatedDamageToTarget(true, npcAlly, timeToGetThere, DAMAGE_TYPE_ALL) then
+                            bot.dontInterruptTimer = GameTime()
                             return BOT_ACTION_DESIRE_HIGH, npcEnemy
                         end
                     end
@@ -155,6 +156,7 @@ function ConsiderQ()
                 
 				if roamTarget:GetHealth()*1.1 <= sumdamage then
                     setHeroVar("Target", roamTarget)
+                    bot.dontInterruptTimer = GameTime()
 					return BOT_ACTION_DESIRE_HIGH, roamTarget
 				end
 			end
@@ -173,8 +175,10 @@ function ConsiderQ()
                     local creep    = gHeroVar.GetNearbyEnemyCreep(npcAlly, 1600)
                     if utils.ValidTarget(creep[1]) then
                         if #enemies3 == 0 and #creep > 0 then
+                            bot.dontInterruptTimer = GameTime()
                             return BOT_ACTION_DESIRE_HIGH, creep[1]
                         elseif #enemies3 == 1 and #creep > 0 then
+                            bot.dontInterruptTimer = GameTime()
                             return BOT_ACTION_DESIRE_HIGH, creep[1]
                         end
                     end
@@ -195,11 +199,12 @@ function ConsiderQ()
 			if not utils.IsTargetMagicImmune(npcEnemy) and not utils.IsCrowdControlled(npcEnemy) and 
                 #enemies3 <= #allies3 then
                 setHeroVar("Target", npcEnemy)
+                bot.dontInterruptTimer = GameTime()
 				return BOT_ACTION_DESIRE_MODERATE, npcEnemy
 			end
 		end
 	end
-    
+
     return BOT_ACTION_DESIRE_NONE, nil
 end
 

@@ -440,7 +440,7 @@ function UseItems()
     if utils.IsBusy(bot) then return true end
     if bot:IsMuted() then return false end
     
-    if modifiers.IsInvisible(bot) then return false end
+    if (bot.dontInterruptTimer and (GameTime() - bot.dontInterruptTimer) < 1.0) or modifiers.IsInvisible(bot) then return false end
     
     if UseEuls() then return true end
     

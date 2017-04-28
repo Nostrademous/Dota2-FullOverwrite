@@ -108,6 +108,7 @@ function X:DoInit(bot)
     self:setHeroVar("TeamBuy", {})
     self:setHeroVar("DoDefendLane", {})
     bot.IsRetreating = false
+    bot.RetreatHealthPerc = 0.25
     self:setHeroVar("Target", nil)
     self:setHeroVar("RoamTarget", nil)
     
@@ -138,7 +139,6 @@ function X:DoInit(bot)
     utils.myPrint(" initialized - Lane: ", self:getHeroVar("CurLane"), ", Role: ", self:getHeroVar("Role"))
 
     self:DoHeroSpecificInit(bot)
-    if not bot.RetreatHealthPerc then bot.RetreatHealthPerc = 0.25 end
     
     local itemPurchase = dofile( GetScriptDirectory().."/itemPurchase/"..self.Name )
     setHeroVar("ItemPurchaseClass", itemPurchase)

@@ -61,6 +61,60 @@ function X:Think(bot)
             end
         end
     end
+    
+    local linProjs = gHeroVar.GetGlobalVar("BadProjectiles")
+    if # linProjs > 0 then
+        local projName = nil
+        local projRadius = 0
+        local projVelocity = nil
+        local projLocation = nil
+        local projMinDist = 100000
+    
+        for _, linProj in pairs(linProjs) do
+            local distFromMe = GetUnitToLocationDistance(bot, linProj.location)
+            if distFromMe < 2500 and distFromMe < projMinDist then
+                projMinDist   = distFromMe
+                projName      = linProj.ability
+                projRadius    = linProj.radius
+                projVelocity  = linProj.velocity
+                projLocation  = linProj.location
+            end
+        end
+        
+        if projMinDist < 2500 then
+            local a = projVelocity.y/projVelocity.x
+            local b = projLocation.y - a * projLocation.x
+            local c = bot:GetLocation().x
+            local d = bot:GetLocation().y
+            local h = math.sqrt(c * c + (b - d) * (b - d) - (a * (b - d) - c) * (a * (b - d) -c )/(a * a + 1))
+            local projSpeed = math.sqrt(projVelocity.x * projVelocity.x + projVelocity.y * projVelocity.y)
+            
+            if h <= (projRadius + 150) then
+                local angle = bot:GetFacing()
+                local speed = bot:GetCurrentMovementSpeed()
+                local radians = angle * math.pi / 180
+                for i = 1, 30, 1 do -- do 30 3-degree steps (max 90 degrees) in both directions to find escape
+                    radians = (angle + i * 3 ) * math.pi / 180
+                    c = bot:GetLocation().x + math.cos(radians) * speed * projMinDist/projSpeed
+                    d = bot:GetLocation().y + math.sin(radians) * speed * projMinDist/projSpeed
+                    h = math.sqrt(c*c + (b - d) * (b - d) - (a*(b-d) -c)*(a*(b-d) -c)/(a*a +1))
+                    if h > (projRadius + 150) then
+                        gHeroVar.HeroMoveToLocation(bot, Vector(c, d))
+                        return
+                    end
+                    
+                    radians = (angle - i * 3) * math.pi / 180;
+                    c = bot:GetLocation().x + math.cos(radians) * speed * projMinDist/projSpeed
+                    d = bot:GetLocation().y + math.sin(radians) * speed * projMinDist/projSpeed
+                    h = math.sqrt(c*c + (b - d) * (b - d) - (a*(b-d) -c)*(a*(b-d) -c)/(a*a +1))
+                    if h > (projRadius + 150) then
+                        gHeroVar.HeroMoveToLocation(bot, Vector(c, d))
+                        return
+                    end
+                end
+            end
+        end
+    end
 end
 
 function X:Desire(bot)
@@ -77,6 +131,12 @@ function X:Desire(bot)
         for _, projectile in pairs(projectiles) do
             --utils.myPrint("Ability: ", projectile.ability:GetName())
             --utils.myPrint("Velocity: ", projectile.velocity)
+            local distFromMe = GetUnitToLocationDistance(bot, projectile.location)
+            if distFromMe < 1500 then
+                return BOT_MODE_DESIRE_ABSOLUTE
+            elseif distFromMe < 2500 then
+                return BOT_MODE_DESIRE_VERYHIGH
+            end
         end
     end
     

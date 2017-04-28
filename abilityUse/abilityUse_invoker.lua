@@ -493,9 +493,17 @@ function invAbility:AbilityUsageThink(bot)
 end
 
 function ConsiderShowUp(bot)    
-    if modifiers.IsInvisible(bot) then
+    if (bot.dontInterruptTimer and (GameTime() - bot.dontInterrupt) < 1.0) or 
+        modifiers.IsInvisible(bot) then
         if modeName == "retreat" or modeName == "shrine" then
             return false
+        elseif modeName == "roam" then
+            local roamTarget = getHeroVar("RoamTarget")
+            if utils.ValidTarget(roamTarget) then
+                if GetUnitToUnitDistance(bot, roamTarget) > 800 then
+                    return false
+                end
+            end
         end
     end
     
@@ -1190,7 +1198,8 @@ function ConsiderGhostWalk()
         for _, npcEnemy in pairs( nearbyEnemyHeroes ) do
             if utils.ValidTarget(npcEnemy) and (bot:WasRecentlyDamagedByHero( npcEnemy, 1.0 ) 
                 or GetUnitToUnitDistance( npcEnemy, bot ) < 600) then
-                return BOT_ACTION_DESIRE_HIGH
+                bot.dontInterrupt = GameTime()
+                return BOT_ACTION_DESIRE_HIGH+0.02
             end
         end
     end
@@ -1213,7 +1222,8 @@ function ConsiderGhostWalk()
                 
 				if roamTarget:GetHealth()*1.1 <= sumdamage then
                     setHeroVar("Target", roamTarget)
-					return BOT_ACTION_DESIRE_MODERATE
+                    bot.dontInterrupt = GameTime()
+					return BOT_ACTION_DESIRE_MODERATE+0.01
 				end
 			end
 		end

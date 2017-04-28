@@ -62,7 +62,7 @@ function ConsiderQ()
     -- Global high-priorty usage
     --------------------------------------
     --try to kill enemy hero
-    if modeName ~= "retreat" then
+    if modeName ~= "retreat" or (modeName == "retreat" and bot.SelfRef:getCurrentModeValue() < BOT_MODE_DESIRE_VERYHIGH) then
         if utils.ValidTarget(WeakestEnemy) then
             if not utils.IsTargetMagicImmune( WeakestEnemy ) then
                 if HeroHealth <= WeakestEnemy:GetActualIncomingDamage(Damage, DAMAGE_TYPE_MAGICAL) then

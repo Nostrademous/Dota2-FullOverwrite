@@ -124,14 +124,17 @@ function X:Desire(bot)
     end
     
     if HealthPerc > 0.9 and ManaPerc > 0.9 then
+        bot.IsRetreating = false
         return BOT_MODE_DESIRE_NONE
     end
 
     if HealthPerc > 0.65 and ManaPerc > 0.6 and bot:DistanceFromFountain() > 6000 then
+        bot.IsRetreating = false
         return BOT_MODE_DESIRE_NONE
     end
 
     if HealthPerc > 0.8 and ManaPerc > 0.36 and bot:DistanceFromFountain() > 6000 then
+        bot.IsRetreating = false
         return BOT_MODE_DESIRE_NONE
     end
     

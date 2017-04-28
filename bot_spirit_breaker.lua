@@ -72,7 +72,8 @@ function Think()
     local bot = GetBot()
 
     -- We are charging
-    if bot:HasModifier("modifier_spirit_breaker_charge_of_darkness") then
+    if (bot.dontInterruptTimer and (GameTime() - bot.dontInterruptTimer) < 1.0) or 
+        bot:HasModifier("modifier_spirit_breaker_charge_of_darkness") then
         ConsiderActionsWhileCharging(bot) 
         return
     end

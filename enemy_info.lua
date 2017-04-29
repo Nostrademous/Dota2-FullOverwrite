@@ -37,53 +37,60 @@ function EnemyInfo.BuildEnemyList()
             if hEnemy then
                 -- yes we can see them (at least some of them if multiple)
                 if EnemyInfo[pid].multiple then
+                    local hNearestCopy = nil
+                    local nDist = 100000
+                    
                     for _, hEnemyCopy in pairs(hEnemy) do
-                        -- TODO: Figure out how to handle
+                        -- TODO: Figure out
+                        -- local dist = GetUnitToUnitDistance()
                     end
-                else
-                    if not hEnemy:IsNull() then
-                        EnemyInfo[pid].Name = utils.GetHeroName(hEnemy)
-                        EnemyInfo[pid].Level = hEnemy:GetLevel()
-                        EnemyInfo[pid].Items = {}
-                        
-                        EnemyInfo[pid].Location = hEnemy:GetLocation()
-                        EnemyInfo[pid].LastSeen = GameTime()
-                        EnemyInfo[pid].Lane = utils.NearestLane(hEnemy)
-                        EnemyInfo[pid].ExtraLoc1 = hEnemy:GetExtrapolatedLocation(1.0)
-                        EnemyInfo[pid].ExtraLoc3 = hEnemy:GetExtrapolatedLocation(3.0)
-                        EnemyInfo[pid].ExtraLoc5 = hEnemy:GetExtrapolatedLocation(5.0)
+                    
+                    LastEnemyUpdate = GameTime()
+                    return
+                end
                 
-                        if hEnemy:IsUnableToMiss() then
-                            EnemyInfo[pid].HasTruestrike = true
-                            EnemyInfo.HasTruestrike = true
-                        else
-                            EnemyInfo[pid].HasTruestrike = false
-                        end
-                
-                        if GameTime() - LastEnemyUpdate > UpdateFreq2 then
-                            for i = 0, 5, 1 do
-                                local item = hEnemy:GetItemInSlot(i)
-                                if item ~= nil then
-                                    local sItemName = item:GetName()
-                                    EnemyInfo[pid].Items[i] = sItemName
-                                    
-                                    -- can we be detected if we go invis
-                                    -- TODO: account for abilities
-                                    if sItemName == "item_gem" or sItemName == "item_ward_dispenser" or 
-                                        sItemName == "item_ward_sentry" or sItemName == "item_dust" or 
-                                        sItemName == "item_necronomicon_3" then
-                                        EnemyInfo[pid].HasDetection = true
-                                    else
-                                        EnemyInfo[pid].HasDetection = false
-                                    end
-                                    
-                                    -- can enemy go invis
-                                    -- TODO: account for abilities
-                                    if sItemName == "item_invis_sword" or sItemName == "item_silver_edge" or
-                                        sItemName == "item_glimmer_cape" or sItemName == "item_shadow_amulet" then
-                                    else
-                                        EnemyInfo[pid].CanGoInvis = false
-                                    end
+                if not hEnemy:IsNull() then
+                    EnemyInfo[pid].Name = utils.GetHeroName(hEnemy)
+                    EnemyInfo[pid].Level = hEnemy:GetLevel()
+                    EnemyInfo[pid].Items = {}
+                    
+                    EnemyInfo[pid].Location = hEnemy:GetLocation()
+                    EnemyInfo[pid].LastSeen = GameTime()
+                    EnemyInfo[pid].Lane = utils.NearestLane(hEnemy)
+                    EnemyInfo[pid].ExtraLoc1 = hEnemy:GetExtrapolatedLocation(1.0)
+                    EnemyInfo[pid].ExtraLoc3 = hEnemy:GetExtrapolatedLocation(3.0)
+                    EnemyInfo[pid].ExtraLoc5 = hEnemy:GetExtrapolatedLocation(5.0)
+            
+                    if hEnemy:IsUnableToMiss() then
+                        EnemyInfo[pid].HasTruestrike = true
+                        EnemyInfo.HasTruestrike = true
+                    else
+                        EnemyInfo[pid].HasTruestrike = false
+                    end
+            
+                    if GameTime() - LastEnemyUpdate > UpdateFreq2 then
+                        for i = 0, 5, 1 do
+                            local item = hEnemy:GetItemInSlot(i)
+                            if item ~= nil then
+                                local sItemName = item:GetName()
+                                EnemyInfo[pid].Items[i] = sItemName
+                                
+                                -- can we be detected if we go invis
+                                -- TODO: account for abilities
+                                if sItemName == "item_gem" or sItemName == "item_ward_dispenser" or 
+                                    sItemName == "item_ward_sentry" or sItemName == "item_dust" or 
+                                    sItemName == "item_necronomicon_3" then
+                                    EnemyInfo[pid].HasDetection = true
+                                else
+                                    EnemyInfo[pid].HasDetection = false
+                                end
+                                
+                                -- can enemy go invis
+                                -- TODO: account for abilities
+                                if sItemName == "item_invis_sword" or sItemName == "item_silver_edge" or
+                                    sItemName == "item_glimmer_cape" or sItemName == "item_shadow_amulet" then
+                                else
+                                    EnemyInfo[pid].CanGoInvis = false
                                 end
                             end
                         end
@@ -114,6 +121,10 @@ function EnemyInfo.GetLocation( id )
     -- check if we have seen the enemy at least once before
     if EnemyInfo[id] and EnemyInfo[id].ExtraLoc1 == nil then
         return nil
+    end
+    
+    if EnemyInfo[id].multiple then
+        utils.myPrint("This enemy has multiple entities... fix")
     end
     
     local tDelta = GameTime() - EnemyInfo[id].LastSeen

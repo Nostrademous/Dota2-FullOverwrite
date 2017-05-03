@@ -1,0 +1,155 @@
+-------------------------------------------------------------------------------
+--- AUTHOR: Nostrademous
+--- GITHUB REPO: https://github.com/Nostrademous/Dota2-FullOverwrite
+-------------------------------------------------------------------------------
+
+BotsInit = require( "game/botsinit" )
+local genericAbility = BotsInit.CreateGeneric()
+
+local heroData = require( GetScriptDirectory().."/hero_data" )
+local utils = require( GetScriptDirectory().."/utility" )
+local gHeroVar = require( GetScriptDirectory().."/global_hero_data" )
+
+function setHeroVar(var, value)
+    local bot = GetBot()
+    gHeroVar.SetVar(bot:GetPlayerID(), var, value)
+end
+
+function getHeroVar(var)
+    local bot = GetBot()
+    return gHeroVar.GetVar(bot:GetPlayerID(), var)
+end
+
+local Abilities = {
+    heroData.sniper.SKILL_0,
+    heroData.sniper.SKILL_1,
+    heroData.sniper.SKILL_2,
+    heroData.sniper.SKILL_3
+}
+
+local abilityQ = ""
+local abilityW = ""
+local abilityE = ""
+local abilityR = ""
+
+local AttackRange   = 0
+local ManaPerc      = 0.0
+local HealthPerc    = 0.0
+local modeName      = nil
+
+function genericAbility:AbilityUsageThink(bot)
+    -- Check if we're already using an ability
+    if utils.IsBusy(bot) then return true end
+    
+    -- Check to see if we are CC'ed
+    if utils.IsUnableToCast(bot) then return false end
+
+    if abilityQ == "" then abilityQ = bot:GetAbilityByName( Abilities[1] ) end
+    if abilityW == "" then abilityW = bot:GetAbilityByName( Abilities[2] ) end
+    if abilityE == "" then abilityE = bot:GetAbilityByName( Abilities[3] ) end
+    if abilityR == "" then abilityR = bot:GetAbilityByName( Abilities[4] ) end
+    
+    AttackRange   = bot:GetAttackRange()
+	ManaPerc      = bot:GetMana()/bot:GetMaxMana()
+	HealthPerc    = bot:GetHealth()/bot:GetMaxHealth()
+    modeName      = bot.SelfRef:getCurrentMode():GetName()
+    
+    local modeDesire    = Max(0.01, bot.SelfRef:getCurrentModeValue())
+    
+    -- CHECK BELOW TO SEE WHICH ABILITIES ARE NOT PASSIVE AND WHAT RETURN TYPES ARE --
+    -- Consider using each ability
+	local castQDesire, castQLoc     = ConsiderQ()
+	local castRDesire, castRTarget  = ConsiderR()
+    
+    -- CHECK BELOW TO SEE WHAT PRIORITY OF ABILITIES YOU WANT FOR THIS HERO --
+    -- YOU MIGHT ALSO WANT TO ADD OTHER CONDITIONS TO WHEN TO CAST WHAT     --
+    -- EXAMPLE: 
+    -- if castRDesire >= modeDesire and castRDesire >= Max(CastEDesire, CastWDesire) then
+    if castRDesire >= modeDesire and castRDesire > castQDesire then
+		gHeroVar.HeroUseAbilityOnEntity(bot, abilityR, castRTarget)
+		return true
+	end
+
+	if castQDesire >= modeDesire then
+		gHeroVar.HeroUseAbilityOnEntity(bot, abilityQ, castQTarget)
+		return true
+	end
+    
+    return false
+end
+
+function ConsiderQ()
+    local bot = GetBot()
+    
+    if not abilityQ:IsFullyCastable() then
+		return BOT_ACTION_DESIRE_NONE, nil
+	end
+    
+    -- WRITE CODE HERE --
+    
+    return BOT_ACTION_DESIRE_NONE, nil
+end
+
+function ConsiderR()
+    local bot = GetBot()
+    
+    if not abilityR:IsFullyCastable() then
+		return BOT_ACTION_DESIRE_NONE, nil
+	end
+    
+    -- WRITE CODE HERE --
+    
+    return BOT_ACTION_DESIRE_NONE, nil
+end
+
+function genericAbility:nukeDamage( bot, enemy )
+    if not utils.ValidTarget(enemy) then return 0, {}, 0, 0, 0 end
+
+    local comboQueue = {}
+    local manaAvailable = bot:GetMana()
+    local dmgTotal = bot:GetOffensivePower()
+    local castTime = 0
+    local stunTime = 0
+    local slowTime = 0
+    local engageDist = 500
+    
+    -- WRITE CODE HERE --
+    -- local physImmune = modifiers.IsPhysicalImmune(enemy)
+    -- local magicImmune = utils.IsTargetMagicImmune(enemy)
+    
+    if abilityQ:IsFullyCastable() then
+    local manaCostQ = abilityQ:GetManaCost()
+        if manaCostQ <= manaAvailable then
+            manaAvailable = manaAvailable - manaCostQ
+            --dmgTotal = dmgTotal + XYZ
+            --castTime = castTime + abilityQ:GetCastPoint()
+            --stunTime = stunTime + XYZ
+            --engageDist = Min(engageDist, abilityQ:GetCastRange())
+            table.insert(comboQueue, abilityQ)
+        end
+    end
+    
+    if abilityR:IsFullyCastable() then
+        local manaCostR = abilityR:GetManaCost()
+        if manaCostR <= manaAvailable then
+            manaAvailable = manaAvailable - manaCostR
+            --dmgTotal = dmgTotal + 200  -- 200 pure damage every 1/4 second if moving
+            --castTime = castTime + abilityR:GetCastPoint()
+            --stunTime = stunTime + 12.0
+            --engageDist = Min(engageDist, abilityR:GetCastRange())
+            table.insert(comboQueue, abilityR)
+        end
+    end
+    
+    return dmgTotal, comboQueue, castTime, stunTime, slowTime, engageDist
+end
+
+function genericAbility:queueNuke(bot, enemy, castQueue, engageDist)
+    if not utils.ValidTarget(enemy) then return false end
+    
+    -- WRITE CODE HERE --
+    
+    return false
+end
+
+return genericAbility

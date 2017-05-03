@@ -189,6 +189,23 @@ function ConsiderE()
         end
     end
     
+    -- If we're Roshing
+    if modeName == "roshan" then
+        if GetUnitToLocationDistance(bot, utils.ROSHAN) < 600 then
+            local eCreep = gHeroVar.GetNearbyEnemyCreep(bot, 600)
+            local roshan = nil
+            for _, creep in pairs(eCreep) do
+                if utils.ValidTarget(creep) and creep:GetUnitName() == "npc_dota_roshan" then
+                    roshan = creep
+                    break
+                end
+            end
+            if utils.ValidTarget(roshan) then
+                return BOT_ACTION_DESIRE_MODERATE, utils.VectorTowards(bot:GetLocation(), roshan:GetLocation(), RandomInt(0, CastRange))
+            end
+        end
+    end
+    
     -- If we're farming
     local creeps = gHeroVar.GetNearbyEnemyCreep( bot, 900 )
     if modeName == "laning" or modeName == "jungling" then
@@ -206,7 +223,7 @@ function ConsiderR()
     local bot = GetBot()
     
     if not abilityR:IsFullyCastable() then
-	return BOT_ACTION_DESIRE_NONE, nil
+        return BOT_ACTION_DESIRE_NONE, nil
     end
 
     local CastRange = abilityR:GetCastRange()
@@ -220,7 +237,7 @@ function ConsiderR()
     local enemies = gHeroVar.GetNearbyEnemies(bot, Radius)
     local disabledHeroCount = 0
     for _, eHero in pairs(enemies) do
-        if utils.ValidTarget(eHero) and utils.IsCrowdControlled(eHero) or eHero:GetCurrentMovementSpeed() <= 200 then
+        if utils.ValidTarget(eHero) and (utils.IsCrowdControlled(eHero) or eHero:GetCurrentMovementSpeed() <= 200) then
             disabledHeroCount = disabledHeroCount + 1
         end
     end

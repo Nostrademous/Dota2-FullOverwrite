@@ -111,6 +111,10 @@ function IsInvisible(bot)
     return bot:IsInvisible()
 end
 
+function IsTeleporting( hUnit )
+    return hUnit:HasModifier("modifier_teleporting")
+end
+
 function IsRuptured(bot)
     return bot:HasModifier("modifier_bloodseeker_rupture")
 end

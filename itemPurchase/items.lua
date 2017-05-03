@@ -343,7 +343,7 @@ X["item_vladmir"] = { X["item_ring_of_basilius"] , "item_lifesteal", X["item_hea
 
 X["item_guardian_greaves"] = { X["item_arcane_boots"], X["item_mekansm"], "item_recipe_guardian_greaves" }
 
-X["item_bloodthorn"] = { X["item_orchid"], X["item_crystalys"], "item_recipe_bloodthorn" }
+X["item_bloodthorn"] = { X["item_orchid"], X["item_lesser_crit"], "item_recipe_bloodthorn" }
 
 --------------------------------------------------------------------------------------------
 -- Functions

@@ -158,7 +158,7 @@ function GlobalFightDetermination()
     local bUpdate, newTime = utils.TimePassed(lastGlobalFightDetermination, 0.25)
     if bUpdate then lastGlobalFightDetermination = newTime else return end
 
-    local eyeRange = 1200
+    local eyeRange = 1600
     local listAllies = GetUnitList(UNIT_LIST_ALLIED_HEROES)
     local listEnemies = GetUnitList(UNIT_LIST_ENEMY_HEROES)
     
@@ -217,12 +217,11 @@ function GlobalFightDetermination()
                                     if ally2:IsBot() then
                                         local allyNukeDmg, allyActionQueue, allyCastTime, allyStun, allySlow, allyEngageDist = ally2.SelfRef:GetNukeDamage( ally2, enemy )
 
-                                        -- update our total nuke damage
-                                        totalNukeDmg = totalNukeDmg + allyNukeDmg
-
                                         local globalAbility = gHero.GetVar(ally2:GetPlayerID(), "HasGlobal")
                                         if allyTimeToReach <= 6.0 then
                                             --utils.myPrint("ally ", utils.GetHeroName(ally2), " is ", distToEnemy, " units away. Time to reach: ", allyTimeToReach)
+                                            -- update our total nuke damage
+                                            totalNukeDmg = totalNukeDmg + allyNukeDmg
 
                                             allAllyStun = allAllyStun + allyStun
                                             allAllySlow = allAllySlow + allySlow
@@ -230,10 +229,13 @@ function GlobalFightDetermination()
                                             totalTimeToKillTarget = totalTimeToKillTarget + allyTimeToKillTarget
                                             table.insert(participatingAllies, {ally2, allyActionQueue, allyEngageDist})
                                         elseif globalAbility and globalAbility[1]:IsFullyCastable() then
+                                            totalNukeDmg = totalNukeDmg + globalAbility:GetAbilityDamage()
                                             table.insert(globalAllies, {ally2, globalAbility})
                                         end
                                     else
-                                        totalNukeDmg = totalNukeDmg + ally2:GetOffensivePower()
+                                        if allyTimeToReach <= 6.0 then
+                                            totalNukeDmg = totalNukeDmg + ally2:GetOffensivePower()
+                                        end
                                     end
                                 end
                             end

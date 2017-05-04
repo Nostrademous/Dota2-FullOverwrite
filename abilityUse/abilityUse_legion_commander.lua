@@ -81,12 +81,10 @@ function ConsiderQ()
 	--------------------------------------
 	-- fighting (team fight) and can hit 2+ enemies
 	if modeName == "fight" then
-		if ManaPerc > 0.4 then
-			local locationAoE = bot:FindAoELocation( true, false, bot:GetLocation(), CastRange, Radius, 0, 0 )
-			if locationAoE.count >= 2 then
-				return BOT_ACTION_DESIRE_MODERATE, locationAoE.targetloc
-			end
-		end
+        local locationAoE = bot:FindAoELocation( true, true, bot:GetLocation(), CastRange, Radius, 0, 0 )
+        if locationAoE.count >= 2 then
+            return BOT_ACTION_DESIRE_HIGH+0.01, locationAoE.targetloc
+        end
 	end
 	
 	-- If we're pushing or defending a lane and can hit 4+ creeps, go for it
@@ -94,7 +92,7 @@ function ConsiderQ()
 		if ManaPerc > 0.4 then
 			local locationAoE = bot:FindAoELocation( true, false, bot:GetLocation(), CastRange, Radius, 0, 0 )
 			if locationAoE.count >= 4 then
-				return BOT_ACTION_DESIRE_MODERATE, locationAoE.targetloc
+				return BOT_ACTION_DESIRE_MODERATE+0.01, locationAoE.targetloc
 			end
 		end
 	end
@@ -106,17 +104,17 @@ function ConsiderQ()
         
 		if utils.ValidTarget(npcEnemy) then
 			if not utils.IsTargetMagicImmune( npcEnemy ) then
-				return BOT_ACTION_DESIRE_MODERATE, utils.VectorTowards(npcEnemy:GetLocation(), bot:GetLocation(), Radius/2)
+				return BOT_ACTION_DESIRE_MODERATE+0.01, utils.VectorTowards(npcEnemy:GetLocation(), bot:GetLocation(), Radius/2)
 			end
 		end
 	end
 	
 	-- If we're farming and can kill 3+ creeps
 	if modeName == "jungling" or modeName == "laning" then
-		if ManaPerc > 0.4 then
+		if ManaPerc > 0.5 then
 			local locationAoE = bot:FindAoELocation( true, false, bot:GetLocation(), CastRange, Radius, 0, Damage )
 			if ( locationAoE.count >= 3 ) then
-				return BOT_ACTION_DESIRE_LOW, locationAoE.targetloc
+				return BOT_ACTION_DESIRE_LOW+0.01, locationAoE.targetloc
 			end
 		end
 	end
@@ -265,7 +263,7 @@ function ConsiderR()
                 
 				if HeroHealth <= (bot:GetEstimatedDamageToTarget(true, WeakestEnemy, Duration, DAMAGE_TYPE_PHYSICAL) + extraDmg) and 
                     #allies >= #enemies then
-					return BOT_ACTION_DESIRE_HIGH, WeakestEnemy
+					return BOT_ACTION_DESIRE_VERYHIGH+0.01, WeakestEnemy
 				end
 			end
 		end
@@ -289,7 +287,7 @@ function ConsiderR()
 			if not npcEnemy:IsInvulnerable() and GetUnitToUnitDistance(bot, npcEnemy) < CastRange then
                 if HeroHealth <= (bot:GetEstimatedDamageToTarget(true, npcEnemy, Duration, DAMAGE_TYPE_PHYSICAL) + extraDmg) and 
                     #allies >= #enemies then
-                    return BOT_ACTION_DESIRE_MODERATE, npcEnemy
+                    return BOT_ACTION_DESIRE_MODERATE+0.01, npcEnemy
                 end
 			end
 		end

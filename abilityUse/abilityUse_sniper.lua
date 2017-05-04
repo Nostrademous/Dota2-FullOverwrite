@@ -78,16 +78,87 @@ function genericAbility:AbilityUsageThink(bot)
     return false
 end
 
+-- This function calculate the amount of Shrapnel Damage done to enemy hero assuming 
+-- we start the AOE centered on him and he immediately starts walking away when it becomes visible
+local function CalculateShrapnelDamage( hBot, hEnemyUnit, aoeRadius, shrapnelDmg )
+    local moveSpeedSlow = abilityQ:GetSpecialValueInt("slow_movement_speed")/100.0 -- this will be a negative percentage
+    local enemySpeedInAoE = hEnemyUnit:GetCurrentMovementSpeed() * (1 + moveSpeedSlow) -- plus b/c it's negative
+    local dmg = (aoeRadius/enemySpeedInAoE) * shrapnelDmg
+    return hEnemyUnit:GetActualIncomingDamage(dmg, DAMAGE_TYPE_MAGICAL)
+end
+
 function ConsiderQ()
     local bot = GetBot()
     
-    if not abilityQ:IsFullyCastable() then
-		return BOT_ACTION_DESIRE_NONE, nil
+    if not abilityQ:IsFullyCastable() or abilityQ:GetCurrentCharges() == 0 then
+		return BOT_ACTION_DESIRE_NONE, {}
 	end
     
     -- WRITE CODE HERE --
+    local CastRange = abilityQ:GetCastRange()
+    local CastPoint = abilityQ:GetCastPoint() + abilityQ:GetSpecialValueFloat( "damage_delay" )
+    local Radius = abilityQ:GetSpecialValueInt( "radius" )
+    local Damage = abilityQ:GetSpecialValueInt( "shrapnel_damage" )
     
-    return BOT_ACTION_DESIRE_NONE, nil
+    local hasTalent = GetAbilityByName(heroData.sniper.TALENT_2):GetLevel() >= 1
+    if hasTalent then Damage = Damage + 20 end
+    
+    local numCharges = abilityQ:GetCurrentCharges()
+    
+    -- TODO: Implement use for Vision
+    
+    --------------------------------------
+	-- Global high-priorty usage
+	--------------------------------------
+	--try to kill enemy hero
+    local WeakestEnemy, HeroHealth = utils.GetWeakestHero(bot, CastRange)
+    
+	if modeName ~= "retreat" then
+		if utils.ValidTarget(WeakestEnemy) then
+			if not utils.IsTargetMagicImmune( WeakestEnemy ) then            
+				if HeroHealth <= CalculateShrapnelDamage( bot, WeakestEnemy, Radius, Damage ) then
+					return BOT_ACTION_DESIRE_HIGH, WeakestEnemy:GetExtrapolatedLocation(CastPoint + 0.25)
+				end
+			end
+		end
+	end
+    
+    --------------------------------------
+	-- Mode based usage
+	--------------------------------------
+    -- fighting (team fight) and can hit 2+ enemies
+	if modeName == "fight" then
+        local locationAoE = bot:FindAoELocation( true, false, bot:GetLocation(), CastRange, Radius, 0, 0 )
+        if locationAoE.count >= 2 then
+            return BOT_ACTION_DESIRE_HIGH+0.01, locationAoE.targetloc
+        end
+	end
+	
+	-- If we're pushing or defending a lane and can hit 4+ creeps, go for it
+	if modeName == "defendlane" or modeName == "pushlane" then
+		if ManaPerc > 0.4 and numCharges > 1 then
+			local locationAoE = bot:FindAoELocation( true, false, bot:GetLocation(), CastRange, Radius, 0, 0 )
+			if locationAoE.count >= 4 then
+				return BOT_ACTION_DESIRE_MODERATE+0.01, locationAoE.targetloc
+			end
+		end
+    end
+    
+	-- If we're going after someone
+	if modeName == "roam" or modeName == "defendally" or modeName == "fight" then
+		local npcEnemy = getHeroVar("RoamTarget")
+        if npcEnemy == nil then npcEnemy = getHeroVar("Target") end
+
+		if utils.ValidTarget(npcEnemy) then           
+			if not utils.IsTargetMagicImmune(npcEnemy) and GetUnitToUnitDistance(bot, npcEnemy) < CastRange then
+                if HeroHealth <= CalculateShrapnelDamage( bot, ncpEnemy, Radius, Damage )
+                    return BOT_ACTION_DESIRE_MODERATE+0.01, npcEnemy:GetExtrapolatedLocation(CastPoint + 0.25)
+                end
+			end
+		end
+	end
+    
+    return BOT_ACTION_DESIRE_NONE, {}
 end
 
 function ConsiderR()
@@ -98,6 +169,35 @@ function ConsiderR()
 	end
     
     -- WRITE CODE HERE --
+    local CastRange = abilityR:GetCastRange()
+    local Damage = abilityR:GetAbilityDamage()
+     
+    --try to kill enemy hero
+    if not bot:HasScepter() then
+        if modeName ~= "retreat" or #gHeroVar.GetNearbyEnemies( bot, 1500 ) == 0 then
+            local enemies = GetUnitList(UNIT_LIST_ENEMY_HEROES)
+            local WeakestEnemy, HeroHealth = utils.GetWeakestHero(bot, CastRange, enemies)
+            
+            if utils.ValidTarget(WeakestEnemy) then
+                if not utils.IsTargetMagicImmune(WeakestEnemy) then
+                    if HeroHealth < WeakestEnemy:GetActualIncomingDamage(Damage, DAMAGE_TYPE_MAGICAL) then
+                        BOT_ACTION_DESIRE_VERYHIGH+0.01, WeakestEnemy
+                    end
+                end
+            end
+        end
+    else
+        if modeName ~= "retreat" or #gHeroVar.GetNearbyEnemies( bot, 1500 ) == 0 then
+            local Radius = abilityR:GetSpecialValueInt( "scepter_radius" )
+            local CritMultiplier = abilityR:GetSpecialValueInt( "scepter_crit_bonus" )/100.0
+            -- TODO: Technically the kills are not guaranteed as I don't think FindAoELocation takes armor/magic-resistance into consideration
+            -- NOTE: Aghs Assassinate is PHYSICAL DAMAGE
+            local locationAoE = bot:FindAoELocation( true, true, bot:GetLocation(), CastRange, Radius, abilityR:GetCastPoint(), CritMultiplier*Damage )
+            if locationAoE.count >= 1 then
+				return BOT_ACTION_DESIRE_VERYHIGH+0.01, locationAoE.targetloc
+			end
+        end
+    end
     
     return BOT_ACTION_DESIRE_NONE, nil
 end

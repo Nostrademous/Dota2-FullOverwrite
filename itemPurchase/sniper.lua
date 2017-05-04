@@ -9,33 +9,33 @@ local thisBot = BotsInit.CreateGeneric()
 local generic = dofile( GetScriptDirectory().."/itemPurchase/generic" )
 
 generic.ItemsToBuyAsHardCarry = {
-	StartingItems = {
-		"item_tango",
-		"item_wraith_band"
-	},
-	UtilityItems = {
-		"item_flask"
-	},
-	CoreItems = {
-		"item_phase_boots",
-		"item_ring_of_aquila",
-		"item_dragon_lance",
+    StartingItems = {
+        "item_tango",
+        "item_wraith_band"
+    },
+    UtilityItems = {
+        "item_flask"
+    },
+    CoreItems = {
+        "item_phase_boots",
+        "item_ring_of_aquila",
+        "item_dragon_lance",
         "item_maelstrom",
         "item_hurricane_pike",
         "item_mjollnir",
-	},
-	ExtensionItems = {
-		{
+    },
+    ExtensionItems = {
+        OffensiveItems = {
             "item_monkey_king_bar",
             "item_skadi",
             "item_greater_crit"
-		},
-		{
+        },
+        DefensiveItems = {
             "item_black_king_bar",
             "item_ultimate_scepter",
             "item_silver_edge"
-		}
-	},
+        }
+    },
     SellItems = {
         "item_ring_of_aquila"
     }

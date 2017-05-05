@@ -229,7 +229,7 @@ function GlobalFightDetermination()
                                             totalTimeToKillTarget = totalTimeToKillTarget + allyTimeToKillTarget
                                             table.insert(participatingAllies, {ally2, allyActionQueue, allyEngageDist})
                                         elseif globalAbility and globalAbility[1]:IsFullyCastable() then
-                                            totalNukeDmg = totalNukeDmg + globalAbility:GetAbilityDamage()
+                                            totalNukeDmg = totalNukeDmg + globalAbility[1]:GetAbilityDamage()
                                             table.insert(globalAllies, {ally2, globalAbility})
                                         end
                                     else

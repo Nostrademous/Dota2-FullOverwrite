@@ -111,12 +111,12 @@ end
 
 -- This function calculate the amount of Shrapnel Damage done to enemy hero assuming 
 -- we start the AOE centered on him and he immediately starts walking away when it becomes visible
-local function CalculateShrapnelDamage( hBot, hEnemyUnit, aoeRadius, shrapnelDmg )
+local function CalculateShrapnelDamage( hBot, hEnemyUnit, aoeRadius, shrapnelDmg, numCharges )
     if not utils.ValidTarget(hEnemyUnit) then return 0 end
     
     local moveSpeedSlow = abilityQ:GetSpecialValueInt("slow_movement_speed")/100.0 -- this will be a negative percentage
     local enemySpeedInAoE = hEnemyUnit:GetCurrentMovementSpeed() * (1 + moveSpeedSlow) -- plus b/c it's negative
-    local dmg = (aoeRadius/enemySpeedInAoE) * shrapnelDmg
+    local dmg = (aoeRadius/enemySpeedInAoE) * shrapnelDmg * numCharges
     return hEnemyUnit:GetActualIncomingDamage(dmg, DAMAGE_TYPE_MAGICAL)
 end
 
@@ -149,7 +149,7 @@ function ConsiderQ()
 	if modeName ~= "retreat" then
 		if utils.ValidTarget(WeakestEnemy) then
 			if not utils.IsTargetMagicImmune( WeakestEnemy ) then            
-				if HeroHealth <= CalculateShrapnelDamage( bot, WeakestEnemy, Radius, Damage ) then
+				if HeroHealth <= CalculateShrapnelDamage( bot, WeakestEnemy, Radius, Damage, numCharges ) then
 					return BOT_ACTION_DESIRE_HIGH, WeakestEnemy:GetExtrapolatedLocation(CastPoint + 0.25)
 				end
 			end
@@ -191,7 +191,7 @@ function ConsiderQ()
 
 		if utils.ValidTarget(npcEnemy) then           
 			if not utils.IsTargetMagicImmune(npcEnemy) and GetUnitToUnitDistance(bot, npcEnemy) < CastRange then
-                if HeroHealth <= CalculateShrapnelDamage( bot, npcEnemy, Radius, Damage ) then
+                if HeroHealth <= CalculateShrapnelDamage( bot, npcEnemy, Radius, Damage, numCharges ) then
                     return BOT_ACTION_DESIRE_MODERATE+0.01, npcEnemy:GetExtrapolatedLocation(CastPoint + 0.25)
                 end
 			end

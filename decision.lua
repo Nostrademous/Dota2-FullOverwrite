@@ -297,6 +297,12 @@ function X:AnalyzeLanes(nLane)
     if utils.InTable(nLane, self:getHeroVar("CurLane")) then
         return
     end
+    
+    local currLane = self:getHeroVar("CurLane")
+    local frontier = GetLaneFrontAmount(GetTeam(), currLane, false)
+    if frontier < 0.55 then
+        return
+    end
 
     if #nLane > 1 then
         local newLane = nLane[RandomInt(1, #nLane)]

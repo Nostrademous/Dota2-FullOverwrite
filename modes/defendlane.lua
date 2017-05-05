@@ -64,6 +64,11 @@ function X:DefendTower(bot, hBuilding)
     local allies = gHeroVar.GetNearbyAllies(bot, 1500)
     local eCreep = gHeroVar.GetNearbyEnemyCreep(bot, 1200)
     
+    local defenseLane = utils.NearestLane(bot)
+    if defenseLane > 0 and getHeroVar("CurLane") ~= defenseLane then
+        setHeroVar("CurLane", defenseLane)
+    end
+    
     if #enemies > 0 and #allies >= #enemies then -- we are good to go
         if utils.ValidTarget(enemies[1]) then
             gHeroVar.HeroAttackUnit(bot, enemies[1], true) -- Charge! at the closes enemy
@@ -90,7 +95,7 @@ function X:DefendTower(bot, hBuilding)
             return
         end
         
-        if GetUnitToUnitDistance(bot, hBuilding) < 400 then
+        if GetUnitToUnitDistance(bot, hBuilding) > 400 then
             gHeroVar.HeroMoveToUnit(bot, hBuilding)
             return
         end

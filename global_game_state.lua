@@ -217,7 +217,7 @@ function GlobalFightDetermination()
                                     if ally2:IsBot() then
                                         local allyNukeDmg, allyActionQueue, allyCastTime, allyStun, allySlow, allyEngageDist = ally2.SelfRef:GetNukeDamage( ally2, enemy )
 
-                                        local globalAbility = gHero.GetVar(ally2:GetPlayerID(), "HasGlobal")
+                                        local globalAbility, globalDmg, globalDmgType, globalDelay = ally2.SelfRef:GetGlobalDamage()
                                         if allyTimeToReach <= 6.0 then
                                             --utils.myPrint("ally ", utils.GetHeroName(ally2), " is ", distToEnemy, " units away. Time to reach: ", allyTimeToReach)
                                             -- update our total nuke damage
@@ -228,9 +228,9 @@ function GlobalFightDetermination()
                                             local allyTimeToKillTarget = fight_simul.estimateTimeToKill(ally2, enemy)
                                             totalTimeToKillTarget = totalTimeToKillTarget + allyTimeToKillTarget
                                             table.insert(participatingAllies, {ally2, allyActionQueue, allyEngageDist})
-                                        elseif globalAbility and globalAbility[1]:IsFullyCastable() then
-                                            totalNukeDmg = totalNukeDmg + globalAbility[1]:GetAbilityDamage()
-                                            table.insert(globalAllies, {ally2, globalAbility})
+                                        elseif globalAbility then
+                                            totalNukeDmg = totalNukeDmg + enemy:GetActualIncomingDamage(globalDmg, globalDmgType)
+                                            table.insert(globalAllies, {ally2, globalAbility, enemy:GetExtrapolatedLocation(globalDelay)})
                                         end
                                     else
                                         if allyTimeToReach <= 6.0 then
@@ -279,7 +279,8 @@ function GlobalFightDetermination()
                                 end
 
                                 for _, v in pairs(globalAllies) do
-                                    gHero.SetVar(v[1]:GetPlayerID(), "UseGlobal", {v[2][1], enemy})
+                                    --gHero.SetVar(v[1]:GetPlayerID(), "UseGlobal", {v[2][1], enemy})
+                                    v[1].SelfRef:UseGlobal(enemy, v[2], v[3])
                                     utils.myPrint(utils.GetHeroName(v[1]).." casting global skill.")
                                 end
 
@@ -300,7 +301,8 @@ function GlobalFightDetermination()
                                 end
 
                                 for _, v in pairs(globalAllies) do
-                                    gHero.SetVar(v[1]:GetPlayerID(), "UseGlobal", {v[2][1], enemy})
+                                    --gHero.SetVar(v[1]:GetPlayerID(), "UseGlobal", {v[2][1], enemy})
+                                    v[1].SelfRef:UseGlobal(enemy, v[2], v[3])
                                     utils.myPrint(utils.GetHeroName(v[1]).." casting global skill.")
                                 end
 

@@ -1002,7 +1002,7 @@ function ConsiderSunStrike()
 
     -- Get some of its values
     local nRadius = 175
-    local nDelay = 1.75 + getHeroVar("AbilityDelay") + 0.2 -- 0.05 cast point, 1.7 delay
+    local nDelay = 1.75 + getHeroVar("AbilityDelay") -- 0.05 cast point, 1.7 delay
     local nDamage = abilitySS:GetSpecialValueFloat("damage")
 
     --------------------------------------

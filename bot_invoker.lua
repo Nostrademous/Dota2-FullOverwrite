@@ -64,6 +64,38 @@ function invBot:QueueNuke(bot, target, actionQueue, engageDist)
     return ability.queueNuke( bot, target, actionQueue, engageDist )
 end
 
+-- RETURN: ability, damage, dmg_type, cast delay
+function invBot:GetGlobalDamage()
+    local bot = GetBot()
+    
+    local globalAbility = bot:GetAbilityByName("invoker_sun_strike")
+    if globalAbility and globalAbility:IsFullyCastable() then
+        if not globalAbility:IsHidden() then
+            return globalAbility, globalAbility:GetSpecialValueFloat("damage"), DAMAGE_TYPE_PURE, 1.75
+        else
+            if bot:GetMana() >= (globalAbility:GetManaCost() + bot:GetAbilityByName(SKILL_R):GetManaCost()) then
+                return globalAbility, globalAbility:GetSpecialValueFloat("damage"), DAMAGE_TYPE_PURE, (1.75 + 0.25)
+            end
+        end
+    end
+    
+    return nil, 0, nil, 0
+end
+
+function invBot:UseGlobal( hTarget, hAbility, Loc )
+    if utils.ValidTarget(hTarget) then
+        local bot = GetBot()
+        gHeroVar.HeroPushUseAbilityOnLocation(bot, hAbility, Loc)
+        if hAbility:IsHidden() then
+            bot:ActionPush_Delay(0.01)
+            gHeroVar.HeroPushUseAbility(bot,  bot:GetAbilityByName(SKILL_R) )
+            gHeroVar.HeroPushUseAbility(bot,  bot:GetAbilityByName(SKILL_E) )
+            gHeroVar.HeroPushUseAbility(bot,  bot:GetAbilityByName(SKILL_E) )
+            gHeroVar.HeroPushUseAbility(bot,  bot:GetAbilityByName(SKILL_E) )
+        end
+    end
+end
+
 function invBot:DoHeroSpecificInit(bot)
     setHeroVar("HasGlobal", {[1]=bot:GetAbilityByName("invoker_sun_strike"), [2]=1.75+getHeroVar("AbilityDelay")})
     setHeroVar("HasStun",  {{[1]=bot:GetAbilityByName("invoker_cold_snap"), [2]=0.05+getHeroVar("AbilityDelay")}})

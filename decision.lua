@@ -363,7 +363,15 @@ function X:IsReadyToGank(bot)
 end
 
 function X:DoHeroSpecificInit(bot)
-    utils.myPrint("non-overloaded function 'DoHeroSpecificInit' called")
+    --utils.myPrint("non-overloaded function 'DoHeroSpecificInit' called")
+    return
+end
+
+function X:GetGlobalDamage()
+    return nil, 0, DAMAGE_TYPE_ALL, 0
+end
+
+function X:UseGlobal( hTarget, hAbility, Loc )
     return
 end
 

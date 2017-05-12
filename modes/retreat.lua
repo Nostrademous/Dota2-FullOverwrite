@@ -67,13 +67,19 @@ function X:Think(bot)
     
     if utils.IsItemAvailable("item_blink") then
         local value = 1200 -- max blink distance
+        local rLane = getHeroVar("RetreatLane")
         
-        local scale = 242.0
-        if getHeroVar("RetreatLane") == LANE_MID then scale = 173.5 end
+        if rLane == nil or rLane == LANE_NONE then
+            nextmove = utils.VectorTowards(bot:GetLocation(), utils.Fountain(), 1190)
+        else
+            local scale = 242.0
+            if rLane == nil or rLane == LANE_MID or rLane == LANE_NONE then scale = 173.5 end
+            
+            value = (value/scale)*0.01
+            nextmove = GetLocationAlongLane(rLane, Max(rPos-value, 0.0))
+            nextmove = utils.VectorTowards(bot:GetLocation(), nextmove, 1190)
+        end
         
-        value = (value/scale)*0.01
-        nextmove = GetLocationAlongLane(rLane, Max(rPos-value, 0.0))
-        nextmove = utils.VectorTowards(bot:GetLocation(), nextmove, 1200)
         item_usage.UseBlink(nextmove)
         return
     end

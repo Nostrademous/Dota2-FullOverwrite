@@ -67,11 +67,13 @@ function X:Think(bot)
     
     if utils.IsItemAvailable("item_blink") then
         local value = 1200 -- max blink distance
-        -- below I test how far in units is a single 0.01 move in terms of GetLocationAlongLane()
-        local scale = utils.GetDistance(GetLocationAlongLane(rLane, 0.5), GetLocationAlongLane(rLane, 0.49))
-        value = ((value - 25) / scale)*0.01 -- we subtract 25 to give ourselves a little rounding wiggle room
+        
+        local scale = 242.0
+        if getHeroVar("RetreatLane") == LANE_MID then scale = 173.5 end
+        
+        value = (value/scale)*0.01
         nextmove = GetLocationAlongLane(rLane, Max(rPos-value, 0.0))
-        nextmove = utils.VectorTowards(bot:GetLocation(), nextmove, 1150)
+        nextmove = utils.VectorTowards(bot:GetLocation(), nextmove, 1200)
         item_usage.UseBlink(nextmove)
         return
     end

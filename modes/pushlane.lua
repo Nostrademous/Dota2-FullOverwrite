@@ -152,22 +152,30 @@ function X:Think(bot)
                 local nearbyEnemyCreep = gHeroVar.GetNearbyEnemyCreep(bot, 1200)
 
                 if #nearbyEnemyCreep > 0 then
-                if #nearbyAlliedCreep > 0 or frontier < 0.25 then
-                    -- TODO: below should make exception for tanky high health regen heroes
-                    -- like Timber, DK, Axe, Bristle, etc... probably using a flag like bot.CanTank
-                    if not utils.IsCreepAttackingMe(1.0) then -- or bot.CanTank then
-                        local creep, _ = utils.GetWeakestCreep(nearbyEnemyCreep)
-                        if utils.ValidTarget(creep) then
-                            gHeroVar.HeroAttackUnit(bot, creep, true)
-                            return
+                    if #nearbyAlliedCreep > 0 or frontier < 0.25 then
+                        -- TODO: below should make exception for tanky high health regen heroes
+                        -- like Timber, DK, Axe, Bristle, etc... probably using a flag like bot.CanTank
+                        if not utils.IsCreepAttackingMe(1.0) then -- or bot.CanTank then
+                            local creep, _ = utils.GetWeakestCreep(nearbyEnemyCreep)
+                            if utils.ValidTarget(creep) then
+                                gHeroVar.HeroAttackUnit(bot, creep, true)
+                                return
+                            end
                         end
                     end
                 end
-            end
                 
-                -- no creeps, move forward in lane
-                gHeroVar.HeroMoveToLocation(bot, dest)
-                return
+                local dist = GetUnitToUnitDistance(bot, hTower)
+                local range = bot:GetAttackRange()
+                
+                if dist > range then
+                    -- no creeps, move forward in lane until in attack range
+                    gHeroVar.HeroMoveToLocation(bot, dest)
+                    return
+                elseif dist < (range - 100) then
+                    gHeroVar.HeroMoveToLocation(bot, utils.VectorAway(bot:GetLocation(), hTower:GetLocation(), range-dist))
+                    return
+                end
             end
         end
     end
@@ -227,7 +235,7 @@ function X:Desire(bot)
     local nearEnemies = gHeroVar.GetNearbyEnemies(bot, 1200)
     if #nearEnemies > 0 then
         local nearAllies = gHeroVar.GetNearbyAllies(bot, 1200)
-        if #nearAllies < #nearEnemies+1 then
+        if #nearAllies < (#nearEnemies+1) then
             return BOT_MODE_DESIRE_NONE
         end
     end

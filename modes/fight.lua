@@ -68,17 +68,17 @@ function X:Think(bot)
             if dist < attackRange then
                 if modifiers.IsPhysicalImmune(target) or (bot:GetLastAttackTime() + bot:GetSecondsPerAttack()) > GameTime() then
                     -- move away if we are too close
-                    if dist < 0.3*attackRange then
-                        gHeroVar.HeroMoveToLocation(bot, utils.VectorAway(bot:GetLocation(), target:GetLocation(), 0.75*attackRange-dist))
+                    if dist < (attackRange-100) then
+                        gHeroVar.HeroMoveToLocation(bot, utils.VectorAway(bot:GetLocation(), target:GetLocation(), attackRange-dist-100))
                         return
-                    elseif dist > 0.75*attackRange then
-                        gHeroVar.HeroMoveToLocation(bot, utils.VectorTowards(bot:GetLocation(), target:GetLocation(), 0.75*attackRange-dist))
+                    elseif dist > (attackRange-100) then
+                        gHeroVar.HeroMoveToLocation(bot, utils.VectorTowards(bot:GetLocation(), target:GetLocation(), dist-attackRange-100))
                         return
                     end
                 else
                     -- move away if we are too close
-                    if dist < 0.3*attackRange then
-                        gHeroVar.HeroMoveToLocation(bot, utils.VectorAway(bot:GetLocation(), target:GetLocation(), 0.75*attackRange-dist))
+                    if dist < (attackRange-200) then
+                        gHeroVar.HeroMoveToLocation(bot, utils.VectorAway(bot:GetLocation(), target:GetLocation(), attackRange-dist-100))
                         return
                     else
                         gHeroVar.HeroAttackUnit(bot, target, true)

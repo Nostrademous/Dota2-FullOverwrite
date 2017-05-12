@@ -433,11 +433,9 @@ function invAbility:AbilityUsageThink(bot)
         if castGWDesire >= modeDesire and castGWDesire >= castIWDesire then
             --utils.myPrint("I want to Ghost Walk")
             if not abilityGW:IsHidden() then
-                bot:ActionPush_Delay( 0.25 )
                 gHeroVar.HeroPushUseAbility(bot,  abilityGW )
                 return true
             elseif abilityR:IsFullyCastable() then
-                bot:ActionPush_Delay( 0.25 )
                 gHeroVar.HeroQueueUseAbility(bot,  abilityGW )
                 local bRes = invokeGhostWalk(bot)
                 if bRes then return true end
@@ -893,7 +891,7 @@ function ConsiderIceWall()
 	if #tableNearbyAttackingAlliedHeroes >= 2 then
         local locationAoE = bot:FindAoELocation( true, true, bot:GetLocation(), nCastRange, nRadius, 0, 0 )
         if locationAoE.count >= 2 then
-            return BOT_ACTION_DESIRE_HIGH, 90
+            return BOT_ACTION_DESIRE_HIGH+0.01, 90
         end
     end
 
@@ -903,7 +901,7 @@ function ConsiderIceWall()
         for _, npcEnemy in pairs( nearbyEnemyHeroes ) do
             if utils.ValidTarget(npcEnemy) and bot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) and
                 GetUnitToUnitDistance(npcEnemy, bot) < 350 then
-                return BOT_ACTION_DESIRE_MODERATE, 0
+                return BOT_ACTION_DESIRE_MODERATE+0.01, 0
             end
         end
     end
@@ -917,7 +915,7 @@ function ConsiderIceWall()
 		if utils.ValidTarget(npcEnemy) then
             --FIXME: Need to check orientation
             if not utils.IsTargetMagicImmune(npcEnemy) and GetUnitToUnitDistance( bot, target ) < nCastRange then
-                return BOT_ACTION_DESIRE_MODERATE, 90
+                return BOT_ACTION_DESIRE_MODERATE+0.01, 90
             end
         end
     end
@@ -1194,12 +1192,12 @@ function ConsiderGhostWalk()
 
     -- WE ARE RETREATING AND THEY ARE ON US
     if modeName == "retreat" or modeName == "shrine" then
-        local nearbyEnemyHeroes = gHeroVar.GetNearbyEnemies(bot, 1200)
+        local nearbyEnemyHeroes = gHeroVar.GetNearbyEnemies(bot, 1600)
         for _, npcEnemy in pairs( nearbyEnemyHeroes ) do
             if utils.ValidTarget(npcEnemy) and (bot:WasRecentlyDamagedByHero( npcEnemy, 1.0 ) 
                 or GetUnitToUnitDistance( npcEnemy, bot ) < 600) then
                 bot.dontInterrupt = GameTime()
-                return BOT_ACTION_DESIRE_HIGH+0.02
+                return BOT_ACTION_DESIRE_VERYHIGH+0.02
             end
         end
     end
@@ -1223,7 +1221,7 @@ function ConsiderGhostWalk()
 				if roamTarget:GetHealth()*1.1 <= sumdamage then
                     setHeroVar("Target", roamTarget)
                     bot.dontInterrupt = GameTime()
-					return BOT_ACTION_DESIRE_MODERATE+0.01
+					return BOT_ACTION_DESIRE_HIGH+0.01
 				end
 			end
 		end

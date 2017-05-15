@@ -114,6 +114,8 @@ function X:Desire(bot)
                 bestShrine = SB3
             end
         end
+        
+        --[[ Removed in Patch 7.06
         local SB4 = GetShrine(Team, SHRINE_BASE_4)
         if SB4 and SB4:GetHealth() > 0 and GetShrineCooldown(SB4) == 0 then
             local dist = GetUnitToUnitDistance(bot, SB4)
@@ -130,6 +132,7 @@ function X:Desire(bot)
                 bestShrine = SB5
             end
         end
+        --]]
         
         if utils.ValidTarget(bestShrine) then
             if distToShrine < (bot:DistanceFromFountain() + 3500) then

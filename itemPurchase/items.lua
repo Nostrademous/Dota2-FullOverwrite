@@ -143,7 +143,7 @@ X["item_wind_lace"]  = {"item_wind_lace"}
 -- Items made from basics
 --------------------------------------------------------------------------------------------
 
-X["item_aether_lens"] = { "item_energy_booster", "item_ring_of_health", "item_recipe_aether_lens" }
+X["item_aether_lens"] = { "item_energy_booster", "item_void_stone", "item_recipe_aether_lens" }
 
 -- Aghanim's Scepter
 X["item_ultimate_scepter"] = { "item_point_booster", "item_staff_of_wizardry", "item_blade_of_alacrity", "item_ogre_axe" }
@@ -189,7 +189,7 @@ X["item_cyclone"] = { "item_staff_of_wizardry", "item_wind_lace", "item_void_sto
 -- Eye of Skadi
 X["item_skadi"] = { "item_point_booster", "item_orb_of_venom", "item_ultimate_orb", "item_ultimate_orb" }
 
-X["item_force_staff"] = { "item_ring_of_regen", "item_staff_of_wizardry", "item_recipe_force_staff" }
+X["item_force_staff"] = { "item_ring_of_health", "item_staff_of_wizardry", "item_recipe_force_staff" }
 
 X["item_glimmer_cape"] = { "item_cloak", "item_shadow_amulet" }
 
@@ -197,7 +197,7 @@ X["item_hand_of_midas"] = { "item_gloves", "item_recipe_hand_of_midas" }
 
 X["item_headdress"] = { "item_branches", "item_ring_of_regen", "item_recipe_headdress" }
 
-X["item_heart"] = { "item_reaver", "item_vitality_booster", "item_recipe_heart" }
+X["item_heart"] = { "item_reaver", "item_vitality_booster", "item_vitality_booster" }
 
 X["item_hood_of_defiance"] = { "item_ring_of_health", "item_cloak", "item_ring_of_regen" }
 
@@ -244,7 +244,7 @@ X["item_rapier"] = { "item_demon_edge", "item_relic" }
 
 X["item_ring_of_basilius"] = {  "item_ring_of_protection", "item_sobi_mask" }
 
-X["item_rod_of_atos"] = { "item_vitality_booster", "item_staff_of_wizardry", "item_staff_of_wizardry" }
+X["item_rod_of_atos"] = { "item_bracer", "item_bracer", "item_staff_of_wizardry", "item_recipe_rod_of_atos" }
 
 X["item_sange"] = { "item_belt_of_strength", "item_ogre_axe", "item_recipe_sange" }
 
@@ -262,11 +262,11 @@ X["item_basher"] = { "item_javelin", "item_belt_of_strength", "item_recipe_bashe
 
 X["item_soul_booster"] = { "item_point_booster", "item_vitality_booster", "item_energy_booster" }
 
-X["item_soul_ring"] = { "item_ring_of_regen", "item_sobi_mask", "item_recipe_soul_ring" }
+X["item_soul_ring"] = { "item_ring_of_regen", "item_sobi_mask", "item_enchanted_mango" }
 
 X["item_tranquil_boots"] = { "item_wind_lace", "item_ring_of_regen", "item_boots" }
 
-X["item_urn_of_shadows"] = { "item_gauntlets", "item_gauntlets", "item_sobi_mask", "item_recipe_urn_of_shadows" }
+X["item_urn_of_shadows"] = { "item_infused_raindrop", "item_circlet", "item_ring_of_protection", "item_recipe_urn_of_shadows" }
 
 X["item_vanguard"] = { "item_stout_shield" , "item_vitality_booster", "item_ring_of_health" }
 
@@ -303,7 +303,7 @@ X["item_echo_sabre"] = { X["item_oblivion_staff"], "item_ogre_axe" }
 
 X["item_heavens_halberd"] = { X["item_sange"], "item_talisman_of_evasion"}
 
-X["item_helm_of_the_dominator"] = { X["item_headdress"], "item_gloves", "item_recipe_helm_of_the_dominator" }
+X["item_helm_of_the_dominator"] = { X["item_headdress"], "item_gloves", "item_ring_of_health" }
 
 X["item_hurricane_pike"] = { X["item_force_staff"], X["item_dragon_lance"], "item_recipe_hurricane_pike" }
 

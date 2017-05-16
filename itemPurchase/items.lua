@@ -207,7 +207,7 @@ X["item_maelstrom"] = { "item_gloves", "item_mithril_hammer", "item_recipe_maels
 
 X["item_magic_wand"] = { "item_branches", "item_branches", "item_circlet", "item_magic_stick" }
 
-X["item_mask_of_madness"] = { "item_lifesteal", "item_recipe_mask_of_madness" }
+X["item_mask_of_madness"] = { "item_lifesteal", "item_quarterstaff" }
 
 X["item_medallion_of_courage"] = { "item_chainmail", "item_sobi_mask", "item_blight_stone" }
 

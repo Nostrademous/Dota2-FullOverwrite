@@ -32,9 +32,7 @@ local buildings = {
     {["ApiID"]=SHRINE_JUNGLE_2, ["Type"]=TYPE_SHRINE},
     {["ApiID"]=SHRINE_BASE_1, ["Type"]=TYPE_SHRINE},
     {["ApiID"]=SHRINE_BASE_2, ["Type"]=TYPE_SHRINE},
-    {["ApiID"]=SHRINE_BASE_3, ["Type"]=TYPE_SHRINE},
-    {["ApiID"]=SHRINE_BASE_4, ["Type"]=TYPE_SHRINE},
-    {["ApiID"]=SHRINE_BASE_5, ["Type"]=TYPE_SHRINE}
+    {["ApiID"]=SHRINE_BASE_3, ["Type"]=TYPE_SHRINE}
 }
 
 local offsetByLane = {[LANE_TOP] = 0, [LANE_MID] = 3, [LANE_BOT] = 6}

@@ -434,11 +434,15 @@ function invAbility:AbilityUsageThink(bot)
             --utils.myPrint("I want to Ghost Walk")
             if not abilityGW:IsHidden() then
                 gHeroVar.HeroPushUseAbility(bot,  abilityGW )
+                bot.dontInterruptTimer = GameTime()
                 return true
             elseif abilityR:IsFullyCastable() then
-                gHeroVar.HeroQueueUseAbility(bot,  abilityGW )
+                gHeroVar.HeroPushUseAbility(bot,  abilityGW )
                 local bRes = invokeGhostWalk(bot)
-                if bRes then return true end
+                if bRes then
+                    bot.dontInterruptTimer = GameTime()
+                    return true
+                end
                 bot:Action_ClearActions(false)
             end
         end

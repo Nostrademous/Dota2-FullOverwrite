@@ -774,7 +774,7 @@ function UseEuls()
         if #tableNearbyAttackingAlliedHeroes >= 2 then
             local npcMostDangerousEnemy = utils.GetScariestEnemy(bot, CastRange)
 
-            if utils.ValidTarget(npcMostDangerousEnemy)	then
+            if utils.ValidTarget(npcMostDangerousEnemy)	and not utils.IsCrowdControlled(npcMostDangerousEnemy) then
                 gHeroVar.HeroUseAbilityOnEntity(bot, euls, npcMostDangerousEnemy)
                 return true
             end

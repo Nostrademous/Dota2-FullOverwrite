@@ -424,13 +424,14 @@ function ConsiderR()
         if utils.ValidTarget(WeakestEnemy) then
             if DamageType == DAMAGE_TYPE_MAGICAL then
                 if not utils.IsTargetMagicImmune(WeakestEnemy) and not utils.IsCrowdControlled(WeakestEnemy) then
-                    if HeroHealth <= WeakestEnemy:GetActualIncomingDamage(Damage, DAMAGE_TYPE_MAGICAL) then
+                    local actDmg = WeakestEnemy:GetActualIncomingDamage(Damage, DAMAGE_TYPE_MAGICAL)
+                    if HeroHealth <= actDmg and HeroHealth > 2*bot:GetAttackDamage() then
                         return BOT_ACTION_DESIRE_HIGH, WeakestEnemy
                     end
                 end
             else
                 if not utils.IsCrowdControlled(WeakestEnemy) then
-                    if HeroHealth <= Damage then
+                    if HeroHealth <= Damage and HeroHealth > 2*bot:GetAttackDamage() then
                         return BOT_ACTION_DESIRE_HIGH, WeakestEnemy
                     end
                 end
@@ -443,8 +444,10 @@ function ConsiderR()
 	if #tableNearbyAttackingAlliedHeroes >= 2 then
 		local npcMostDangerousEnemy = utils.GetScariestEnemy(bot, CastRange, true)
 
-		if utils.ValidTarget(npcMostDangerousEnemy)	then
-			return BOT_ACTION_DESIRE_HIGH, npcMostDangerousEnemy
+		if utils.ValidTarget(npcMostDangerousEnemy) and not utils.IsCrowdControlled(npcMostDangerousEnemy) then
+            if npcMostDangerousEnemy:GetHealth() > 2*bot:GetAttackDamage() then
+                return BOT_ACTION_DESIRE_HIGH, npcMostDangerousEnemy
+            end
 		end
 	end
 

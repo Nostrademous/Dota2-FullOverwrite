@@ -97,7 +97,7 @@ function X.TeamThink()
     local badProjectiles = {}
     -- NOTE: a projectile will be a table with { "location", "ability", "velocity", "radius", "playerid" }
     for _, projectile in pairs(GetLinearProjectiles()) do
-        if projectile.playerid ~= nil or GetTeamForPlayer(projectile.playerid) == utils.GetOtherTeam() then
+        if projectile.playerid == nil or GetTeamForPlayer(projectile.playerid) == utils.GetOtherTeam() then
             table.insert(badProjectiles, projectile)
         end
     end

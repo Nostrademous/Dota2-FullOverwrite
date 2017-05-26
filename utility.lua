@@ -934,7 +934,8 @@ function U.NextNeutralSpawn()
     if DotaTime() < 30 then
         return 30
     else
-        t = math.ceil((DotaTime() - 60) / 120) * 120 + 60
+        local respawnFreq = 60
+        t = math.ceil((DotaTime() - 60) / respawnFreq) * respawnFreq + 60
         --U.myPrint("Next spawn time is ", t)
         return t
     end

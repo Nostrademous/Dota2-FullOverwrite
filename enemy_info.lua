@@ -98,12 +98,12 @@ function EnemyInfo.BuildEnemyList()
                 end
             else
                 -- we cannot see them at this time
-                local lastSeenLoc, lastSeenTime = GetHeroLastSeenInfo(pid)
-                if lastSeenTime then
-                    EnemyInfo[pid].Location = lastSeenLoc
-                    EnemyInfo[pid].LastSeen = lastSeenTime
+                local hTable = GetHeroLastSeenInfo(pid)
+                if #hTable > 0 then
+                    EnemyInfo[pid].Location = hTable[1].location
+                    EnemyInfo[pid].LastSeen = hTable[1].time_since_seen
                     
-                    if lastSeenTime > 6.0 then
+                    if hTable[1].time_since_seen > 6.0 then
                         EnemyInfo[pid].Lane = -1
                         EnemyInfo[pid].ExtraLoc1 = nil
                         EnemyInfo[pid].ExtraLoc3 = nil
